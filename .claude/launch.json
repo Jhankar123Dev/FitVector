@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["apps/web/dev.js", "dev", "--port", "3000"],
+      "port": 3000
+    },
+    {
+      "name": "ai-engine",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "src.main:app", "--reload", "--port", "8000"],
+      "port": 8000
+    }
+  ]
+}
