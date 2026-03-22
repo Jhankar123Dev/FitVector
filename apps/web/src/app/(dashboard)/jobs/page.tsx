@@ -11,6 +11,7 @@ import type { JobFilters } from "@/components/jobs/job-filters";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { UpgradePrompt } from "@/components/shared/upgrade-prompt";
+import { TailorDialog } from "@/components/resume/tailor-dialog";
 import { useJobSearch } from "@/hooks/use-jobs";
 import { useUser } from "@/hooks/use-user";
 import type { JobSearchParams, JobSearchResult } from "@/types/job";
@@ -31,6 +32,7 @@ export default function JobsPage() {
   const [searchParams, setSearchParams] = useState<JobSearchParams | null>(null);
   const [filters, setFilters] = useState<JobFilters>(DEFAULT_FILTERS);
   const [selectedJob, setSelectedJob] = useState<JobSearchResult | null>(null);
+  const [tailorJob, setTailorJob] = useState<JobSearchResult | null>(null);
 
   const {
     data,
@@ -218,12 +220,24 @@ export default function JobsPage() {
                 </div>
 
                 {/* Right: Job detail */}
-                {selectedJob && (
+                {selectedJob && !tailorJob && (
                   <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
                     <JobDetailPanel
                       job={selectedJob}
                       userSkills={[]}
                       onBack={() => setSelectedJob(null)}
+                      onTailorResume={() => setTailorJob(selectedJob)}
+                    />
+                  </div>
+                )}
+
+                {tailorJob && (
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+                    <TailorDialog
+                      jobDescription={tailorJob.description}
+                      jobTitle={tailorJob.title}
+                      companyName={tailorJob.companyName}
+                      onClose={() => setTailorJob(null)}
                     />
                   </div>
                 )}

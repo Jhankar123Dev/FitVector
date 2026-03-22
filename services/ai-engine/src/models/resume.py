@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -20,15 +20,28 @@ class TailorResumeRequest(BaseModel):
         ..., description="Previously parsed resume JSON"
     )
     job_description: str = Field(..., description="Target job description text")
+    job_title: Optional[str] = Field(
+        default=None, description="Job title for version naming"
+    )
+    company_name: Optional[str] = Field(
+        default=None, description="Company name for version naming"
+    )
     template_id: str = Field(
-        default="default", description="LaTeX template identifier"
+        default="modern", description="LaTeX template identifier"
+    )
+    user_id: Optional[str] = Field(
+        default=None, description="User ID for storage path"
     )
 
 
 class TailorResumeResponse(BaseModel):
     latex_source: str = Field(..., description="Generated LaTeX source code")
-    pdf_url: str = Field(..., description="URL to the compiled PDF")
+    pdf_url: str = Field(default="", description="URL to the compiled PDF (empty if compilation failed)")
     version_name: str = Field(..., description="Human-readable version label")
     generation_time_ms: int = Field(
         ..., description="Time taken to generate in milliseconds"
+    )
+    error: Optional[str] = Field(
+        default=None,
+        description="Error message if PDF compilation failed (LaTeX source still available)",
     )
