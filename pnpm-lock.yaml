@@ -114,6 +114,12 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.7(@types/react@18.3.28)
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8.57.1
+        version: 8.57.1(@typescript-eslint/parser@8.57.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^8.57.1
+        version: 8.57.1(eslint@8.57.1)(typescript@5.9.3)
       autoprefixer:
         specifier: ^10.4.0
         version: 10.4.27(postcss@8.5.8)
