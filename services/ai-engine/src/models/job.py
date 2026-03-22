@@ -8,11 +8,14 @@ class JobSearchRequest(BaseModel):
     role: str = Field(..., description="Job title or role to search for")
     location: str = Field(..., description="City, state, or remote")
     sources: list[str] = Field(
-        default=["linkedin", "indeed"],
-        description="Job boards to scrape (linkedin, indeed, glassdoor, etc.)",
+        default=["indeed", "linkedin", "google", "naukri", "glassdoor"],
+        description="Job boards to scrape",
     )
     hours_old: int = Field(default=72, description="Max age of listings in hours")
-    results_wanted: int = Field(default=20, description="Number of results per source")
+    results_wanted: int = Field(default=50, description="Number of results per source")
+    country: str = Field(default="India", description="Country for locale-aware scraping")
+    job_type: Optional[str] = Field(default=None, description="fulltime, parttime, etc.")
+    is_remote: bool = Field(default=False, description="Filter for remote jobs only")
 
 
 class ScrapedJob(BaseModel):
@@ -32,3 +35,6 @@ class ScrapedJob(BaseModel):
 
 class JobSearchResponse(BaseModel):
     jobs: list[ScrapedJob] = Field(default_factory=list)
+    total_found: int = 0
+    scrape_time_ms: int = 0
+    source_results: dict[str, int] = Field(default_factory=dict)
