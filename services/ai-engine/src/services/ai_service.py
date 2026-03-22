@@ -1,6 +1,7 @@
-"""AI-powered resume tailoring service.
+"""AI-powered services: resume tailoring and outreach generation.
 
-Pipeline: user profile JSON + JD text → Claude API → LaTeX source → Tectonic PDF → Supabase upload.
+Resume: user profile JSON + JD text → Claude API → LaTeX source → Tectonic PDF → Supabase upload.
+Outreach: user profile + job → Claude API → cold email / LinkedIn msg / referral request.
 """
 
 from __future__ import annotations
@@ -230,3 +231,109 @@ Here is the LaTeX resume to tailor:
         generation_time_ms=elapsed,
         error=error_msg,
     )
+
+
+# ─── Outreach Generation ────────────────────────────────────────────────────
+
+from src.models.outreach import OutreachRequest, OutreachResponse
+from src.prompts.cold_email import (
+    COLD_EMAIL_SYSTEM_PROMPT,
+    LINKEDIN_MESSAGE_SYSTEM_PROMPT,
+    REFERRAL_REQUEST_SYSTEM_PROMPT,
+)
+
+
+def _build_outreach_user_prompt(request: OutreachRequest) -> str:
+    """Build the user prompt for outreach generation."""
+    profile = request.user_profile
+    job = request.job
+
+    parts = [
+        f"Candidate Name: {profile.get('name', 'Candidate')}",
+        f"Target Role: {job.get('title', 'N/A')} at {job.get('company_name', 'the company')}",
+    ]
+
+    skills = profile.get("skills") or []
+    if skills:
+        parts.append(f"Candidate Skills: {', '.join(skills[:15])}")
+
+    experience = profile.get("experience_summary") or profile.get("current_role")
+    if experience:
+        parts.append(f"Current/Recent Role: {experience}")
+
+    jd = job.get("description") or ""
+    if jd:
+        parts.append(f"Job Description (excerpt): {jd[:500]}")
+
+    if request.recruiter_name:
+        parts.append(f"Recruiter/Contact Name: {request.recruiter_name}")
+
+    relationship = request.user_profile.get("relationship_context")
+    if relationship:
+        parts.append(f"Relationship with contact: {relationship}")
+
+    parts.append(f"Desired tone: {request.tone}")
+
+    return "\n".join(parts)
+
+
+async def generate_outreach(request: OutreachRequest) -> OutreachResponse:
+    """Generate outreach message using Claude."""
+    # Select system prompt based on type
+    prompt_map = {
+        "cold_email": COLD_EMAIL_SYSTEM_PROMPT,
+        "linkedin_inmail": LINKEDIN_MESSAGE_SYSTEM_PROMPT,
+        "referral_request": REFERRAL_REQUEST_SYSTEM_PROMPT,
+    }
+    system_prompt = prompt_map.get(request.outreach_type, COLD_EMAIL_SYSTEM_PROMPT)
+    user_prompt = _build_outreach_user_prompt(request)
+
+    try:
+        from anthropic import AsyncAnthropic  # type: ignore[import-untyped]
+
+        client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+
+        response = await client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1000,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+
+        raw_text = response.content[0].text
+        parsed = json.loads(raw_text)
+
+        return OutreachResponse(
+            subject=parsed.get("subject"),
+            subject_alternatives=parsed.get("subject_alternatives"),
+            body=parsed["body"],
+            personalization_points=parsed.get("personalization_points", []),
+        )
+
+    except Exception as exc:
+        logger.error("Outreach generation failed: %s", exc)
+        # Return a fallback template
+        job_title = request.job.get("title", "the position")
+        company = request.job.get("company_name", "your company")
+        name = request.user_profile.get("name", "I")
+
+        if request.outreach_type == "cold_email":
+            return OutreachResponse(
+                subject=f"Interest in {job_title} at {company}",
+                subject_alternatives=[
+                    f"Experienced developer interested in {job_title}",
+                    f"Application for {job_title} — {company}",
+                ],
+                body=f"Hi {request.recruiter_name or 'there'},\n\nI came across the {job_title} position at {company} and I'm very interested. My background aligns well with the requirements.\n\nWould you be open to a brief conversation?\n\nBest regards,\n{name}",
+                personalization_points=["Fallback template — AI generation failed"],
+            )
+        elif request.outreach_type == "linkedin_inmail":
+            return OutreachResponse(
+                body=f"Hi! I'm interested in the {job_title} role at {company}. My skills align well — would love to connect and learn more!",
+                personalization_points=["Fallback template"],
+            )
+        else:
+            return OutreachResponse(
+                body=f"Hi {request.recruiter_name or 'there'},\n\nI saw a {job_title} opening at {company} that I'd love to apply for. Given our connection, I was wondering if you'd be open to referring me. Happy to share my resume and chat.\n\nThanks!",
+                personalization_points=["Fallback template"],
+            )
