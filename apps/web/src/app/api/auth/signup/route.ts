@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const signupSchema = z.object({
   name: z.string().min(2),
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     const { name, email, password } = parsed.data;
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Check if user already exists
     const { data: existingUser } = await supabase
