@@ -1,0 +1,119 @@
+"use client";
+
+import { useState } from "react";
+import { useUser } from "@/hooks/use-user";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Save, User, CreditCard, Bell } from "lucide-react";
+import Link from "next/link";
+
+export default function SettingsPage() {
+  const { user } = useUser();
+  const [name, setName] = useState(user?.name || "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName: name }),
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage your account and preferences
+        </p>
+      </div>
+
+      {/* Profile */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="h-4 w-4" />
+            Profile
+          </CardTitle>
+          <CardDescription>Your personal information</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Full Name</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 max-w-sm"
+            />
+          </div>
+          <div>
+            <Label>Email</Label>
+            <Input value={user?.email || ""} disabled className="mt-1 max-w-sm" />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Email cannot be changed
+            </p>
+          </div>
+          <Button onClick={handleSave} disabled={isSaving} className="gap-1.5">
+            <Save className="h-3.5 w-3.5" />
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Plan */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <CreditCard className="h-4 w-4" />
+            Subscription
+          </CardTitle>
+          <CardDescription>Your current plan and usage</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="text-sm capitalize">
+              {user?.planTier || "free"} plan
+            </Badge>
+            {user?.planTier === "free" && (
+              <Button size="sm" asChild>
+                <Link href="/dashboard/settings/plan">Upgrade</Link>
+              </Button>
+            )}
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {user?.planTier === "free"
+              ? "Upgrade to unlock more searches, resume tailoring, and outreach."
+              : "Thank you for being a subscriber!"}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Bell className="h-4 w-4" />
+            Notifications
+          </CardTitle>
+          <CardDescription>Control how you receive updates</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/settings/notifications">
+              Manage Notification Preferences
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
