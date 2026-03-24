@@ -7,7 +7,7 @@ import { TemplatePicker } from "./template-picker";
 import { PdfViewer } from "./pdf-viewer";
 import { ResumeEditor } from "./resume-editor";
 import { useTailorResume } from "@/hooks/use-resume";
-import { Loader2, FileText, ArrowLeft, Sparkles, AlertCircle } from "lucide-react";
+import { Loader2, FileText, ArrowLeft, Sparkles } from "lucide-react";
 import type { TailorResumeResult } from "@/types/resume";
 
 interface TailorDialogProps {
@@ -93,29 +93,6 @@ export function TailorDialog({
           </div>
         </div>
 
-        {/* Compilation warning */}
-        {result.compilationError && (
-          <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg bg-yellow-50 p-3 text-xs text-yellow-700">
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <div>
-              <p className="font-medium">PDF compilation unavailable</p>
-              <p className="mt-0.5">{result.compilationError}</p>
-              <p className="mt-1">
-                Download the .tex file and compile it in{" "}
-                <a
-                  href="https://www.overleaf.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  Overleaf
-                </a>
-                .
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Split view: Editor | Preview */}
         <div className="flex min-h-0 flex-1">
           {/* Left: Editor */}
@@ -126,10 +103,10 @@ export function TailorDialog({
             />
           </div>
 
-          {/* Right: PDF Preview */}
+          {/* Right: PDF Preview — compiled on demand via resumeId */}
           <div className="w-1/2">
             <PdfViewer
-              pdfUrl={result.pdfUrl}
+              resumeId={result.id}
               latexSource={latexSource}
               versionName={result.versionName}
             />

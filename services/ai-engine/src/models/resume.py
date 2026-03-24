@@ -3,9 +3,8 @@ from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
-class ParseResumeRequest(BaseModel):
-    file_url: str = Field(..., description="URL to the uploaded resume file")
-    file_type: str = Field(..., description="File MIME type (application/pdf, application/docx, etc.)")
+class CompilePdfRequest(BaseModel):
+    latex_source: str = Field(..., description="LaTeX source to compile into PDF")
 
 
 class ParseResumeResponse(BaseModel):

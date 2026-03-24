@@ -72,13 +72,14 @@ export function VersionList({ versions }: VersionListProps) {
                   View
                 </Link>
               </Button>
-              {version.pdfUrl && (
-                <Button variant="ghost" size="sm" asChild>
-                  <a href={version.pdfUrl} download>
-                    <Download className="h-3.5 w-3.5" />
-                  </a>
-                </Button>
-              )}
+              <Button variant="ghost" size="sm" asChild title="Download PDF">
+                <a
+                  href={`/api/user/resumes/${version.id}/pdf`}
+                  download={`${version.versionName}.pdf`}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </a>
+              </Button>
             </div>
           </CardContent>
         </Card>

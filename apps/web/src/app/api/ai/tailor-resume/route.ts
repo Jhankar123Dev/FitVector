@@ -73,10 +73,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Call Python tailoring service
+    // Call Python tailoring service — returns LaTeX only, no PDF compiled here
     const result = await pythonClient.post<{
       latex_source: string;
-      pdf_url: string;
       version_name: string;
       generation_time_ms: number;
       error: string | null;
@@ -86,10 +85,9 @@ export async function POST(req: Request) {
       job_title: body.jobTitle || null,
       company_name: body.companyName || null,
       template_id: body.templateId || "modern",
-      user_id: userId,
     }, { timeout: 60000 });
 
-    // Store in tailored_resumes table
+    // Store LaTeX in DB — pdf_url stays null, compiled on-demand
     const { data: resume, error: insertError } = await supabase
       .from("tailored_resumes")
       .insert({
@@ -97,7 +95,7 @@ export async function POST(req: Request) {
         version_name: result.version_name,
         template_id: body.templateId || "modern",
         latex_source: result.latex_source,
-        pdf_url: result.pdf_url || null,
+        pdf_url: null,
         job_title: body.jobTitle || null,
         company_name: body.companyName || null,
       })
@@ -123,10 +121,8 @@ export async function POST(req: Request) {
       data: {
         id: resume?.id || null,
         latexSource: result.latex_source,
-        pdfUrl: result.pdf_url || null,
         versionName: result.version_name,
         generationTimeMs: result.generation_time_ms,
-        compilationError: result.error || null,
         usage: {
           used: currentUsage + 1,
           limit: PLAN_LIMITS[planTier].resume_tailor,

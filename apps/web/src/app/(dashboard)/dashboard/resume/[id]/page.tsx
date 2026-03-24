@@ -56,10 +56,10 @@ export default function ResumeDetailPage({
           <ResumeEditor latexSource={resume.latexSource} readOnly />
         </div>
 
-        {/* Right: PDF Preview */}
+        {/* Right: PDF Preview — compiled on demand */}
         <div className="w-1/2">
           <PdfViewer
-            pdfUrl={resume.pdfUrl}
+            resumeId={id}
             latexSource={resume.latexSource}
             versionName={resume.versionName}
           />

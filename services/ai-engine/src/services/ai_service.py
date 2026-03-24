@@ -1,11 +1,13 @@
-"""AI-powered services: resume tailoring and outreach generation.
+"""AI-powered services: resume tailoring, parsing, and outreach generation.
 
 Resume: user profile JSON + JD text → Gemini API → LaTeX source → Tectonic PDF → Supabase upload.
+Parse: raw PDF/DOCX bytes → PyMuPDF/python-docx → Gemini Flash → structured JSON.
 Outreach: user profile + job → Gemini API → cold email / LinkedIn msg / referral request.
 """
 
 from __future__ import annotations
 
+import io
 import json
 import logging
 import re
@@ -16,12 +18,11 @@ from typing import Any
 from google import genai
 
 from src.config import settings
-from src.models.resume import TailorResumeRequest, TailorResumeResponse
+from src.models.resume import ParseResumeResponse, TailorResumeRequest, TailorResumeResponse
 from src.prompts.resume_tailor import (
     DEFAULT_LATEX_TEMPLATE,
     RESUME_TAILOR_SYSTEM_PROMPT,
 )
-from src.services.pdf_service import compile_latex_to_pdf, upload_pdf_to_supabase
 
 logger = logging.getLogger("fitvector.ai_service")
 
@@ -194,6 +195,122 @@ def _generate_version_name(
     return f"{company}_{role}_{month_year}"
 
 
+_PARSE_RESUME_SYSTEM_PROMPT = """You are a resume parser. Extract structured data from the resume text provided.
+
+Return ONLY a valid JSON object with this exact structure (no markdown fences, no extra text):
+{
+  "contact": {
+    "name": "Full Name",
+    "email": "email@example.com",
+    "phone": "+1-555-000-0000",
+    "location": "City, State",
+    "linkedin": "https://linkedin.com/in/...",
+    "github": "https://github.com/...",
+    "portfolio": ""
+  },
+  "summary": "Professional summary or objective",
+  "target_role": "Inferred target job title",
+  "experience": [
+    {
+      "role": "Job Title",
+      "company": "Company Name",
+      "start_date": "Jan 2022",
+      "end_date": "Present",
+      "location": "City, State",
+      "bullets": ["Achievement or responsibility 1", "Achievement 2"]
+    }
+  ],
+  "education": [
+    {
+      "institution": "University Name",
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "year": "2021",
+      "gpa": ""
+    }
+  ],
+  "projects": [
+    {
+      "name": "Project Name",
+      "technologies": ["Python", "React"],
+      "bullets": ["What it does, impact"]
+    }
+  ],
+  "skills": ["Python", "React", "SQL"],
+  "certifications": ["AWS Certified Solutions Architect"],
+  "languages": ["English", "Spanish"]
+}
+
+Rules:
+- Use empty string "" for missing text fields, empty array [] for missing list fields
+- Infer target_role from the most recent job title or overall resume direction
+- skills should be a flat list of all technical and soft skills mentioned
+- If the resume has no projects section, return empty array for projects
+- Keep bullets concise (under 120 chars each)
+"""
+
+
+def _extract_text_from_pdf(file_bytes: bytes) -> str:
+    """Extract plain text from PDF bytes using PyMuPDF."""
+    import fitz  # PyMuPDF
+
+    doc = fitz.open(stream=file_bytes, filetype="pdf")
+    pages_text = []
+    for page in doc:
+        pages_text.append(page.get_text())
+    doc.close()
+    return "\n".join(pages_text)
+
+
+def _extract_text_from_docx(file_bytes: bytes) -> str:
+    """Extract plain text from DOCX bytes using python-docx."""
+    from docx import Document
+
+    doc = Document(io.BytesIO(file_bytes))
+    paragraphs = [para.text for para in doc.paragraphs if para.text.strip()]
+    return "\n".join(paragraphs)
+
+
+async def parse_resume_file(file_bytes: bytes, content_type: str) -> ParseResumeResponse:
+    """Extract text from PDF/DOCX and parse into structured JSON via Gemini Flash."""
+    # Step 1: Extract raw text
+    if "pdf" in content_type:
+        raw_text = _extract_text_from_pdf(file_bytes)
+    else:
+        raw_text = _extract_text_from_docx(file_bytes)
+
+    if not raw_text.strip():
+        raise ValueError("Could not extract any text from the uploaded file.")
+
+    # Truncate to avoid hitting token limits (~12k chars ≈ 3k tokens)
+    truncated_text = raw_text[:12000]
+
+    # Step 2: Call Gemini Flash for structured extraction
+    raw_json = await _call_gemini(
+        task="parse_resume",
+        system_prompt=_PARSE_RESUME_SYSTEM_PROMPT,
+        user_prompt=f"Parse this resume:\n\n{truncated_text}",
+        max_tokens=2048,
+        temperature=0.1,
+    )
+
+    # Step 3: Parse JSON response
+    # Strip markdown fences if model adds them
+    clean = raw_json.strip()
+    if clean.startswith("```"):
+        clean = re.sub(r"^```(?:json)?\s*", "", clean)
+        clean = re.sub(r"\s*```$", "", clean)
+
+    try:
+        parsed_data = json.loads(clean)
+    except json.JSONDecodeError as exc:
+        logger.warning("Gemini returned non-JSON for resume parse: %s", exc)
+        # Return minimal structure so UI doesn't break
+        parsed_data = {"raw_text": raw_text[:500], "parse_error": str(exc)}
+
+    return ParseResumeResponse(parsed_data=parsed_data)
+
+
 async def tailor_resume(request: TailorResumeRequest) -> TailorResumeResponse:
     """Main tailoring pipeline: profile + JD → Claude → LaTeX → PDF → upload."""
     start_time = time.monotonic()
@@ -242,31 +359,15 @@ Here is the LaTeX resume to tailor:
             error="AI tailoring failed — returning original resume. Error: " + str(exc),
         )
 
-    # Step 4: Compile LaTeX to PDF
-    pdf_bytes, compile_error = await compile_latex_to_pdf(latex_source, timeout=10.0)
-
-    pdf_url = ""
-    error_msg = None
-
-    if pdf_bytes and request.user_id:
-        # Step 5: Upload to Supabase
-        uploaded_url = await upload_pdf_to_supabase(
-            pdf_bytes, request.user_id, version_name
-        )
-        if uploaded_url:
-            pdf_url = uploaded_url
-    elif compile_error:
-        error_msg = compile_error
-        logger.warning("PDF compilation failed: %s", compile_error)
-
     elapsed = int((time.monotonic() - start_time) * 1000)
 
+    # LaTeX is returned as-is; PDF is compiled on-demand via /ai/compile-pdf
     return TailorResumeResponse(
         latex_source=latex_source,
-        pdf_url=pdf_url,
+        pdf_url="",
         version_name=version_name,
         generation_time_ms=elapsed,
-        error=error_msg,
+        error=None,
     )
 
 

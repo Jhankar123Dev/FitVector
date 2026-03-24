@@ -8,10 +8,8 @@ export interface TailorResumeParams {
 export interface TailorResumeResult {
   id: string | null;
   latexSource: string;
-  pdfUrl: string | null;
   versionName: string;
   generationTimeMs: number;
-  compilationError: string | null;
   usage: {
     used: number;
     limit: number;
@@ -22,7 +20,6 @@ export interface ResumeVersion {
   id: string;
   versionName: string;
   templateId: string;
-  pdfUrl: string | null;
   jobTitle: string | null;
   companyName: string | null;
   createdAt: string;

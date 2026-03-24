@@ -89,24 +89,27 @@ export async function POST(req: Request) {
 
     const parseResult = await pythonRes.json();
 
+    // Python returns { parsed_data: { contact, experience, skills, ... } }
+    const parsedResume = parseResult.parsed_data ?? parseResult.parsed ?? parseResult;
+
     // Store parsed data in user_profiles
     await supabase
       .from("user_profiles")
       .upsert(
         {
           user_id: session.user.id,
-          parsed_resume_json: parseResult.parsed || parseResult,
+          parsed_resume_json: parsedResume,
           raw_resume_url: rawResumeUrl,
           raw_resume_filename: file.name,
           resume_parsed_at: new Date().toISOString(),
-          skills: parseResult.parsed?.skills || parseResult.skills || [],
+          skills: parsedResume?.skills || [],
         },
         { onConflict: "user_id" },
       );
 
     return NextResponse.json({
       data: {
-        parsed: parseResult.parsed || parseResult,
+        parsed: parsedResume,
         rawResumeUrl,
       },
     });

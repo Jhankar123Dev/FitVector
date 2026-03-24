@@ -41,6 +41,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Pre-download the HuggingFace embedding model (~80MB) to avoid cold-start delay
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
+# Install Playwright Chromium for LinkedIn/Glassdoor scraping
+RUN playwright install --with-deps chromium
+
 # Copy application source
 COPY src/ ./src/
 
