@@ -121,8 +121,8 @@ CREATE TABLE user_profiles (
     skills                  TEXT[] DEFAULT '{}',
 
     -- Embedding (pgvector)
-    embedding               vector(1536),
-    embedding_model         TEXT DEFAULT 'text-embedding-3-small',
+    embedding               vector(384),
+    embedding_model         TEXT DEFAULT 'all-MiniLM-L6-v2',
     embedding_updated_at    TIMESTAMPTZ,
 
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -190,8 +190,8 @@ CREATE TABLE jobs (
     company_description     TEXT,
 
     -- Embedding
-    embedding               vector(1536),
-    embedding_model         TEXT DEFAULT 'text-embedding-3-small',
+    embedding               vector(384),
+    embedding_model         TEXT DEFAULT 'all-MiniLM-L6-v2',
 
     -- Status
     is_active               BOOLEAN NOT NULL DEFAULT true,
@@ -286,7 +286,7 @@ CREATE TABLE tailored_resumes (
     company_name        TEXT,
 
     -- AI generation metadata
-    ai_model            TEXT DEFAULT 'claude-sonnet-4-20250514',
+    ai_model            TEXT DEFAULT 'gemini-2.0-flash',
     prompt_version      TEXT DEFAULT 'v1',
     generation_time_ms  INTEGER,
 
@@ -328,7 +328,7 @@ CREATE TABLE generated_outreach (
     was_copied              BOOLEAN DEFAULT false,
     was_sent                BOOLEAN DEFAULT false,
 
-    ai_model                TEXT DEFAULT 'claude-sonnet-4-20250514',
+    ai_model                TEXT DEFAULT 'gemini-2.0-flash',
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

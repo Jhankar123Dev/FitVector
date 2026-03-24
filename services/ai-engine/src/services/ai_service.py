@@ -1,7 +1,7 @@
 """AI-powered services: resume tailoring and outreach generation.
 
-Resume: user profile JSON + JD text → Claude API → LaTeX source → Tectonic PDF → Supabase upload.
-Outreach: user profile + job → Claude API → cold email / LinkedIn msg / referral request.
+Resume: user profile JSON + JD text → Gemini API → LaTeX source → Tectonic PDF → Supabase upload.
+Outreach: user profile + job → Gemini API → cold email / LinkedIn msg / referral request.
 """
 
 from __future__ import annotations
@@ -13,6 +13,8 @@ import time
 from datetime import datetime
 from typing import Any
 
+from google import genai
+
 from src.config import settings
 from src.models.resume import TailorResumeRequest, TailorResumeResponse
 from src.prompts.resume_tailor import (
@@ -22,6 +24,46 @@ from src.prompts.resume_tailor import (
 from src.services.pdf_service import compile_latex_to_pdf, upload_pdf_to_supabase
 
 logger = logging.getLogger("fitvector.ai_service")
+
+# ─── Gemini client (singleton) ───────────────────────────────────────────────
+
+_gemini_client: genai.Client | None = None
+
+
+def _get_gemini() -> genai.Client:
+    global _gemini_client
+    if _gemini_client is None:
+        _gemini_client = genai.Client(api_key=settings.gemini_api_key)
+    return _gemini_client
+
+
+def get_model_for_task(task: str) -> str:
+    """Select Gemini model based on task complexity."""
+    if task == "tailor_resume":
+        return "gemini-1.5-pro"
+    return "gemini-2.0-flash"
+
+
+async def _call_gemini(
+    task: str,
+    system_prompt: str,
+    user_prompt: str,
+    max_tokens: int = 4000,
+    temperature: float = 0.3,
+) -> str:
+    """Unified helper to call Gemini with the right model for the task."""
+    client = _get_gemini()
+    model = get_model_for_task(task)
+    response = client.models.generate_content(
+        model=model,
+        contents=user_prompt,
+        config={
+            "system_instruction": system_prompt,
+            "max_output_tokens": max_tokens,
+            "temperature": temperature,
+        },
+    )
+    return response.text
 
 
 def _build_latex_from_profile(parsed_resume: dict[str, Any]) -> str:
@@ -169,12 +211,8 @@ async def tailor_resume(request: TailorResumeRequest) -> TailorResumeResponse:
     job_title = request.job_title or None
     version_name = _generate_version_name(company_name, job_title)
 
-    # Step 3: Call Claude for tailoring
+    # Step 3: Call Gemini for tailoring (uses gemini-1.5-pro for reliable LaTeX)
     try:
-        from anthropic import AsyncAnthropic  # type: ignore[import-untyped]
-
-        client = AsyncAnthropic(api_key=settings.anthropic_api_key)
-
         user_message = f"""Here is the job description (JD):
 
 {request.job_description}
@@ -183,18 +221,17 @@ Here is the LaTeX resume to tailor:
 
 {base_latex}"""
 
-        response = await client.messages.create(
-            model="claude-sonnet-4-20250514",
+        raw_output = await _call_gemini(
+            task="tailor_resume",
+            system_prompt=RESUME_TAILOR_SYSTEM_PROMPT,
+            user_prompt=user_message,
             max_tokens=4096,
-            system=RESUME_TAILOR_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
+            temperature=0.2,
         )
-
-        raw_output = response.content[0].text
         latex_source = _extract_latex(raw_output)
 
     except Exception as exc:
-        logger.error("Claude tailoring failed: %s", exc)
+        logger.error("Gemini tailoring failed: %s", exc)
         # Return the baseline LaTeX with error flag
         elapsed = int((time.monotonic() - start_time) * 1000)
         return TailorResumeResponse(
@@ -278,7 +315,7 @@ def _build_outreach_user_prompt(request: OutreachRequest) -> str:
 
 
 async def generate_outreach(request: OutreachRequest) -> OutreachResponse:
-    """Generate outreach message using Claude."""
+    """Generate outreach message using Gemini Flash."""
     # Select system prompt based on type
     prompt_map = {
         "cold_email": COLD_EMAIL_SYSTEM_PROMPT,
@@ -289,18 +326,12 @@ async def generate_outreach(request: OutreachRequest) -> OutreachResponse:
     user_prompt = _build_outreach_user_prompt(request)
 
     try:
-        from anthropic import AsyncAnthropic  # type: ignore[import-untyped]
-
-        client = AsyncAnthropic(api_key=settings.anthropic_api_key)
-
-        response = await client.messages.create(
-            model="claude-sonnet-4-20250514",
+        raw_text = await _call_gemini(
+            task="generate_outreach",
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
             max_tokens=1000,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}],
         )
-
-        raw_text = response.content[0].text
         parsed = json.loads(raw_text)
 
         return OutreachResponse(

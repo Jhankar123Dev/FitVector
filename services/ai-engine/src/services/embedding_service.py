@@ -1,7 +1,7 @@
 """Embedding generation and match scoring service.
 
-Uses OpenAI text-embedding-3-small for vector embeddings and cosine similarity
-for match scoring with calibrated thresholds from the scoring-engine spec.
+Uses HuggingFace all-MiniLM-L6-v2 (384-dim) for local vector embeddings and
+cosine similarity for match scoring with calibrated thresholds.
 
 Blended scoring: 70% embedding + 30% deterministic.
 """
@@ -12,6 +12,8 @@ import json
 import logging
 import math
 from typing import Any
+
+from sentence_transformers import SentenceTransformer
 
 from src.config import settings
 from src.models.scoring import (
@@ -36,30 +38,28 @@ from src.utils.text import truncate_words
 
 logger = logging.getLogger("fitvector.embedding")
 
-# ─── Embedding generation ───────────────────────────────────────────────────
+# ─── Embedding generation (local HuggingFace model) ─────────────────────────
 
-_openai_client = None
+# Load model once at startup (~80MB download on first run, then cached)
+_embedding_model: SentenceTransformer | None = None
 
 
-def _get_openai():
-    global _openai_client
-    if _openai_client is None:
-        from openai import AsyncOpenAI  # type: ignore[import-untyped]
-
-        _openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
-    return _openai_client
+def _get_embedding_model() -> SentenceTransformer:
+    global _embedding_model
+    if _embedding_model is None:
+        logger.info("Loading embedding model all-MiniLM-L6-v2...")
+        _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+        logger.info("Embedding model loaded (384 dimensions)")
+    return _embedding_model
 
 
 async def generate_embeddings_batch(texts: list[str]) -> list[list[float]]:
-    """Generate embeddings for a batch of texts. Max 100 per batch."""
+    """Generate embeddings for a batch of texts using local HuggingFace model."""
     if not texts:
         return []
-    client = _get_openai()
-    response = await client.embeddings.create(
-        model="text-embedding-3-small",
-        input=texts[:100],
-    )
-    return [item.embedding for item in response.data]
+    model = _get_embedding_model()
+    embeddings = model.encode(texts, normalize_embeddings=True)
+    return embeddings.tolist()
 
 
 async def generate_embedding(text: str) -> list[float]:
@@ -286,11 +286,9 @@ Respond ONLY with valid JSON matching the schema below — no markdown, no extra
 
 
 async def generate_gap_analysis(request: GapAnalysisRequest) -> GapAnalysisResponse:
-    """Generate detailed gap analysis using Claude."""
+    """Generate detailed gap analysis using Gemini Flash."""
     try:
-        from anthropic import AsyncAnthropic  # type: ignore[import-untyped]
-
-        client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        from src.services.ai_service import _call_gemini
 
         user_prompt = f"""Candidate Profile:
 {json.dumps(request.parsed_resume, indent=2)}
@@ -311,14 +309,12 @@ Provide your analysis as JSON:
   "recommendations": ["string"]
 }}"""
 
-        response = await client.messages.create(
-            model="claude-sonnet-4-20250514",
+        raw_text = await _call_gemini(
+            task="generate_gap_analysis",
+            system_prompt=GAP_ANALYSIS_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
             max_tokens=2000,
-            system=GAP_ANALYSIS_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
         )
-
-        raw_text = response.content[0].text
         parsed = json.loads(raw_text)
 
         return GapAnalysisResponse(

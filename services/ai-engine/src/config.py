@@ -7,8 +7,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     # AI provider keys
-    anthropic_api_key: str = ""
-    openai_api_key: str = ""
+    gemini_api_key: str = ""
 
     # Internal service auth
     python_service_secret: str = ""

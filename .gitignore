@@ -2,7 +2,7 @@
 node_modules/
 .pnpm-store/
 .claude
-
+.git-rewrite
 # Next.js
 .next/
 out/
@@ -70,3 +70,7 @@ coverage/
 # Misc
 *.tsbuildinfo
 book1.xlsx
+
+# Excel files
+*.xlsx
+*.csv
