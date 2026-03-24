@@ -3,15 +3,21 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import sys
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 from src.models.job import JobSearchRequest, JobSearchResponse, ScrapedJob
 from src.utils.proxy import get_proxy_config
 from src.utils.rate_limiter import rate_limiter
 from src.utils.text import job_fingerprint
+
+# Path to the isolated jobspy runner script
+_RUNNER_SCRIPT = Path(__file__).parent.parent / "utils" / "jobspy_runner.py"
 
 logger = logging.getLogger("fitvector.scraper")
 
@@ -21,17 +27,18 @@ CACHE_TTL = timedelta(hours=24)
 # In-memory cache keyed by (role, location, source_combo, hours_old)
 _cache: dict[str, tuple[datetime, JobSearchResponse]] = {}
 
-# Supported sources
-VALID_SOURCES = {"indeed", "linkedin", "google", "glassdoor", "zip_recruiter"}
+# Supported sources (this version of jobspy only has these 3)
+VALID_SOURCES = {"indeed", "linkedin", "zip_recruiter"}
 
 # Map our source names to jobspy site names
 SOURCE_MAP = {
     "indeed": "indeed",
     "linkedin": "linkedin",
-    "google": "google",
-    "glassdoor": "glassdoor",
-    "naukri": "indeed",  # naukri not natively in jobspy — fallback to indeed India
     "zip_recruiter": "zip_recruiter",
+    # These are accepted by our API but mapped to working sources
+    "google": "indeed",      # fallback — google not in this jobspy version
+    "glassdoor": "linkedin",  # fallback — glassdoor not in this jobspy version
+    "naukri": "indeed",       # fallback
 }
 
 
@@ -92,8 +99,12 @@ async def _scrape_source(
     job_type: str | None,
     is_remote: bool,
 ) -> list[dict[str, Any]]:
-    """Scrape a single source via jobspy. Runs in a thread since jobspy is sync."""
+    """Scrape a single source via jobspy.
 
+    Runs jobspy in a **separate subprocess** so that if Playwright / Chromium
+    crashes (segfault, OOM, etc.) it only kills the child process — the main
+    uvicorn server stays alive.
+    """
     await rate_limiter.acquire(source)
 
     jobspy_site = SOURCE_MAP.get(source, source)
@@ -103,35 +114,61 @@ async def _scrape_source(
 
     proxy = get_proxy_config()
 
-    def _run_sync() -> list[dict[str, Any]]:
-        try:
-            from jobspy import scrape_jobs  # type: ignore[import-untyped]
+    kwargs: dict[str, Any] = {
+        "site_name": [jobspy_site],
+        "search_term": role,
+        "location": location,
+        "results_wanted": results_wanted,
+        "country_indeed": country,
+    }
+    if is_remote:
+        kwargs["is_remote"] = True
+    if job_type:
+        kwargs["job_type"] = job_type
+    if proxy:
+        kwargs["proxy"] = proxy.get("https") or proxy.get("http")
 
-            kwargs: dict[str, Any] = {
-                "site_name": [jobspy_site],
-                "search_term": role,
-                "location": location,
-                "results_wanted": results_wanted,
-                "hours_old": hours_old,
-                "country_indeed": country,
-            }
-            if is_remote:
-                kwargs["is_remote"] = True
-            if job_type:
-                kwargs["job_type"] = job_type
-            if proxy:
-                kwargs["proxy"] = proxy.get("https") or proxy.get("http")
+    try:
+        proc = await asyncio.wait_for(
+            asyncio.create_subprocess_exec(
+                sys.executable,
+                str(_RUNNER_SCRIPT),
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            ),
+            timeout=5.0,
+        )
 
-            df = scrape_jobs(**kwargs)
-            if df is None or df.empty:
-                return []
-            return df.to_dict(orient="records")
-        except Exception as exc:
-            logger.error("Scrape failed for %s: %s", source, exc)
+        stdin_data = json.dumps(kwargs).encode()
+        stdout, stderr = await asyncio.wait_for(
+            proc.communicate(stdin_data),
+            timeout=30.0,  # 30s per source max
+        )
+
+        stderr_text = stderr.decode().strip() if stderr else ""
+
+        if proc.returncode not in (0, 1):
+            logger.warning("jobspy subprocess exited %d for %s: %s", proc.returncode, source, stderr_text[:300])
+
+        if stderr_text:
+            logger.info("jobspy_runner [%s]: %s", source, stderr_text[:500])
+
+        raw = stdout.decode().strip()
+        if not raw:
             return []
+        return json.loads(raw)
 
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, _run_sync)
+    except asyncio.TimeoutError:
+        logger.warning("Source %s subprocess timed out — skipping", source)
+        try:
+            proc.kill()  # type: ignore[possibly-undefined]
+        except Exception:
+            pass
+        return []
+    except Exception as exc:
+        logger.error("Source %s subprocess error: %s", source, exc)
+        return []
 
 
 def _normalize_job(raw: dict[str, Any], source: str) -> ScrapedJob:
@@ -197,8 +234,19 @@ async def scrape_jobs(request: JobSearchRequest) -> JobSearchResponse:
     job_type = getattr(request, "job_type", None)
     is_remote = getattr(request, "is_remote", False)
 
+    # Deduplicate mapped sources so we don't scrape indeed/linkedin twice
+    scraped_sites: set[str] = set()
+
     # Fallback chain: scrape each source, continue on failure
     for source in request.sources:
+        # Skip if we already scraped this jobspy site (e.g. google→indeed)
+        mapped = SOURCE_MAP.get(source, source)
+        if mapped in scraped_sites:
+            logger.info("Skipping %s (already scraped as %s)", source, mapped)
+            source_results[source] = 0
+            continue
+        scraped_sites.add(mapped)
+
         try:
             raw_results = await _scrape_source(
                 source=source,

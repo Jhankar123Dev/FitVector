@@ -70,7 +70,6 @@ export async function POST(req: Request) {
       .from("users")
       .update({
         onboarding_completed: true,
-        user_status: "active",
       })
       .eq("id", session.user.id);
 

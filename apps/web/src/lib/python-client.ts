@@ -20,7 +20,7 @@ class PythonClient {
     body?: unknown,
     options: PythonClientOptions = {},
   ): Promise<T> {
-    const { timeout = 30000 } = options;
+    const { timeout = 90000 } = options;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);

@@ -74,3 +74,6 @@ book1.xlsx
 # Excel files
 *.xlsx
 *.csv
+
+services/ai-engine/stderr.tmp
+start.txt
