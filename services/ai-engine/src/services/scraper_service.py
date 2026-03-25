@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from src.config import settings
 from src.models.job import JobSearchRequest, JobSearchResponse, ScrapedJob
 from src.utils.proxy import get_proxy_config
 from src.utils.rate_limiter import rate_limiter
@@ -143,7 +144,7 @@ async def _scrape_source(
         stdin_data = json.dumps(kwargs).encode()
         stdout, stderr = await asyncio.wait_for(
             proc.communicate(stdin_data),
-            timeout=30.0,  # 30s per source max
+            timeout=60.0,  # 60s per source — subprocess import is slow on Windows
         )
 
         stderr_text = stderr.decode().strip() if stderr else ""
@@ -182,6 +183,9 @@ def _normalize_job(raw: dict[str, Any], source: str) -> ScrapedJob:
                 posted_dt = datetime.fromisoformat(posted)
             else:
                 posted_dt = posted
+            # Ensure timezone-aware (assume UTC if naive)
+            if posted_dt and posted_dt.tzinfo is None:
+                posted_dt = posted_dt.replace(tzinfo=timezone.utc)
         except (ValueError, TypeError):
             posted_dt = None
 
@@ -216,6 +220,109 @@ def _deduplicate(jobs: list[ScrapedJob]) -> list[ScrapedJob]:
     return unique
 
 
+_JOB_ANALYSIS_PROMPT = """You are a job description analyzer. Extract structured data from each job description.
+
+For EACH job, return a JSON object with:
+- "required_skills": skills CENTRAL to responsibilities (not just mentioned)
+- "nice_to_have_skills": skills listed as "bonus", "preferred", "exposure to", or examples
+- "required_experience_years": lower bound of stated range (e.g. "3-5 years" → 3). 0 if not stated.
+- "seniority": "entry-level" | "junior" | "mid" | "senior" based on experience years
+- "role_type": "backend" | "frontend" | "fullstack" | "data" | "devops" | "ai" | "mobile" | "design" | "qa" | "product"
+
+Rules:
+- Do NOT invent skills not mentioned in the text
+- If experience range given, use the LOWER bound
+- "Exposure" or "nice to have" = nice_to_have_skills, not required
+- Classify "ai-adjacent" roles (uses AI tools but doesn't train models) as their primary type (e.g. "backend")
+- Return ONLY a JSON array, no markdown fences, no extra text
+"""
+
+
+async def _analyze_batch(batch: list[ScrapedJob]) -> list[dict]:
+    """Analyze a batch of jobs with Gemini Flash. Returns list of analysis dicts."""
+    from src.services.ai_service import _call_gemini
+
+    descriptions = []
+    for i, job in enumerate(batch):
+        desc = job.description[:800] if job.description else ""
+        descriptions.append(f"[Job {i+1}] Title: {job.title}\n{desc}")
+
+    user_prompt = f"Analyze these {len(batch)} job descriptions:\n\n" + "\n---\n".join(descriptions)
+
+    try:
+        raw = await _call_gemini(
+            task="analyze_jobs",
+            system_prompt=_JOB_ANALYSIS_PROMPT,
+            user_prompt=user_prompt,
+            max_tokens=2048,
+            temperature=0.1,
+        )
+        # Strip markdown fences if present
+        clean = raw.strip()
+        if clean.startswith("```"):
+            import re
+            clean = re.sub(r"^```(?:json)?\s*", "", clean)
+            clean = re.sub(r"\s*```$", "", clean)
+
+        parsed = json.loads(clean)
+        if isinstance(parsed, dict):
+            parsed = [parsed]
+        return parsed
+    except Exception as exc:
+        logger.warning("LLM job analysis batch failed: %s", exc)
+        return []
+
+
+async def analyze_jobs_with_llm(jobs: list[ScrapedJob]) -> list[ScrapedJob]:
+    """Enrich jobs with LLM-extracted skills using concurrent Gemini Flash calls.
+
+    Batches jobs 3 at a time and fires all batches concurrently with asyncio.gather.
+    Falls back to keyword extraction on failure.
+    """
+    if not settings.enable_llm_job_analysis or not jobs:
+        return jobs
+
+    BATCH_SIZE = 3
+    batches = [jobs[i:i + BATCH_SIZE] for i in range(0, len(jobs), BATCH_SIZE)]
+
+    # Fire ALL batches concurrently — user requirement for <5s total
+    results = await asyncio.gather(
+        *[_analyze_batch(batch) for batch in batches],
+        return_exceptions=True,
+    )
+
+    # Merge results back into jobs
+    job_idx = 0
+    for batch_idx, batch_result in enumerate(results):
+        batch = batches[batch_idx]
+        if isinstance(batch_result, Exception):
+            logger.warning("LLM batch %d failed: %s", batch_idx, batch_result)
+            job_idx += len(batch)
+            continue
+
+        for i, analysis in enumerate(batch_result):
+            if job_idx + i >= len(jobs):
+                break
+            job = jobs[job_idx + i]
+            if isinstance(analysis, dict):
+                if analysis.get("required_skills"):
+                    job.skills_required = analysis["required_skills"]
+                if analysis.get("nice_to_have_skills"):
+                    job.skills_nice_to_have = analysis["nice_to_have_skills"]
+                if analysis.get("required_experience_years") is not None:
+                    job.required_experience_years = analysis["required_experience_years"]
+                if analysis.get("seniority"):
+                    job.seniority = analysis["seniority"]
+                if analysis.get("role_type"):
+                    job.role_type = analysis["role_type"]
+
+        job_idx += len(batch)
+
+    analyzed = sum(1 for j in jobs if j.seniority is not None)
+    logger.info("LLM analysis enriched %d/%d jobs", analyzed, len(jobs))
+    return jobs
+
+
 async def scrape_jobs(request: JobSearchRequest) -> JobSearchResponse:
     """Main entry point: scrape, deduplicate, cache, and return."""
     cache_key = _cache_key(request)
@@ -236,19 +343,21 @@ async def scrape_jobs(request: JobSearchRequest) -> JobSearchResponse:
 
     # Deduplicate mapped sources so we don't scrape indeed/linkedin twice
     scraped_sites: set[str] = set()
-
-    # Fallback chain: scrape each source, continue on failure
+    unique_sources: list[str] = []
     for source in request.sources:
-        # Skip if we already scraped this jobspy site (e.g. google→indeed)
         mapped = SOURCE_MAP.get(source, source)
-        if mapped in scraped_sites:
-            logger.info("Skipping %s (already scraped as %s)", source, mapped)
+        if mapped not in scraped_sites and mapped in VALID_SOURCES:
+            scraped_sites.add(mapped)
+            unique_sources.append(source)
+        else:
             source_results[source] = 0
-            continue
-        scraped_sites.add(mapped)
 
+    logger.info("Scraping %d sources in parallel: %s", len(unique_sources), unique_sources)
+
+    # Scrape ALL sources concurrently — much faster than sequential
+    async def _scrape_with_error_handling(source: str) -> tuple[str, list[dict]]:
         try:
-            raw_results = await _scrape_source(
+            raw = await _scrape_source(
                 source=source,
                 role=request.role,
                 location=request.location,
@@ -258,17 +367,43 @@ async def scrape_jobs(request: JobSearchRequest) -> JobSearchResponse:
                 job_type=job_type,
                 is_remote=is_remote,
             )
-            jobs = [_normalize_job(r, source) for r in raw_results]
-            source_results[source] = len(jobs)
-            all_jobs.extend(jobs)
-            logger.info("Source %s returned %d jobs", source, len(jobs))
+            return source, raw
         except Exception as exc:
             logger.error("Source %s failed: %s", source, exc)
+            return source, []
+
+    gather_results = await asyncio.gather(
+        *[_scrape_with_error_handling(s) for s in unique_sources]
+    )
+
+    for source, raw_results in gather_results:
+        jobs = [_normalize_job(r, source) for r in raw_results]
+        source_results[source] = len(jobs)
+        all_jobs.extend(jobs)
+        if raw_results:
+            logger.info("Source %s returned %d jobs", source, len(jobs))
+        else:
             failed_sources.append(source)
-            source_results[source] = 0
 
     # Deduplicate
     unique_jobs = _deduplicate(all_jobs)
+    logger.info("After dedup: %d jobs. Dates: %s", len(unique_jobs),
+                [(j.title[:30], str(j.posted_at)) for j in unique_jobs[:5]])
+
+    # Filter out old jobs — compare dates only (jobspy returns dates without times)
+    if request.hours_old and request.hours_old > 0:
+        cutoff_date = (datetime.now(timezone.utc) - timedelta(hours=request.hours_old)).date()
+        before_count = len(unique_jobs)
+        unique_jobs = [
+            j for j in unique_jobs
+            if j.posted_at is None or j.posted_at.date() >= cutoff_date
+        ]
+        filtered_out = before_count - len(unique_jobs)
+        logger.info("Date filter (cutoff=%s): removed %d/%d jobs", cutoff_date, filtered_out, before_count)
+
+    # Enrich jobs with LLM-extracted skills (concurrent Gemini Flash calls)
+    unique_jobs = await analyze_jobs_with_llm(unique_jobs)
+
     elapsed_ms = int((time.monotonic() - start) * 1000)
 
     response = JobSearchResponse(

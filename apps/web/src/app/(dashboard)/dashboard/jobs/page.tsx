@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { Search, SearchX, Loader2 } from "lucide-react";
+import { Search, SearchX, Loader2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { JobList } from "@/components/jobs/job-list";
@@ -20,7 +20,7 @@ const DEFAULT_FILTERS: JobFilters = {
   location: "",
   workMode: "",
   jobType: "",
-  hoursOld: 72,
+  hoursOld: 720,
   salaryMin: "",
   salaryMax: "",
   decisionLabel: "",
@@ -120,9 +120,21 @@ export default function JobsPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search jobs... e.g. Frontend Developer, Data Scientist"
+              placeholder="Job title... e.g. Frontend Developer"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="pl-9"
+            />
+          </div>
+          <div className="relative w-40 shrink-0 sm:w-48">
+            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="City or Remote"
+              value={filters.location}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, location: e.target.value }))
+              }
               onKeyDown={handleKeyDown}
               className="pl-9"
             />
@@ -181,7 +193,7 @@ export default function JobsPage() {
         <EmptyState
           icon={Search}
           title="Start your job search"
-          description="Enter a role above and we'll search across LinkedIn, Indeed, Naukri, Glassdoor and more."
+          description="Enter a role and location above — we'll search LinkedIn, Indeed, and more."
         />
       )}
 

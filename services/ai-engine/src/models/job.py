@@ -31,6 +31,10 @@ class ScrapedJob(BaseModel):
     job_type: Optional[str] = None
     work_mode: Optional[str] = None
     skills_required: list[str] = Field(default_factory=list)
+    skills_nice_to_have: list[str] = Field(default_factory=list)
+    required_experience_years: Optional[float] = None
+    seniority: Optional[str] = None
+    role_type: Optional[str] = None
 
 
 class JobSearchResponse(BaseModel):

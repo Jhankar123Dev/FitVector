@@ -6,6 +6,7 @@ import { MatchScoreBadge } from "./match-score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { SourceBadge } from "./source-badge";
 import { ActionBar } from "./action-bar";
+import { GapAnalysisPanel } from "./gap-analysis-panel";
 import {
   MapPin,
   Clock,
@@ -195,6 +196,11 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
           </div>
         </div>
       )}
+
+      {/* Gap Analysis — triggered by button click */}
+      <div className="border-b px-4 py-3">
+        <GapAnalysisPanel job={job} />
+      </div>
 
       {/* Description */}
       <div className="flex-1 overflow-y-auto p-4">

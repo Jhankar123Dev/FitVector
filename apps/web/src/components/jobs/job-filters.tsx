@@ -59,7 +59,7 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
     filters.location ||
     filters.workMode ||
     filters.jobType ||
-    filters.hoursOld !== 72 ||
+    filters.hoursOld !== 720 ||
     filters.salaryMin ||
     filters.salaryMax ||
     filters.decisionLabel;

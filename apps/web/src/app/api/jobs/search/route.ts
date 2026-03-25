@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const location = searchParams.get("location") || "";
     const workMode = searchParams.get("workMode") || undefined;
     const jobType = searchParams.get("jobType") || undefined;
-    const hoursOld = parseInt(searchParams.get("hoursOld") || "72", 10);
+    const hoursOld = parseInt(searchParams.get("hoursOld") || "720", 10);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "25", 10);
     const decisionLabelFilter = searchParams.get("decisionLabel") as DecisionLabel | null;
@@ -72,6 +72,10 @@ export async function GET(req: NextRequest) {
         job_type: string | null;
         work_mode: string | null;
         skills_required: string[];
+        skills_nice_to_have: string[];
+        required_experience_years: number | null;
+        seniority: string | null;
+        role_type: string | null;
       }>;
       total_found: number;
       scrape_time_ms: number;
@@ -79,13 +83,13 @@ export async function GET(req: NextRequest) {
     }>("/scrape/jobs", {
       role,
       location,
-      sources: ["indeed", "linkedin", "google", "naukri", "glassdoor"],
+      sources: ["linkedin", "indeed", "zip_recruiter"],
       hours_old: hoursOld,
       results_wanted: resultsWanted,
       country: "India",
       job_type: jobType || null,
       is_remote: workMode === "remote",
-    }, { timeout: 60000 });
+    }, { timeout: 90000 });
 
     // Log usage
     await supabase.from("usage_logs").insert({
@@ -145,7 +149,8 @@ export async function GET(req: NextRequest) {
         deterministicScore: null as number | null,
         deterministicComponents: null as Record<string, unknown> | null,
         skillsRequired: job.skills_required,
-        skillsNiceToHave: [] as string[],
+        skillsNiceToHave: job.skills_nice_to_have || [],
+        requiredExperienceYears: job.required_experience_years || null,
         isEasyApply: false,
         isSaved: false,
         description: job.description,
@@ -197,11 +202,11 @@ export async function GET(req: NextRequest) {
               job_text: `Job title: ${job.title}\nRequired skills: ${job.skillsRequired.join(", ")}\n${job.description.slice(0, 500)}`,
               user_skills: userSkills,
               job_required_skills: job.skillsRequired,
-              job_nice_to_have_skills: [],
+              job_nice_to_have_skills: job.skillsNiceToHave,
               user_role: userTargetRoles[0] || null,
               job_role: job.title,
               user_experience_years: null,
-              job_required_experience_years: null,
+              job_required_experience_years: job.requiredExperienceYears,
             }, { timeout: 15000 })
             .catch(() => null),
         );

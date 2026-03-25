@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # Proxy for web scraping
     proxy_url: str = ""
 
+    # Feature flags (admin-controlled)
+    enable_llm_job_analysis: bool = True
+    enable_gap_analysis: bool = True
+
     @property
     def service_secret(self) -> str:
         """Alias used by the auth middleware."""
