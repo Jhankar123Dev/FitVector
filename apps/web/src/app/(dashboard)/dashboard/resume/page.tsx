@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText, Plus } from "lucide-react";
+import { useRef, useState, useCallback } from "react";
+import { FileText, Plus, Upload, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VersionList } from "@/components/resume/version-list";
@@ -9,6 +10,71 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { useResumeVersions } from "@/hooks/use-resume";
 import { useUser } from "@/hooks/use-user";
 import { useUsage } from "@/hooks/use-usage";
+
+function BaseResumeUpload({ hasResume }: { hasResume: boolean }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFile = useCallback(async (file: File) => {
+    setUploading(true);
+    setError(null);
+    setSuccess(false);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/ai/parse-resume", { method: "POST", body: formData });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Upload failed");
+      }
+      setSuccess(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setUploading(false);
+    }
+  }, []);
+
+  return (
+    <div className="rounded-lg border p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <FileText className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Base Resume</p>
+            <p className="text-xs text-muted-foreground">
+              {success ? "Resume uploaded — AI will use this for tailoring" : hasResume ? "Resume on file — upload a new one to replace it" : "Upload your resume so AI can tailor it for jobs"}
+            </p>
+          </div>
+          {success && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploading ? (
+            <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Uploading...</>
+          ) : (
+            <><Upload className="mr-1.5 h-3.5 w-3.5" /> {hasResume ? "Replace" : "Upload"} Resume</>
+          )}
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.docx"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+        />
+      </div>
+      {error && <p className="mt-2 flex items-center gap-1 text-xs text-destructive"><AlertCircle className="h-3 w-3" />{error}</p>}
+      {success && <p className="mt-2 text-xs text-green-600">Resume uploaded and parsed successfully!</p>}
+    </div>
+  );
+}
 
 export default function ResumePage() {
   const { user } = useUser();
@@ -39,6 +105,9 @@ export default function ResumePage() {
           )}
         </div>
       </div>
+
+      {/* Base resume upload */}
+      <BaseResumeUpload hasResume={!!(user as any)?.resume_data} />
 
       {/* How it works */}
       <div className="rounded-lg border bg-muted/30 p-4">

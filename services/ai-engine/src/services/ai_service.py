@@ -51,20 +51,44 @@ async def _call_gemini(
     user_prompt: str,
     max_tokens: int = 4000,
     temperature: float = 0.3,
+    _retries: int = 3,
 ) -> str:
-    """Unified helper to call Gemini with the right model for the task."""
+    """Unified helper to call Gemini with the right model for the task.
+
+    Auto-retries up to _retries times on 429 RESOURCE_EXHAUSTED,
+    honouring the retryDelay from the error response.
+    """
+    import asyncio
+
     client = _get_gemini()
     model = get_model_for_task(task)
-    response = client.models.generate_content(
-        model=model,
-        contents=user_prompt,
-        config={
-            "system_instruction": system_prompt,
-            "max_output_tokens": max_tokens,
-            "temperature": temperature,
-        },
-    )
-    return response.text
+
+    for attempt in range(_retries):
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=user_prompt,
+                config={
+                    "system_instruction": system_prompt,
+                    "max_output_tokens": max_tokens,
+                    "temperature": temperature,
+                },
+            )
+            return response.text
+        except Exception as exc:
+            err_str = str(exc)
+            is_rate_limit = "429" in err_str or "RESOURCE_EXHAUSTED" in err_str
+            if is_rate_limit and attempt < _retries - 1:
+                # Extract retryDelay from error message (e.g. "Please retry in 53s")
+                match = re.search(r"retry[^\d]*(\d+(?:\.\d+)?)\s*s", err_str, re.IGNORECASE)
+                wait = float(match.group(1)) + 2 if match else 60.0
+                logger.warning(
+                    "Gemini 429 on attempt %d/%d — waiting %.0fs then retrying",
+                    attempt + 1, _retries, wait,
+                )
+                await asyncio.sleep(wait)
+                continue
+            raise
 
 
 def _build_latex_from_profile(parsed_resume: dict[str, Any]) -> str:

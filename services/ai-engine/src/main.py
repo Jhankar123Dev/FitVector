@@ -1,3 +1,11 @@
+import ssl
+import urllib3
+import truststore
+
+truststore.inject_into_ssl()
+ssl._create_default_https_context = ssl._create_unverified_context  # type: ignore[assignment]
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 import logging
 from contextlib import asynccontextmanager
 

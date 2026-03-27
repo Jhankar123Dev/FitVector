@@ -17,10 +17,10 @@ from src.utils.proxy import get_proxy_config
 from src.utils.rate_limiter import rate_limiter
 from src.utils.text import job_fingerprint
 
-# Path to the isolated jobspy runner script
-_RUNNER_SCRIPT = Path(__file__).parent.parent / "utils" / "jobspy_runner.py"
-
 logger = logging.getLogger("fitvector.scraper")
+
+# Path to the standalone jobspy runner script
+_RUNNER_SCRIPT = Path(__file__).parent.parent / "utils" / "jobspy_runner.py"
 
 # Cache TTL: 24 hours
 CACHE_TTL = timedelta(hours=24)
@@ -41,6 +41,8 @@ SOURCE_MAP = {
     "glassdoor": "linkedin",  # fallback — glassdoor not in this jobspy version
     "naukri": "indeed",       # fallback
 }
+
+
 
 
 def _cache_key(request: JobSearchRequest) -> str:
@@ -100,11 +102,11 @@ async def _scrape_source(
     job_type: str | None,
     is_remote: bool,
 ) -> list[dict[str, Any]]:
-    """Scrape a single source via jobspy.
+    """Scrape a single source via jobspy in an isolated subprocess.
 
-    Runs jobspy in a **separate subprocess** so that if Playwright / Chromium
-    crashes (segfault, OOM, etc.) it only kills the child process — the main
-    uvicorn server stays alive.
+    Each source runs in its own child process — if jobspy crashes (SSL error,
+    segfault, etc.) only that child dies; the main uvicorn server is unaffected.
+    All sources are launched in parallel by the caller (asyncio.gather).
     """
     await rate_limiter.acquire(source)
 
@@ -130,40 +132,30 @@ async def _scrape_source(
         kwargs["proxy"] = proxy.get("https") or proxy.get("http")
 
     try:
-        proc = await asyncio.wait_for(
-            asyncio.create_subprocess_exec(
-                sys.executable,
-                str(_RUNNER_SCRIPT),
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            ),
-            timeout=5.0,
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable, str(_RUNNER_SCRIPT),
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
-
         stdin_data = json.dumps(kwargs).encode()
         stdout, stderr = await asyncio.wait_for(
             proc.communicate(stdin_data),
-            timeout=60.0,  # 60s per source — subprocess import is slow on Windows
+            timeout=120.0,
         )
-
-        stderr_text = stderr.decode().strip() if stderr else ""
-
-        if proc.returncode not in (0, 1):
-            logger.warning("jobspy subprocess exited %d for %s: %s", proc.returncode, source, stderr_text[:300])
-
-        if stderr_text:
-            logger.info("jobspy_runner [%s]: %s", source, stderr_text[:500])
-
-        raw = stdout.decode().strip()
-        if not raw:
+        if stderr:
+            logger.debug("Source %s runner stderr: %s", source, stderr.decode()[:300])
+        if proc.returncode != 0:
+            logger.error("Source %s subprocess exited %d: %s", source, proc.returncode, stderr.decode()[:200])
             return []
-        return json.loads(raw)
-
+        results: list[dict[str, Any]] = json.loads(stdout)
+        logger.info("Source %s returned %d raw results", source, len(results))
+        return results
     except asyncio.TimeoutError:
-        logger.warning("Source %s subprocess timed out — skipping", source)
+        logger.warning("Source %s subprocess timed out after 120s — skipping", source)
         try:
-            proc.kill()  # type: ignore[possibly-undefined]
+            proc.kill()
+            await proc.wait()
         except Exception:
             pass
         return []
@@ -220,106 +212,87 @@ def _deduplicate(jobs: list[ScrapedJob]) -> list[ScrapedJob]:
     return unique
 
 
-_JOB_ANALYSIS_PROMPT = """You are a job description analyzer. Extract structured data from each job description.
-
-For EACH job, return a JSON object with:
-- "required_skills": skills CENTRAL to responsibilities (not just mentioned)
-- "nice_to_have_skills": skills listed as "bonus", "preferred", "exposure to", or examples
-- "required_experience_years": lower bound of stated range (e.g. "3-5 years" → 3). 0 if not stated.
-- "seniority": "entry-level" | "junior" | "mid" | "senior" based on experience years
-- "role_type": "backend" | "frontend" | "fullstack" | "data" | "devops" | "ai" | "mobile" | "design" | "qa" | "product"
-
-Rules:
-- Do NOT invent skills not mentioned in the text
-- If experience range given, use the LOWER bound
-- "Exposure" or "nice to have" = nice_to_have_skills, not required
-- Classify "ai-adjacent" roles (uses AI tools but doesn't train models) as their primary type (e.g. "backend")
-- Return ONLY a JSON array, no markdown fences, no extra text
-"""
-
-
-async def _analyze_batch(batch: list[ScrapedJob]) -> list[dict]:
-    """Analyze a batch of jobs with Gemini Flash. Returns list of analysis dicts."""
-    from src.services.ai_service import _call_gemini
-
-    descriptions = []
-    for i, job in enumerate(batch):
-        desc = job.description[:800] if job.description else ""
-        descriptions.append(f"[Job {i+1}] Title: {job.title}\n{desc}")
-
-    user_prompt = f"Analyze these {len(batch)} job descriptions:\n\n" + "\n---\n".join(descriptions)
-
-    try:
-        raw = await _call_gemini(
-            task="analyze_jobs",
-            system_prompt=_JOB_ANALYSIS_PROMPT,
-            user_prompt=user_prompt,
-            max_tokens=2048,
-            temperature=0.1,
-        )
-        # Strip markdown fences if present
-        clean = raw.strip()
-        if clean.startswith("```"):
-            import re
-            clean = re.sub(r"^```(?:json)?\s*", "", clean)
-            clean = re.sub(r"\s*```$", "", clean)
-
-        parsed = json.loads(clean)
-        if isinstance(parsed, dict):
-            parsed = [parsed]
-        return parsed
-    except Exception as exc:
-        logger.warning("LLM job analysis batch failed: %s", exc)
-        return []
-
-
 async def analyze_jobs_with_llm(jobs: list[ScrapedJob]) -> list[ScrapedJob]:
-    """Enrich jobs with LLM-extracted skills using concurrent Gemini Flash calls.
+    """Enrich jobs with LLM-extracted skills in ONE single Gemini API call.
 
-    Batches jobs 3 at a time and fires all batches concurrently with asyncio.gather.
-    Falls back to keyword extraction on failure.
+    Sends all jobs together to stay within the 15 RPM free-tier limit.
+    25 jobs × ~500 tokens each = ~12,500 tokens — well within the 1M TPM limit.
+    Falls back to keyword extraction silently on failure.
     """
     if not settings.enable_llm_job_analysis or not jobs:
         return jobs
 
-    BATCH_SIZE = 3
-    batches = [jobs[i:i + BATCH_SIZE] for i in range(0, len(jobs), BATCH_SIZE)]
+    from src.services.ai_service import _call_gemini
+    import re
 
-    # Fire ALL batches concurrently — user requirement for <5s total
-    results = await asyncio.gather(
-        *[_analyze_batch(batch) for batch in batches],
-        return_exceptions=True,
+    # Build a compact JSON array — only index, title, description (first 600 chars)
+    job_list = [
+        {"i": i, "title": job.title, "desc": (job.description or "")[:600]}
+        for i, job in enumerate(jobs)
+    ]
+
+    system_prompt = (
+        "You are a job description analyzer. "
+        f"I am providing you with exactly {len(jobs)} job descriptions. "
+        f"You MUST return a JSON array containing exactly {len(jobs)} objects in the exact same order. "
+        "Do not skip, merge, or summarize any jobs.\n\n"
+        "Each object must have these keys:\n"
+        '- "i": the original index (integer, unchanged)\n'
+        '- "required_skills": list of skills CENTRAL to the role responsibilities\n'
+        '- "nice_to_have_skills": skills listed as "bonus", "preferred", or "exposure to"\n'
+        '- "required_experience_years": integer lower bound of stated range (0 if not mentioned)\n'
+        '- "seniority": one of "entry-level" | "junior" | "mid" | "senior"\n'
+        '- "role_type": one of "backend" | "frontend" | "fullstack" | "data" | "devops" | "ai" | "mobile" | "design" | "qa" | "product"\n\n'
+        "Rules:\n"
+        "- Do NOT invent skills not present in the text\n"
+        "- Return ONLY a raw JSON array — no markdown fences, no extra text"
     )
 
-    # Merge results back into jobs
-    job_idx = 0
-    for batch_idx, batch_result in enumerate(results):
-        batch = batches[batch_idx]
-        if isinstance(batch_result, Exception):
-            logger.warning("LLM batch %d failed: %s", batch_idx, batch_result)
-            job_idx += len(batch)
-            continue
+    user_prompt = f"Analyze all {len(jobs)} jobs:\n\n{json.dumps(job_list, ensure_ascii=False)}"
 
-        for i, analysis in enumerate(batch_result):
-            if job_idx + i >= len(jobs):
-                break
-            job = jobs[job_idx + i]
-            if isinstance(analysis, dict):
-                if analysis.get("required_skills"):
-                    job.skills_required = analysis["required_skills"]
-                if analysis.get("nice_to_have_skills"):
-                    job.skills_nice_to_have = analysis["nice_to_have_skills"]
-                if analysis.get("required_experience_years") is not None:
-                    job.required_experience_years = analysis["required_experience_years"]
-                if analysis.get("seniority"):
-                    job.seniority = analysis["seniority"]
-                if analysis.get("role_type"):
-                    job.role_type = analysis["role_type"]
+    try:
+        raw = await _call_gemini(
+            task="analyze_jobs_oneshot",
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            max_tokens=4096,
+            temperature=0.1,
+            _retries=1,  # No retries for job search — fail fast, use keyword fallback
+        )
 
-        job_idx += len(batch)
+        # Strip markdown fences if Gemini adds them anyway
+        clean = raw.strip()
+        if clean.startswith("```"):
+            clean = re.sub(r"^```(?:json)?\s*", "", clean)
+            clean = re.sub(r"\s*```$", "", clean)
 
-    analyzed = sum(1 for j in jobs if j.seniority is not None)
-    logger.info("LLM analysis enriched %d/%d jobs", analyzed, len(jobs))
+        analyses: list[dict] = json.loads(clean)
+        if isinstance(analyses, dict):
+            analyses = [analyses]
+
+        # Map back by index
+        index_map = {a["i"]: a for a in analyses if isinstance(a, dict) and "i" in a}
+        for i, job in enumerate(jobs):
+            analysis = index_map.get(i)
+            if not analysis:
+                continue
+            if analysis.get("required_skills"):
+                job.skills_required = analysis["required_skills"]
+            if analysis.get("nice_to_have_skills"):
+                job.skills_nice_to_have = analysis["nice_to_have_skills"]
+            if analysis.get("required_experience_years") is not None:
+                job.required_experience_years = analysis["required_experience_years"]
+            if analysis.get("seniority"):
+                job.seniority = analysis["seniority"]
+            if analysis.get("role_type"):
+                job.role_type = analysis["role_type"]
+
+        analyzed = sum(1 for j in jobs if j.seniority is not None)
+        logger.info("One-shot LLM analysis enriched %d/%d jobs", analyzed, len(jobs))
+
+    except Exception as exc:
+        logger.warning("One-shot LLM job analysis failed (keyword fallback active): %s", exc)
+
     return jobs
 
 

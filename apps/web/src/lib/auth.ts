@@ -157,6 +157,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.provider = account.provider;
       }
 
+      // If id is not a UUID (OAuth providers give numeric sub IDs), look up real Supabase UUID by email
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (token.id && !isUUID.test(token.id) && token.email) {
+        const supabase = await getSupabaseAdmin();
+        const { data: dbUser } = await supabase
+          .from("users")
+          .select("id, plan_tier, onboarding_completed")
+          .eq("email", token.email as string)
+          .single();
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.planTier = dbUser.plan_tier;
+          token.onboardingCompleted = dbUser.onboarding_completed;
+        }
+      }
+
       // Refresh user data from DB on session update
       if (trigger === "update") {
         const supabase = await getSupabaseAdmin();
