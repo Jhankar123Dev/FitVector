@@ -30,6 +30,7 @@ import {
   useBulkScreen,
 } from "@/hooks/use-applicants";
 import { useEmployerJob } from "@/hooks/use-employer-jobs";
+import { useInviteInterview } from "@/hooks/use-interviews";
 import type { Applicant, PipelineStage } from "@/types/employer";
 import { PIPELINE_STAGE_LABELS, PIPELINE_COLUMNS } from "@/types/employer";
 
@@ -59,6 +60,7 @@ export default function PipelinePage() {
   const rejectMutation = useRejectApplicant();
   const screenApplicant = useScreenApplicant();
   const bulkScreenMutation = useBulkScreen();
+  const inviteInterview = useInviteInterview();
 
   const job = jobData?.data;
   const applicants = (applicantsData?.data || []) as unknown as Applicant[];
@@ -264,9 +266,20 @@ export default function PipelinePage() {
                 <XCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 Reject
               </Button>
-              <Button variant="outline" size="sm" className="hidden md:inline-flex gap-1.5 h-8">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:inline-flex gap-1.5 h-8"
+                onClick={() => {
+                  for (const id of selectedIds) {
+                    inviteInterview.mutate({ applicantId: id });
+                  }
+                  clearSelection();
+                }}
+                disabled={inviteInterview.isPending}
+              >
                 <Send className="h-3.5 w-3.5" />
-                Send AI Interview
+                {inviteInterview.isPending ? "Sending..." : "Send AI Interview"}
               </Button>
               <Button variant="outline" size="sm" className="hidden md:inline-flex gap-1.5 h-8">
                 <ClipboardCheck className="h-3.5 w-3.5" />

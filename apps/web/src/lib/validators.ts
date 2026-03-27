@@ -160,3 +160,19 @@ export const changeStageSchema = z.object({
 export const rejectApplicantSchema = z.object({
   reason: z.string().min(1, "Rejection reason is required").max(1000),
 });
+
+// ─── Employer: AI Interviews ──────────────────────────────────────────────────
+
+export const inviteInterviewSchema = z.object({
+  interviewType: z.enum(["technical", "behavioral", "role_specific", "general"]).default("general"),
+  durationPlanned: z.number().int().min(10).max(60).default(20),
+  focusAreas: z.string().optional(),
+  customQuestions: z.array(z.string()).optional(),
+});
+
+export const completeInterviewSchema = z.object({
+  answers: z.array(z.object({
+    question: z.string(),
+    answer: z.string().min(1),
+  })).min(1, "At least one answer is required"),
+});

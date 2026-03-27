@@ -35,7 +35,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { MOCK_AI_INTERVIEWS } from "@/lib/mock/interview-data";
+import { useInterview } from "@/hooks/use-interviews";
+import type { AIInterview } from "@/types/employer";
 import {
   AI_RECOMMENDATION_LABELS,
   AI_RECOMMENDATION_COLORS,
@@ -97,7 +98,16 @@ export default function InterviewReportPage() {
   const router = useRouter();
   const interviewId = params.id as string;
 
-  const interview = MOCK_AI_INTERVIEWS.find((i) => i.id === interviewId) || MOCK_AI_INTERVIEWS[0];
+  const { data: interviewData, isLoading } = useInterview(interviewId);
+  const interview = interviewData?.data as unknown as AIInterview | undefined;
+
+  if (isLoading || !interview) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   // Transcript state
   const [transcriptExpanded, setTranscriptExpanded] = useState(false);

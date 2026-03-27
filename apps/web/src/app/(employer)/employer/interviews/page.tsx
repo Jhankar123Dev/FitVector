@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import { MOCK_AI_INTERVIEWS } from "@/lib/mock/interview-data";
+import { useInterviews } from "@/hooks/use-interviews";
 import type { AIInterview, AIInterviewStatus } from "@/types/employer";
 import { AI_INTERVIEW_STATUS_LABELS, AI_RECOMMENDATION_LABELS, AI_RECOMMENDATION_COLORS } from "@/types/employer";
 
@@ -54,7 +54,8 @@ function computeStats(interviews: AIInterview[]) {
 }
 
 export default function InterviewsPage() {
-  const [interviews] = useState<AIInterview[]>(MOCK_AI_INTERVIEWS);
+  const { data: interviewsData, isLoading } = useInterviews();
+  const interviews = (interviewsData?.data || []) as unknown as AIInterview[];
   const stats = useMemo(() => computeStats(interviews), [interviews]);
 
   const filterByTab = (tab: string) => {

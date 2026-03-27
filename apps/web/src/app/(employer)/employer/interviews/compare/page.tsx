@@ -23,7 +23,7 @@ import {
   Legend,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { MOCK_AI_INTERVIEWS } from "@/lib/mock/interview-data";
+import { useInterviews } from "@/hooks/use-interviews";
 import type { AIInterview } from "@/types/employer";
 import { AI_RECOMMENDATION_LABELS, AI_RECOMMENDATION_COLORS } from "@/types/employer";
 
@@ -49,10 +49,12 @@ export default function ComparePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get completed interviews only
+  // Fetch all interviews and filter to completed
+  const { data: interviewsData } = useInterviews("completed");
+  const allInterviews = (interviewsData?.data || []) as unknown as AIInterview[];
   const completedInterviews = useMemo(
-    () => MOCK_AI_INTERVIEWS.filter((i) => i.status === "completed" && i.overallScore != null),
-    [],
+    () => allInterviews.filter((i) => i.status === "completed" && i.overallScore != null),
+    [allInterviews],
   );
 
   // Parse initial selections from URL
