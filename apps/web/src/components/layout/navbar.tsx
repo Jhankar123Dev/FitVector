@@ -4,8 +4,11 @@ import { signOut } from "next-auth/react";
 import { Bell, Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationDropdown } from "./notification-dropdown";
 import { useUser } from "@/hooks/use-user";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { MOCK_NOTIFICATIONS } from "@/lib/mock/seeker-marketplace-data";
+import type { SeekerNotification } from "@/types/marketplace";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -14,17 +17,33 @@ interface NavbarProps {
 export function Navbar({ onMenuClick }: NavbarProps) {
   const { user } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<SeekerNotification[]>(MOCK_NOTIFICATIONS);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
+    [notifications],
+  );
+
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  };
 
   const initials = user?.name
     ? user.name
@@ -53,16 +72,41 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         </span>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative text-surface-500 hover:text-surface-700">
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">Notifications</span>
-        </Button>
+        <div className="relative" ref={notifRef}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative text-surface-500 hover:text-surface-700"
+            onClick={() => {
+              setShowNotifications(!showNotifications);
+              setShowDropdown(false);
+            }}
+          >
+            <Bell className="h-5 w-5" />
+            <span className="sr-only">Notifications</span>
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                {unreadCount}
+              </span>
+            )}
+          </Button>
+
+          {showNotifications && (
+            <NotificationDropdown
+              notifications={notifications}
+              onMarkAllRead={handleMarkAllRead}
+            />
+          )}
+        </div>
 
         {/* User avatar + dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-200 focus:ring-offset-2"
-            onClick={() => setShowDropdown(!showDropdown)}
+            onClick={() => {
+              setShowDropdown(!showDropdown);
+              setShowNotifications(false);
+            }}
           >
             <Avatar className="h-8 w-8">
               {user?.image && <AvatarImage src={user.image} alt={user.name || ""} />}

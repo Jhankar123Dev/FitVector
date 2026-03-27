@@ -24,6 +24,7 @@ interface JobDetailProps {
   userSkills?: string[];
   onBack: () => void;
   onTailorResume?: () => void;
+  onFitVectorApply?: () => void;
 }
 
 function formatTimeAgo(dateStr: string | null): string {
@@ -56,7 +57,7 @@ function formatSalary(min: number | null, max: number | null): string | null {
   return null;
 }
 
-export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }: JobDetailProps) {
+export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume, onFitVectorApply }: JobDetailProps) {
   const salary = formatSalary(job.salaryMin, job.salaryMax);
   const timeAgo = formatTimeAgo(job.postedAt);
 
@@ -214,7 +215,7 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
       </div>
 
       {/* Action bar */}
-      <ActionBar job={job} onTailorResume={onTailorResume} />
+      <ActionBar job={job} onTailorResume={onTailorResume} onFitVectorApply={onFitVectorApply} />
     </div>
   );
 }

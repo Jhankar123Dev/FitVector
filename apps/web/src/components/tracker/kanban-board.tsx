@@ -5,6 +5,8 @@ import { DragDropContext, type DropResult } from "react-beautiful-dnd";
 import { KanbanColumn } from "./kanban-column";
 import { APPLICATION_STATUSES } from "@fitvector/shared";
 import type { TrackerApplication } from "@/hooks/use-tracker";
+import { isFitVectorApp, FV_STATUS_CONFIG } from "@/types/marketplace";
+import type { FVApplicationStatus } from "@/types/marketplace";
 
 // Kanban columns (6 visible — withdrawn excluded)
 const KANBAN_COLUMNS = [
@@ -41,13 +43,19 @@ export function KanbanBoard({
     [applications, onStatusChange],
   );
 
-  // Group applications by status
+  // Group applications by status (map FitVector statuses to kanban columns)
   const grouped: Record<string, TrackerApplication[]> = {};
   for (const col of KANBAN_COLUMNS) {
     grouped[col.id] = [];
   }
   for (const app of applications) {
-    if (grouped[app.status]) {
+    if (isFitVectorApp(app.status)) {
+      const fvConfig = FV_STATUS_CONFIG[app.status as FVApplicationStatus];
+      const column = fvConfig?.trackerColumn || "applied";
+      if (grouped[column]) {
+        grouped[column].push(app);
+      }
+    } else if (grouped[app.status]) {
       grouped[app.status].push(app);
     }
   }

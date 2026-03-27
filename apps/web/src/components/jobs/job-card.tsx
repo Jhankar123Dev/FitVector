@@ -1,10 +1,11 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { MatchScoreBadge } from "./match-score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { SourceBadge } from "./source-badge";
-import { MapPin, Clock, Briefcase, IndianRupee } from "lucide-react";
+import { MapPin, Clock, Briefcase, IndianRupee, Zap } from "lucide-react";
 import type { JobSearchResult } from "@/types/job";
 
 interface JobCardProps {
@@ -48,10 +49,13 @@ function formatSalary(min: number | null, max: number | null): string | null {
 export function JobCard({ job, onClick, isSelected }: JobCardProps) {
   const salary = formatSalary(job.salaryMin, job.salaryMax);
   const timeAgo = formatTimeAgo(job.postedAt);
+  const isFitVector = job.sources.includes("fitvector");
 
   return (
     <Card
       className={`cursor-pointer transition-all hover:shadow-card-hover ${
+        isFitVector ? "border-l-2 border-l-accent-500 " : ""
+      }${
         isSelected
           ? "border-brand-500 ring-1 ring-brand-500"
           : "hover:border-surface-300"
@@ -61,9 +65,17 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-semibold leading-tight text-surface-800">
-              {job.title}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="truncate text-sm font-semibold leading-tight text-surface-800">
+                {job.title}
+              </h3>
+              {isFitVector && (
+                <Badge className="shrink-0 gap-0.5 bg-accent-50 px-1.5 py-0 text-[10px] text-accent-700 hover:bg-accent-100">
+                  <Zap className="h-2.5 w-2.5" />
+                  FitVector
+                </Badge>
+              )}
+            </div>
             <p className="mt-0.5 text-sm text-surface-500">
               {job.companyName}
             </p>

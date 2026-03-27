@@ -14,9 +14,17 @@ import {
   Calendar,
   Trash2,
   Save,
+  Zap,
+  FileText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { APPLICATION_STATUSES } from "@fitvector/shared";
 import type { TrackerApplication } from "@/hooks/use-tracker";
+import { isFitVectorApp, FV_STATUS_CONFIG } from "@/types/marketplace";
+import type { FVApplicationStatus } from "@/types/marketplace";
+import { FitVectorStatusTimeline } from "./fitvector-status-timeline";
+import { MOCK_FITVECTOR_APPLICATION } from "@/lib/mock/seeker-marketplace-data";
 
 interface ApplicationDetailModalProps {
   application: TrackerApplication;
@@ -37,6 +45,14 @@ export function ApplicationDetailModal({
   const [contactRole, setContactRole] = useState(application.contactRole || "");
   const [followupDate, setFollowupDate] = useState(application.nextFollowupDate || "");
   const [isDirty, setIsDirty] = useState(false);
+  const [showFVDetails, setShowFVDetails] = useState(false);
+
+  const isFV = isFitVectorApp(application.status);
+  const fvConfig = isFV
+    ? FV_STATUS_CONFIG[application.status as FVApplicationStatus]
+    : null;
+  // Use mock FitVector application data for timeline/details
+  const fvApp = isFV ? MOCK_FITVECTOR_APPLICATION : null;
 
   const handleSave = () => {
     onUpdate(application.id, {
@@ -63,10 +79,22 @@ export function ApplicationDetailModal({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {statusConfig && (
-              <Badge style={{ backgroundColor: statusConfig.color, color: "white" }}>
-                {statusConfig.label}
-              </Badge>
+            {isFV && fvConfig ? (
+              <>
+                <Badge className="gap-1 bg-accent-50 text-accent-700 hover:bg-accent-100">
+                  <Zap className="h-3 w-3" />
+                  FitVector
+                </Badge>
+                <Badge style={{ backgroundColor: fvConfig.color, color: "white" }}>
+                  {fvConfig.label}
+                </Badge>
+              </>
+            ) : (
+              statusConfig && (
+                <Badge style={{ backgroundColor: statusConfig.color, color: "white" }}>
+                  {statusConfig.label}
+                </Badge>
+              )
             )}
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
@@ -85,32 +113,84 @@ export function ApplicationDetailModal({
             </Button>
           )}
 
-          {/* Status history */}
-          <div>
-            <Label className="text-xs">Status History</Label>
-            <div className="mt-1 space-y-1">
-              {(application.statusHistory || []).map((entry, i) => {
-                const cfg = APPLICATION_STATUSES[entry.status as keyof typeof APPLICATION_STATUSES];
-                return (
-                  <div key={i} className="flex items-center gap-2 text-xs">
-                    <div
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: cfg?.color || "#6B7280" }}
-                    />
-                    <span className="font-medium">{cfg?.label || entry.status}</span>
-                    <span className="text-muted-foreground">
-                      {new Date(entry.changed_at).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+          {/* Status history / FitVector timeline */}
+          {isFV && fvApp ? (
+            <div>
+              <Label className="text-xs">Application Timeline</Label>
+              <div className="mt-2">
+                <FitVectorStatusTimeline
+                  timeline={fvApp.statusTimeline}
+                  currentStatus={application.status}
+                />
+              </div>
+
+              {/* FV Application Details */}
+              <button
+                onClick={() => setShowFVDetails(!showFVDetails)}
+                className="mt-2 flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
+              >
+                {showFVDetails ? (
+                  <ChevronUp className="h-3 w-3" />
+                ) : (
+                  <ChevronDown className="h-3 w-3" />
+                )}
+                Application Details
+              </button>
+              {showFVDetails && (
+                <div className="mt-2 space-y-2 rounded-lg bg-surface-50 p-3">
+                  <div className="flex items-center gap-2 text-xs">
+                    <FileText className="h-3 w-3 text-surface-400" />
+                    <span className="text-surface-500">Resume:</span>
+                    <span className="font-medium text-surface-700">{fvApp.resumeName}</span>
                   </div>
-                );
-              })}
+                  <div className="text-xs">
+                    <span className="text-surface-500">Match Score:</span>{" "}
+                    <span className="font-medium text-surface-700">{fvApp.matchScore}%</span>
+                  </div>
+                  {fvApp.screeningAnswers.length > 0 && (
+                    <div className="text-xs">
+                      <span className="text-surface-500">Screening Questions:</span>{" "}
+                      <span className="font-medium text-surface-700">
+                        {fvApp.screeningAnswers.length} answered
+                      </span>
+                    </div>
+                  )}
+                  {fvApp.coverNote && (
+                    <div className="text-xs">
+                      <p className="text-surface-500">Cover Note:</p>
+                      <p className="mt-1 text-surface-600">{fvApp.coverNote}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div>
+              <Label className="text-xs">Status History</Label>
+              <div className="mt-1 space-y-1">
+                {(application.statusHistory || []).map((entry, i) => {
+                  const cfg = APPLICATION_STATUSES[entry.status as keyof typeof APPLICATION_STATUSES];
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-xs">
+                      <div
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: cfg?.color || "#6B7280" }}
+                      />
+                      <span className="font-medium">{cfg?.label || entry.status}</span>
+                      <span className="text-muted-foreground">
+                        {new Date(entry.changed_at).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           <div>

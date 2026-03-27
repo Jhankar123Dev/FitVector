@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Bookmark,
   BookmarkCheck,
+  Zap,
 } from "lucide-react";
 import type { JobSearchResult } from "@/types/job";
 
@@ -17,6 +18,7 @@ interface ActionBarProps {
   onColdEmail?: () => void;
   onLinkedInMsg?: () => void;
   onToggleSave?: () => void;
+  onFitVectorApply?: () => void;
 }
 
 export function ActionBar({
@@ -25,17 +27,32 @@ export function ActionBar({
   onColdEmail,
   onLinkedInMsg,
   onToggleSave,
+  onFitVectorApply,
 }: ActionBarProps) {
+  const isFitVector = job.sources.includes("fitvector");
+
   return (
     <div className="flex flex-wrap items-center gap-2 border-t bg-background p-4">
-      {/* Apply externally */}
-      {job.url && (
-        <Button size="sm" asChild>
-          <a href={job.url} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-            Apply
-          </a>
+      {/* FitVector Apply */}
+      {isFitVector ? (
+        <Button
+          size="sm"
+          onClick={onFitVectorApply}
+          className="gap-1.5 bg-accent-500 text-white hover:bg-accent-600"
+        >
+          <Zap className="h-3.5 w-3.5" />
+          Apply via FitVector
         </Button>
+      ) : (
+        /* Apply externally */
+        job.url && (
+          <Button size="sm" asChild>
+            <a href={job.url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+              Apply
+            </a>
+          </Button>
+        )
       )}
 
       {/* Tailor Resume */}

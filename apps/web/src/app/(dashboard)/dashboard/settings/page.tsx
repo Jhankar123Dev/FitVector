@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Save, User, CreditCard, Bell } from "lucide-react";
+import { Save, User, CreditCard, Bell, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function SettingsPage() {
@@ -118,6 +118,31 @@ export default function SettingsPage() {
               Manage Notification Preferences
             </Link>
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* FitVector Verified */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50">
+              <ShieldCheck className="h-4 w-4 text-brand-500" />
+            </div>
+            FitVector Verified
+          </CardTitle>
+          <CardDescription>
+            Verify your identity, education, and skills for priority visibility with employers
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Badge variant="brand">1 of 4 verified</Badge>
+            <Button size="sm" variant="outline" asChild>
+              <Link href="/dashboard/settings/verification">
+                Manage Verification →
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
