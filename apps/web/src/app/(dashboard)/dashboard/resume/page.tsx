@@ -38,17 +38,19 @@ function BaseResumeUpload({ hasResume }: { hasResume: boolean }) {
   }, []);
 
   return (
-    <div className="rounded-lg border p-4">
+    <div className="rounded-xl border border-surface-200 bg-white p-4 shadow-card">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <FileText className="h-5 w-5 text-muted-foreground" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
+            <FileText className="h-5 w-5 text-brand-500" />
+          </div>
           <div>
-            <p className="text-sm font-medium">Base Resume</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-medium text-surface-800">Base Resume</p>
+            <p className="text-xs text-surface-500">
               {success ? "Resume uploaded — AI will use this for tailoring" : hasResume ? "Resume on file — upload a new one to replace it" : "Upload your resume so AI can tailor it for jobs"}
             </p>
           </div>
-          {success && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+          {success && <CheckCircle2 className="h-4 w-4 text-accent-500" />}
         </div>
         <Button
           variant="outline"
@@ -70,8 +72,8 @@ function BaseResumeUpload({ hasResume }: { hasResume: boolean }) {
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
         />
       </div>
-      {error && <p className="mt-2 flex items-center gap-1 text-xs text-destructive"><AlertCircle className="h-3 w-3" />{error}</p>}
-      {success && <p className="mt-2 text-xs text-green-600">Resume uploaded and parsed successfully!</p>}
+      {error && <p className="mt-2 flex items-center gap-1 text-xs text-red-600"><AlertCircle className="h-3 w-3" />{error}</p>}
+      {success && <p className="mt-2 text-xs text-accent-600">Resume uploaded and parsed successfully!</p>}
     </div>
   );
 }
@@ -84,18 +86,18 @@ export default function ResumePage() {
   const resumeUsage = usage?.usage?.resumeTailor;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Resume Versions</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-semibold text-surface-800">Resume Versions</h1>
+          <p className="mt-1 text-sm text-surface-500">
             Your AI-tailored resumes optimized for specific job descriptions
           </p>
         </div>
         <div className="flex items-center gap-3">
           {resumeUsage && (
-            <div className="text-right text-xs text-muted-foreground">
+            <div className="text-right text-xs text-surface-500">
               <span className="font-medium">
                 {resumeUsage.used} of{" "}
                 {resumeUsage.limit === -1 ? "unlimited" : resumeUsage.limit}
@@ -110,9 +112,9 @@ export default function ResumePage() {
       <BaseResumeUpload hasResume={!!(user as any)?.resume_data} />
 
       {/* How it works */}
-      <div className="rounded-lg border bg-muted/30 p-4">
-        <h3 className="mb-2 text-sm font-medium">How resume tailoring works</h3>
-        <ol className="space-y-1 text-xs text-muted-foreground">
+      <div className="rounded-xl border border-surface-200 bg-surface-50 p-4">
+        <h3 className="mb-2 text-sm font-medium text-surface-700">How resume tailoring works</h3>
+        <ol className="space-y-1 text-xs text-surface-500">
           <li>
             1. Open any job from the Jobs tab and click{" "}
             <Badge variant="outline" className="text-[10px]">

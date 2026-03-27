@@ -75,15 +75,15 @@ export default function TrackerPage() {
       {/* Header */}
       <div className="flex items-center justify-between pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Application Tracker</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-semibold text-surface-800">Application Tracker</h1>
+          <p className="mt-1 text-sm text-surface-500">
             Track your applications from saved to offer
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* Search */}
           <div className="relative hidden sm:block">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
             <Input
               placeholder="Search by company..."
               value={search}
@@ -100,9 +100,9 @@ export default function TrackerPage() {
 
       {/* Add form */}
       {showAddForm && (
-        <div className="mb-4 flex items-end gap-2 rounded-lg border bg-muted/30 p-3">
+        <div className="mb-4 flex items-end gap-2 rounded-xl border border-surface-200 bg-surface-50 p-3">
           <div className="flex-1">
-            <label className="text-xs font-medium">Job Title *</label>
+            <label className="text-xs font-medium text-surface-700">Job Title *</label>
             <Input
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
@@ -111,7 +111,7 @@ export default function TrackerPage() {
             />
           </div>
           <div className="flex-1">
-            <label className="text-xs font-medium">Company *</label>
+            <label className="text-xs font-medium text-surface-700">Company *</label>
             <Input
               value={newCompany}
               onChange={(e) => setNewCompany(e.target.value)}

@@ -55,10 +55,10 @@ export function LoginForm() {
   }
 
   return (
-    <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
+    <div className="mx-auto flex w-full flex-col justify-center space-y-6 rounded-xl border border-surface-200 bg-white p-8 shadow-card sm:w-[400px]">
       <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-        <p className="text-sm text-muted-foreground">Sign in to your FitVector account</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-surface-800">Welcome back</h1>
+        <p className="text-sm text-surface-500">Sign in to your FitVector account</p>
       </div>
 
       <SocialButtons callbackUrl="/dashboard" />
@@ -68,13 +68,13 @@ export function LoginForm() {
           <Separator className="w-full" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+          <span className="bg-white px-2 text-surface-400">Or continue with email</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {error && (
-          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
         )}
 
         <div className="space-y-2">
@@ -87,7 +87,7 @@ export function LoginForm() {
             disabled={isLoading}
             {...register("email")}
           />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -100,7 +100,7 @@ export function LoginForm() {
             disabled={isLoading}
             {...register("password")}
           />
-          {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+          {errors.password && <p className="text-xs text-red-600">{errors.password.message}</p>}
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
@@ -108,9 +108,9 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <p className="px-8 text-center text-sm text-muted-foreground">
+      <p className="px-8 text-center text-sm text-surface-500">
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className="underline underline-offset-4 hover:text-primary">
+        <Link href="/signup" className="font-medium text-brand-500 hover:text-brand-600">
           Sign up
         </Link>
       </p>

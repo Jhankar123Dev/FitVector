@@ -59,7 +59,6 @@ export function SignupForm() {
         return;
       }
 
-      // Redirect to onboarding after successful signup
       window.location.href = "/onboarding";
     } catch {
       setError("Something went wrong. Please try again.");
@@ -69,10 +68,10 @@ export function SignupForm() {
   }
 
   return (
-    <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
+    <div className="mx-auto flex w-full flex-col justify-center space-y-6 rounded-xl border border-surface-200 bg-white p-8 shadow-card sm:w-[400px]">
       <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
-        <p className="text-sm text-muted-foreground">Start your AI-powered job search today</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-surface-800">Create your account</h1>
+        <p className="text-sm text-surface-500">Start your AI-powered job search today</p>
       </div>
 
       <SocialButtons callbackUrl="/onboarding" />
@@ -82,13 +81,13 @@ export function SignupForm() {
           <Separator className="w-full" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+          <span className="bg-white px-2 text-surface-400">Or continue with email</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {error && (
-          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
         )}
 
         <div className="space-y-2">
@@ -101,7 +100,7 @@ export function SignupForm() {
             disabled={isLoading}
             {...register("name")}
           />
-          {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+          {errors.name && <p className="text-xs text-red-600">{errors.name.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -114,7 +113,7 @@ export function SignupForm() {
             disabled={isLoading}
             {...register("email")}
           />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -127,7 +126,7 @@ export function SignupForm() {
             disabled={isLoading}
             {...register("password")}
           />
-          {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+          {errors.password && <p className="text-xs text-red-600">{errors.password.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -141,7 +140,7 @@ export function SignupForm() {
             {...register("confirmPassword")}
           />
           {errors.confirmPassword && (
-            <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
+            <p className="text-xs text-red-600">{errors.confirmPassword.message}</p>
           )}
         </div>
 
@@ -150,20 +149,20 @@ export function SignupForm() {
         </Button>
       </form>
 
-      <p className="px-8 text-center text-sm text-muted-foreground">
+      <p className="px-8 text-center text-sm text-surface-500">
         Already have an account?{" "}
-        <Link href="/login" className="underline underline-offset-4 hover:text-primary">
+        <Link href="/login" className="font-medium text-brand-500 hover:text-brand-600">
           Sign in
         </Link>
       </p>
 
-      <p className="px-8 text-center text-xs text-muted-foreground">
+      <p className="px-8 text-center text-xs text-surface-400">
         By creating an account, you agree to our{" "}
-        <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
+        <Link href="/terms" className="underline underline-offset-4 hover:text-surface-600">
           Terms of Service
         </Link>{" "}
         and{" "}
-        <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">
+        <Link href="/privacy" className="underline underline-offset-4 hover:text-surface-600">
           Privacy Policy
         </Link>
         .

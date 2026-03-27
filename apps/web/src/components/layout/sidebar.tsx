@@ -12,7 +12,6 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { useUser } from "@/hooks/use-user";
 
 const NAV_ITEMS = [
@@ -36,26 +35,16 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex h-full w-64 flex-col border-r bg-background",
+        "flex h-full w-64 flex-col bg-surface-900",
         className,
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b px-6">
-        <svg
-          className="h-7 w-7 text-primary"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 17l10 5 10-5" />
-          <path d="M2 12l10 5 10-5" />
-        </svg>
-        <span className="text-lg font-bold">FitVector</span>
+      <div className="flex h-16 items-center gap-2 border-b border-surface-800 px-6">
+        <span className="text-xl font-bold">
+          <span className="text-brand-400">Fit</span>
+          <span className="text-white">Vector</span>
+        </span>
       </div>
 
       {/* Navigation */}
@@ -70,10 +59,10 @@ export function Sidebar({ className }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-brand-500/20 text-brand-300 border-l-2 border-brand-400"
+                  : "text-surface-400 hover:bg-surface-800 hover:text-white",
               )}
             >
               <item.icon className="h-4 w-4" />
@@ -84,18 +73,18 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       {/* Plan badge */}
-      <div className="border-t p-4">
-        <div className="rounded-lg bg-muted p-3">
+      <div className="border-t border-surface-800 p-4">
+        <div className="rounded-lg bg-surface-800 p-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Current Plan</span>
-            <Badge variant="secondary" className="text-xs capitalize">
+            <span className="text-xs font-medium text-surface-400">Current Plan</span>
+            <span className="rounded-full bg-brand-500/20 px-2.5 py-0.5 text-xs font-medium capitalize text-brand-300">
               {user?.planTier || "free"}
-            </Badge>
+            </span>
           </div>
           {user?.planTier === "free" && (
             <Link
               href="/dashboard/settings/plan"
-              className="mt-2 block text-xs text-primary hover:underline"
+              className="mt-2 block text-xs text-brand-400 hover:text-brand-300 transition-colors"
             >
               Upgrade for more features
             </Link>

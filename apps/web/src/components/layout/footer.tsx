@@ -27,27 +27,15 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="border-t border-surface-200 bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-12">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
           <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="flex items-center text-xl font-bold">
-              <svg
-                className="mr-2 h-7 w-7 text-primary"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-              FitVector
+              <span className="text-brand-500">Fit</span>
+              <span className="text-surface-800">Vector</span>
             </Link>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="mt-4 text-sm text-surface-500">
               AI-powered job search platform that helps you find, tailor, and apply to your dream
               jobs.
             </p>
@@ -55,13 +43,13 @@ export function Footer() {
 
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h3 className="text-sm font-semibold">{category}</h3>
+              <h3 className="text-sm font-semibold text-surface-800">{category}</h3>
               <ul className="mt-4 space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="text-sm text-surface-500 transition-colors hover:text-surface-800"
                     >
                       {link.label}
                     </Link>
@@ -72,8 +60,8 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 border-t pt-8">
-          <p className="text-center text-sm text-muted-foreground">
+        <div className="mt-12 border-t border-surface-200 pt-8">
+          <p className="text-center text-sm text-surface-400">
             &copy; {new Date().getFullYear()} FitVector. All rights reserved.
           </p>
         </div>

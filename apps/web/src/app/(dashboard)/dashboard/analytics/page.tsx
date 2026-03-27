@@ -76,10 +76,10 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-2xl font-semibold text-surface-800">Analytics</h1>
+        <p className="mt-1 text-sm text-surface-500">
           Track your job search performance and trends
         </p>
       </div>
@@ -97,18 +97,18 @@ export default function AnalyticsPage() {
       {!isLoading && data && data.totalApplications > 0 && (
         <>
           {/* Stat cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat) => (
               <Card key={stat.title}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-xs font-medium text-muted-foreground">
+                  <CardTitle className="text-xs font-medium uppercase tracking-wider text-surface-500">
                     {stat.title}
                   </CardTitle>
-                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                  <stat.icon className="h-4 w-4 text-surface-400" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                  <div className="text-3xl font-bold text-surface-800">{stat.value}</div>
+                  <p className="text-xs text-surface-500">{stat.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -127,14 +127,14 @@ export default function AnalyticsPage() {
                   return (
                     <div key={status}>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="capitalize">{status}</span>
-                        <span className="text-muted-foreground">
+                        <span className="capitalize text-surface-700">{status}</span>
+                        <span className="text-surface-500">
                           {count} ({pct}%)
                         </span>
                       </div>
-                      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-surface-100">
                         <div
-                          className="h-full rounded-full bg-primary transition-all"
+                          className="h-full rounded-full bg-brand-500 transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

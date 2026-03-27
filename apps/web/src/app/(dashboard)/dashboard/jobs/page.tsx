@@ -98,15 +98,15 @@ export default function JobsPage() {
       <div className="flex-none space-y-4 pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Job Search</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-2xl font-semibold text-surface-800">Job Search</h1>
+            <p className="text-sm text-surface-500">
               Search across multiple platforms and find your perfect match
             </p>
           </div>
 
           {/* Usage counter */}
           {usage && usage.limit !== Infinity && (
-            <div className="hidden text-right text-xs text-muted-foreground sm:block">
+            <div className="hidden text-right text-xs text-surface-500 sm:block">
               <span className="font-medium">
                 {usage.used} of {usage.limit}
               </span>{" "}
@@ -118,7 +118,7 @@ export default function JobsPage() {
         {/* Search bar */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
             <Input
               placeholder="Job title... e.g. Frontend Developer"
               value={query}
@@ -128,7 +128,7 @@ export default function JobsPage() {
             />
           </div>
           <div className="relative w-40 shrink-0 sm:w-48">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
             <Input
               placeholder="City or Remote"
               value={filters.location}
@@ -209,7 +209,7 @@ export default function JobsPage() {
           ) : (
             <>
               {/* Results count */}
-              <div className="mb-3 text-xs text-muted-foreground">
+              <div className="mb-3 text-xs text-surface-500">
                 {totalJobs} job{totalJobs !== 1 ? "s" : ""} found
               </div>
 

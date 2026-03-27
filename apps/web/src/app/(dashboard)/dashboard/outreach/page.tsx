@@ -31,15 +31,15 @@ function CopyBtn({ text }: { text: string }) {
         setTimeout(() => setCopied(false), 2000);
       }}
     >
-      {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+      {copied ? <Check className="h-3 w-3 text-accent-600" /> : <Copy className="h-3 w-3" />}
     </Button>
   );
 }
 
 const TYPE_CONFIG: Record<string, { icon: typeof Mail; label: string; color: string }> = {
-  cold_email: { icon: Mail, label: "Cold Email", color: "bg-blue-100 text-blue-700" },
-  linkedin_message: { icon: MessageSquare, label: "LinkedIn", color: "bg-sky-100 text-sky-700" },
-  referral_request: { icon: UserPlus, label: "Referral", color: "bg-purple-100 text-purple-700" },
+  cold_email: { icon: Mail, label: "Cold Email", color: "bg-brand-50 text-brand-700" },
+  linkedin_message: { icon: MessageSquare, label: "LinkedIn", color: "bg-sky-50 text-sky-700" },
+  referral_request: { icon: UserPlus, label: "Referral", color: "bg-accent-50 text-accent-700" },
 };
 
 export default function OutreachPage() {
@@ -54,10 +54,10 @@ export default function OutreachPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Outreach History</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-2xl font-semibold text-surface-800">Outreach History</h1>
+        <p className="mt-1 text-sm text-surface-500">
           All your generated cold emails, LinkedIn messages, and referral requests
         </p>
       </div>
@@ -82,25 +82,25 @@ export default function OutreachPage() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="rounded-lg bg-muted p-2">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
+                      <div className="rounded-lg bg-surface-100 p-2">
+                        <Icon className="h-4 w-4 text-surface-500" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <Badge className={cfg.color + " text-[10px]"}>{cfg.label}</Badge>
                           {entry.recruiterName && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-surface-500">
                               to {entry.recruiterName}
                             </span>
                           )}
                         </div>
                         {entry.subject && (
-                          <p className="mt-1 text-sm font-medium">{entry.subject}</p>
+                          <p className="mt-1 text-sm font-medium text-surface-800">{entry.subject}</p>
                         )}
-                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                        <p className="mt-1 line-clamp-2 text-xs text-surface-500">
                           {entry.body}
                         </p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">
+                        <p className="mt-1 text-[10px] text-surface-400">
                           {new Date(entry.createdAt).toLocaleDateString("en-IN", {
                             day: "numeric",
                             month: "short",

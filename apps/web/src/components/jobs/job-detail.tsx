@@ -60,7 +60,6 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
   const salary = formatSalary(job.salaryMin, job.salaryMax);
   const timeAgo = formatTimeAgo(job.postedAt);
 
-  // Use deterministic components for skill match if available
   const detComponents = job.deterministicComponents;
   const matching = detComponents?.requiredSkillsMatch?.matched ||
     job.skillsRequired.filter((s) =>
@@ -74,7 +73,7 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="border-b p-4">
+      <div className="border-b border-surface-200 p-4">
         <Button
           variant="ghost"
           size="sm"
@@ -87,8 +86,8 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
 
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">{job.title}</h2>
-            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <h2 className="text-lg font-semibold text-surface-800">{job.title}</h2>
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-surface-500">
               <Building2 className="h-3.5 w-3.5" />
               {job.companyName}
             </p>
@@ -105,7 +104,7 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
         </div>
 
         {/* Meta */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-surface-500">
           {job.location && (
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5" />
@@ -142,12 +141,12 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
 
       {/* Skills Match Visualization */}
       {(matching.length > 0 || missing.length > 0) && (
-        <div className="border-b p-4">
-          <h3 className="mb-2 text-sm font-semibold">Skills Match</h3>
+        <div className="border-b border-surface-200 p-4">
+          <h3 className="mb-2 text-sm font-semibold text-surface-800">Skills Match</h3>
           {detComponents?.requiredSkillsMatch && (
-            <div className="mb-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+            <div className="mb-2 h-2 w-full overflow-hidden rounded-full bg-surface-100">
               <div
-                className="h-full rounded-full bg-green-500 transition-all"
+                className="h-full rounded-full bg-accent-500 transition-all"
                 style={{
                   width: `${Math.round(detComponents.requiredSkillsMatch.ratio * 100)}%`,
                 }}
@@ -157,15 +156,15 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
           <div className="space-y-2">
             {matching.length > 0 && (
               <div>
-                <p className="mb-1 text-xs text-muted-foreground">
+                <p className="mb-1 text-xs text-surface-500">
                   You have ({matching.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {matching.map((skill) => (
                     <Badge
                       key={skill}
-                      variant="secondary"
-                      className="gap-1 bg-green-50 text-green-700"
+                      variant="success"
+                      className="gap-1"
                     >
                       <CheckCircle2 className="h-3 w-3" />
                       {skill}
@@ -176,15 +175,15 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
             )}
             {missing.length > 0 && (
               <div>
-                <p className="mb-1 text-xs text-muted-foreground">
+                <p className="mb-1 text-xs text-surface-500">
                   To learn ({missing.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {missing.map((skill) => (
                     <Badge
                       key={skill}
-                      variant="secondary"
-                      className="gap-1 bg-red-50 text-red-700"
+                      variant="destructive"
+                      className="gap-1"
                     >
                       <XCircle className="h-3 w-3" />
                       {skill}
@@ -197,19 +196,19 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume }:
         </div>
       )}
 
-      {/* Gap Analysis — triggered by button click */}
-      <div className="border-b px-4 py-3">
+      {/* Gap Analysis */}
+      <div className="border-b border-surface-200 px-4 py-3">
         <GapAnalysisPanel job={job} />
       </div>
 
       {/* Description */}
       <div className="p-4">
-        <h3 className="mb-2 text-sm font-semibold">Job Description</h3>
-        <div className="prose prose-sm max-w-none text-muted-foreground">
+        <h3 className="mb-2 text-sm font-semibold text-surface-800">Job Description</h3>
+        <div className="max-w-none text-surface-600">
           {job.description ? (
-            <div className="whitespace-pre-wrap text-sm">{job.description}</div>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed">{job.description}</div>
           ) : (
-            <p className="italic">No description available.</p>
+            <p className="italic text-surface-400">No description available.</p>
           )}
         </div>
       </div>

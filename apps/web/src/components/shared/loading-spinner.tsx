@@ -11,9 +11,9 @@ interface LoadingSpinnerProps {
 export function LoadingSpinner({ className, message }: LoadingSpinnerProps) {
   return (
     <div className={cn("flex flex-col items-center justify-center gap-3 py-12", className)}>
-      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
       {message && (
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <p className="text-sm text-surface-500">{message}</p>
       )}
     </div>
   );

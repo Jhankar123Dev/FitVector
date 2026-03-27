@@ -29,10 +29,10 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-2xl font-semibold text-surface-800">Settings</h1>
+        <p className="mt-1 text-sm text-surface-500">
           Manage your account and preferences
         </p>
       </div>
@@ -41,7 +41,9 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <User className="h-4 w-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50">
+              <User className="h-4 w-4 text-brand-500" />
+            </div>
             Profile
           </CardTitle>
           <CardDescription>Your personal information</CardDescription>
@@ -52,13 +54,13 @@ export default function SettingsPage() {
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 max-w-sm"
+              className="mt-1.5 max-w-sm"
             />
           </div>
           <div>
             <Label>Email</Label>
-            <Input value={user?.email || ""} disabled className="mt-1 max-w-sm" />
-            <p className="mt-1 text-xs text-muted-foreground">
+            <Input value={user?.email || ""} disabled className="mt-1.5 max-w-sm" />
+            <p className="mt-1 text-xs text-surface-400">
               Email cannot be changed
             </p>
           </div>
@@ -73,14 +75,16 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <CreditCard className="h-4 w-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-50">
+              <CreditCard className="h-4 w-4 text-accent-600" />
+            </div>
             Subscription
           </CardTitle>
           <CardDescription>Your current plan and usage</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="text-sm capitalize">
+            <Badge variant="brand" className="text-sm capitalize">
               {user?.planTier || "free"} plan
             </Badge>
             {user?.planTier === "free" && (
@@ -89,7 +93,7 @@ export default function SettingsPage() {
               </Button>
             )}
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-surface-500">
             {user?.planTier === "free"
               ? "Upgrade to unlock more searches, resume tailoring, and outreach."
               : "Thank you for being a subscriber!"}
@@ -101,7 +105,9 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Bell className="h-4 w-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50">
+              <Bell className="h-4 w-4 text-amber-600" />
+            </div>
             Notifications
           </CardTitle>
           <CardDescription>Control how you receive updates</CardDescription>

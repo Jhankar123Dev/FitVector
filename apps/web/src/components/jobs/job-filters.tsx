@@ -77,7 +77,7 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
           <SlidersHorizontal className="h-3.5 w-3.5" />
           Filters
           {hasFilters && (
-            <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
+            <span className="ml-1 rounded-full bg-brand-500 px-1.5 text-[10px] text-white">
               !
             </span>
           )}
@@ -92,8 +92,8 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
                 filters.decisionLabel === dl.value
                   ? dl.value
                     ? dl.color
-                    : "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-foreground/30"
+                    : "border-brand-500 bg-brand-50 text-brand-700"
+                  : "border-surface-200 text-surface-500 hover:border-surface-300"
               }`}
               onClick={() =>
                 onChange({
@@ -117,7 +117,7 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
 
       {/* Filter panel */}
       {isOpen && (
-        <div className="mt-3 grid gap-4 rounded-lg border bg-background p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-3 grid gap-4 rounded-xl border border-surface-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Location */}
           <div>
             <Label className="text-xs">Location</Label>
@@ -140,8 +140,8 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
                   key={mode.value}
                   className={`rounded-md border px-2 py-1 text-xs transition-colors ${
                     filters.workMode === mode.value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-foreground/30"
+                      ? "border-brand-500 bg-brand-50 text-brand-700"
+                      : "border-surface-200 text-surface-500 hover:border-surface-300"
                   }`}
                   onClick={() =>
                     onChange({
@@ -165,8 +165,8 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
                   key={type.value}
                   className={`rounded-md border px-2 py-1 text-xs transition-colors ${
                     filters.jobType === type.value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-foreground/30"
+                      ? "border-brand-500 bg-brand-50 text-brand-700"
+                      : "border-surface-200 text-surface-500 hover:border-surface-300"
                   }`}
                   onClick={() =>
                     onChange({
@@ -190,8 +190,8 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
                   key={opt.value}
                   className={`rounded-md border px-2 py-1 text-xs transition-colors ${
                     filters.hoursOld === opt.value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-foreground/30"
+                      ? "border-brand-500 bg-brand-50 text-brand-700"
+                      : "border-surface-200 text-surface-500 hover:border-surface-300"
                   }`}
                   onClick={() =>
                     onChange({ ...filters, hoursOld: opt.value })
@@ -212,8 +212,8 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
                   key={dl.value}
                   className={`rounded-md border px-2 py-1 text-xs transition-colors ${
                     filters.decisionLabel === dl.value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-foreground/30"
+                      ? "border-brand-500 bg-brand-50 text-brand-700"
+                      : "border-surface-200 text-surface-500 hover:border-surface-300"
                   }`}
                   onClick={() =>
                     onChange({
@@ -241,7 +241,7 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
                 }
                 className="h-8 text-sm"
               />
-              <span className="text-xs text-muted-foreground">to</span>
+              <span className="text-xs text-surface-500">to</span>
               <Input
                 placeholder="Max"
                 type="number"
