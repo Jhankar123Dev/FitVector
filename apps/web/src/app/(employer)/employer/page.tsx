@@ -8,14 +8,37 @@ import {
   Users,
   Video,
   TrendingUp,
+  TrendingDown,
   ArrowRight,
   Clock,
   Target,
+  UserPlus,
+  CalendarCheck,
+  Send,
   CheckCircle2,
+  FileText,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
-import { MOCK_COMPANY, MOCK_EMPLOYER_STATS } from "@/lib/mock/employer-data";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+import {
+  MOCK_COMPANY,
+  MOCK_EMPLOYER_STATS,
+  MOCK_ACTIVITY_FEED,
+  MOCK_FUNNEL_DATA,
+} from "@/lib/mock/employer-data";
+import { formatRelativeTime } from "@/lib/utils";
 
+// ── Stats config ────────────────────────────────────────────────────
 const STATS = [
   {
     label: "Active Jobs",
@@ -23,6 +46,8 @@ const STATS = [
     icon: Briefcase,
     iconBg: "bg-brand-50",
     iconColor: "text-brand-500",
+    trend: "+1",
+    trendUp: true,
     href: "/employer/jobs",
   },
   {
@@ -31,6 +56,8 @@ const STATS = [
     icon: Users,
     iconBg: "bg-accent-50",
     iconColor: "text-accent-600",
+    trend: "+18%",
+    trendUp: true,
     href: "/employer/candidates",
   },
   {
@@ -39,40 +66,58 @@ const STATS = [
     icon: Video,
     iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
+    trend: "+3",
+    trendUp: true,
     href: "/employer/interviews",
   },
   {
-    label: "Offers Extended",
-    value: MOCK_EMPLOYER_STATS.offersExtended,
-    icon: CheckCircle2,
+    label: "Avg. Time to Hire",
+    value: MOCK_EMPLOYER_STATS.avgTimeToHire,
+    icon: Clock,
     iconBg: "bg-emerald-50",
     iconColor: "text-emerald-600",
-    href: "/employer/candidates",
+    trend: "-2d",
+    trendUp: true,
+    href: "/employer/analytics",
   },
 ];
 
+// ── Activity icon map ───────────────────────────────────────────────
+const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
+  new_applicant: { icon: UserPlus, bg: "bg-brand-50", color: "text-brand-500" },
+  ai_interview_completed: { icon: CheckCircle2, bg: "bg-accent-50", color: "text-accent-600" },
+  interview_scheduled: { icon: CalendarCheck, bg: "bg-amber-50", color: "text-amber-600" },
+  job_posted: { icon: FileText, bg: "bg-sky-50", color: "text-sky-600" },
+  offer_sent: { icon: Send, bg: "bg-emerald-50", color: "text-emerald-600" },
+  candidate_hired: { icon: CheckCircle2, bg: "bg-emerald-50", color: "text-emerald-600" },
+};
+
+// ── Funnel bar colors ───────────────────────────────────────────────
+const FUNNEL_COLORS = ["#6c5ce7", "#8278ff", "#a78bfa", "#00d97e", "#34d399", "#6ee7b7"];
+
+// ── Quick actions ───────────────────────────────────────────────────
 const QUICK_ACTIONS = [
   {
-    label: "Post a New Job",
-    description: "Create a job listing with AI-powered screening",
+    label: "Post a Job",
+    description: "Create a new job listing with AI screening",
     icon: Briefcase,
-    href: "/employer/jobs",
+    href: "/employer/jobs/create",
     iconBg: "bg-brand-50",
     iconColor: "text-brand-500",
   },
   {
-    label: "Review Candidates",
-    description: "Screen and rank applicants across all roles",
-    icon: Target,
+    label: "Review Applicants",
+    description: "Screen and rank candidates across roles",
+    icon: Eye,
     href: "/employer/candidates",
     iconBg: "bg-accent-50",
     iconColor: "text-accent-600",
   },
   {
-    label: "View Analytics",
-    description: "Track your hiring funnel and key metrics",
-    icon: TrendingUp,
-    href: "/employer/analytics",
+    label: "Check Interviews",
+    description: "View upcoming and completed interviews",
+    icon: Video,
+    href: "/employer/interviews",
     iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
   },
@@ -91,7 +136,7 @@ export default function EmployerDashboardPage() {
         </p>
       </div>
 
-      {/* Stats grid */}
+      {/* ── Stats row ──────────────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STATS.map((stat) => (
           <Link key={stat.label} href={stat.href}>
@@ -100,11 +145,25 @@ export default function EmployerDashboardPage() {
                 <div className={`rounded-lg p-2.5 ${stat.iconBg}`}>
                   <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-2xl font-bold text-surface-800">
                     {stat.value}
                   </p>
                   <p className="text-xs text-surface-500">{stat.label}</p>
+                </div>
+                <div
+                  className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    stat.trendUp
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-red-50 text-red-700"
+                  }`}
+                >
+                  {stat.trendUp ? (
+                    <TrendingUp className="h-3 w-3" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3" />
+                  )}
+                  {stat.trend}
                 </div>
               </CardContent>
             </Card>
@@ -112,9 +171,113 @@ export default function EmployerDashboardPage() {
         ))}
       </div>
 
-      {/* Two-column section */}
+      {/* ── Main grid: chart + activity ────────────────────────────── */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Hiring funnel chart */}
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Hiring Funnel</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={MOCK_FUNNEL_DATA}
+                  margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#e7e5e4"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="stage"
+                    tick={{ fontSize: 11, fill: "#78716c" }}
+                    axisLine={{ stroke: "#e7e5e4" }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#78716c" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "1px solid #e7e5e4",
+                      boxShadow:
+                        "0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06)",
+                      fontSize: "13px",
+                    }}
+                  />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={40}>
+                    {MOCK_FUNNEL_DATA.map((_, idx) => (
+                      <Cell
+                        key={idx}
+                        fill={FUNNEL_COLORS[idx % FUNNEL_COLORS.length]}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent activity feed */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Recent Activity</CardTitle>
+            <Link
+              href="/employer/analytics"
+              className="text-xs font-medium text-brand-600 hover:text-brand-700"
+            >
+              View all
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {MOCK_ACTIVITY_FEED.slice(0, 6).map((item) => {
+                const cfg = ACTIVITY_ICONS[item.type] || ACTIVITY_ICONS.new_applicant;
+                const IconComp = cfg.icon;
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.actionUrl}
+                    className="flex items-start gap-3 group"
+                  >
+                    <div
+                      className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${cfg.bg}`}
+                    >
+                      <IconComp className={`h-3.5 w-3.5 ${cfg.color}`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-surface-700 group-hover:text-surface-900 transition-colors">
+                        {item.message}{" "}
+                        {item.candidateName && (
+                          <span className="font-medium text-surface-800">
+                            {item.candidateName}
+                          </span>
+                        )}
+                        {item.candidateName && " — "}
+                        <span className="font-medium text-surface-800">
+                          {item.jobTitle}
+                        </span>
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-surface-400">
+                        {formatRelativeTime(item.timestamp)}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── Quick actions + plan ───────────────────────────────────── */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Quick actions */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
@@ -147,24 +310,13 @@ export default function EmployerDashboardPage() {
           </Card>
         </div>
 
-        {/* Right column: hiring metrics */}
+        {/* Metrics + plan */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Hiring Metrics</CardTitle>
+              <CardTitle className="text-base">Key Metrics</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-surface-400" />
-                  <span className="text-sm text-surface-600">
-                    Avg. Time to Hire
-                  </span>
-                </div>
-                <span className="text-sm font-semibold text-surface-800">
-                  {MOCK_EMPLOYER_STATS.avgTimeToHire}
-                </span>
-              </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Target className="h-4 w-4 text-surface-400" />
@@ -176,39 +328,31 @@ export default function EmployerDashboardPage() {
                   {MOCK_EMPLOYER_STATS.screeningAccuracy}
                 </span>
               </div>
-
-              {/* Mini funnel */}
-              <div className="mt-2 space-y-2 border-t border-surface-100 pt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-surface-500">
-                  Hiring Funnel
-                </p>
-                {[
-                  { label: "Applied", count: 127, pct: 100 },
-                  { label: "AI Screened", count: 89, pct: 70 },
-                  { label: "AI Interviewed", count: 34, pct: 27 },
-                  { label: "Human Interview", count: 12, pct: 9 },
-                  { label: "Offered", count: 2, pct: 2 },
-                ].map((stage) => (
-                  <div key={stage.label} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-surface-600">{stage.label}</span>
-                      <span className="font-medium text-surface-800">
-                        {stage.count}
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-surface-100">
-                      <div
-                        className="h-1.5 rounded-full bg-brand-500 transition-all"
-                        style={{ width: `${stage.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-surface-400" />
+                  <span className="text-sm text-surface-600">
+                    Offers Extended
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-surface-800">
+                  {MOCK_EMPLOYER_STATS.offersExtended}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-surface-400" />
+                  <span className="text-sm text-surface-600">
+                    Interview Completion
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-surface-800">
+                  78%
+                </span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Company plan info */}
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
@@ -222,7 +366,12 @@ export default function EmployerDashboardPage() {
               <p className="mt-2 text-xs text-surface-500">
                 10 active jobs, 500 screenings/mo, 50 AI interviews/mo
               </p>
-              <Button variant="outline" size="sm" className="mt-3 w-full" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 w-full"
+                asChild
+              >
                 <Link href="/employer/settings">Manage Plan</Link>
               </Button>
             </CardContent>
