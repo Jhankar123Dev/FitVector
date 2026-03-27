@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useCreateAssessment } from "@/hooks/use-assessments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -96,6 +97,7 @@ const CODE_LANGUAGES = ["javascript", "typescript", "python", "java", "go", "rus
 
 export default function CreateAssessmentPage() {
   const router = useRouter();
+  const createAssessment = useCreateAssessment();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<AssessmentForm>(INITIAL_FORM);
 
@@ -594,16 +596,56 @@ export default function CreateAssessmentPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => router.push("/employer/assessments")}
+              disabled={createAssessment.isPending}
+              onClick={async () => {
+                const settings = {
+                  randomizeQuestions: form.randomizeQuestions,
+                  showResultsToCandidate: form.showResultsToCandidate,
+                  maxAttempts: form.maxAttempts,
+                  proctoring: { tabSwitchDetection: form.tabSwitchDetection, copyPasteDetection: form.copyPasteDetection },
+                };
+                await createAssessment.mutateAsync({
+                  name: form.title,
+                  assessmentType: form.type,
+                  timeLimitMinutes: form.duration || null,
+                  difficulty: form.difficulty || null,
+                  passingScore: form.passingScore || null,
+                  questions: form.questions,
+                  settings,
+                });
+                router.push("/employer/assessments");
+              }}
             >
               Save as Draft
             </Button>
             <Button
-              onClick={() => router.push("/employer/assessments")}
+              disabled={createAssessment.isPending}
+              onClick={async () => {
+                const settings = {
+                  randomizeQuestions: form.randomizeQuestions,
+                  showResultsToCandidate: form.showResultsToCandidate,
+                  maxAttempts: form.maxAttempts,
+                  proctoring: { tabSwitchDetection: form.tabSwitchDetection, copyPasteDetection: form.copyPasteDetection },
+                };
+                await createAssessment.mutateAsync({
+                  name: form.title,
+                  assessmentType: form.type,
+                  timeLimitMinutes: form.duration || null,
+                  difficulty: form.difficulty || null,
+                  passingScore: form.passingScore || null,
+                  questions: form.questions,
+                  settings,
+                });
+                router.push("/employer/assessments");
+              }}
               className="gap-1.5"
             >
-              <Check className="h-3.5 w-3.5" />
-              Publish
+              {createAssessment.isPending ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              {createAssessment.isPending ? "Saving..." : "Publish"}
             </Button>
           </div>
         )}

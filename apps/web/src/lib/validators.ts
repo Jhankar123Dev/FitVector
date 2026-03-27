@@ -176,3 +176,36 @@ export const completeInterviewSchema = z.object({
     answer: z.string().min(1),
   })).min(1, "At least one answer is required"),
 });
+
+// ─── Employer: Assessments ────────────────────────────────────────────────────
+
+export const createAssessmentSchema = z.object({
+  name: z.string().min(2, "Assessment name is required").max(200),
+  assessmentType: z.enum(["coding_test", "mcq_quiz", "case_study", "assignment"]),
+  timeLimitMinutes: z.number().int().min(5).max(300).optional().nullable(),
+  difficulty: z.enum(["easy", "medium", "hard"]).optional().nullable(),
+  passingScore: z.number().int().min(0).max(100).optional().nullable(),
+  questions: z.array(z.record(z.unknown())).default([]),
+  settings: z.record(z.unknown()).default({}),
+  isTemplate: z.boolean().default(false),
+});
+
+export const updateAssessmentSchema = createAssessmentSchema.partial();
+
+export const assignAssessmentSchema = z.object({
+  applicantIds: z.array(z.string().uuid()).min(1, "At least one applicant required"),
+  jobPostId: z.string().uuid(),
+});
+
+export const gradeSubmissionSchema = z.object({
+  manualScore: z.number().int().min(0).max(100),
+  graderNotes: z.string().max(5000).optional(),
+});
+
+export const submitAssessmentSchema = z.object({
+  answers: z.array(z.object({
+    questionId: z.string(),
+    selectedAnswer: z.string().optional(),
+    codeSubmission: z.string().optional(),
+  })).min(1),
+});

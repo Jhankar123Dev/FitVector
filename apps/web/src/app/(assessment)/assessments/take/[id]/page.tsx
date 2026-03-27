@@ -17,26 +17,81 @@ import {
   Code2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_ASSESSMENT_INSTANCES } from "@/lib/mock/assessment-data";
 import type { AssessmentQuestion } from "@/types/employer";
 import { QUESTION_TYPE_LABELS } from "@/types/employer";
 
-type ViewState = "intro" | "test" | "confirm" | "results";
+type ViewState = "loading" | "intro" | "test" | "confirm" | "results";
+
+interface AssessmentData {
+  id: string;
+  status: string;
+  startedAt: string | null;
+  candidateName: string;
+  assessmentName: string;
+  assessmentType: string;
+  jobTitle: string;
+  timeLimitMinutes: number | null;
+  difficulty: string | null;
+  passingScore: number | null;
+  questions: AssessmentQuestion[];
+  settings: Record<string, unknown>;
+  questionCount: number;
+}
 
 export default function TakeAssessmentPage() {
   const { id } = useParams<{ id: string }>();
-  const assessment = MOCK_ASSESSMENT_INSTANCES.find((a) => a.id === id);
 
-  const [view, setView] = useState<ViewState>("intro");
+  const [assessmentData, setAssessmentData] = useState<AssessmentData | null>(null);
+  const [view, setView] = useState<ViewState>("loading");
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [timeLeft, setTimeLeft] = useState(0); // seconds
+  const [submitResult, setSubmitResult] = useState<Record<string, unknown> | null>(null);
+  const [loadError, setLoadError] = useState("");
+
+  // Fetch assessment data from API
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(`/api/assessment/${id}`);
+        const json = await res.json();
+        if (!res.ok) {
+          setLoadError(json.error || "Assessment not available");
+          return;
+        }
+        setAssessmentData(json.data);
+        if (json.data.status === "started") {
+          // Already started — go to test view
+          setTimeLeft((json.data.timeLimitMinutes || 30) * 60);
+          setView("test");
+        } else {
+          setView("intro");
+        }
+      } catch {
+        setLoadError("Failed to load assessment");
+      }
+    }
+    load();
+  }, [id]);
+
+  // Build a mock-compat assessment object for existing UI
+  const assessment = assessmentData ? {
+    id: assessmentData.id,
+    title: assessmentData.assessmentName,
+    type: assessmentData.assessmentType,
+    difficulty: assessmentData.difficulty || "medium",
+    duration: assessmentData.timeLimitMinutes || 30,
+    passingScore: assessmentData.passingScore || 60,
+    questions: assessmentData.questions,
+    status: "active",
+    settings: assessmentData.settings,
+  } : null;
 
   // Initialise timer
   useEffect(() => {
-    if (assessment) setTimeLeft(assessment.duration * 60);
-  }, [assessment]);
+    if (assessment && view === "intro") setTimeLeft((assessment.duration || 30) * 60);
+  }, [assessment, view]);
 
   // Countdown
   useEffect(() => {
@@ -52,12 +107,20 @@ export default function TakeAssessmentPage() {
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   }, []);
 
-  if (!assessment) {
+  if (view === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (loadError || !assessment) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-sm text-surface-500">Assessment not found.</p>
+            <p className="text-sm text-surface-500">{loadError || "Assessment not found."}</p>
           </CardContent>
         </Card>
       </div>
@@ -138,10 +201,10 @@ export default function TakeAssessmentPage() {
                 <li>• You can navigate between questions using the navigation bar.</li>
                 <li>• Flag questions to review them later before submitting.</li>
                 <li>• Your answers are auto-saved as you progress.</li>
-                {assessment.settings.proctoring.tabSwitchDetection && (
+                {(assessment.settings as Record<string, Record<string, boolean>>)?.proctoring?.tabSwitchDetection && (
                   <li className="text-amber-600">• Tab/window switches will be monitored.</li>
                 )}
-                {assessment.settings.proctoring.copyPasteDetection && (
+                {(assessment.settings as Record<string, Record<string, boolean>>)?.proctoring?.copyPasteDetection && (
                   <li className="text-amber-600">• Copy-paste activity will be monitored.</li>
                 )}
               </ul>
@@ -149,7 +212,15 @@ export default function TakeAssessmentPage() {
 
             <Button
               className="w-full gap-1.5"
-              onClick={() => setView("test")}
+              onClick={async () => {
+                try {
+                  await fetch(`/api/assessment/${id}/start`, { method: "POST" });
+                  setView("test");
+                } catch {
+                  // Still allow starting on error
+                  setView("test");
+                }
+              }}
             >
               Start Assessment
               <ChevronRight className="h-4 w-4" />
@@ -206,7 +277,7 @@ export default function TakeAssessmentPage() {
               </div>
             </div>
 
-            {assessment.settings.showResultsToCandidate && (
+            {(assessment.settings as Record<string, boolean>)?.showResultsToCandidate && (
               <div className="space-y-2 text-left">
                 <p className="text-xs font-semibold text-surface-700">Question Breakdown</p>
                 {questions.map((q, i) => {
@@ -272,7 +343,24 @@ export default function TakeAssessmentPage() {
               <Button variant="outline" className="flex-1" onClick={() => setView("test")}>
                 Go Back
               </Button>
-              <Button className="flex-1 gap-1.5" onClick={() => setView("results")}>
+              <Button className="flex-1 gap-1.5" onClick={async () => {
+                try {
+                  const payload = {
+                    answers: (assessment?.questions || []).map((q: AssessmentQuestion) => ({
+                      questionId: q.id,
+                      selectedAnswer: answers[q.id] || undefined,
+                    })),
+                  };
+                  const res = await fetch(`/api/assessment/${id}/submit`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                  });
+                  const json = await res.json();
+                  setSubmitResult(json.data || {});
+                } catch { /* fallback */ }
+                setView("results");
+              }}>
                 <Send className="h-3.5 w-3.5" />
                 Submit
               </Button>

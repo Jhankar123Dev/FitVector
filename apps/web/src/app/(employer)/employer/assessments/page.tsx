@@ -22,7 +22,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_ASSESSMENT_TEMPLATES, MOCK_CANDIDATE_RESULTS } from "@/lib/mock/assessment-data";
+import { useAssessments } from "@/hooks/use-assessments";
 import type { AssessmentTemplate, AssessmentType } from "@/types/employer";
 import {
   ASSESSMENT_TYPE_LABELS,
@@ -67,7 +67,8 @@ function computeStats(templates: AssessmentTemplate[]) {
 }
 
 export default function AssessmentsPage() {
-  const [templates] = useState(MOCK_ASSESSMENT_TEMPLATES);
+  const { data: assessmentsData, isLoading } = useAssessments();
+  const templates = (assessmentsData?.data || []) as unknown as AssessmentTemplate[];
   const stats = useMemo(() => computeStats(templates), [templates]);
 
   const filterByTab = (tab: string): AssessmentTemplate[] => {
@@ -168,7 +169,7 @@ export default function AssessmentsPage() {
 // ── Template card ────────────────────────────────────────────────────
 function TemplateCard({ template }: { template: AssessmentTemplate }) {
   const TypeIcon = TYPE_ICONS[template.type];
-  const resultCount = MOCK_CANDIDATE_RESULTS.filter((r) => r.assessmentId === template.id).length;
+  const resultCount = template.candidatesTaken || 0;
 
   return (
     <Card className="flex flex-col">

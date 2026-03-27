@@ -27,16 +27,15 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import {
-  MOCK_ASSESSMENT_INSTANCES,
-  MOCK_CANDIDATE_RESULTS,
-} from "@/lib/mock/assessment-data";
+import { useAssessment, useAssessmentResults } from "@/hooks/use-assessments";
 import type { CandidateAssessmentResult } from "@/types/employer";
 import {
   ASSESSMENT_TYPE_LABELS,
   DIFFICULTY_LABELS,
   CANDIDATE_ASSESSMENT_STATUS_LABELS,
   CANDIDATE_ASSESSMENT_STATUS_COLORS,
+  type AssessmentType,
+  type DifficultyLevel,
 } from "@/types/employer";
 
 // ── Score distribution buckets ───────────────────────────────────────
@@ -61,11 +60,11 @@ export default function AssessmentResultsPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
 
-  const assessment = MOCK_ASSESSMENT_INSTANCES.find((a) => a.id === id);
-  const allResults = useMemo(
-    () => MOCK_CANDIDATE_RESULTS.filter((r) => r.assessmentId === id),
-    [id],
-  );
+  const { data: assessmentData } = useAssessment(id);
+  const { data: resultsData, isLoading } = useAssessmentResults(id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const assessment = assessmentData?.data as any;
+  const allResults = (resultsData?.data || []) as unknown as CandidateAssessmentResult[];
 
   if (!assessment) {
     return (
@@ -119,10 +118,10 @@ export default function AssessmentResultsPage() {
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <Badge className="border text-[10px] bg-brand-50 text-brand-700 border-brand-200">
-              {ASSESSMENT_TYPE_LABELS[assessment.type]}
+              {ASSESSMENT_TYPE_LABELS[assessment.type as AssessmentType] || assessment.type}
             </Badge>
             <Badge className="border text-[10px] bg-surface-100 text-surface-600 border-surface-200">
-              {DIFFICULTY_LABELS[assessment.difficulty]}
+              {DIFFICULTY_LABELS[assessment.difficulty as DifficultyLevel] || assessment.difficulty}
             </Badge>
             <span className="text-[11px] text-surface-500 flex items-center gap-1">
               <Clock className="h-3 w-3" /> {assessment.duration} min
