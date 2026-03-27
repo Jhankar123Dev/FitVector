@@ -2,6 +2,17 @@ import type { PlanTier } from '../constants/plan-limits';
 import type { JobSourceId } from '../constants/job-sources';
 import type { ApplicationStatusId } from '../constants/application-statuses';
 
+// ─── Phase 2 + 3 Type Re-exports ──────────────────────────────────────────
+export type * from './company';
+export type * from './job-post';
+export type * from './applicant';
+export type * from './ai-interview';
+export type * from './assessment';
+export type * from './human-interview';
+export type * from './marketplace';
+export type * from './community';
+export type * from './verified-profile';
+
 // ─── Auth & User ────────────────────────────────────────────────────────────
 
 export type AuthProvider = 'google' | 'github' | 'email';
