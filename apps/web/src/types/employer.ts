@@ -445,3 +445,125 @@ export interface AIInterview {
   audioUrl: string | null;
   createdAt: string;
 }
+
+// ── Assessment System types ────────────────────────────────────────
+
+export type AssessmentStatus = "draft" | "active" | "archived";
+export type QuestionType = "multiple_choice" | "code" | "short_answer" | "true_false";
+
+export const ASSESSMENT_STATUS_LABELS: Record<AssessmentStatus, string> = {
+  draft: "Draft",
+  active: "Active",
+  archived: "Archived",
+};
+
+export const ASSESSMENT_STATUS_COLORS: Record<AssessmentStatus, string> = {
+  draft: "bg-surface-100 text-surface-600 border-surface-200",
+  active: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  archived: "bg-red-50 text-red-700 border-red-200",
+};
+
+export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
+  multiple_choice: "Multiple Choice",
+  code: "Code",
+  short_answer: "Short Answer",
+  true_false: "True / False",
+};
+
+export interface AssessmentTemplate {
+  id: string;
+  title: string;
+  type: AssessmentType;
+  difficulty: DifficultyLevel;
+  duration: number; // minutes
+  questionCount: number;
+  tags: string[];
+  status: AssessmentStatus;
+  description: string;
+  completionRate: number; // 0-100
+  avgScore: number; // 0-100
+  candidatesTaken: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AssessmentQuestion {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  options?: string[]; // for multiple_choice / true_false
+  correctAnswer: string; // option text or expected answer
+  points: number;
+  codeLanguage?: string; // for code questions
+  testCases?: { input: string; expectedOutput: string }[];
+}
+
+export interface AssessmentInstance {
+  id: string;
+  templateId: string;
+  title: string;
+  type: AssessmentType;
+  difficulty: DifficultyLevel;
+  duration: number;
+  passingScore: number; // percentage
+  questions: AssessmentQuestion[];
+  status: AssessmentStatus;
+  settings: {
+    randomizeQuestions: boolean;
+    showResultsToCandidate: boolean;
+    maxAttempts: number;
+    proctoring: {
+      tabSwitchDetection: boolean;
+      copyPasteDetection: boolean;
+    };
+  };
+  createdAt: string;
+}
+
+export type CandidateAssessmentStatus = "not_started" | "in_progress" | "completed" | "expired";
+
+export const CANDIDATE_ASSESSMENT_STATUS_LABELS: Record<CandidateAssessmentStatus, string> = {
+  not_started: "Not Started",
+  in_progress: "In Progress",
+  completed: "Completed",
+  expired: "Expired",
+};
+
+export const CANDIDATE_ASSESSMENT_STATUS_COLORS: Record<CandidateAssessmentStatus, string> = {
+  not_started: "bg-surface-100 text-surface-600 border-surface-200",
+  in_progress: "bg-amber-50 text-amber-700 border-amber-200",
+  completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  expired: "bg-red-50 text-red-700 border-red-200",
+};
+
+export interface AssessmentAnswer {
+  questionId: string;
+  selectedAnswer: string;
+  codeSubmission?: string;
+  isCorrect: boolean;
+  pointsEarned: number;
+  pointsMax: number;
+  timeTaken: number; // seconds
+}
+
+export interface CandidateAssessmentResult {
+  id: string;
+  assessmentId: string;
+  assessmentTitle: string;
+  candidateName: string;
+  candidateEmail: string;
+  status: CandidateAssessmentStatus;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  passed: boolean;
+  startedAt: string | null;
+  completedAt: string | null;
+  timeSpent: number | null; // minutes
+  answers: AssessmentAnswer[];
+  proctoringFlags: {
+    tabSwitches: number;
+    copyPasteAttempts: number;
+    flagged: boolean;
+  };
+}
