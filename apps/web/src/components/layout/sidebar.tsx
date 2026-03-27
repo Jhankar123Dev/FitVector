@@ -9,6 +9,7 @@ import {
   Mail,
   Kanban,
   BarChart3,
+  Users,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/outreach", label: "Outreach", icon: Mail },
   { href: "/dashboard/tracker", label: "Tracker", icon: Kanban },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard/community", label: "Community", icon: Users },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
