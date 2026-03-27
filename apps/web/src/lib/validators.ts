@@ -147,3 +147,16 @@ export const updateJobPostSchema = createJobPostSchema.partial();
 export const changeJobStatusSchema = z.object({
   status: z.enum(["active", "paused", "closed", "filled"]),
 });
+
+// ─── Employer: Applicant Pipeline ─────────────────────────────────────────────
+
+export const changeStageSchema = z.object({
+  stage: z.enum([
+    "applied", "ai_screened", "ai_interviewed", "assessment",
+    "human_interview", "offer", "hired", "rejected", "on_hold",
+  ]),
+});
+
+export const rejectApplicantSchema = z.object({
+  reason: z.string().min(1, "Rejection reason is required").max(1000),
+});

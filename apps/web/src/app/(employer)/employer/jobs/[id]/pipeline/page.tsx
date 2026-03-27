@@ -22,7 +22,14 @@ import {
 import { cn } from "@/lib/utils";
 import { CandidateCard } from "@/components/employer/pipeline/candidate-card";
 import { CandidateDetail } from "@/components/employer/pipeline/candidate-detail";
-import { MOCK_APPLICANTS, MOCK_JOB_POSTS } from "@/lib/mock/employer-data";
+import {
+  useApplicants,
+  useChangeApplicantStage,
+  useRejectApplicant,
+  useScreenApplicant,
+  useBulkScreen,
+} from "@/hooks/use-applicants";
+import { useEmployerJob } from "@/hooks/use-employer-jobs";
 import type { Applicant, PipelineStage } from "@/types/employer";
 import { PIPELINE_STAGE_LABELS, PIPELINE_COLUMNS } from "@/types/employer";
 
@@ -45,9 +52,17 @@ export default function PipelinePage() {
   const router = useRouter();
   const jobId = params.id as string;
 
-  const job = MOCK_JOB_POSTS.find((j) => j.id === jobId) || MOCK_JOB_POSTS[0];
+  // Real data hooks
+  const { data: jobData } = useEmployerJob(jobId);
+  const { data: applicantsData, isLoading } = useApplicants(jobId);
+  const changeStage = useChangeApplicantStage();
+  const rejectMutation = useRejectApplicant();
+  const screenApplicant = useScreenApplicant();
+  const bulkScreenMutation = useBulkScreen();
 
-  const [applicants, setApplicants] = useState<Applicant[]>(MOCK_APPLICANTS);
+  const job = jobData?.data;
+  const applicants = (applicantsData?.data || []) as unknown as Applicant[];
+
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailApplicant, setDetailApplicant] = useState<Applicant | null>(null);
@@ -69,7 +84,8 @@ export default function PipelinePage() {
         return false;
       if (filterSkill) {
         const skill = filterSkill.toLowerCase();
-        if (!a.parsedResume.skills.some((s) => s.toLowerCase().includes(skill)))
+        const skills = a.parsedResume?.skills || [];
+        if (!skills.some((s: string) => s.toLowerCase().includes(skill)))
           return false;
       }
       if (filterSource && a.source !== filterSource) return false;
@@ -115,38 +131,43 @@ export default function PipelinePage() {
   };
 
   function advanceApplicant(id: string) {
-    setApplicants((prev) =>
-      prev.map((a) => {
-        if (a.id !== id) return a;
-        const next = NEXT_STAGE[a.pipelineStage];
-        return next ? { ...a, pipelineStage: next } : a;
-      }),
-    );
+    const applicant = applicants.find((a) => a.id === id);
+    if (!applicant) return;
+    const next = NEXT_STAGE[applicant.pipelineStage];
+    if (next) {
+      changeStage.mutate({ id, stage: next });
+    }
     setDetailApplicant(null);
   }
 
-  function rejectApplicant(id: string) {
-    setApplicants((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, pipelineStage: "rejected" as const } : a)),
-    );
+  function handleRejectApplicant(id: string) {
+    rejectMutation.mutate({ id, reason: "Not a fit for this role" });
     setDetailApplicant(null);
+  }
+
+  function handleScreenApplicant(id: string) {
+    screenApplicant.mutate(id);
+  }
+
+  function handleBulkScreen() {
+    bulkScreenMutation.mutate(jobId);
   }
 
   function bulkAdvance() {
-    setApplicants((prev) =>
-      prev.map((a) => {
-        if (!selectedIds.has(a.id)) return a;
-        const next = NEXT_STAGE[a.pipelineStage];
-        return next ? { ...a, pipelineStage: next } : a;
-      }),
-    );
+    for (const id of selectedIds) {
+      const applicant = applicants.find((a) => a.id === id);
+      if (applicant) {
+        const next = NEXT_STAGE[applicant.pipelineStage];
+        if (next) changeStage.mutate({ id, stage: next });
+      }
+    }
     clearSelection();
   }
 
   function bulkReject() {
-    setApplicants((prev) =>
-      prev.map((a) => (selectedIds.has(a.id) ? { ...a, pipelineStage: "rejected" as const } : a)),
-    );
+    for (const id of selectedIds) {
+      rejectMutation.mutate({ id, reason: "Bulk rejection" });
+    }
     clearSelection();
   }
 
@@ -169,11 +190,11 @@ export default function PipelinePage() {
             </Button>
             <div className="min-w-0">
               <h1 className="truncate text-base sm:text-lg font-semibold text-surface-800">
-                {job.title}
+                {job?.title || "Loading..."}
               </h1>
               <p className="truncate text-[11px] sm:text-xs text-surface-500">
                 {filtered.length} candidates &middot;{" "}
-                {job.location} &middot; {job.department}
+                {job?.location || ""} &middot; {job?.department || ""}
               </p>
             </div>
           </div>
@@ -521,7 +542,7 @@ export default function PipelinePage() {
           applicant={detailApplicant}
           onClose={() => setDetailApplicant(null)}
           onAdvance={advanceApplicant}
-          onReject={rejectApplicant}
+          onReject={handleRejectApplicant}
         />
       )}
     </div>

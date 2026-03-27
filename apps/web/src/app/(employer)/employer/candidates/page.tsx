@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { MOCK_APPLICANTS } from "@/lib/mock/employer-data";
+import { useAllApplicants } from "@/hooks/use-applicants";
 import {
   BUCKET_COLORS,
   BUCKET_LABELS,
@@ -28,8 +28,11 @@ export default function CandidatesPage() {
   const [bucketFilter, setBucketFilter] = useState<ScreeningBucket | "all">("all");
   const [stageFilter, setStageFilter] = useState<PipelineStage | "all">("all");
 
+  const { data: applicantsData, isLoading } = useAllApplicants();
+  const allApplicants = (applicantsData?.data || []) as unknown as Applicant[];
+
   const filtered = useMemo(() => {
-    let result = [...MOCK_APPLICANTS];
+    let result = [...allApplicants];
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -37,7 +40,7 @@ export default function CandidatesPage() {
         (a) =>
           a.name.toLowerCase().includes(q) ||
           a.email.toLowerCase().includes(q) ||
-          a.currentRole.toLowerCase().includes(q),
+          (a.currentRole || "").toLowerCase().includes(q),
       );
     }
     if (bucketFilter !== "all") {
@@ -50,10 +53,22 @@ export default function CandidatesPage() {
     return result.sort(
       (a, b) => (b.screeningScore ?? 0) - (a.screeningScore ?? 0),
     );
-  }, [search, bucketFilter, stageFilter]);
+  }, [allApplicants, search, bucketFilter, stageFilter]);
 
-  const totalCount = MOCK_APPLICANTS.length;
-  const strongFitCount = MOCK_APPLICANTS.filter((a) => a.screeningBucket === "strong_fit").length;
+  const totalCount = allApplicants.length;
+  const strongFitCount = allApplicants.filter((a) => a.screeningBucket === "strong_fit").length;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-5">
+        <div className="h-8 w-48 animate-pulse rounded bg-surface-200" />
+        <div className="h-12 animate-pulse rounded-lg bg-surface-100" />
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-16 animate-pulse rounded-lg border border-surface-200 bg-surface-50" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
