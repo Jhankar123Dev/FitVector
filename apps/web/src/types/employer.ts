@@ -657,3 +657,61 @@ export interface TeamActivity {
   description: string;
   timestamp: string;
 }
+
+// ── Analytics types ────────────────────────────────────────────────
+
+export type AnalyticsDateRange = "7d" | "30d" | "90d" | "custom";
+
+export interface AnalyticsMetrics {
+  totalApplicants: number;
+  interviewsConducted: number;
+  offersMade: number;
+  hires: number;
+  avgTimeToHire: number | null; // days
+  costPerHire: number | null; // in INR
+}
+
+export interface FunnelStage {
+  stage: string;
+  count: number;
+  conversionRate: number | null; // percentage from previous stage
+}
+
+export interface SourceMetric {
+  source: ApplicantSource;
+  count: number;
+  avgScore: number;
+}
+
+export interface JobPerformance {
+  jobId: string;
+  title: string;
+  applicants: number;
+  screenRate: number;
+  interviewRate: number;
+  hired: number;
+}
+
+export interface InterviewerPerformance {
+  memberId: string;
+  name: string;
+  interviewsDone: number;
+  avgFeedbackTime: number; // hours
+  calibrationScore: number; // 0-100
+}
+
+// ── Talent Pool types ──────────────────────────────────────────────
+
+export interface TalentPoolCandidate {
+  id: string;
+  name: string;
+  email: string;
+  skills: string[];
+  lastAppliedRole: string;
+  lastAppliedJobId: string;
+  score: number; // 0-100
+  dateAdded: string;
+  tags: string[];
+  source: ApplicantSource;
+  notes: string | null;
+}
