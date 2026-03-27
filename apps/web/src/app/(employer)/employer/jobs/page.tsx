@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Plus,
   MoreHorizontal,
@@ -18,14 +20,23 @@ import {
   MapPin,
   Calendar,
   Briefcase,
+  Rocket,
+  CreditCard,
+  Smartphone,
+  CheckCircle2,
+  X,
+  Loader2,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOCK_JOB_POSTS } from "@/lib/mock/employer-data";
-import type { JobPost, JobPostStatus } from "@/types/employer";
+import type { JobPost, JobPostStatus, PromotionType, PromotionDuration } from "@/types/employer";
 import {
   JOB_STATUS_LABELS,
   JOB_TYPE_LABELS,
   WORK_MODE_LABELS,
+  PROMOTION_TYPE_LABELS,
+  PROMOTION_PRICING,
 } from "@/types/employer";
 
 const STATUS_BADGE_VARIANT: Record<
@@ -140,9 +151,11 @@ function JobActionsMenu({
 function JobRow({
   job,
   onAction,
+  onBoost,
 }: {
   job: JobPost;
   onAction: (action: string, jobId: string) => void;
+  onBoost: (job: JobPost) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-surface-200 bg-white p-4 transition-shadow hover:shadow-card sm:flex-row sm:items-center sm:justify-between">
@@ -207,6 +220,17 @@ function JobRow({
 
       {/* Right: actions */}
       <div className="flex items-center gap-2">
+        {job.status === "active" && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onBoost(job)}
+            className="gap-1 text-xs"
+          >
+            <Rocket className="h-3 w-3" />
+            Boost
+          </Button>
+        )}
         <Button variant="outline" size="sm" asChild>
           <Link href={`/employer/jobs/${job.id}/pipeline`}>
             <Users className="mr-1.5 h-3.5 w-3.5" />
@@ -221,6 +245,7 @@ function JobRow({
 
 export default function EmployerJobsPage() {
   const [jobs, setJobs] = useState<JobPost[]>(MOCK_JOB_POSTS);
+  const [boostJob, setBoostJob] = useState<JobPost | null>(null);
 
   function handleAction(action: string, jobId: string) {
     setJobs((prev) =>
@@ -331,12 +356,203 @@ export default function EmployerJobsPage() {
               filterByStatus(
                 tab === "all" ? undefined : (tab as JobPostStatus),
               ).map((job) => (
-                <JobRow key={job.id} job={job} onAction={handleAction} />
+                <JobRow key={job.id} job={job} onAction={handleAction} onBoost={setBoostJob} />
               ))
             )}
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Boost Job Modal */}
+      {boostJob && (
+        <BoostJobModal job={boostJob} onClose={() => setBoostJob(null)} />
+      )}
+    </div>
+  );
+}
+
+// ─── Boost Job Modal ───────────────────────────────────────────────────────
+
+function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) {
+  const [promoType, setPromoType] = useState<PromotionType>("sponsored_feed");
+  const [duration, setDuration] = useState<PromotionDuration>(14);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi">("card");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const price = PROMOTION_PRICING[duration].price;
+
+  const handleSubmit = () => {
+    setSubmitting(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      setSubmitted(true);
+    }, 1500);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+      <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b p-4">
+          <h2 className="text-base font-semibold text-surface-800">
+            {submitted ? "Promotion Active!" : "Boost Job Listing"}
+          </h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {submitted ? (
+          <div className="flex flex-col items-center p-8 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+            </div>
+            <p className="text-sm font-medium text-surface-800">
+              {job.title} is now promoted!
+            </p>
+            <p className="mt-1 text-xs text-surface-500">
+              {PROMOTION_TYPE_LABELS[promoType].label} for {duration} days
+            </p>
+            <div className="mt-4 flex gap-2">
+              <Button size="sm" variant="outline" onClick={onClose}>Done</Button>
+              <Button size="sm" asChild>
+                <a href="/employer/promotions">View Promotions</a>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 p-4">
+            {/* Job info */}
+            <div className="rounded-lg bg-surface-50 p-3">
+              <p className="text-sm font-medium text-surface-800">{job.title}</p>
+              <p className="text-xs text-surface-500">
+                {job.location} · {job.applicantsCount} applicants
+              </p>
+            </div>
+
+            {/* Promotion Type */}
+            <div>
+              <Label className="text-xs">Promotion Type</Label>
+              <div className="mt-2 space-y-2">
+                {(Object.keys(PROMOTION_TYPE_LABELS) as PromotionType[]).map((type) => {
+                  const config = PROMOTION_TYPE_LABELS[type];
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => setPromoType(type)}
+                      className={cn(
+                        "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors",
+                        promoType === type
+                          ? "border-brand-300 bg-brand-50/50"
+                          : "border-surface-200 hover:border-surface-300",
+                      )}
+                    >
+                      <div className={cn(
+                        "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
+                        promoType === type ? "border-brand-500 bg-brand-500" : "border-surface-300",
+                      )}>
+                        {promoType === type && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-surface-800">{config.label}</p>
+                        <p className="text-xs text-surface-500">{config.description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div>
+              <Label className="text-xs">Duration</Label>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {([7, 14, 30] as PromotionDuration[]).map((d) => {
+                  const p = PROMOTION_PRICING[d];
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => setDuration(d)}
+                      className={cn(
+                        "rounded-lg border p-3 text-center transition-colors",
+                        duration === d
+                          ? "border-brand-300 bg-brand-50"
+                          : "border-surface-200 hover:border-surface-300",
+                      )}
+                    >
+                      <p className="text-sm font-semibold text-surface-800">{p.label}</p>
+                      <p className="text-lg font-bold text-brand-600">₹{p.price.toLocaleString()}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="rounded-lg border border-surface-200 p-3">
+              <p className="mb-1 text-xs font-medium text-surface-500">Preview</p>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-amber-400 text-white text-[10px]">
+                  <Megaphone className="mr-0.5 h-2.5 w-2.5" />
+                  Sponsored
+                </Badge>
+                <span className="text-sm font-medium text-surface-800">{job.title}</span>
+              </div>
+              <p className="mt-0.5 text-xs text-surface-400">{job.companyId ? "TechStartup Inc" : ""} · {job.location}</p>
+            </div>
+
+            {/* Payment Method */}
+            <div>
+              <Label className="text-xs">Payment Method</Label>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => setPaymentMethod("card")}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-2 rounded-lg border py-2 text-xs font-medium transition-colors",
+                    paymentMethod === "card"
+                      ? "border-brand-300 bg-brand-50 text-brand-700"
+                      : "border-surface-200 text-surface-600",
+                  )}
+                >
+                  <CreditCard className="h-3.5 w-3.5" />
+                  Card
+                </button>
+                <button
+                  onClick={() => setPaymentMethod("upi")}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-2 rounded-lg border py-2 text-xs font-medium transition-colors",
+                    paymentMethod === "upi"
+                      ? "border-brand-300 bg-brand-50 text-brand-700"
+                      : "border-surface-200 text-surface-600",
+                  )}
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                  UPI
+                </button>
+              </div>
+              <p className="mt-1.5 text-[10px] text-surface-400">
+                Payment powered by Razorpay · Secure checkout
+              </p>
+            </div>
+
+            {/* Total + Submit */}
+            <div className="flex items-center justify-between border-t pt-3">
+              <div>
+                <p className="text-xs text-surface-500">Total</p>
+                <p className="text-xl font-bold text-surface-800">₹{price.toLocaleString()}</p>
+              </div>
+              <Button onClick={handleSubmit} disabled={submitting} className="gap-1.5">
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Rocket className="h-4 w-4" />
+                )}
+                {submitting ? "Processing..." : "Promote Job"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

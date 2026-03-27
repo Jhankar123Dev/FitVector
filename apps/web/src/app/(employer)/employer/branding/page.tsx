@@ -1,0 +1,418 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Eye,
+  Users,
+  TrendingUp,
+  FileText,
+  Upload,
+  X,
+  Plus,
+  Save,
+  Lightbulb,
+  Target,
+  EyeIcon,
+  ArrowUpRight,
+  Building2,
+  MapPin,
+  Briefcase,
+  Image,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { MOCK_COMPANY_BRANDING } from "@/lib/mock/branding-data";
+import { MOCK_COMPANY, MOCK_JOB_POSTS } from "@/lib/mock/employer-data";
+import type { CompanyBranding, CultureValue, DayInTheLife } from "@/types/employer";
+
+const ICON_MAP: Record<string, typeof Lightbulb> = {
+  lightbulb: Lightbulb,
+  target: Target,
+  eye: EyeIcon,
+  "trending-up": TrendingUp,
+};
+
+export default function BrandingPage() {
+  const [branding, setBranding] = useState<CompanyBranding>(MOCK_COMPANY_BRANDING);
+  const [bannerName, setBannerName] = useState<string | null>(null);
+  const [newBenefit, setNewBenefit] = useState("");
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerName(file.name);
+    }
+    e.target.value = "";
+  };
+
+  const addBenefit = () => {
+    if (!newBenefit.trim()) return;
+    setBranding((prev) => ({ ...prev, benefits: [...prev.benefits, newBenefit.trim()] }));
+    setNewBenefit("");
+  };
+
+  const removeBenefit = (index: number) => {
+    setBranding((prev) => ({ ...prev, benefits: prev.benefits.filter((_, i) => i !== index) }));
+  };
+
+  const updateCultureValue = (index: number, field: keyof CultureValue, value: string) => {
+    setBranding((prev) => ({
+      ...prev,
+      cultureValues: prev.cultureValues.map((v, i) =>
+        i === index ? { ...v, [field]: value } : v,
+      ),
+    }));
+  };
+
+  const updateDayInTheLife = (index: number, description: string) => {
+    setBranding((prev) => ({
+      ...prev,
+      dayInTheLife: prev.dayInTheLife.map((d, i) =>
+        i === index ? { ...d, description } : d,
+      ),
+    }));
+  };
+
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => setSaving(false), 1000);
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Hidden file input */}
+      <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleBannerUpload} />
+
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-surface-800">Company Branding</h1>
+          <p className="mt-0.5 text-sm text-surface-500">
+            Build your employer brand to attract top talent
+          </p>
+        </div>
+        <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+          <Save className="h-3.5 w-3.5" />
+          {saving ? "Saving..." : "Save All Changes"}
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: "Profile Views", value: branding.profileViews.toLocaleString(), icon: Eye, bg: "bg-blue-50", color: "text-blue-600" },
+          { label: "Followers", value: String(branding.followers), icon: Users, bg: "bg-purple-50", color: "text-purple-600" },
+          { label: "Application Rate", value: `${branding.applicationRate}%`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
+          { label: "Day in the Life", value: String(branding.dayInTheLife.length), icon: FileText, bg: "bg-amber-50", color: "text-amber-600" },
+        ].map((s) => (
+          <Card key={s.label}>
+            <CardContent className="flex items-center gap-3 p-3">
+              <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", s.bg)}>
+                <s.icon className={cn("h-4 w-4", s.color)} />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-surface-800">{s.value}</p>
+                <p className="text-[11px] text-surface-500">{s.label}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Tabs: Edit / Preview */}
+      <Tabs defaultValue="edit">
+        <TabsList>
+          <TabsTrigger value="edit">Edit</TabsTrigger>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+        </TabsList>
+
+        {/* ── Edit Tab ── */}
+        <TabsContent value="edit" className="space-y-5">
+          {/* Banner */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Banner Image</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div
+                className="relative flex h-32 items-center justify-center rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 sm:h-44"
+              >
+                {bannerName ? (
+                  <div className="flex items-center gap-2 rounded-lg bg-white/90 px-3 py-1.5 text-sm">
+                    <Image className="h-4 w-4 text-brand-600" />
+                    <span className="text-surface-700">{bannerName}</span>
+                    <button onClick={() => setBannerName(null)}>
+                      <X className="h-3 w-3 text-surface-400" />
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 bg-white/90"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Upload Banner
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Company Story */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Company Story</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={branding.story}
+                onChange={(e) => setBranding((prev) => ({ ...prev, story: e.target.value }))}
+                rows={6}
+                className="text-sm"
+                placeholder="Tell your company's story..."
+              />
+            </CardContent>
+          </Card>
+
+          {/* Team Photos */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Team Photos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+                {branding.teamPhotos.map((photo) => (
+                  <div key={photo.id} className="text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-brand-100 text-sm font-bold text-brand-700">
+                      {photo.initials}
+                    </div>
+                    <p className="mt-1 text-[10px] text-surface-500 line-clamp-1">{photo.caption}</p>
+                  </div>
+                ))}
+                <div className="flex flex-col items-center justify-center">
+                  <button className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-dashed border-surface-300 text-surface-400 hover:border-brand-300 hover:text-brand-500">
+                    <Plus className="h-5 w-5" />
+                  </button>
+                  <p className="mt-1 text-[10px] text-surface-400">Add Photo</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Benefits */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Benefits & Perks</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {branding.benefits.map((benefit, i) => (
+                  <Badge key={i} variant="brand" className="gap-1 py-1 text-xs">
+                    {benefit}
+                    <button onClick={() => removeBenefit(i)}>
+                      <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="mt-3 flex gap-2">
+                <Input
+                  value={newBenefit}
+                  onChange={(e) => setNewBenefit(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addBenefit(); }}
+                  placeholder="Add a benefit..."
+                  className="h-8 text-xs"
+                />
+                <Button size="sm" variant="outline" onClick={addBenefit} disabled={!newBenefit.trim()} className="h-8">
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Culture Values */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Culture Values</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {branding.cultureValues.map((value, i) => {
+                  const Icon = ICON_MAP[value.icon] || Lightbulb;
+                  return (
+                    <div key={i} className="rounded-lg border border-surface-200 p-3">
+                      <div className="mb-2 flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50">
+                          <Icon className="h-4 w-4 text-brand-600" />
+                        </div>
+                        <Input
+                          value={value.title}
+                          onChange={(e) => updateCultureValue(i, "title", e.target.value)}
+                          className="h-7 text-xs font-medium"
+                        />
+                      </div>
+                      <Textarea
+                        value={value.description}
+                        onChange={(e) => updateCultureValue(i, "description", e.target.value)}
+                        rows={2}
+                        className="text-xs"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Day in the Life */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Day in the Life</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {branding.dayInTheLife.map((entry, i) => (
+                <div key={entry.jobPostId} className="rounded-lg border border-surface-200 p-3">
+                  <Label className="text-xs font-medium text-surface-700">
+                    {entry.jobTitle}
+                  </Label>
+                  <Textarea
+                    value={entry.description}
+                    onChange={(e) => updateDayInTheLife(i, e.target.value)}
+                    rows={3}
+                    className="mt-1.5 text-xs"
+                  />
+                </div>
+              ))}
+              {MOCK_JOB_POSTS.filter(
+                (jp) => jp.status === "active" && !branding.dayInTheLife.some((d) => d.jobPostId === jp.id),
+              ).length > 0 && (
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                  <Plus className="h-3 w-3" />
+                  Add for another role
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Preview Tab ── */}
+        <TabsContent value="preview">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              {/* Banner */}
+              <div className="flex h-32 items-end bg-gradient-to-r from-brand-500 to-brand-700 p-4 sm:h-44">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white text-lg font-bold text-brand-600 shadow-lg">
+                    {MOCK_COMPANY.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">{MOCK_COMPANY.name}</h2>
+                    <div className="flex items-center gap-2 text-xs text-white/80">
+                      <span className="flex items-center gap-1">
+                        <Building2 className="h-3 w-3" />
+                        {MOCK_COMPANY.companySize} employees
+                      </span>
+                      <span>·</span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {MOCK_COMPANY.locations[0]}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6 p-4 sm:p-6">
+                {/* Story */}
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-surface-800">About Us</h3>
+                  <p className="text-sm text-surface-600 whitespace-pre-wrap">{branding.story}</p>
+                </div>
+
+                {/* Culture Values */}
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold text-surface-800">Our Values</h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {branding.cultureValues.map((value, i) => {
+                      const Icon = ICON_MAP[value.icon] || Lightbulb;
+                      return (
+                        <div key={i} className="rounded-lg bg-surface-50 p-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
+                              <Icon className="h-4 w-4 text-brand-600" />
+                            </div>
+                            <h4 className="text-sm font-medium text-surface-800">{value.title}</h4>
+                          </div>
+                          <p className="mt-1.5 text-xs text-surface-500">{value.description}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Benefits */}
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-surface-800">Benefits & Perks</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {branding.benefits.map((b, i) => (
+                      <Badge key={i} variant="brand" className="text-xs">{b}</Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Team */}
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold text-surface-800">Meet the Team</h3>
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+                    {branding.teamPhotos.map((photo) => (
+                      <div key={photo.id} className="text-center">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                          {photo.initials}
+                        </div>
+                        <p className="mt-1 text-[10px] text-surface-500 line-clamp-1">{photo.caption}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Day in the Life */}
+                {branding.dayInTheLife.length > 0 && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold text-surface-800">A Day in the Life</h3>
+                    <div className="space-y-3">
+                      {branding.dayInTheLife.map((entry) => (
+                        <div key={entry.jobPostId} className="rounded-lg border border-surface-200 p-3">
+                          <div className="flex items-center gap-2">
+                            <Briefcase className="h-3.5 w-3.5 text-brand-500" />
+                            <h4 className="text-sm font-medium text-surface-800">{entry.jobTitle}</h4>
+                          </div>
+                          <p className="mt-1.5 text-xs text-surface-600">{entry.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* CTA */}
+                <Button className="w-full gap-1.5">
+                  Apply to Open Roles
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

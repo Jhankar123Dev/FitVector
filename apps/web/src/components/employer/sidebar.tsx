@@ -11,6 +11,8 @@ import {
   CalendarDays,
   BarChart3,
   Database,
+  Palette,
+  Megaphone,
   Settings,
   UsersRound,
 } from "lucide-react";
@@ -26,6 +28,8 @@ const NAV_ITEMS = [
   { href: "/employer/scheduling", label: "Scheduling", icon: CalendarDays },
   { href: "/employer/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/employer/talent-pool", label: "Talent Pool", icon: Database },
+  { href: "/employer/branding", label: "Branding", icon: Palette },
+  { href: "/employer/promotions", label: "Promotions", icon: Megaphone },
   { href: "/employer/settings", label: "Settings", icon: Settings },
   { href: "/employer/team", label: "Team", icon: UsersRound },
 ];

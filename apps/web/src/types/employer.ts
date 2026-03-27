@@ -715,3 +715,81 @@ export interface TalentPoolCandidate {
   source: ApplicantSource;
   notes: string | null;
 }
+
+// ── Company Branding ─────────────────────────────────────────────
+
+export interface TeamPhoto {
+  id: string;
+  url: string | null;
+  caption: string;
+  initials: string;
+}
+
+export interface CultureValue {
+  title: string;
+  description: string;
+  icon: string;
+}
+
+export interface DayInTheLife {
+  jobPostId: string;
+  jobTitle: string;
+  description: string;
+}
+
+export interface CompanyBranding {
+  bannerUrl: string | null;
+  story: string;
+  teamPhotos: TeamPhoto[];
+  benefits: string[];
+  cultureValues: CultureValue[];
+  dayInTheLife: DayInTheLife[];
+  profileViews: number;
+  followers: number;
+  applicationRate: number;
+}
+
+// ── Promoted Listings ────────────────────────────────────────────
+
+export type PromotionType = "sponsored_feed" | "priority_search";
+export type PromotionDuration = 7 | 14 | 30;
+export type PromotionStatus = "active" | "expired" | "paused";
+
+export const PROMOTION_TYPE_LABELS: Record<PromotionType, { label: string; description: string }> = {
+  sponsored_feed: {
+    label: "Sponsored Feed",
+    description: "Your job appears at the top of candidate feeds with a 'Sponsored' badge",
+  },
+  priority_search: {
+    label: "Priority Search",
+    description: "Your job ranks higher in search results for matching candidates",
+  },
+};
+
+export const PROMOTION_PRICING: Record<PromotionDuration, { price: number; label: string }> = {
+  7: { price: 999, label: "7 days" },
+  14: { price: 2499, label: "14 days" },
+  30: { price: 4999, label: "30 days" },
+};
+
+export const PROMOTION_STATUS_COLORS: Record<PromotionStatus, { label: string; color: string; bg: string }> = {
+  active: { label: "Active", color: "text-green-700", bg: "bg-green-50" },
+  expired: { label: "Expired", color: "text-surface-500", bg: "bg-surface-100" },
+  paused: { label: "Paused", color: "text-amber-700", bg: "bg-amber-50" },
+};
+
+export interface PromotedListing {
+  id: string;
+  jobPostId: string;
+  jobTitle: string;
+  promotionType: PromotionType;
+  duration: PromotionDuration;
+  startDate: string;
+  endDate: string;
+  amountPaid: number;
+  currency: string;
+  impressions: number;
+  clicks: number;
+  applications: number;
+  status: PromotionStatus;
+}

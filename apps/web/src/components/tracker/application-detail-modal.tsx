@@ -18,11 +18,15 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
+  Rocket,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { APPLICATION_STATUSES } from "@fitvector/shared";
 import type { TrackerApplication } from "@/hooks/use-tracker";
-import { isFitVectorApp, FV_STATUS_CONFIG } from "@/types/marketplace";
-import type { FVApplicationStatus } from "@/types/marketplace";
+import { isFitVectorApp, FV_STATUS_CONFIG, BOOST_OPTIONS, BOOST_CREDIT_PACKS } from "@/types/marketplace";
+import type { FVApplicationStatus, BoostTier } from "@/types/marketplace";
 import { FitVectorStatusTimeline } from "./fitvector-status-timeline";
 import { MOCK_FITVECTOR_APPLICATION } from "@/lib/mock/seeker-marketplace-data";
 
@@ -46,6 +50,8 @@ export function ApplicationDetailModal({
   const [followupDate, setFollowupDate] = useState(application.nextFollowupDate || "");
   const [isDirty, setIsDirty] = useState(false);
   const [showFVDetails, setShowFVDetails] = useState(false);
+  const [isBoosted, setIsBoosted] = useState(false);
+  const [selectedBoostTier, setSelectedBoostTier] = useState<BoostTier>("standard");
 
   const isFV = isFitVectorApp(application.status);
   const fvConfig = isFV
@@ -189,6 +195,68 @@ export function ApplicationDetailModal({
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Boost Application (FitVector apps only) */}
+          {isFV && (
+            <div className="border-t border-surface-200 pt-3">
+              {isBoosted ? (
+                <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-3">
+                  <CheckCircle2 className="h-4 w-4 text-amber-600" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800">Application Boosted</p>
+                    <p className="text-xs text-amber-600">
+                      {BOOST_OPTIONS.find((o) => o.tier === selectedBoostTier)?.label} — your application is highlighted in the employer&apos;s pipeline
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Rocket className="h-4 w-4 text-brand-500" />
+                    <h4 className="text-xs font-semibold text-surface-800">Boost Your Application</h4>
+                  </div>
+                  <p className="mb-3 text-xs text-surface-500">
+                    Highlight your application in the employer&apos;s pipeline with a &quot;Boosted&quot; badge
+                  </p>
+                  <div className="space-y-1.5">
+                    {BOOST_OPTIONS.map((option) => (
+                      <button
+                        key={option.tier}
+                        onClick={() => setSelectedBoostTier(option.tier)}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-lg border p-2.5 text-left transition-colors",
+                          selectedBoostTier === option.tier
+                            ? "border-brand-300 bg-brand-50/50"
+                            : "border-surface-200 hover:border-surface-300",
+                        )}
+                      >
+                        <div>
+                          <p className="text-xs font-medium text-surface-800">{option.label}</p>
+                          <p className="text-[10px] text-surface-500">{option.description}</p>
+                        </div>
+                        <span className="text-sm font-bold text-brand-600">₹{option.price}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[10px] text-surface-400">
+                    <Sparkles className="mr-0.5 inline h-2.5 w-2.5" />
+                    Or buy a credit pack: {BOOST_CREDIT_PACKS[0].count} boosts for ₹{BOOST_CREDIT_PACKS[0].price} ({BOOST_CREDIT_PACKS[0].savings})
+                  </p>
+                  <p className="mt-1 text-[10px] text-surface-400">
+                    Boosted applications are highlighted but do not affect your match score.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsBoosted(true)}
+                    className="mt-3 w-full gap-1.5 bg-amber-500 text-white hover:bg-amber-600"
+                  >
+                    <Rocket className="h-3.5 w-3.5" />
+                    Boost for ₹{BOOST_OPTIONS.find((o) => o.tier === selectedBoostTier)?.price}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

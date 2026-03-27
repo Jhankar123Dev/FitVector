@@ -108,3 +108,25 @@ export const VERIFICATION_STATUS_CONFIG: Record<
   verified: { label: "Verified", color: "text-green-700", bg: "bg-green-50" },
   expired: { label: "Expired", color: "text-red-700", bg: "bg-red-50" },
 };
+
+// ─── Application Boost ─────────────────────────────────────────────────────
+
+export type BoostTier = "basic" | "standard" | "premium";
+
+export interface BoostOption {
+  tier: BoostTier;
+  price: number;
+  label: string;
+  description: string;
+}
+
+export const BOOST_OPTIONS: BoostOption[] = [
+  { tier: "basic", price: 99, label: "Basic Boost", description: "Application highlighted for 3 days" },
+  { tier: "standard", price: 199, label: "Standard Boost", description: "Highlighted for 7 days + priority badge" },
+  { tier: "premium", price: 299, label: "Premium Boost", description: "Highlighted for 14 days + priority badge + top of pipeline" },
+];
+
+export const BOOST_CREDIT_PACKS = [
+  { count: 5, price: 449, savings: "Save 10%" },
+  { count: 12, price: 999, savings: "Save 16%" },
+];
