@@ -30,57 +30,10 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import {
-  MOCK_COMPANY,
-  MOCK_EMPLOYER_STATS,
-  MOCK_ACTIVITY_FEED,
-  MOCK_FUNNEL_DATA,
-} from "@/lib/mock/employer-data";
+import { MOCK_ACTIVITY_FEED } from "@/lib/mock/employer-data";
 import { formatRelativeTime } from "@/lib/utils";
-
-// ── Stats config ────────────────────────────────────────────────────
-const STATS = [
-  {
-    label: "Active Jobs",
-    value: MOCK_EMPLOYER_STATS.activeJobs,
-    icon: Briefcase,
-    iconBg: "bg-brand-50",
-    iconColor: "text-brand-500",
-    trend: "+1",
-    trendUp: true,
-    href: "/employer/jobs",
-  },
-  {
-    label: "Total Applicants",
-    value: MOCK_EMPLOYER_STATS.totalApplicants,
-    icon: Users,
-    iconBg: "bg-accent-50",
-    iconColor: "text-accent-600",
-    trend: "+18%",
-    trendUp: true,
-    href: "/employer/candidates",
-  },
-  {
-    label: "Interviews This Week",
-    value: MOCK_EMPLOYER_STATS.interviewsThisWeek,
-    icon: Video,
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    trend: "+3",
-    trendUp: true,
-    href: "/employer/interviews",
-  },
-  {
-    label: "Avg. Time to Hire",
-    value: MOCK_EMPLOYER_STATS.avgTimeToHire,
-    icon: Clock,
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    trend: "-2d",
-    trendUp: true,
-    href: "/employer/analytics",
-  },
-];
+import { useAnalytics, useFunnel } from "@/hooks/use-analytics";
+import { useEmployer } from "@/hooks/use-employer";
 
 // ── Activity icon map ───────────────────────────────────────────────
 const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
@@ -124,12 +77,63 @@ const QUICK_ACTIONS = [
 ];
 
 export default function EmployerDashboardPage() {
+  const { data: analyticsData } = useAnalytics();
+  const { data: funnelResponse } = useFunnel();
+  const { data: employerData } = useEmployer();
+
+  const apiMetrics = analyticsData?.data || {};
+  const company = employerData?.data?.company;
+  const MOCK_FUNNEL_DATA = funnelResponse?.data || [];
+
+  const STATS = [
+    {
+      label: "Active Jobs",
+      value: (apiMetrics.totalApplicants as number) > 0 ? "Active" : "0",
+      icon: Briefcase,
+      iconBg: "bg-brand-50",
+      iconColor: "text-brand-500",
+      trend: "",
+      trendUp: true,
+      href: "/employer/jobs",
+    },
+    {
+      label: "Total Applicants",
+      value: (apiMetrics.totalApplicants as number) || 0,
+      icon: Users,
+      iconBg: "bg-accent-50",
+      iconColor: "text-accent-600",
+      trend: "",
+      trendUp: true,
+      href: "/employer/candidates",
+    },
+    {
+      label: "Interviews",
+      value: (apiMetrics.interviewsConducted as number) || 0,
+      icon: Video,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      trend: "",
+      trendUp: true,
+      href: "/employer/interviews",
+    },
+    {
+      label: "Avg. Time to Hire",
+      value: apiMetrics.avgTimeToHire != null ? `${apiMetrics.avgTimeToHire}d` : "—",
+      icon: Clock,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      trend: "",
+      trendUp: true,
+      href: "/employer/analytics",
+    },
+  ];
+
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
-          Welcome back, {MOCK_COMPANY.name}
+          Welcome back, {company?.name || "Your Company"}
         </h1>
         <p className="mt-1 text-sm text-surface-500">
           Here&apos;s what&apos;s happening with your hiring pipeline
@@ -325,7 +329,7 @@ export default function EmployerDashboardPage() {
                   </span>
                 </div>
                 <span className="text-sm font-semibold text-surface-800">
-                  {MOCK_EMPLOYER_STATS.screeningAccuracy}
+                  {"—"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -336,7 +340,7 @@ export default function EmployerDashboardPage() {
                   </span>
                 </div>
                 <span className="text-sm font-semibold text-surface-800">
-                  {MOCK_EMPLOYER_STATS.offersExtended}
+                  {(apiMetrics.offersMade as number) || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -360,7 +364,7 @@ export default function EmployerDashboardPage() {
                   Plan
                 </span>
                 <Badge variant="brand" className="capitalize">
-                  {MOCK_COMPANY.planTier}
+                  {company?.planTier || "starter"}
                 </Badge>
               </div>
               <p className="mt-2 text-xs text-surface-500">

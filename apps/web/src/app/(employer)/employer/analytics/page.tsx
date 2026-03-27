@@ -31,10 +31,8 @@ import {
 import { cn } from "@/lib/utils";
 import type { AnalyticsDateRange } from "@/types/employer";
 import { SOURCE_LABELS } from "@/types/employer";
+import { useAnalytics, useFunnel, useSources } from "@/hooks/use-analytics";
 import {
-  MOCK_ANALYTICS_METRICS,
-  MOCK_FUNNEL_STAGES,
-  MOCK_SOURCE_METRICS,
   MOCK_TIME_TO_HIRE_TREND,
   MOCK_JOB_PERFORMANCE,
   MOCK_INTERVIEWER_PERFORMANCE,
@@ -52,16 +50,24 @@ const DATE_RANGE_OPTIONS: { value: AnalyticsDateRange; label: string }[] = [
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState<AnalyticsDateRange>("30d");
 
-  const metrics = dateRange === "custom"
-    ? MOCK_ANALYTICS_METRICS["90d"]
-    : MOCK_ANALYTICS_METRICS[dateRange];
+  // Real data from API
+  const { data: analyticsData, isLoading: metricsLoading } = useAnalytics(dateRange === "custom" ? "90d" : dateRange);
+  const { data: funnelData } = useFunnel();
+  const { data: sourcesData } = useSources();
 
-  // Previous period for trend comparison
-  const prevMetrics = dateRange === "7d"
-    ? MOCK_ANALYTICS_METRICS["30d"]
-    : dateRange === "30d"
-      ? MOCK_ANALYTICS_METRICS["90d"]
-      : MOCK_ANALYTICS_METRICS["90d"];
+  // Map API response to expected shape
+  const apiMetrics = analyticsData?.data || {};
+  const metrics = {
+    totalApplicants: (apiMetrics.totalApplicants as number) || 0,
+    interviewsConducted: (apiMetrics.interviewsConducted as number) || 0,
+    offersMade: (apiMetrics.offersMade as number) || 0,
+    hires: (apiMetrics.hires as number) || 0,
+    avgTimeToHire: apiMetrics.avgTimeToHire != null ? `${apiMetrics.avgTimeToHire} days` : null,
+    costPerHire: null,
+  };
+
+  // No previous period comparison from API — use null for now
+  const prevMetrics = metrics;
 
   function trendPct(current: number, previous: number): { value: string; up: boolean } | null {
     if (previous === 0) return null;
@@ -81,11 +87,11 @@ export default function AnalyticsPage() {
       [""],
       ["Hiring Funnel"],
       ["Stage", "Count", "Conversion Rate"],
-      ...MOCK_FUNNEL_STAGES.map((s) => [s.stage, String(s.count), s.conversionRate != null ? `${s.conversionRate}%` : ""]),
+      ...(funnelData?.data || []).map((s) => [s.stage, String(s.count), s.conversionRate != null ? `${s.conversionRate}%` : ""]),
       [""],
       ["Source Analysis"],
       ["Source", "Count", "Avg Score"],
-      ...MOCK_SOURCE_METRICS.map((s) => [SOURCE_LABELS[s.source], String(s.count), String(s.avgScore)]),
+      ...(sourcesData?.data || []).map((s) => [s.source, String(s.count), String(s.avgScore)]),
     ];
     const csv = rows.map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -175,8 +181,8 @@ export default function AnalyticsPage() {
         <CardContent>
           {/* Custom funnel visualization */}
           <div className="space-y-2">
-            {MOCK_FUNNEL_STAGES.map((stage, i) => {
-              const maxCount = MOCK_FUNNEL_STAGES[0].count;
+            {(funnelData?.data || []).map((stage, i) => {
+              const maxCount = (funnelData?.data || [])[0].count;
               const widthPct = maxCount > 0 ? Math.max((stage.count / maxCount) * 100, 8) : 8;
               return (
                 <div key={stage.stage} className="flex items-center gap-3">
@@ -221,7 +227,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-[220px] sm:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={MOCK_SOURCE_METRICS.map((s) => ({ ...s, name: SOURCE_LABELS[s.source] }))} barSize={32}>
+                <BarChart data={(sourcesData?.data || []).map((s) => ({ ...s, name: s.source }))} barSize={32}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#78716c" }} />
                   <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "#a8a29e" }} />

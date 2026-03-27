@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import { MOCK_TALENT_POOL } from "@/lib/mock/analytics-data";
-import { MOCK_JOB_POSTS } from "@/lib/mock/employer-data";
+import { useTalentPool, useUpdateTags, useReengage } from "@/hooks/use-talent-pool";
+import { useEmployerJobs } from "@/hooks/use-employer-jobs";
 import type { TalentPoolCandidate } from "@/types/employer";
 import { SOURCE_LABELS } from "@/types/employer";
 
@@ -50,10 +50,18 @@ function getScoreColor(score: number): string {
 }
 
 export default function TalentPoolPage() {
-  const [candidates, setCandidates] = useState(MOCK_TALENT_POOL);
+  const { data: talentData, isLoading } = useTalentPool();
+  const { data: jobsData } = useEmployerJobs();
+  const updateTags = useUpdateTags();
+  const reengage = useReengage();
+
+  const candidates = (talentData?.data || []) as unknown as TalentPoolCandidate[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const MOCK_JOB_POSTS = (jobsData?.data || []) as any[];
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [scoreFilter, setScoreFilter] = useState<string>("all"); // "all" | "80+" | "60-80" | "<60"
+  const [scoreFilter, setScoreFilter] = useState<string>("all");
   const [reengageCandidate, setReengageCandidate] = useState<TalentPoolCandidate | null>(null);
   const [addingTagFor, setAddingTagFor] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
@@ -70,7 +78,7 @@ export default function TalentPoolPage() {
     const activeJobs = MOCK_JOB_POSTS.filter((j) => j.status === "active");
     for (const job of activeJobs) {
       const matching = candidates.filter((c) =>
-        c.skills.some((s) => job.requiredSkills.some((rs) => rs.toLowerCase() === s.toLowerCase())),
+        c.skills.some((s: string) => (job.requiredSkills || []).some((rs: string) => rs.toLowerCase() === s.toLowerCase())),
       );
       if (matching.length >= 2) {
         return { job, count: matching.length };
@@ -110,19 +118,16 @@ export default function TalentPoolPage() {
     );
   }
 
-  function removeCandidate(id: string) {
-    setCandidates((prev) => prev.filter((c) => c.id !== id));
+  function removeCandidate(_id: string) {
+    // Future: remove from talent pool via API
   }
 
   function addTagToCandidate(id: string) {
     if (!newTag.trim()) return;
-    setCandidates((prev) =>
-      prev.map((c) =>
-        c.id === id && !c.tags.includes(newTag.trim())
-          ? { ...c, tags: [...c.tags, newTag.trim()] }
-          : c,
-      ),
-    );
+    const candidate = candidates.find((c: TalentPoolCandidate) => c.id === id);
+    if (candidate && !candidate.tags.includes(newTag.trim())) {
+      updateTags.mutate({ id, tags: [...candidate.tags, newTag.trim()] });
+    }
     setNewTag("");
     setAddingTagFor(null);
   }
