@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,16 +17,21 @@ import {
   ClipboardCheck,
   Send,
   Plus,
+  ThumbsUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import type { Applicant, PipelineStage, CandidateNote } from "@/types/employer";
+import type { Applicant, PipelineStage, CandidateNote, CandidateVote, VoteValue } from "@/types/employer";
 import {
   PIPELINE_STAGE_LABELS,
   BUCKET_LABELS,
   BUCKET_COLORS,
   TEAM_ROLE_LABELS,
+  VOTE_LABELS,
+  VOTE_COLORS,
 } from "@/types/employer";
+import { MOCK_TEAM_MEMBERS } from "@/lib/mock/employer-data";
+import { MOCK_CANDIDATE_VOTES } from "@/lib/mock/scheduling-data";
 
 // ── Score bar component ─────────────────────────────────────────────
 function ScoreBar({ label, value }: { label: string; value: number }) {
@@ -71,6 +76,12 @@ export function CandidateDetail({
 }: CandidateDetailProps) {
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<CandidateNote[]>(applicant.notes);
+  const [votes, setVotes] = useState<CandidateVote[]>(
+    MOCK_CANDIDATE_VOTES.filter((v) => v.candidateId === applicant.id),
+  );
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionFilter, setMentionFilter] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const initials = applicant.name
     .split(" ")
@@ -100,6 +111,78 @@ export function CandidateDetail({
     setNotes((prev) => [n, ...prev]);
     setNoteText("");
   }
+
+  function castVote(value: VoteValue) {
+    const existing = votes.find((v) => v.voterId === "tm-001");
+    if (existing) {
+      setVotes((prev) =>
+        prev.map((v) => (v.voterId === "tm-001" ? { ...v, vote: value } : v)),
+      );
+    } else {
+      setVotes((prev) => [
+        ...prev,
+        {
+          id: `vote-${Date.now()}`,
+          candidateId: applicant.id,
+          voterId: "tm-001",
+          voterName: "Arjun Mehta",
+          voterRole: "admin" as const,
+          vote: value,
+          comment: null,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    }
+  }
+
+  function handleNoteKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "@") {
+      setMentionOpen(true);
+      setMentionFilter("");
+    } else if (mentionOpen) {
+      if (e.key === "Escape") {
+        setMentionOpen(false);
+      }
+    }
+  }
+
+  function handleNoteChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value;
+    setNoteText(val);
+    // Check if we're in mention mode
+    const lastAt = val.lastIndexOf("@");
+    if (lastAt >= 0 && mentionOpen) {
+      setMentionFilter(val.slice(lastAt + 1).toLowerCase());
+    }
+  }
+
+  function insertMention(name: string) {
+    const lastAt = noteText.lastIndexOf("@");
+    const newText = noteText.slice(0, lastAt) + "@" + name + " ";
+    setNoteText(newText);
+    setMentionOpen(false);
+    textareaRef.current?.focus();
+  }
+
+  const filteredTeam = useMemo(
+    () =>
+      MOCK_TEAM_MEMBERS.filter(
+        (m) => m.name && m.name.toLowerCase().includes(mentionFilter),
+      ),
+    [mentionFilter],
+  );
+
+  // Decision summary
+  const decisionSummary = useMemo(() => {
+    if (votes.length === 0) return null;
+    const positive = votes.filter((v) => v.vote === "strong_hire" || v.vote === "hire").length;
+    const negative = votes.filter((v) => v.vote === "no_hire" || v.vote === "strong_no_hire").length;
+    if (positive > 0 && negative === 0) return { type: "consensus" as const, label: "Team Consensus: Hire" };
+    if (negative > 0 && positive === 0) return { type: "consensus_no" as const, label: "Team Consensus: No Hire" };
+    return { type: "split" as const, label: `Team Split: ${positive} Hire / ${negative} No Hire` };
+  }, [votes]);
+
+  const myVote = votes.find((v) => v.voterId === "tm-001");
 
   const b = applicant.screeningBreakdown;
 
@@ -437,15 +520,115 @@ export function CandidateDetail({
               </TabsContent>
 
               {/* ── Notes Tab ─────────────────────────────────────── */}
-              <TabsContent value="notes" className="mt-0 space-y-4">
-                {/* Add note */}
+              <TabsContent value="notes" className="mt-0 space-y-5">
+                {/* ── Team Feedback / Voting ─────────────────────── */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ThumbsUp className="h-3.5 w-3.5 text-surface-500" />
+                    <p className="text-xs font-semibold text-surface-700">Team Feedback</p>
+                  </div>
+
+                  {/* Cast your vote */}
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] text-surface-500">Your vote:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(["strong_hire", "hire", "no_hire", "strong_no_hire"] as VoteValue[]).map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => castVote(v)}
+                          className={cn(
+                            "rounded-full border px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold transition-colors",
+                            myVote?.vote === v
+                              ? VOTE_COLORS[v]
+                              : "border-surface-200 text-surface-500 hover:border-surface-300",
+                          )}
+                        >
+                          {VOTE_LABELS[v]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* All votes */}
+                  {votes.length > 0 && (
+                    <div className="space-y-1.5">
+                      {votes.map((v) => (
+                        <div key={v.id} className="flex items-center gap-2">
+                          <span className="text-xs text-surface-700">{v.voterName}</span>
+                          <Badge variant="secondary" className="text-[9px]">
+                            {TEAM_ROLE_LABELS[v.voterRole]}
+                          </Badge>
+                          <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold", VOTE_COLORS[v.vote])}>
+                            {VOTE_LABELS[v.vote]}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {votes.length === 0 && (
+                    <p className="text-[11px] text-surface-400">No votes yet. Be the first to share your feedback.</p>
+                  )}
+
+                  {/* Decision summary */}
+                  {decisionSummary && (
+                    <div
+                      className={cn(
+                        "rounded-lg p-2.5 text-xs font-medium",
+                        decisionSummary.type === "consensus"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : decisionSummary.type === "consensus_no"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-amber-50 text-amber-700",
+                      )}
+                    >
+                      {decisionSummary.label}
+                      {decisionSummary.type === "split" && (
+                        <span className="block mt-0.5 text-[11px] font-normal opacity-80">
+                          Consider discussing before advancing.
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-surface-100" />
+
+                {/* ── Add note with @mentions ────────────────────── */}
                 <div className="space-y-2">
-                  <Textarea
-                    placeholder="Add a note about this candidate..."
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    className="min-h-[80px]"
-                  />
+                  <div className="relative">
+                    <Textarea
+                      ref={textareaRef}
+                      placeholder="Add a note... (type @ to mention a team member)"
+                      value={noteText}
+                      onChange={handleNoteChange}
+                      onKeyDown={handleNoteKeyDown}
+                      className="min-h-[80px]"
+                    />
+                    {/* @mention dropdown */}
+                    {mentionOpen && filteredTeam.length > 0 && (
+                      <div className="absolute left-0 bottom-full mb-1 z-10 w-60 rounded-lg border border-surface-200 bg-white shadow-lg">
+                        {filteredTeam.map((m) => (
+                          <button
+                            key={m.id}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-surface-50 transition-colors"
+                            onMouseDown={(e) => {
+                              e.preventDefault(); // prevent blur
+                              insertMention(m.name!);
+                            }}
+                          >
+                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[8px] font-bold text-surface-600">
+                              {m.name!.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                            </div>
+                            <span className="font-medium text-surface-800">{m.name}</span>
+                            <Badge variant="secondary" className="text-[8px] ml-auto">
+                              {TEAM_ROLE_LABELS[m.role]}
+                            </Badge>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <Button
                     size="sm"
                     onClick={addNote}
@@ -456,7 +639,7 @@ export function CandidateDetail({
                   </Button>
                 </div>
 
-                {/* Notes list */}
+                {/* ── Notes list with @mention highlighting ──────── */}
                 <div className="space-y-3">
                   {notes.map((note) => (
                     <div
@@ -477,7 +660,7 @@ export function CandidateDetail({
                         </span>
                       </div>
                       <p className="mt-1.5 text-sm text-surface-600">
-                        {note.content}
+                        <RenderNoteContent content={note.content} />
                       </p>
                     </div>
                   ))}
@@ -528,4 +711,45 @@ export function CandidateDetail({
       </div>
     </>
   );
+}
+
+// ── Render note content with @mention highlighting ──────────────────
+const TEAM_NAMES = MOCK_TEAM_MEMBERS.filter((m) => m.name).map((m) => m.name!);
+
+function RenderNoteContent({ content }: { content: string }) {
+  // Split on @Name patterns and highlight them
+  const parts: React.ReactNode[] = [];
+  let remaining = content;
+  let key = 0;
+
+  while (remaining.length > 0) {
+    const atIndex = remaining.indexOf("@");
+    if (atIndex < 0) {
+      parts.push(remaining);
+      break;
+    }
+
+    // Add text before @
+    if (atIndex > 0) {
+      parts.push(remaining.slice(0, atIndex));
+    }
+
+    // Check if what follows @ matches a team member name
+    const afterAt = remaining.slice(atIndex + 1);
+    const matchedName = TEAM_NAMES.find((name) => afterAt.startsWith(name));
+
+    if (matchedName) {
+      parts.push(
+        <span key={key++} className="text-brand-600 font-medium">
+          @{matchedName}
+        </span>,
+      );
+      remaining = remaining.slice(atIndex + 1 + matchedName.length);
+    } else {
+      parts.push("@");
+      remaining = remaining.slice(atIndex + 1);
+    }
+  }
+
+  return <>{parts}</>;
 }

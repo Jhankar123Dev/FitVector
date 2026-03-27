@@ -567,3 +567,93 @@ export interface CandidateAssessmentResult {
     flagged: boolean;
   };
 }
+
+// ── Interview Scheduling types ─────────────────────────────────────
+
+export type ScheduledInterviewType = "phone" | "video" | "onsite";
+export type ScheduledInterviewStatus = "scheduled" | "completed" | "cancelled" | "rescheduled";
+
+export const SCHEDULED_INTERVIEW_TYPE_LABELS: Record<ScheduledInterviewType, string> = {
+  phone: "Phone",
+  video: "Video",
+  onsite: "On-site",
+};
+
+export const SCHEDULED_INTERVIEW_STATUS_LABELS: Record<ScheduledInterviewStatus, string> = {
+  scheduled: "Scheduled",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  rescheduled: "Rescheduled",
+};
+
+export const SCHEDULED_INTERVIEW_TYPE_COLORS: Record<ScheduledInterviewType, string> = {
+  phone: "bg-amber-50 text-amber-700 border-amber-200",
+  video: "bg-brand-50 text-brand-700 border-brand-200",
+  onsite: "bg-emerald-50 text-emerald-700 border-emerald-200",
+};
+
+export const SCHEDULED_INTERVIEW_STATUS_COLORS: Record<ScheduledInterviewStatus, string> = {
+  scheduled: "bg-brand-50 text-brand-700 border-brand-200",
+  completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  cancelled: "bg-red-50 text-red-700 border-red-200",
+  rescheduled: "bg-amber-50 text-amber-700 border-amber-200",
+};
+
+export interface ScheduledInterview {
+  id: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  jobPostId: string;
+  jobTitle: string;
+  interviewerIds: string[];
+  interviewerNames: string[];
+  type: ScheduledInterviewType;
+  status: ScheduledInterviewStatus;
+  scheduledAt: string; // ISO datetime
+  duration: number; // minutes
+  meetingLink: string | null;
+  location: string | null;
+  interviewerNotes: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+// ── Candidate Voting types ─────────────────────────────────────────
+
+export type VoteValue = "strong_hire" | "hire" | "no_hire" | "strong_no_hire";
+
+export const VOTE_LABELS: Record<VoteValue, string> = {
+  strong_hire: "Strong Hire",
+  hire: "Hire",
+  no_hire: "No Hire",
+  strong_no_hire: "Strong No Hire",
+};
+
+export const VOTE_COLORS: Record<VoteValue, string> = {
+  strong_hire: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  hire: "bg-brand-100 text-brand-700 border-brand-300",
+  no_hire: "bg-amber-100 text-amber-700 border-amber-300",
+  strong_no_hire: "bg-red-100 text-red-700 border-red-300",
+};
+
+export interface CandidateVote {
+  id: string;
+  candidateId: string;
+  voterId: string;
+  voterName: string;
+  voterRole: TeamMemberRole;
+  vote: VoteValue;
+  comment: string | null;
+  createdAt: string;
+}
+
+// ── Team Activity types ────────────────────────────────────────────
+
+export interface TeamActivity {
+  id: string;
+  actorName: string;
+  actorRole: TeamMemberRole;
+  description: string;
+  timestamp: string;
+}
