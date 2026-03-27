@@ -29,7 +29,12 @@ import {
   Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_JOB_POSTS } from "@/lib/mock/employer-data";
+import {
+  useEmployerJobs,
+  useChangeJobStatus,
+  useDuplicateJobPost,
+  type JobPostWithCounts,
+} from "@/hooks/use-employer-jobs";
 import type { JobPost, JobPostStatus, PromotionType, PromotionDuration } from "@/types/employer";
 import {
   JOB_STATUS_LABELS,
@@ -153,9 +158,9 @@ function JobRow({
   onAction,
   onBoost,
 }: {
-  job: JobPost;
+  job: JobPostWithCounts;
   onAction: (action: string, jobId: string) => void;
-  onBoost: (job: JobPost) => void;
+  onBoost: (job: JobPostWithCounts) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-surface-200 bg-white p-4 transition-shadow hover:shadow-card sm:flex-row sm:items-center sm:justify-between">
@@ -244,51 +249,56 @@ function JobRow({
 }
 
 export default function EmployerJobsPage() {
-  const [jobs, setJobs] = useState<JobPost[]>(MOCK_JOB_POSTS);
-  const [boostJob, setBoostJob] = useState<JobPost | null>(null);
+  const { data: jobsData, isLoading, error } = useEmployerJobs();
+  const changeStatus = useChangeJobStatus();
+  const duplicateJob = useDuplicateJobPost();
+  const [boostJob, setBoostJob] = useState<JobPostWithCounts | null>(null);
+
+  const jobs: JobPostWithCounts[] = jobsData?.data || [];
 
   function handleAction(action: string, jobId: string) {
-    setJobs((prev) =>
-      prev.map((j) => {
-        if (j.id !== jobId) return j;
-        switch (action) {
-          case "pause":
-            return { ...j, status: "paused" as const };
-          case "resume":
-            return { ...j, status: "active" as const };
-          case "close":
-            return { ...j, status: "closed" as const };
-          case "duplicate":
-            // Add a duplicate at the top
-            return j; // handled below
-          default:
-            return j;
-        }
-      }),
-    );
-
-    if (action === "duplicate") {
-      const source = jobs.find((j) => j.id === jobId);
-      if (source) {
-        const dup: JobPost = {
-          ...source,
-          id: `jp-dup-${Date.now()}`,
-          title: `${source.title} (Copy)`,
-          status: "draft",
-          applicantsCount: 0,
-          screenedCount: 0,
-          interviewedCount: 0,
-          hiredCount: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setJobs((prev) => [dup, ...prev]);
-      }
+    switch (action) {
+      case "pause":
+        changeStatus.mutate({ id: jobId, status: "paused" });
+        break;
+      case "resume":
+        changeStatus.mutate({ id: jobId, status: "active" });
+        break;
+      case "close":
+        changeStatus.mutate({ id: jobId, status: "closed" });
+        break;
+      case "duplicate":
+        duplicateJob.mutate(jobId);
+        break;
     }
   }
 
   const filterByStatus = (status?: JobPostStatus) =>
     status ? jobs.filter((j) => j.status === status) : jobs;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-6 w-24 animate-pulse rounded bg-surface-200" />
+            <div className="mt-2 h-4 w-48 animate-pulse rounded bg-surface-100" />
+          </div>
+        </div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-24 animate-pulse rounded-lg border border-surface-200 bg-surface-50" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        Failed to load jobs. Please try again.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">

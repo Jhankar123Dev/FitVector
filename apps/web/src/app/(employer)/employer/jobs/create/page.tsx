@@ -27,6 +27,7 @@ import {
   GripVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCreateJobPost } from "@/hooks/use-employer-jobs";
 import type {
   JobPostFormData,
   WorkMode,
@@ -136,6 +137,8 @@ export default function CreateJobPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<JobPostFormData>(INITIAL_FORM);
+  const createJobPost = useCreateJobPost();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Temp inputs
   const [reqSkillInput, setReqSkillInput] = useState("");
@@ -247,10 +250,35 @@ export default function CreateJobPage() {
     }, 2000);
   }
 
-  // ── Navigation ────────────────────────────────────────────────────
-  function handlePublish() {
-    // In a real app, POST to API
-    router.push("/employer/jobs");
+  // ── Submit ────────────────────────────────────────────────────────
+  async function handleSaveJob(publishNow: boolean) {
+    setSubmitError(null);
+    try {
+      await createJobPost.mutateAsync({
+        title: form.title,
+        department: form.department || null,
+        location: form.location || null,
+        workMode: form.workMode || null,
+        jobType: form.jobType || null,
+        experienceMin: form.experienceMin || null,
+        experienceMax: form.experienceMax || null,
+        salaryMin: form.salaryMin ? parseInt(form.salaryMin, 10) : null,
+        salaryMax: form.salaryMax ? parseInt(form.salaryMax, 10) : null,
+        salaryCurrency: form.salaryCurrency,
+        salaryVisible: form.salaryVisible,
+        description: form.description,
+        requiredSkills: form.requiredSkills,
+        niceToHaveSkills: form.niceToHaveSkills,
+        screeningQuestions: form.screeningQuestions,
+        openingsCount: form.openingsCount,
+        interviewPlan: form.interviewConfig?.enabled ? form.interviewConfig : null,
+        assessmentConfig: form.assessmentConfig?.enabled ? form.assessmentConfig : null,
+        status: publishNow ? "active" : "draft",
+      } as Record<string, unknown> & { title: string; description: string });
+      router.push("/employer/jobs");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to save job. Try again.");
+    }
   }
 
   // ── Filtered skill suggestions ────────────────────────────────────
@@ -1501,12 +1529,27 @@ export default function CreateJobPage() {
         <div className="flex items-center gap-2">
           {step === 7 ? (
             <>
-              <Button variant="outline" onClick={handlePublish}>
+              {submitError && (
+                <span className="text-xs text-red-500 mr-2">{submitError}</span>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => handleSaveJob(false)}
+                disabled={createJobPost.isPending}
+              >
                 Save as Draft
               </Button>
-              <Button onClick={handlePublish} className="gap-1.5">
-                <Check className="h-4 w-4" />
-                Publish Job
+              <Button
+                onClick={() => handleSaveJob(true)}
+                disabled={createJobPost.isPending}
+                className="gap-1.5"
+              >
+                {createJobPost.isPending ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+                {createJobPost.isPending ? "Publishing..." : "Publish Job"}
               </Button>
             </>
           ) : (

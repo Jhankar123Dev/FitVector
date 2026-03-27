@@ -93,3 +93,57 @@ export const updateMemberSchema = z.object({
   role: z.enum(["admin", "recruiter", "hiring_manager", "viewer"]).optional(),
   status: z.enum(["active", "deactivated"]).optional(),
 });
+
+// ─── Employer: Job Posts ──────────────────────────────────────────────────────
+
+export const createJobPostSchema = z.object({
+  title: z.string().min(3, "Title is required").max(200),
+  department: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+  isRemote: z.boolean().default(false),
+  workMode: z.enum(["onsite", "remote", "hybrid"]).optional().nullable(),
+  jobType: z.enum(["fulltime", "parttime", "contract", "internship"]).optional().nullable(),
+  experienceMin: z.number().int().min(0).optional().nullable(),
+  experienceMax: z.number().int().max(50).optional().nullable(),
+  salaryMin: z.number().int().min(0).optional().nullable(),
+  salaryMax: z.number().int().optional().nullable(),
+  salaryCurrency: z.string().default("INR"),
+  salaryVisible: z.boolean().default(true),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  requiredSkills: z.array(z.string()).default([]),
+  niceToHaveSkills: z.array(z.string()).default([]),
+  screeningQuestions: z.array(z.object({
+    id: z.string(),
+    question: z.string(),
+    type: z.enum(["short_answer", "yes_no", "multiple_choice"]),
+    options: z.array(z.string()).optional(),
+    required: z.boolean(),
+  })).default([]),
+  openingsCount: z.number().int().min(1).default(1),
+  applicationDeadline: z.string().optional().nullable(),
+  interviewPlan: z.object({
+    enabled: z.boolean(),
+    interviewType: z.string(),
+    duration: z.number(),
+    focusAreas: z.string(),
+    difficultyLevel: z.string(),
+    customQuestions: z.array(z.string()),
+  }).optional().nullable(),
+  assessmentConfig: z.object({
+    enabled: z.boolean(),
+    assessmentType: z.string(),
+    timeLimit: z.number(),
+    difficultyLevel: z.string(),
+    customQuestions: z.array(z.string()),
+  }).optional().nullable(),
+  autoAdvanceThreshold: z.number().int().min(0).max(100).optional().nullable(),
+  autoRejectThreshold: z.number().int().min(0).max(100).optional().nullable(),
+  dimensionWeights: z.record(z.number()).optional().nullable(),
+  status: z.enum(["draft", "active"]).default("draft"),
+});
+
+export const updateJobPostSchema = createJobPostSchema.partial();
+
+export const changeJobStatusSchema = z.object({
+  status: z.enum(["active", "paused", "closed", "filled"]),
+});
