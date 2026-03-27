@@ -1,4 +1,4 @@
-import type { Company, TeamMember, JobPost, ActivityItem } from "@/types/employer";
+import type { Company, TeamMember, JobPost, ActivityItem, Applicant } from "@/types/employer";
 
 export const MOCK_COMPANY: Company = {
   id: "comp-001",
@@ -349,4 +349,176 @@ export const MOCK_FUNNEL_DATA = [
   { stage: "Human Interview", count: 12 },
   { stage: "Offered", count: 4 },
   { stage: "Hired", count: 1 },
+];
+
+// ── Helper to create candidates quickly ─────────────────────────────
+function mkCandidate(
+  id: string,
+  name: string,
+  email: string,
+  phone: string,
+  currentRole: string,
+  currentCompany: string,
+  experience: number,
+  source: Applicant["source"],
+  stage: Applicant["pipelineStage"],
+  score: number,
+  bucket: Applicant["screeningBucket"],
+  summary: string,
+  breakdown: Applicant["screeningBreakdown"],
+  skills: string[],
+  appliedAt: string,
+): Applicant {
+  return {
+    id,
+    jobPostId: "jp-001",
+    name,
+    email,
+    phone,
+    currentRole,
+    currentCompany,
+    experience,
+    avatarUrl: null,
+    source,
+    pipelineStage: stage,
+    screeningScore: score,
+    screeningBucket: bucket,
+    screeningSummary: summary,
+    screeningBreakdown: breakdown,
+    parsedResume: {
+      summary: `${name} is a ${currentRole} at ${currentCompany} with ${experience} years of experience.`,
+      experience: [
+        {
+          company: currentCompany,
+          title: currentRole,
+          duration: `${Math.max(1, experience - 2)} years`,
+          highlights: [
+            "Led key product initiatives and delivered on time",
+            "Collaborated with cross-functional teams on critical projects",
+          ],
+        },
+        {
+          company: "Previous Company",
+          title: "Software Developer",
+          duration: "2 years",
+          highlights: [
+            "Built core features used by 10K+ users",
+            "Improved application performance by 40%",
+          ],
+        },
+      ],
+      education: [
+        {
+          institution: "Indian Institute of Technology",
+          degree: "B.Tech Computer Science",
+          year: `${2026 - experience - 4}`,
+        },
+      ],
+      skills,
+      projects: [
+        { name: "Open Source Contribution", description: "Contributed to popular React UI library" },
+      ],
+    },
+    notes: [
+      {
+        id: `note-${id}-1`,
+        authorName: "Priya Sharma",
+        authorRole: "recruiter",
+        content: "Initial screening looks promising. Good skill match.",
+        createdAt: appliedAt,
+      },
+    ],
+    appliedAt,
+    updatedAt: appliedAt,
+  };
+}
+
+export const MOCK_APPLICANTS: Applicant[] = [
+  // ── Applied (3) ───────────────────────────────────────────────────
+  mkCandidate("app-001", "Ananya Krishnan", "ananya.k@gmail.com", "+91-98765-43210", "Frontend Developer", "Zoho Corp", 3, "fitvector", "applied", 0, "potential_fit",
+    "Resume received. Pending AI screening.",
+    { skillMatch: 0, experienceRelevance: 0, educationFit: 0, achievementSignals: 0, cultureFit: 0, screeningQuestions: 0 },
+    ["React", "JavaScript", "CSS", "HTML", "Git"], "2026-03-27T09:00:00Z"),
+  mkCandidate("app-002", "Siddharth Jain", "sid.jain@outlook.com", "+91-99887-76543", "Software Engineer", "TCS", 2, "external", "applied", 0, "potential_fit",
+    "Resume received. Pending AI screening.",
+    { skillMatch: 0, experienceRelevance: 0, educationFit: 0, achievementSignals: 0, cultureFit: 0, screeningQuestions: 0 },
+    ["React", "TypeScript", "Node.js"], "2026-03-27T07:30:00Z"),
+  mkCandidate("app-003", "Meera Nair", "meera.nair@gmail.com", "+91-87654-32109", "UI Developer", "Freshworks", 4, "fitvector", "applied", 0, "potential_fit",
+    "Resume received. Pending AI screening.",
+    { skillMatch: 0, experienceRelevance: 0, educationFit: 0, achievementSignals: 0, cultureFit: 0, screeningQuestions: 0 },
+    ["React", "TypeScript", "Next.js", "Tailwind CSS", "Figma"], "2026-03-26T18:00:00Z"),
+
+  // ── AI Screened (4) ───────────────────────────────────────────────
+  mkCandidate("app-004", "Rahul Menon", "rahul.menon@gmail.com", "+91-76543-21098", "Senior Frontend Engineer", "Swiggy", 5, "fitvector", "ai_screened", 88, "strong_fit",
+    "Strong React and TypeScript expertise with 5 years at a fast-paced product company. Led a team of 3 on Swiggy's merchant dashboard rewrite. Excellent skill match (92%) and relevant experience. Recommended for AI interview.",
+    { skillMatch: 92, experienceRelevance: 88, educationFit: 75, achievementSignals: 90, cultureFit: 85, screeningQuestions: 80 },
+    ["React", "TypeScript", "Next.js", "GraphQL", "Tailwind CSS", "Redux"], "2026-03-25T14:00:00Z"),
+  mkCandidate("app-005", "Priya Subramaniam", "priya.s@yahoo.com", "+91-65432-10987", "Frontend Developer", "Infosys", 4, "external", "ai_screened", 72, "good_fit",
+    "Solid React fundamentals with experience in enterprise applications. Limited exposure to Next.js and modern tooling. Good communication skills evident from screening responses. Worth advancing to assess depth.",
+    { skillMatch: 75, experienceRelevance: 70, educationFit: 80, achievementSignals: 65, cultureFit: 70, screeningQuestions: 72 },
+    ["React", "JavaScript", "Angular", "REST APIs", "Jest"], "2026-03-25T10:00:00Z"),
+  mkCandidate("app-006", "Vikram Patel", "vikram.p@gmail.com", "+91-54321-09876", "Full Stack Developer", "Razorpay", 6, "fitvector", "ai_screened", 91, "strong_fit",
+    "Exceptional candidate. 6 years of React experience at tier-1 companies. Built Razorpay's checkout SDK used by millions. Strong skill match (95%), deep Next.js knowledge, and quantified achievements. Highly recommended.",
+    { skillMatch: 95, experienceRelevance: 90, educationFit: 85, achievementSignals: 95, cultureFit: 88, screeningQuestions: 85 },
+    ["React", "TypeScript", "Next.js", "Node.js", "AWS", "PostgreSQL", "Tailwind CSS"], "2026-03-24T16:00:00Z"),
+  mkCandidate("app-007", "Deepa Raghavan", "deepa.r@gmail.com", "+91-43210-98765", "Software Developer", "Wipro", 3, "external", "ai_screened", 52, "potential_fit",
+    "Basic React knowledge but limited experience with TypeScript and modern frameworks. Education from a good institution. May need significant ramp-up time. Consider for AI interview to assess learning ability.",
+    { skillMatch: 48, experienceRelevance: 50, educationFit: 78, achievementSignals: 40, cultureFit: 55, screeningQuestions: 45 },
+    ["React", "JavaScript", "jQuery", "HTML", "CSS"], "2026-03-24T11:00:00Z"),
+
+  // ── AI Interviewed (3) ────────────────────────────────────────────
+  mkCandidate("app-008", "Arjun Reddy", "arjun.r@gmail.com", "+91-32109-87654", "Senior Software Engineer", "Flipkart", 7, "fitvector", "ai_interviewed", 85, "strong_fit",
+    "Demonstrated deep React expertise in AI interview. Excellent system design thinking — proposed micro-frontend architecture with strong reasoning. Minor gap in CSS-in-JS approaches. Strong communicator.",
+    { skillMatch: 88, experienceRelevance: 85, educationFit: 80, achievementSignals: 88, cultureFit: 82, screeningQuestions: 78 },
+    ["React", "TypeScript", "Next.js", "System Design", "Node.js", "AWS", "GraphQL"], "2026-03-22T09:00:00Z"),
+  mkCandidate("app-009", "Kavitha Sundaram", "kavitha.s@gmail.com", "+91-21098-76543", "Frontend Lead", "Ola", 6, "referral", "ai_interviewed", 79, "good_fit",
+    "Good technical depth in React and state management. AI interview revealed strong leadership skills but moderate Next.js experience. Asked insightful questions about the role. Good cultural fit signals.",
+    { skillMatch: 80, experienceRelevance: 78, educationFit: 72, achievementSignals: 82, cultureFit: 80, screeningQuestions: 75 },
+    ["React", "TypeScript", "Redux", "MobX", "Webpack", "Testing"], "2026-03-21T14:00:00Z"),
+  mkCandidate("app-010", "Nikhil Sharma", "nikhil.s@proton.me", "+91-10987-65432", "React Developer", "Paytm", 4, "fitvector", "ai_interviewed", 68, "good_fit",
+    "Decent React skills but struggled with system design questions in AI interview. Good at component-level work but limited architectural thinking. Communication was clear. May benefit from mentorship.",
+    { skillMatch: 72, experienceRelevance: 65, educationFit: 70, achievementSignals: 60, cultureFit: 68, screeningQuestions: 70 },
+    ["React", "JavaScript", "TypeScript", "REST APIs", "CSS Modules"], "2026-03-20T11:00:00Z"),
+
+  // ── Assessment (2) ────────────────────────────────────────────────
+  mkCandidate("app-011", "Sneha Iyer", "sneha.i@gmail.com", "+91-98712-34567", "Frontend Engineer", "CRED", 5, "fitvector", "assessment", 83, "strong_fit",
+    "Strong candidate from CRED with excellent UI/UX sensibility. AI interview showed depth in React patterns. Currently completing coding assessment.",
+    { skillMatch: 85, experienceRelevance: 82, educationFit: 78, achievementSignals: 86, cultureFit: 84, screeningQuestions: 80 },
+    ["React", "TypeScript", "Next.js", "Framer Motion", "Tailwind CSS", "Storybook"], "2026-03-19T09:00:00Z"),
+  mkCandidate("app-012", "Aditya Verma", "aditya.v@gmail.com", "+91-87612-34567", "Software Engineer II", "Google", 5, "referral", "assessment", 90, "strong_fit",
+    "Exceptional candidate from Google. Top scores across all dimensions. Deep expertise in React performance optimization and large-scale applications. Completing assessment.",
+    { skillMatch: 94, experienceRelevance: 92, educationFit: 90, achievementSignals: 92, cultureFit: 80, screeningQuestions: 88 },
+    ["React", "TypeScript", "Next.js", "Golang", "System Design", "Kubernetes"], "2026-03-18T10:00:00Z"),
+
+  // ── Human Interview (2) ───────────────────────────────────────────
+  mkCandidate("app-013", "Pooja Deshmukh", "pooja.d@gmail.com", "+91-76512-34567", "Senior Frontend Developer", "PhonePe", 6, "fitvector", "human_interview", 86, "strong_fit",
+    "Passed all automated stages with flying colors. Currently in human interview round with Rahul (hiring manager). Strong leadership potential.",
+    { skillMatch: 88, experienceRelevance: 86, educationFit: 82, achievementSignals: 88, cultureFit: 86, screeningQuestions: 82 },
+    ["React", "TypeScript", "Next.js", "React Native", "GraphQL", "AWS"], "2026-03-15T09:00:00Z"),
+  mkCandidate("app-014", "Rohan Kulkarni", "rohan.k@gmail.com", "+91-65412-34567", "Tech Lead", "Myntra", 8, "fitvector", "human_interview", 82, "strong_fit",
+    "Very experienced candidate. Strong technical depth but salary expectations may be high. Human interview scheduled for culture fit assessment.",
+    { skillMatch: 84, experienceRelevance: 88, educationFit: 76, achievementSignals: 85, cultureFit: 75, screeningQuestions: 78 },
+    ["React", "TypeScript", "Next.js", "Node.js", "System Design", "Team Lead"], "2026-03-14T11:00:00Z"),
+
+  // ── Offer (1) ─────────────────────────────────────────────────────
+  mkCandidate("app-015", "Shreya Banerjee", "shreya.b@gmail.com", "+91-54312-34567", "Senior React Developer", "Atlassian", 7, "referral", "offer", 93, "strong_fit",
+    "Top candidate. Excelled at every stage. Offer extended at INR 32 LPA. Awaiting response.",
+    { skillMatch: 95, experienceRelevance: 94, educationFit: 88, achievementSignals: 95, cultureFit: 90, screeningQuestions: 92 },
+    ["React", "TypeScript", "Next.js", "GraphQL", "AWS", "System Design", "Mentoring"], "2026-03-10T09:00:00Z"),
+
+  // ── Hired (1) ─────────────────────────────────────────────────────
+  mkCandidate("app-016", "Karthik Narayanan", "karthik.n@gmail.com", "+91-43212-34567", "Frontend Architect", "Microsoft", 9, "fitvector", "hired", 95, "strong_fit",
+    "Hired! Start date April 14. Exceptional candidate with 9 years of experience including 3 years at Microsoft. Will lead the frontend team.",
+    { skillMatch: 96, experienceRelevance: 95, educationFit: 92, achievementSignals: 96, cultureFit: 92, screeningQuestions: 90 },
+    ["React", "TypeScript", "Next.js", "System Design", "Architecture", "Team Lead", "AWS"], "2026-03-05T09:00:00Z"),
+
+  // ── Rejected (2) ──────────────────────────────────────────────────
+  mkCandidate("app-017", "Amit Tiwari", "amit.t@gmail.com", "+91-32112-34567", "Junior Developer", "Startup XYZ", 1, "external", "rejected", 28, "weak_fit",
+    "Very junior for this senior role. Only 1 year of experience with basic React knowledge. No TypeScript or Next.js. Auto-rejected based on screening threshold.",
+    { skillMatch: 30, experienceRelevance: 20, educationFit: 40, achievementSignals: 15, cultureFit: 35, screeningQuestions: 25 },
+    ["React", "JavaScript", "HTML", "CSS"], "2026-03-23T09:00:00Z"),
+  mkCandidate("app-018", "Lakshmi Venkatesh", "lakshmi.v@gmail.com", "+91-21012-34567", "Backend Developer", "HCL", 5, "imported", "rejected", 35, "weak_fit",
+    "Primarily a backend developer with minimal frontend experience. Applied for a senior frontend role. Skills don't match the job requirements. Moved to talent pool for future backend roles.",
+    { skillMatch: 25, experienceRelevance: 30, educationFit: 70, achievementSignals: 45, cultureFit: 40, screeningQuestions: 30 },
+    ["Java", "Spring Boot", "PostgreSQL", "Docker", "AWS"], "2026-03-22T10:00:00Z"),
 ];

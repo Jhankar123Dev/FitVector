@@ -1,0 +1,213 @@
+"use client";
+
+import { cn } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/utils";
+import type { Applicant } from "@/types/employer";
+import { SOURCE_LABELS } from "@/types/employer";
+
+function scoreColor(score: number) {
+  if (score >= 80) return "bg-emerald-500";
+  if (score >= 60) return "bg-brand-500";
+  if (score >= 40) return "bg-amber-500";
+  return "bg-red-500";
+}
+
+function scoreBgColor(score: number) {
+  if (score >= 80) return "bg-emerald-50 text-emerald-700";
+  if (score >= 60) return "bg-brand-50 text-brand-700";
+  if (score >= 40) return "bg-amber-50 text-amber-700";
+  return "bg-red-50 text-red-700";
+}
+
+const SOURCE_COLORS: Record<string, string> = {
+  fitvector: "bg-brand-50 text-brand-600",
+  external: "bg-surface-100 text-surface-600",
+  referral: "bg-accent-50 text-accent-700",
+  imported: "bg-sky-50 text-sky-600",
+};
+
+interface CandidateCardProps {
+  applicant: Applicant;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
+  onClick?: (applicant: Applicant) => void;
+  compact?: boolean;
+}
+
+export function CandidateCard({
+  applicant,
+  selected,
+  onSelect,
+  onClick,
+  compact,
+}: CandidateCardProps) {
+  const initials = applicant.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <div
+      className={cn(
+        "group cursor-pointer rounded-lg border bg-white p-3 transition-all hover:shadow-card",
+        selected
+          ? "border-brand-500 ring-1 ring-brand-500"
+          : "border-surface-200 hover:border-surface-300",
+        compact && "p-2",
+      )}
+      onClick={() => onClick?.(applicant)}
+    >
+      <div className="flex items-start gap-3">
+        {/* Checkbox */}
+        {onSelect && (
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSelect(applicant.id);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-1 rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+          />
+        )}
+
+        {/* Avatar */}
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold text-surface-600">
+          {initials}
+        </div>
+
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="truncate text-sm font-medium text-surface-800">
+              {applicant.name}
+            </p>
+            {applicant.screeningScore > 0 && (
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white",
+                  scoreColor(applicant.screeningScore),
+                )}
+              >
+                {applicant.screeningScore}
+              </span>
+            )}
+          </div>
+          <p className="truncate text-xs text-surface-500">
+            {applicant.currentRole} @ {applicant.currentCompany}
+          </p>
+
+          {!compact && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                  SOURCE_COLORS[applicant.source] || SOURCE_COLORS.external,
+                )}
+              >
+                {SOURCE_LABELS[applicant.source]}
+              </span>
+              <span className="text-[10px] text-surface-400">
+                {formatRelativeTime(applicant.appliedAt)}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Table row variant ───────────────────────────────────────────────
+interface CandidateRowProps {
+  applicant: Applicant;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
+  onClick?: (applicant: Applicant) => void;
+}
+
+export function CandidateRow({
+  applicant,
+  selected,
+  onSelect,
+  onClick,
+}: CandidateRowProps) {
+  const initials = applicant.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <tr
+      className={cn(
+        "cursor-pointer border-b border-surface-100 transition-colors hover:bg-surface-50",
+        selected && "bg-brand-50/50",
+      )}
+      onClick={() => onClick?.(applicant)}
+    >
+      <td className="px-4 py-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => {
+            e.stopPropagation();
+            onSelect?.(applicant.id);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold text-surface-600">
+            {initials}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-surface-800">
+              {applicant.name}
+            </p>
+            <p className="text-xs text-surface-500">{applicant.email}</p>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <p className="text-sm text-surface-700">{applicant.currentRole}</p>
+        <p className="text-xs text-surface-400">{applicant.currentCompany}</p>
+      </td>
+      <td className="px-4 py-3">
+        {applicant.screeningScore > 0 ? (
+          <span
+            className={cn(
+              "inline-flex rounded-full px-2 py-0.5 text-xs font-bold",
+              scoreBgColor(applicant.screeningScore),
+            )}
+          >
+            {applicant.screeningScore}
+          </span>
+        ) : (
+          <span className="text-xs text-surface-400">—</span>
+        )}
+      </td>
+      <td className="px-4 py-3">
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[11px] font-medium",
+            SOURCE_COLORS[applicant.source] || SOURCE_COLORS.external,
+          )}
+        >
+          {SOURCE_LABELS[applicant.source]}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-xs text-surface-500">
+          {formatRelativeTime(applicant.appliedAt)}
+        </span>
+      </td>
+    </tr>
+  );
+}

@@ -245,3 +245,120 @@ export interface ActivityItem {
   timestamp: string;
   actionUrl: string;
 }
+
+// ── Applicant / Pipeline types ──────────────────────────────────────
+
+export type PipelineStage =
+  | "applied"
+  | "ai_screened"
+  | "ai_interviewed"
+  | "assessment"
+  | "human_interview"
+  | "offer"
+  | "hired"
+  | "rejected";
+
+export const PIPELINE_STAGE_LABELS: Record<PipelineStage, string> = {
+  applied: "Applied",
+  ai_screened: "AI Screened",
+  ai_interviewed: "AI Interviewed",
+  assessment: "Assessment",
+  human_interview: "Human Interview",
+  offer: "Offer",
+  hired: "Hired",
+  rejected: "Rejected",
+};
+
+export const PIPELINE_COLUMNS: PipelineStage[] = [
+  "applied",
+  "ai_screened",
+  "ai_interviewed",
+  "assessment",
+  "human_interview",
+  "offer",
+  "hired",
+];
+
+export type ApplicantSource = "fitvector" | "external" | "referral" | "imported";
+
+export const SOURCE_LABELS: Record<ApplicantSource, string> = {
+  fitvector: "FitVector",
+  external: "External",
+  referral: "Referral",
+  imported: "Imported",
+};
+
+export type ScreeningBucket = "strong_fit" | "good_fit" | "potential_fit" | "weak_fit";
+
+export const BUCKET_LABELS: Record<ScreeningBucket, string> = {
+  strong_fit: "Strong Fit",
+  good_fit: "Good Fit",
+  potential_fit: "Potential Fit",
+  weak_fit: "Weak Fit",
+};
+
+export const BUCKET_COLORS: Record<ScreeningBucket, string> = {
+  strong_fit: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  good_fit: "bg-brand-50 text-brand-700 border-brand-200",
+  potential_fit: "bg-amber-50 text-amber-700 border-amber-200",
+  weak_fit: "bg-red-50 text-red-700 border-red-200",
+};
+
+export interface ScreeningBreakdown {
+  skillMatch: number;
+  experienceRelevance: number;
+  educationFit: number;
+  achievementSignals: number;
+  cultureFit: number;
+  screeningQuestions: number;
+}
+
+export interface ParsedResume {
+  summary: string;
+  experience: {
+    company: string;
+    title: string;
+    duration: string;
+    highlights: string[];
+  }[];
+  education: {
+    institution: string;
+    degree: string;
+    year: string;
+  }[];
+  skills: string[];
+  projects: {
+    name: string;
+    description: string;
+  }[];
+}
+
+export interface CandidateNote {
+  id: string;
+  authorName: string;
+  authorRole: TeamMemberRole;
+  content: string;
+  createdAt: string;
+}
+
+export interface Applicant {
+  id: string;
+  jobPostId: string;
+  name: string;
+  email: string;
+  phone: string;
+  currentRole: string;
+  currentCompany: string;
+  experience: number; // years
+  avatarUrl: string | null;
+  source: ApplicantSource;
+  pipelineStage: PipelineStage;
+  screeningScore: number; // 0-100
+  screeningBucket: ScreeningBucket;
+  screeningSummary: string;
+  screeningBreakdown: ScreeningBreakdown;
+  parsedResume: ParsedResume;
+  notes: CandidateNote[];
+  appliedAt: string;
+  updatedAt: string;
+}
