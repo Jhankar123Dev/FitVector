@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-user";
+import { useFitVectorApply } from "@/hooks/use-fitvector-apply";
 import type { JobSearchResult } from "@/types/job";
 import type { ScreeningAnswer } from "@/types/marketplace";
 import {
@@ -92,6 +93,7 @@ export function FitVectorApplyModal({
   onSubmitted,
 }: FitVectorApplyModalProps) {
   const { user } = useUser();
+  const fitVectorApply = useFitVectorApply();
   const backdropRef = useRef<HTMLDivElement>(null);
 
   // State
@@ -145,14 +147,29 @@ export function FitVectorApplyModal({
     }, 1000);
   };
 
-  // Submit
-  const handleSubmit = () => {
+  // Submit via real API
+  const handleSubmit = async () => {
     setPhase("submitting");
-    setTimeout(() => {
+    try {
+      await fitVectorApply.mutateAsync({
+        jobPostId: employerJobPostId || job.id,
+        resumeId: selectedResumeId,
+        resumeName: selectedResume?.name || "Resume",
+        matchScore: job.matchScore ?? undefined,
+        screeningAnswers: answers.map((a) => ({
+          questionId: a.questionId,
+          question: a.question,
+          answer: a.answer,
+        })),
+        coverNote: interestNote || undefined,
+      });
       setShowConfetti(true);
       setPhase("success");
       setTimeout(() => setShowConfetti(false), 3000);
-    }, 1500);
+    } catch (err) {
+      console.error("Apply failed:", err);
+      setPhase("idle"); // Allow retry
+    }
   };
 
   // Answered count

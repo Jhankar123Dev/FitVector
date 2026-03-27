@@ -33,8 +33,8 @@ import {
   type ExperienceFilter,
   type SalaryAggregation,
 } from "@/types/community";
+import { useSalaryInsights, useSubmitSalaryReport } from "@/hooks/use-community";
 import {
-  computeSalaryAggregation,
   MOCK_SALARY_ROLES,
   MOCK_SALARY_LOCATIONS,
 } from "@/lib/mock/community-data";
@@ -62,12 +62,30 @@ export default function SalaryInsightsPage() {
     return MOCK_SALARY_ROLES.filter((r) => r.toLowerCase().includes(q)).slice(0, 6);
   }, [roleQuery]);
 
-  // Compute aggregation
+  // Fetch aggregation from API
   const expRange = EXPERIENCE_FILTERS[expFilter];
+  const { data: salaryData } = useSalaryInsights(
+    selectedRole,
+    location,
+    expRange.min,
+    expRange.max,
+  );
+
   const aggregation = useMemo<SalaryAggregation | null>(() => {
-    if (!selectedRole) return null;
-    return computeSalaryAggregation(selectedRole, location, expRange.min, expRange.max);
-  }, [selectedRole, location, expFilter, expRange.min, expRange.max]);
+    if (!salaryData?.data || salaryData.data.insufficientData) return null;
+    const d = salaryData.data;
+    return {
+      role: (d.role as string) || selectedRole,
+      location: (d.location as string) || location,
+      sampleSize: (d.sampleSize as number) || 0,
+      median: (d.median as number) || 0,
+      p25: (d.p25 as number) || 0,
+      p75: (d.p75 as number) || 0,
+      min: (d.min as number) || 0,
+      max: (d.max as number) || 0,
+      distribution: [],
+    };
+  }, [salaryData, selectedRole, location]);
 
   // Percentile calculation
   const percentile = useMemo(() => {

@@ -31,14 +31,15 @@ import {
   type DiscussionThread,
   type DiscussionReply,
 } from "@/types/community";
-import {
-  MOCK_DISCUSSION_THREADS,
-  MOCK_DISCUSSION_REPLIES,
-} from "@/lib/mock/community-data";
+import { useCommunityPosts } from "@/hooks/use-community";
+import { MOCK_DISCUSSION_REPLIES } from "@/lib/mock/community-data";
 
 type SortOption = "hot" | "new" | "top";
 
 export default function DiscussionsPage() {
+  const { data: postsData } = useCommunityPosts("discussion");
+  const MOCK_DISCUSSION_THREADS = (postsData?.data || []) as unknown as DiscussionThread[];
+
   const [category, setCategory] = useState<DiscussionCategory | "all">("all");
   const [sort, setSort] = useState<SortOption>("hot");
   const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null);

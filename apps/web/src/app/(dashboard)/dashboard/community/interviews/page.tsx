@@ -32,11 +32,15 @@ import {
   type InterviewOutcome,
   type InterviewExperience,
 } from "@/types/community";
-import { MOCK_INTERVIEW_EXPERIENCES, MOCK_COMPANIES_LIST } from "@/lib/mock/community-data";
+import { useCommunityPosts, useVote } from "@/hooks/use-community";
+import { MOCK_COMPANIES_LIST } from "@/lib/mock/community-data";
 
 type SortOption = "recent" | "helpful" | "company";
 
 export default function InterviewExperiencesPage() {
+  const { data: postsData, isLoading } = useCommunityPosts("interview_experience");
+  const MOCK_INTERVIEW_EXPERIENCES = (postsData?.data || []) as unknown as InterviewExperience[];
+
   // Filters
   const [companySearch, setCompanySearch] = useState("");
   const [roleSearch, setRoleSearch] = useState("");

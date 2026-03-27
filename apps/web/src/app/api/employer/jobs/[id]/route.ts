@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmployerSession } from "@/lib/employer-auth";
 import { updateJobPostSchema } from "@/lib/validators";
-import { transformJobPost } from "../route";
+import { transformJobPost } from "@/lib/job-post-helpers";
 
 // ─── GET: Single job post ────────────────────────────────────────────────────
 

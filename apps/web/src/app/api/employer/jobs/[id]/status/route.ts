@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmployerSession } from "@/lib/employer-auth";
 import { changeJobStatusSchema } from "@/lib/validators";
-import { transformJobPost, insertIntoJobsTable } from "../../route";
+import { transformJobPost, insertIntoJobsTable } from "@/lib/job-post-helpers";
 
 // ─── PUT: Change job post status (publish/pause/close/fill) ──────────────────
 
