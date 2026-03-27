@@ -165,7 +165,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // If id is not a UUID (OAuth providers give numeric sub IDs), look up real Supabase UUID by email
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (token.id && !isUUID.test(token.id) && token.email) {
+      if (token.id && !isUUID.test(String(token.id)) && token.email) {
         const supabase = await getSupabaseAdmin();
         const { data: dbUser } = await supabase
           .from("users")

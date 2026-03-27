@@ -18,9 +18,9 @@ interface AnalyticsData {
 export default function AnalyticsPage() {
   const { user } = useUser();
 
-  const { data, isLoading } = useQuery<AnalyticsData>({
+  const { data, isLoading } = useQuery<AnalyticsData | null>({
     queryKey: ["analytics"],
-    queryFn: async () => {
+    queryFn: async (): Promise<AnalyticsData | null> => {
       const res = await fetch("/api/tracker?all=true");
       if (!res.ok) return null;
       const json = await res.json();
@@ -123,13 +123,14 @@ export default function AnalyticsPage() {
               <div className="space-y-3">
                 {Object.entries(data.statusBreakdown).map(([status, count]) => {
                   const total = data.totalApplications;
-                  const pct = Math.round((count / total) * 100);
+                  const countNum = Number(count);
+                  const pct = Math.round((countNum / total) * 100);
                   return (
                     <div key={status}>
                       <div className="flex items-center justify-between text-sm">
                         <span className="capitalize text-surface-700">{status}</span>
                         <span className="text-surface-500">
-                          {count} ({pct}%)
+                          {countNum} ({pct}%)
                         </span>
                       </div>
                       <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-surface-100">

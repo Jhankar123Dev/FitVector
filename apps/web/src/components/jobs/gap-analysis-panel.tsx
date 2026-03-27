@@ -51,7 +51,7 @@ export function GapAnalysisPanel({ job }: GapAnalysisPanelProps) {
           companyName: job.companyName,
           description: job.description,
           skillsRequired: job.skillsRequired,
-          requiredExperienceYears: (job as Record<string, unknown>).requiredExperienceYears ?? null,
+          requiredExperienceYears: (job as unknown as Record<string, unknown>).requiredExperienceYears ?? null,
         }),
       });
       if (!res.ok) {

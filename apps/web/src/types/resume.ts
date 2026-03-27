@@ -10,6 +10,7 @@ export interface TailorResumeResult {
   latexSource: string;
   versionName: string;
   generationTimeMs: number;
+  compilationError?: string | null;
   usage: {
     used: number;
     limit: number;
