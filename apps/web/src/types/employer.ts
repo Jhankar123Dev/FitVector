@@ -362,3 +362,86 @@ export interface Applicant {
   appliedAt: string;
   updatedAt: string;
 }
+
+// ── AI Interview types ──────────────────────────────────────────────
+
+export type AIInterviewStatus = "invited" | "started" | "completed" | "expired" | "cancelled";
+export type AIRecommendation = "strong_advance" | "advance" | "borderline" | "reject";
+export type CheatingConfidence = "low" | "medium" | "high";
+
+export const AI_INTERVIEW_STATUS_LABELS: Record<AIInterviewStatus, string> = {
+  invited: "Invited",
+  started: "In Progress",
+  completed: "Completed",
+  expired: "Expired",
+  cancelled: "Cancelled",
+};
+
+export const AI_RECOMMENDATION_LABELS: Record<AIRecommendation, string> = {
+  strong_advance: "Strong Advance",
+  advance: "Advance",
+  borderline: "Borderline",
+  reject: "Reject",
+};
+
+export const AI_RECOMMENDATION_COLORS: Record<AIRecommendation, string> = {
+  strong_advance: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  advance: "bg-brand-50 text-brand-700 border-brand-200",
+  borderline: "bg-amber-50 text-amber-700 border-amber-200",
+  reject: "bg-red-50 text-red-700 border-red-200",
+};
+
+export const CHEATING_CONFIDENCE_COLORS: Record<CheatingConfidence, string> = {
+  low: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  medium: "bg-amber-50 text-amber-700 border-amber-200",
+  high: "bg-red-50 text-red-700 border-red-200",
+};
+
+export interface TranscriptTurn {
+  speaker: "ai" | "candidate";
+  text: string;
+  timestamp: string; // "00:00", "01:23" etc
+}
+
+export interface SkillRating {
+  skill: string;
+  score: number; // 1-5
+  justification: string;
+}
+
+export interface CommunicationScore {
+  label: string;
+  score: number; // 1-5
+  note: string;
+}
+
+export interface AIInterview {
+  id: string;
+  applicantId: string;
+  applicantName: string;
+  applicantEmail: string;
+  applicantRole: string;
+  applicantCompany: string;
+  jobPostId: string;
+  jobTitle: string;
+  interviewType: InterviewType;
+  durationPlanned: number; // minutes
+  durationActual: number | null;
+  status: AIInterviewStatus;
+  inviteSentAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  overallScore: number | null; // 0-100
+  aiRecommendation: AIRecommendation | null;
+  cheatingConfidence: CheatingConfidence | null;
+  cheatingSignals: string[];
+  cheatingNote: string | null;
+  executiveSummary: string | null;
+  skillRatings: SkillRating[];
+  strengths: string[];
+  concerns: string[];
+  communicationScores: CommunicationScore[];
+  transcript: TranscriptTurn[];
+  audioUrl: string | null;
+  createdAt: string;
+}
