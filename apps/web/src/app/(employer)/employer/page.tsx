@@ -125,10 +125,10 @@ const QUICK_ACTIONS = [
 
 export default function EmployerDashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-surface-800">
+        <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
           Welcome back, {MOCK_COMPANY.name}
         </h1>
         <p className="mt-1 text-sm text-surface-500">
@@ -137,22 +137,22 @@ export default function EmployerDashboardPage() {
       </div>
 
       {/* ── Stats row ──────────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {STATS.map((stat) => (
           <Link key={stat.label} href={stat.href}>
             <Card className="transition-shadow hover:shadow-card-hover">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className={`rounded-lg p-2.5 ${stat.iconBg}`}>
+              <CardContent className="flex items-center gap-3 p-3 sm:gap-4 sm:p-5">
+                <div className={`hidden sm:block rounded-lg p-2.5 ${stat.iconBg}`}>
                   <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-2xl font-bold text-surface-800">
+                  <p className="text-xl sm:text-2xl font-bold text-surface-800">
                     {stat.value}
                   </p>
-                  <p className="text-xs text-surface-500">{stat.label}</p>
+                  <p className="text-[10px] sm:text-xs text-surface-500">{stat.label}</p>
                 </div>
                 <div
-                  className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                  className={`hidden sm:flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${
                     stat.trendUp
                       ? "bg-emerald-50 text-emerald-700"
                       : "bg-red-50 text-red-700"
@@ -172,14 +172,14 @@ export default function EmployerDashboardPage() {
       </div>
 
       {/* ── Main grid: chart + activity ────────────────────────────── */}
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
         {/* Hiring funnel chart */}
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Hiring Funnel</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Hiring Funnel</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[220px] sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={MOCK_FUNNEL_DATA}
@@ -277,11 +277,11 @@ export default function EmployerDashboardPage() {
       </div>
 
       {/* ── Quick actions + plan ───────────────────────────────────── */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {QUICK_ACTIONS.map((action) => (

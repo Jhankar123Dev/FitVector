@@ -112,31 +112,31 @@ export function CandidateDetail({
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-xl flex-col bg-white shadow-xl sm:w-[520px]">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-white shadow-xl sm:w-[480px] md:w-[520px]">
         {/* ── Header ───────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between border-b border-surface-200 p-5">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-100 text-lg font-bold text-surface-600">
+        <div className="flex items-start justify-between border-b border-surface-200 p-3 sm:p-5">
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-surface-100 text-base sm:text-lg font-bold text-surface-600">
               {initials}
             </div>
-            <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-surface-800">
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-base sm:text-lg font-semibold text-surface-800">
                 {applicant.name}
               </h2>
-              <p className="text-sm text-surface-500">
+              <p className="truncate text-xs sm:text-sm text-surface-500">
                 {applicant.currentRole} @ {applicant.currentCompany}
               </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-surface-500">
+              <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-surface-500">
                 <span className="flex items-center gap-1">
-                  <Mail className="h-3 w-3" />
-                  {applicant.email}
+                  <Mail className="h-3 w-3 shrink-0" />
+                  <span className="truncate max-w-[140px] sm:max-w-none">{applicant.email}</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
+                  <Phone className="h-3 w-3 shrink-0" />
                   {applicant.phone}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Briefcase className="h-3 w-3" />
+                  <Briefcase className="h-3 w-3 shrink-0" />
                   {applicant.experience}y exp
                 </span>
               </div>
@@ -162,8 +162,8 @@ export function CandidateDetail({
         {/* ── Tabs content ─────────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto">
           <Tabs defaultValue="screening" className="flex h-full flex-col">
-            <div className="border-b border-surface-200 px-5 pt-2">
-              <TabsList className="w-full justify-start bg-transparent p-0 h-auto">
+            <div className="border-b border-surface-200 px-3 pt-2 sm:px-5 overflow-x-auto">
+              <TabsList className="w-max sm:w-full justify-start bg-transparent p-0 h-auto">
                 {["resume", "screening", "ai_interview", "assessment", "human_interview", "notes"].map((tab) => (
                   <TabsTrigger
                     key={tab}
@@ -186,7 +186,7 @@ export function CandidateDetail({
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-5 sm:py-4">
               {/* ── Resume Tab ────────────────────────────────────── */}
               <TabsContent value="resume" className="mt-0 space-y-4">
                 <p className="text-sm text-surface-600">
@@ -493,7 +493,7 @@ export function CandidateDetail({
         </div>
 
         {/* ── Footer actions ───────────────────────────────────────── */}
-        <div className="flex items-center gap-2 border-t border-surface-200 p-4">
+        <div className="flex items-center gap-2 border-t border-surface-200 p-3 sm:p-4">
           {applicant.pipelineStage !== "hired" &&
             applicant.pipelineStage !== "rejected" && (
               <>

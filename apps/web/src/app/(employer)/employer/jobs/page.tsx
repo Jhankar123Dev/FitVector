@@ -150,7 +150,7 @@ function JobRow({
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex items-center gap-2">
           <Link
-            href={`/employer/jobs/${job.id}`}
+            href={`/employer/jobs/${job.id}/pipeline`}
             className="truncate text-sm font-semibold text-surface-800 hover:text-brand-600 transition-colors"
           >
             {job.title}
@@ -208,7 +208,7 @@ function JobRow({
       {/* Right: actions */}
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" asChild>
-          <Link href={`/employer/jobs/${job.id}`}>
+          <Link href={`/employer/jobs/${job.id}/pipeline`}>
             <Users className="mr-1.5 h-3.5 w-3.5" />
             View
           </Link>
@@ -266,12 +266,12 @@ export default function EmployerJobsPage() {
     status ? jobs.filter((j) => j.status === status) : jobs;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-surface-800">Jobs</h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">Jobs</h1>
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-surface-500">
             Manage your job postings and track applicants
           </p>
         </div>

@@ -11,8 +11,8 @@ interface EmployerMobileNavProps {
 export function EmployerMobileNav({ open, onOpenChange }: EmployerMobileNavProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-64 p-0">
-        <EmployerSidebar />
+      <SheetContent side="left" className="w-[240px] p-0">
+        <EmployerSidebar onNavigate={() => onOpenChange(false)} />
       </SheetContent>
     </Sheet>
   );

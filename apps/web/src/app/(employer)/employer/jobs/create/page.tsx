@@ -269,21 +269,22 @@ export default function CreateJobPage() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 py-4">
+    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6 py-2 sm:py-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
         <Button
           variant="ghost"
           size="icon"
+          className="h-8 w-8 shrink-0"
           onClick={() => router.push("/employer/jobs")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold text-surface-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
             Create Job Post
           </h1>
-          <p className="text-sm text-surface-500">
+          <p className="text-xs sm:text-sm text-surface-500">
             Step {step} of {STEPS.length} — {STEPS[step - 1].label}
           </p>
         </div>

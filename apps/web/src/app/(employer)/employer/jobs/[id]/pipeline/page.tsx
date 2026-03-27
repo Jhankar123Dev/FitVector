@@ -20,7 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CandidateCard, CandidateRow } from "@/components/employer/pipeline/candidate-card";
+import { CandidateCard } from "@/components/employer/pipeline/candidate-card";
 import { CandidateDetail } from "@/components/employer/pipeline/candidate-detail";
 import { MOCK_APPLICANTS, MOCK_JOB_POSTS } from "@/lib/mock/employer-data";
 import type { Applicant, PipelineStage } from "@/types/employer";
@@ -81,14 +81,8 @@ export default function PipelinePage() {
   // ── Group by stage ──────────────────────────────────────────────
   const byStage = useMemo(() => {
     const map: Record<PipelineStage, Applicant[]> = {
-      applied: [],
-      ai_screened: [],
-      ai_interviewed: [],
-      assessment: [],
-      human_interview: [],
-      offer: [],
-      hired: [],
-      rejected: [],
+      applied: [], ai_screened: [], ai_interviewed: [], assessment: [],
+      human_interview: [], offer: [], hired: [], rejected: [],
     };
     for (const a of filtered) {
       map[a.pipelineStage].push(a);
@@ -159,56 +153,57 @@ export default function PipelinePage() {
   const hasActiveFilters = filterScoreMin > 0 || filterScoreMax < 100 || filterSkill || filterSource || filterExpMin > 0 || filterExpMax < 30;
 
   return (
-    <div className="flex h-full flex-col -m-6">
+    <div className="flex h-full flex-col -m-3 sm:-m-4 md:-m-6">
       {/* ── Top bar ──────────────────────────────────────────────── */}
-      <div className="border-b border-surface-200 bg-white px-6 py-4">
+      <div className="border-b border-surface-200 bg-white px-3 py-3 sm:px-4 sm:py-4 md:px-6">
         {/* Header row */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Button
               variant="ghost"
               size="icon"
+              className="h-8 w-8 shrink-0"
               onClick={() => router.push("/employer/jobs")}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-lg font-semibold text-surface-800">
+            <div className="min-w-0">
+              <h1 className="truncate text-base sm:text-lg font-semibold text-surface-800">
                 {job.title}
               </h1>
-              <p className="text-xs text-surface-500">
+              <p className="truncate text-[11px] sm:text-xs text-surface-500">
                 {filtered.length} candidates &middot;{" "}
                 {job.location} &middot; {job.department}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {/* View toggle */}
             <div className="flex rounded-lg border border-surface-200 p-0.5">
               <button
                 className={cn(
-                  "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                  "rounded-md px-2 py-1 sm:px-2.5 sm:py-1.5 text-[11px] sm:text-xs font-medium transition-colors",
                   viewMode === "kanban"
                     ? "bg-surface-100 text-surface-800"
                     : "text-surface-500 hover:text-surface-700",
                 )}
                 onClick={() => setViewMode("kanban")}
               >
-                <LayoutGrid className="mr-1 inline h-3.5 w-3.5" />
-                Kanban
+                <LayoutGrid className="inline h-3.5 w-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">Kanban</span>
               </button>
               <button
                 className={cn(
-                  "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                  "rounded-md px-2 py-1 sm:px-2.5 sm:py-1.5 text-[11px] sm:text-xs font-medium transition-colors",
                   viewMode === "table"
                     ? "bg-surface-100 text-surface-800"
                     : "text-surface-500 hover:text-surface-700",
                 )}
                 onClick={() => setViewMode("table")}
               >
-                <TableProperties className="mr-1 inline h-3.5 w-3.5" />
-                Table
+                <TableProperties className="inline h-3.5 w-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">Table</span>
               </button>
             </div>
 
@@ -217,12 +212,12 @@ export default function PipelinePage() {
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className="gap-1.5"
+              className="gap-1 sm:gap-1.5 h-8 px-2 sm:px-3"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
               {hasActiveFilters && (
-                <span className="ml-1 h-2 w-2 rounded-full bg-brand-500" />
+                <span className="ml-0.5 h-2 w-2 rounded-full bg-brand-500" />
               )}
             </Button>
           </div>
@@ -230,33 +225,33 @@ export default function PipelinePage() {
 
         {/* ── Bulk actions bar ──────────────────────────────────── */}
         {selectedIds.size > 0 && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-brand-50 px-4 py-2.5">
-            <span className="text-sm font-medium text-brand-700">
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 sm:px-4 sm:py-2.5">
+            <span className="text-xs sm:text-sm font-medium text-brand-700">
               {selectedIds.size} selected
             </span>
-            <div className="ml-auto flex items-center gap-2">
-              <Button size="sm" onClick={bulkAdvance} className="gap-1.5">
-                <ArrowRight className="h-3.5 w-3.5" />
+            <div className="ml-auto flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <Button size="sm" onClick={bulkAdvance} className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5">
+                <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 Advance
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={bulkReject}
-                className="gap-1.5 text-red-600 hover:bg-red-50"
+                className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5 text-red-600 hover:bg-red-50"
               >
-                <XCircle className="h-3.5 w-3.5" />
+                <XCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 Reject
               </Button>
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="hidden md:inline-flex gap-1.5 h-8">
                 <Send className="h-3.5 w-3.5" />
                 Send AI Interview
               </Button>
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="hidden md:inline-flex gap-1.5 h-8">
                 <ClipboardCheck className="h-3.5 w-3.5" />
                 Send Assessment
               </Button>
-              <Button variant="ghost" size="sm" onClick={clearSelection}>
+              <Button variant="ghost" size="sm" onClick={clearSelection} className="h-7 text-xs sm:h-8 sm:text-sm">
                 Clear
               </Button>
             </div>
@@ -265,9 +260,9 @@ export default function PipelinePage() {
 
         {/* ── Filters panel ────────────────────────────────────── */}
         {showFilters && (
-          <div className="mt-3 grid gap-3 rounded-lg border border-surface-200 bg-surface-50 p-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-3 grid gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3 sm:p-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
             <div>
-              <label className="mb-1 block text-xs font-medium text-surface-600">
+              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
                 Score Min
               </label>
               <Input
@@ -280,7 +275,7 @@ export default function PipelinePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-surface-600">
+              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
                 Score Max
               </label>
               <Input
@@ -293,7 +288,7 @@ export default function PipelinePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-surface-600">
+              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
                 Skill
               </label>
               <Input
@@ -304,7 +299,7 @@ export default function PipelinePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-surface-600">
+              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
                 Source
               </label>
               <select
@@ -321,8 +316,8 @@ export default function PipelinePage() {
             </div>
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="mb-1 block text-xs font-medium text-surface-600">
-                  Exp Min (yr)
+                <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
+                  Exp Min
                 </label>
                 <Input
                   type="number"
@@ -333,7 +328,7 @@ export default function PipelinePage() {
                 />
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-xs font-medium text-surface-600">
+                <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
                   Exp Max
                 </label>
                 <Input
@@ -353,20 +348,23 @@ export default function PipelinePage() {
       <div className="flex-1 overflow-auto">
         {viewMode === "kanban" ? (
           /* ═══════════ KANBAN VIEW ═══════════════════════════════ */
-          <div className="flex h-full gap-3 px-6 py-4" style={{ minWidth: "fit-content" }}>
+          <div
+            className="flex h-full gap-2 sm:gap-3 px-3 py-3 sm:px-4 sm:py-4 md:px-6"
+            style={{ minWidth: "fit-content" }}
+          >
             {PIPELINE_COLUMNS.map((stage) => {
               const items = byStage[stage];
               return (
                 <div
                   key={stage}
                   className={cn(
-                    "flex w-[260px] shrink-0 flex-col rounded-lg border-t-[3px] bg-surface-50",
+                    "flex w-[220px] sm:w-[250px] md:w-[260px] shrink-0 flex-col rounded-lg border-t-[3px] bg-surface-50",
                     COLUMN_COLORS[stage],
                   )}
                 >
                   {/* Column header */}
-                  <div className="flex items-center justify-between px-3 py-2.5">
-                    <span className="text-xs font-semibold text-surface-700">
+                  <div className="flex items-center justify-between px-2.5 py-2 sm:px-3 sm:py-2.5">
+                    <span className="text-[11px] sm:text-xs font-semibold text-surface-700">
                       {PIPELINE_STAGE_LABELS[stage]}
                     </span>
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
@@ -375,10 +373,10 @@ export default function PipelinePage() {
                   </div>
 
                   {/* Cards */}
-                  <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2">
+                  <div className="flex-1 space-y-1.5 sm:space-y-2 overflow-y-auto px-1.5 pb-2 sm:px-2">
                     {items.length === 0 ? (
-                      <div className="flex items-center justify-center rounded-lg border border-dashed border-surface-200 py-8">
-                        <p className="text-xs text-surface-400">No candidates</p>
+                      <div className="flex items-center justify-center rounded-lg border border-dashed border-surface-200 py-6 sm:py-8">
+                        <p className="text-[11px] sm:text-xs text-surface-400">No candidates</p>
                       </div>
                     ) : (
                       items.map((a) => (
@@ -402,16 +400,16 @@ export default function PipelinePage() {
               className={cn(
                 "flex shrink-0 flex-col rounded-lg border-t-[3px] bg-surface-50",
                 COLUMN_COLORS.rejected,
-                showRejected ? "w-[260px]" : "w-[50px]",
+                showRejected ? "w-[220px] sm:w-[250px] md:w-[260px]" : "w-[44px] sm:w-[50px]",
               )}
             >
               <button
-                className="flex items-center justify-between px-3 py-2.5"
+                className="flex items-center justify-between px-2.5 py-2 sm:px-3 sm:py-2.5"
                 onClick={() => setShowRejected(!showRejected)}
               >
                 {showRejected ? (
                   <>
-                    <span className="text-xs font-semibold text-surface-700">
+                    <span className="text-[11px] sm:text-xs font-semibold text-surface-700">
                       Rejected
                     </span>
                     <div className="flex items-center gap-1">
@@ -432,7 +430,7 @@ export default function PipelinePage() {
               </button>
 
               {showRejected && (
-                <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2">
+                <div className="flex-1 space-y-1.5 sm:space-y-2 overflow-y-auto px-1.5 pb-2 sm:px-2">
                   {byStage.rejected.map((a) => (
                     <CandidateCard
                       key={a.id}
@@ -449,13 +447,13 @@ export default function PipelinePage() {
           </div>
         ) : (
           /* ═══════════ TABLE VIEW ════════════════════════════════ */
-          <div className="px-6 py-4">
+          <div className="px-3 py-3 sm:px-4 sm:py-4 md:px-6">
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[700px]">
                   <thead>
                     <tr className="border-b border-surface-200 bg-surface-50">
-                      <th className="w-10 px-4 py-3">
+                      <th className="w-10 px-3 py-2.5 sm:px-4 sm:py-3">
                         <input
                           type="checkbox"
                           onChange={(e) => {
@@ -469,22 +467,22 @@ export default function PipelinePage() {
                           className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
                         />
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
                         Candidate
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
                         Current Role
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
                         Score
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
                         Source
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
                         Stage
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
                         Applied
                       </th>
                     </tr>
@@ -501,7 +499,7 @@ export default function PipelinePage() {
                     ))}
                     {filtered.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="py-16 text-center">
+                        <td colSpan={7} className="py-12 sm:py-16 text-center">
                           <Users className="mx-auto h-8 w-8 text-surface-300" />
                           <p className="mt-2 text-sm text-surface-500">
                             No candidates match your filters
@@ -580,7 +578,7 @@ function CandidateTableRow({
       )}
       onClick={() => onClick?.(applicant)}
     >
-      <td className="px-4 py-3">
+      <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <input
           type="checkbox"
           checked={selected}
@@ -592,28 +590,28 @@ function CandidateTableRow({
           className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
         />
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold text-surface-600">
+      <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] sm:text-xs font-semibold text-surface-600">
             {initials}
           </div>
-          <div>
-            <p className="text-sm font-medium text-surface-800">
+          <div className="min-w-0">
+            <p className="truncate text-xs sm:text-sm font-medium text-surface-800">
               {applicant.name}
             </p>
-            <p className="text-xs text-surface-500">{applicant.email}</p>
+            <p className="truncate text-[11px] sm:text-xs text-surface-500">{applicant.email}</p>
           </div>
         </div>
       </td>
-      <td className="px-4 py-3">
-        <p className="text-sm text-surface-700">{applicant.currentRole}</p>
-        <p className="text-xs text-surface-400">{applicant.currentCompany}</p>
+      <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+        <p className="text-xs sm:text-sm text-surface-700">{applicant.currentRole}</p>
+        <p className="text-[11px] sm:text-xs text-surface-400">{applicant.currentCompany}</p>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         {applicant.screeningScore > 0 ? (
           <span
             className={cn(
-              "inline-flex rounded-full px-2 py-0.5 text-xs font-bold",
+              "inline-flex rounded-full px-2 py-0.5 text-[11px] sm:text-xs font-bold",
               scoreBg,
             )}
           >
@@ -623,23 +621,23 @@ function CandidateTableRow({
           <span className="text-xs text-surface-400">—</span>
         )}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-[11px] font-medium",
+            "rounded-full px-2 py-0.5 text-[10px] sm:text-[11px] font-medium",
             SOURCE_COLORS[applicant.source] || SOURCE_COLORS.external,
           )}
         >
           {SOURCE_LABELS[applicant.source]}
         </span>
       </td>
-      <td className="px-4 py-3">
-        <Badge variant="outline" className="text-[11px]">
+      <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+        <Badge variant="outline" className="text-[10px] sm:text-[11px]">
           {PIPELINE_STAGE_LABELS[applicant.pipelineStage]}
         </Badge>
       </td>
-      <td className="px-4 py-3">
-        <span className="text-xs text-surface-500">
+      <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+        <span className="text-[11px] sm:text-xs text-surface-500">
           {new Date(applicant.appliedAt).toLocaleDateString("en-IN", {
             day: "numeric",
             month: "short",

@@ -41,7 +41,7 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
     : "U";
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-surface-200 bg-white px-4 sm:px-6">
+    <header className="sticky top-0 z-40 flex h-14 sm:h-16 items-center justify-between border-b border-surface-200 bg-white px-3 sm:px-4 md:px-6">
       {/* Left: mobile menu */}
       <div className="flex items-center gap-3">
         <Button
