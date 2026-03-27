@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,19 +16,71 @@ import {
   Shield,
   Save,
   Loader2,
+  AlertCircle,
+  Check,
 } from "lucide-react";
-import { MOCK_COMPANY } from "@/lib/mock/employer-data";
+import { useEmployer, useUpdateCompany } from "@/hooks/use-employer";
 
 export default function EmployerSettingsPage() {
-  const [companyName, setCompanyName] = useState(MOCK_COMPANY.name);
-  const [website, setWebsite] = useState(MOCK_COMPANY.websiteUrl);
-  const [description, setDescription] = useState(MOCK_COMPANY.description);
-  const [saving, setSaving] = useState(false);
+  const { data: employerData, isLoading, error } = useEmployer();
+  const updateCompany = useUpdateCompany();
+  const company = employerData?.data?.company;
 
-  const handleSave = () => {
-    setSaving(true);
-    setTimeout(() => setSaving(false), 1000);
+  const [companyName, setCompanyName] = useState("");
+  const [website, setWebsite] = useState("");
+  const [description, setDescription] = useState("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
+
+  // Initialize form state when company data loads
+  useEffect(() => {
+    if (company) {
+      setCompanyName(company.name || "");
+      setWebsite(company.websiteUrl || "");
+      setDescription(company.description || "");
+    }
+  }, [company]);
+
+  const handleSave = async () => {
+    try {
+      await updateCompany.mutateAsync({
+        name: companyName,
+        websiteUrl: website || null,
+        description,
+      });
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <div className="h-6 w-32 animate-pulse rounded bg-surface-200" />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-surface-100" />
+        </div>
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardContent className="py-8">
+              <div className="h-24 animate-pulse rounded bg-surface-100" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (error || !company) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4" />
+        Failed to load company data. Please try again.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -82,21 +134,44 @@ export default function EmployerSettingsPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <Label className="text-xs">Industry</Label>
-              <Input value="SaaS" disabled className="mt-1" />
+              <Input value={company.industry || ""} disabled className="mt-1" />
             </div>
             <div>
               <Label className="text-xs">Company Size</Label>
-              <Input value={MOCK_COMPANY.companySize} disabled className="mt-1" />
+              <Input value={company.companySize || ""} disabled className="mt-1" />
             </div>
             <div>
               <Label className="text-xs">Locations</Label>
-              <Input value={MOCK_COMPANY.locations.join(", ")} disabled className="mt-1" />
+              <Input
+                value={
+                  company.locations
+                    ?.map((l: { city: string; state?: string; country: string }) => [l.city, l.state, l.country].filter(Boolean).join(", "))
+                    .join(" · ") || ""
+                }
+                disabled
+                className="mt-1"
+              />
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving} className="gap-1.5">
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={handleSave} disabled={updateCompany.isPending} className="gap-1.5">
+              {updateCompany.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : saveStatus === "success" ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              {updateCompany.isPending
+                ? "Saving..."
+                : saveStatus === "success"
+                  ? "Saved!"
+                  : "Save Changes"}
+            </Button>
+            {saveStatus === "error" && (
+              <span className="text-xs text-red-500">Failed to save. Try again.</span>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -114,7 +189,7 @@ export default function EmployerSettingsPage() {
         <CardContent>
           <div className="flex items-center gap-3">
             <Badge variant="brand" className="text-sm capitalize">
-              {MOCK_COMPANY.planTier} Plan
+              {company.planTier} Plan
             </Badge>
             <Button size="sm" variant="outline">
               Upgrade Plan

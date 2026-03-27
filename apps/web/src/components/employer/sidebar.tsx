@@ -17,7 +17,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_COMPANY } from "@/lib/mock/employer-data";
+import { useEmployer } from "@/hooks/use-employer";
 
 const NAV_ITEMS = [
   { href: "/employer", label: "Dashboard", icon: LayoutDashboard },
@@ -41,7 +41,8 @@ interface EmployerSidebarProps {
 
 export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps) {
   const pathname = usePathname();
-  const company = MOCK_COMPANY;
+  const { data: employerData, isLoading } = useEmployer();
+  const company = employerData?.data?.company;
 
   return (
     <aside
@@ -52,23 +53,47 @@ export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps)
     >
       {/* Company header */}
       <div className="flex h-14 items-center gap-2.5 border-b border-surface-800 px-4">
-        {company.logoUrl ? (
-          <img
-            src={company.logoUrl}
-            alt={company.name}
-            className="h-7 w-7 rounded-lg object-cover"
-          />
+        {isLoading ? (
+          <>
+            <div className="h-7 w-7 shrink-0 animate-pulse rounded-lg bg-surface-700" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="h-3 w-24 animate-pulse rounded bg-surface-700" />
+              <div className="h-2 w-16 animate-pulse rounded bg-surface-800" />
+            </div>
+          </>
+        ) : company ? (
+          <>
+            {company.logoUrl ? (
+              <img
+                src={company.logoUrl}
+                alt={company.name}
+                className="h-7 w-7 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-xs font-bold text-white">
+                {company.name.charAt(0)}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-white leading-tight">
+                {company.name}
+              </p>
+              <p className="truncate text-[10px] text-surface-500 leading-tight">Employer Portal</p>
+            </div>
+          </>
         ) : (
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-xs font-bold text-white">
-            {company.name.charAt(0)}
-          </div>
+          <>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-700 text-xs font-bold text-surface-400">
+              ?
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-surface-400 leading-tight">
+                No Company
+              </p>
+              <p className="truncate text-[10px] text-surface-500 leading-tight">Employer Portal</p>
+            </div>
+          </>
         )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-semibold text-white leading-tight">
-            {company.name}
-          </p>
-          <p className="truncate text-[10px] text-surface-500 leading-tight">Employer Portal</p>
-        </div>
       </div>
 
       {/* Navigation */}
@@ -102,7 +127,7 @@ export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps)
         <div className="flex items-center justify-between rounded-md bg-surface-800/60 px-3 py-2">
           <span className="text-[11px] font-medium text-surface-400">Plan</span>
           <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[11px] font-semibold capitalize text-brand-300">
-            {company.planTier}
+            {company?.planTier || "starter"}
           </span>
         </div>
       </div>

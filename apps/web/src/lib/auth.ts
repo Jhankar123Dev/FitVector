@@ -19,12 +19,16 @@ declare module "next-auth" {
       image?: string | null;
       planTier: PlanTier;
       onboardingCompleted: boolean;
+      userType: string[];
+      companyId: string | null;
     };
   }
 
   interface User {
     planTier?: PlanTier;
     onboardingCompleted?: boolean;
+    userType?: string[];
+    companyId?: string | null;
   }
 }
 
@@ -36,6 +40,8 @@ declare module "next-auth" {
     provider?: string;
     planTier: PlanTier;
     onboardingCompleted: boolean;
+    userType: string[];
+    companyId: string | null;
   }
 }
 
@@ -163,30 +169,68 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const supabase = await getSupabaseAdmin();
         const { data: dbUser } = await supabase
           .from("users")
-          .select("id, plan_tier, onboarding_completed")
+          .select("id, plan_tier, onboarding_completed, user_type")
           .eq("email", token.email as string)
           .single();
         if (dbUser) {
           token.id = dbUser.id;
           token.planTier = dbUser.plan_tier;
           token.onboardingCompleted = dbUser.onboarding_completed;
+          token.userType = dbUser.user_type || ["seeker"];
         }
       }
 
-      // Refresh user data from DB on session update
+      // On initial sign-in (user is present), fetch user_type and companyId from DB
+      // This works uniformly for Credentials, Google, and LinkedIn providers
+      if (user && token.id) {
+        const supabase = await getSupabaseAdmin();
+
+        // Fetch user_type from DB (OAuth user object won't have it)
+        const { data: dbUser } = await supabase
+          .from("users")
+          .select("user_type")
+          .eq("id", token.id)
+          .single();
+        token.userType = dbUser?.user_type || ["seeker"];
+
+        // Fetch active company membership
+        const { data: membership } = await supabase
+          .from("company_members")
+          .select("company_id")
+          .eq("user_id", token.id)
+          .eq("status", "active")
+          .single();
+        token.companyId = membership?.company_id || null;
+      }
+
+      // Refresh user data from DB on session update (e.g., after company creation)
       if (trigger === "update") {
         const supabase = await getSupabaseAdmin();
         const { data: freshUser } = await supabase
           .from("users")
-          .select("plan_tier, onboarding_completed")
+          .select("plan_tier, onboarding_completed, user_type")
           .eq("id", token.id)
           .single();
 
         if (freshUser) {
           token.planTier = freshUser.plan_tier;
           token.onboardingCompleted = freshUser.onboarding_completed;
+          token.userType = freshUser.user_type || ["seeker"];
         }
+
+        // Refresh company membership
+        const { data: membership } = await supabase
+          .from("company_members")
+          .select("company_id")
+          .eq("user_id", token.id)
+          .eq("status", "active")
+          .single();
+        token.companyId = membership?.company_id || null;
       }
+
+      // Ensure defaults for tokens that were created before this update
+      if (!token.userType) token.userType = ["seeker"];
+      if (token.companyId === undefined) token.companyId = null;
 
       return token;
     },
@@ -194,13 +238,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.id = token.id as string;
       session.user.planTier = (token.planTier as PlanTier) ?? "free";
       session.user.onboardingCompleted = (token.onboardingCompleted as boolean) ?? false;
+      session.user.userType = (token.userType as string[]) ?? ["seeker"];
+      session.user.companyId = (token.companyId as string | null) ?? null;
       return session;
     },
     authorized({ auth: authResult, request }) {
       const isLoggedIn = !!authResult?.user;
       const { pathname } = request.nextUrl;
       const isOnProtectedRoute =
-        pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding");
+        pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding") || pathname.startsWith("/employer");
 
       if (isOnProtectedRoute && !isLoggedIn) {
         return false;

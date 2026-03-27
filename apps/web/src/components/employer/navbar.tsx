@@ -5,7 +5,8 @@ import { Bell, Menu, LogOut, User, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useRef, useEffect } from "react";
-import { MOCK_TEAM_MEMBERS } from "@/lib/mock/employer-data";
+import { signOut } from "next-auth/react";
+import { useUser } from "@/hooks/use-user";
 
 interface EmployerNavbarProps {
   onMenuClick?: () => void;
@@ -15,8 +16,7 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Mock current user = first team member (admin)
-  const currentUser = MOCK_TEAM_MEMBERS[0];
+  const { user } = useUser();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -31,8 +31,8 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const initials = currentUser.name
-    ? currentUser.name
+  const initials = user?.name
+    ? user.name
         .split(" ")
         .map((n) => n[0])
         .join("")
@@ -93,9 +93,9 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
             <div className="absolute right-0 mt-2 w-56 rounded-xl border border-surface-200 bg-white shadow-card-hover">
               <div className="border-b border-surface-100 px-4 py-3">
                 <p className="text-sm font-medium text-surface-800">
-                  {currentUser.name || "User"}
+                  {user?.name || "User"}
                 </p>
-                <p className="text-xs text-surface-500">{currentUser.email}</p>
+                <p className="text-xs text-surface-500">{user?.email || ""}</p>
               </div>
               <div className="py-1">
                 <Link
@@ -117,7 +117,7 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
                 <button
                   onClick={() => {
                     setShowDropdown(false);
-                    // signOut would go here
+                    signOut({ callbackUrl: "/login" });
                   }}
                   className="flex w-full items-center gap-2 px-4 py-2 text-sm text-surface-600 transition-colors hover:bg-surface-50 hover:text-surface-800"
                 >

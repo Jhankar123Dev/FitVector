@@ -25,6 +25,7 @@ import {
   SkipForward,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCreateCompany, useInviteMember } from "@/hooks/use-employer";
 import type {
   OnboardingData,
   Industry,
@@ -61,6 +62,11 @@ export default function EmployerOnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<OnboardingData>(INITIAL_DATA);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // API hooks
+  const createCompany = useCreateCompany();
+  const inviteMember = useInviteMember();
 
   // Tag inputs
   const [keywordInput, setKeywordInput] = useState("");
@@ -152,8 +158,51 @@ export default function EmployerOnboardingPage() {
     if (step > 1) setStep(step - 1);
   }
 
-  function handleComplete() {
-    router.push("/employer");
+  async function handleComplete() {
+    setSubmitError(null);
+    try {
+      // Convert string locations (e.g. "Bangalore, India") to CompanyLocation objects
+      const parsedLocations = data.locations.map((loc) => {
+        const parts = loc.split(",").map((s) => s.trim());
+        return {
+          city: parts[0] || loc,
+          state: parts.length > 2 ? parts[1] : undefined,
+          country: parts[parts.length - 1] || "India",
+        };
+      });
+
+      // 1. Create the company
+      await createCompany.mutateAsync({
+        name: data.companyName,
+        logoUrl: data.logoPreviewUrl || null,
+        websiteUrl: data.websiteUrl || null,
+        industry: data.industry,
+        companySize: data.companySize,
+        description: data.description,
+        cultureKeywords: data.cultureKeywords,
+        locations: parsedLocations,
+      });
+
+      // 2. Send team invites (best-effort — don't block on failures)
+      for (const invite of data.invites) {
+        try {
+          await inviteMember.mutateAsync({
+            email: invite.email,
+            role: invite.role,
+          });
+        } catch (err) {
+          console.warn(`Failed to invite ${invite.email}:`, err);
+        }
+      }
+
+      // 3. Navigate to employer dashboard
+      router.push("/employer");
+    } catch (err) {
+      console.error("Company creation failed:", err);
+      setSubmitError(
+        err instanceof Error ? err.message : "Failed to create company. Please try again."
+      );
+    }
   }
 
   // ── Step validation (light) ──
@@ -633,41 +682,59 @@ export default function EmployerOnboardingPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Create first job */}
-              <button
-                onClick={handleComplete}
-                className="group rounded-xl border-2 border-surface-200 p-6 text-left transition-all hover:border-brand-500 hover:shadow-card-hover"
-              >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 transition-colors group-hover:bg-brand-100">
-                  <Briefcase className="h-6 w-6 text-brand-500" />
-                </div>
-                <h3 className="text-sm font-semibold text-surface-800">
-                  Create a Job Post
-                </h3>
-                <p className="mt-1 text-xs text-surface-500">
-                  Set up your first job listing and start receiving applicants
-                  with AI-powered screening
-                </p>
-              </button>
+            {submitError && (
+              <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {submitError}
+              </div>
+            )}
 
-              {/* Skip */}
-              <button
-                onClick={handleComplete}
-                className="group rounded-xl border-2 border-dashed border-surface-200 p-6 text-left transition-all hover:border-surface-300"
-              >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-100 transition-colors group-hover:bg-surface-200">
-                  <SkipForward className="h-6 w-6 text-surface-500" />
-                </div>
-                <h3 className="text-sm font-semibold text-surface-800">
-                  Skip for Now
-                </h3>
-                <p className="mt-1 text-xs text-surface-500">
-                  Explore the dashboard first. You can create a job post
-                  anytime from the Jobs page.
+            {createCompany.isPending ? (
+              <div className="flex flex-col items-center justify-center py-10">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+                <p className="mt-3 text-sm font-medium text-surface-600">
+                  Setting up your company...
                 </p>
-              </button>
-            </div>
+                <p className="mt-1 text-xs text-surface-400">
+                  Creating company profile and sending invites
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Create first job */}
+                <button
+                  onClick={handleComplete}
+                  className="group rounded-xl border-2 border-surface-200 p-6 text-left transition-all hover:border-brand-500 hover:shadow-card-hover"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 transition-colors group-hover:bg-brand-100">
+                    <Briefcase className="h-6 w-6 text-brand-500" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-surface-800">
+                    Create a Job Post
+                  </h3>
+                  <p className="mt-1 text-xs text-surface-500">
+                    Set up your first job listing and start receiving applicants
+                    with AI-powered screening
+                  </p>
+                </button>
+
+                {/* Skip */}
+                <button
+                  onClick={handleComplete}
+                  className="group rounded-xl border-2 border-dashed border-surface-200 p-6 text-left transition-all hover:border-surface-300"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-100 transition-colors group-hover:bg-surface-200">
+                    <SkipForward className="h-6 w-6 text-surface-500" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-surface-800">
+                    Skip for Now
+                  </h3>
+                  <p className="mt-1 text-xs text-surface-500">
+                    Explore the dashboard first. You can create a job post
+                    anytime from the Jobs page.
+                  </p>
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

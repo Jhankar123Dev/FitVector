@@ -2,7 +2,17 @@
 
 > Use these prompts AFTER the database migration is complete and Phase 1A backend is tested and working. Each prompt wires up one section of the frontend to real Supabase data and API calls.
 
-> For every prompt: attach `project-structure.md`, `api-contracts.md`, and `database-schema.md`.
+> **Context files to attach with every prompt:**
+> - `supabase/migrations/20260327000001_phase2_phase3_tables.sql` — actual DB schema (Phase 2 + 3 tables)
+> - `supabase/migrations/20260322000001_initial_schema.sql` — Phase 1 tables (users, user_profiles, jobs, job_matches, tailored_resumes)
+> - `apps/web/src/lib/supabase/` — existing Supabase client setup
+> - The relevant mock data file(s) for the section being wired (found in `apps/web/src/lib/mock/`)
+
+> **Key column name corrections (confirmed against migration):**
+> - `applicants.role_title` — NOT `current_role` (`current_role` is a PostgreSQL reserved keyword; renamed to `role_title` in migration)
+> - `user_profiles."current_role"` — Phase 1 table uses double-quoted `"current_role"` (reserved keyword, must always be quoted in raw SQL)
+> - `applicants.applicant_user_id` does NOT exist on `applicants` — use `user_id` instead. `applicant_user_id` is only on `fitvector_applications`
+> - `jobs` table has NO `is_fitvector_posted` column — removed as redundant. A job is a FitVector post if and only if `job_post_id IS NOT NULL`
 
 ---
 
@@ -21,7 +31,7 @@ PUT  /api/employer/company/members/:id → Change role / deactivate
 ```
 
 **Logic:**
-- When user creates a company, add 'employer' to their `user_type` array, create company record, create company_member record with role 'admin'
+- When user creates a company, add 'employer' to their `user_type` array (it's `TEXT[]` on the `users` table), create company record, create company_member record with role 'admin'
 - Invite flow: create company_member with status 'invited' + invite_email, send email (or just log for now)
 - Auth middleware: create `getEmployerSession()` helper that checks user has 'employer' in user_type AND is an active member of a company
 
@@ -47,9 +57,9 @@ POST /api/employer/jobs/:id/duplicate → Duplicate a job post
 ```
 
 **Logic:**
-- On publish: also create a record in the `jobs` table (the scraped jobs table) with `is_fitvector_posted = true` and `job_post_id` linked. This makes it appear in job seekers' search results.
-- Job posts only visible to company members (RLS enforced)
-- Increment `applications_count` on the job post when new applicants arrive
+- On publish: also INSERT a record into the `jobs` table (the scraped jobs table) with `job_post_id = <new_job_post.id>`. A job is identified as a FitVector-posted job when `job_post_id IS NOT NULL` — there is no `is_fitvector_posted` column.
+- Job posts only visible to company members (RLS enforced via `is_company_member()` helper)
+- `applications_count` on job_posts auto-increments via the `trg_applicant_count` database trigger — no manual increment needed in API code
 
 **Frontend wiring:**
 - Replace mock jobs list in employer dashboard with real data
@@ -72,16 +82,24 @@ POST /api/employer/applicants/:id/screen   → Trigger AI screening for one appl
 POST /api/employer/jobs/:id/screen-all     → Bulk screen all unscreened applicants
 ```
 
+**Column name reminder for `applicants` table:**
+- Current job title → `role_title` (NOT `current_role` — reserved PG keyword, renamed in migration)
+- Current company → `current_company` ✅ (safe, not reserved)
+- Years of experience → `experience` (INTEGER)
+- Resume JSON → `resume_parsed_json`
+- Pipeline stage → `pipeline_stage`
+- Screening bucket → `bucket` (values: 'strong_fit' | 'good_fit' | 'potential_fit' | 'weak_fit')
+
 **AI Screening logic (Python microservice):**
 - New endpoint: `POST /ai/screen-resume`
-- Takes: applicant's parsed_resume_json + job_post's description + required_skills + dimension_weights
-- Returns: screening_score (0-100), screening_breakdown (per dimension), screening_summary (3-4 sentences), bucket
+- Takes: applicant's `resume_parsed_json` + job_post's `description` + `required_skills` + `dimension_weights`
+- Returns: `screening_score` (0-100), `screening_breakdown` (per dimension), `screening_summary` (3-4 sentences), `bucket`
 - Uses the 6-dimension scoring from the PRD: skill match (30%), experience relevance (25%), education fit (10%), achievement signals (15%), cultural keywords (10%), screening questions (10%)
-- Weights are configurable per job post via dimension_weights JSONB
+- Weights are configurable per job post via `dimension_weights` JSONB column on `job_posts`
 
 **Frontend wiring:**
 - Replace mock applicant cards in pipeline with real Supabase data
-- Kanban drag-drop updates pipeline_stage via API
+- Kanban drag-drop updates `pipeline_stage` via API
 - Candidate detail slide-over fetches real applicant data
 - Screening results show real AI-generated scores and summaries
 - Bulk actions work on selected applicants
@@ -108,10 +126,10 @@ POST /api/interview/:token/complete     → Submit completed interview
 ```
 
 **Logic:**
-- Invite creates ai_interviews record with status 'invited', generates unique token, sends email to candidate with interview link
+- Invite creates `ai_interviews` record with status 'invited', generates unique token, sends email to candidate with interview link
 - For MVP: the actual voice AI interview is NOT built yet. Instead, create a placeholder interview experience page that shows "AI Interview Coming Soon — for now, please answer these questions in text form" with the interview questions displayed as a text form
 - When candidate submits text answers, call Python service to generate evaluation report from the text answers (simulates what the voice AI would produce)
-- Store transcript, evaluation, scores in ai_interviews table
+- Store transcript, evaluation, scores in `ai_interviews` table
 
 **Frontend wiring:**
 - Employer interview list page shows real data
@@ -145,16 +163,16 @@ POST /api/assessment/:token/submit        → Submit answers
 ```
 
 **Logic:**
-- Assign creates assessment_submissions record with status 'invited', generates unique token, sends email
-- MCQ auto-grading: compare selected_answers with correct_answers, compute score
+- Assign creates `assessment_submissions` record with status 'invited', generates unique token, sends email
+- MCQ auto-grading: compare `selected_answers` with `correct_answers`, compute score
 - Coding auto-grading (simplified for MVP): just store the code, don't actually run it. Manual grading by employer.
-- Time tracking: record started_at on start, check time_limit on submit, reject if over limit
+- Time tracking: record `started_at` on start, check `time_limit` on submit, reject if over limit
 - Case study and assignment: always manual grading
 
 **Frontend wiring:**
 - Assessment builder saves to database
 - Candidate assessment page fetches real questions
-- Timer counts down from real time_limit
+- Timer counts down from real `time_limit`
 - Results page shows real submissions and scores
 - Grading interface updates real scores
 
@@ -179,9 +197,9 @@ GET  /api/employer/applicants/:id/votes       → Get all votes
 ```
 
 **Logic:**
-- Scheduling: for MVP, no calendar integration. Just store the scheduled_at time and generate a Google Meet link placeholder. Real calendar sync comes later.
-- Notes: store with author_id, support @mentions (just store the user IDs, frontend handles display)
-- Voting: one vote per team member per applicant. Can update (change vote). Show consensus summary.
+- Scheduling: for MVP, no calendar integration. Just store the `scheduled_at` time and generate a Google Meet link placeholder. Real calendar sync comes later.
+- Notes: store with `author_id`, support @mentions (just store the user IDs in `mentions UUID[]` column, frontend handles display)
+- Voting: one vote per team member per applicant (enforced by `UNIQUE(applicant_id, voter_id)` constraint). Can update (change vote). Show consensus summary.
 
 **Frontend wiring:**
 - Scheduling page shows real interviews from database
@@ -206,11 +224,11 @@ POST /api/employer/talent-pool/:id/reengage    → Send re-engagement email
 ```
 
 **Logic:**
-- Analytics queries aggregate data from applicants, ai_interviews, assessment_submissions, human_interviews tables
-- Funnel: COUNT applicants grouped by pipeline_stage per job
-- Sources: COUNT applicants grouped by source, with average screening_score per source
-- Time-to-hire: AVG days between applicant.created_at and stage='hired' transition
-- Talent pool: applicants where is_talent_pool = true, filterable by tags and skills
+- Analytics queries aggregate data from `applicants`, `ai_interviews`, `assessment_submissions`, `human_interviews` tables
+- Funnel: COUNT applicants grouped by `pipeline_stage` per job
+- Sources: COUNT applicants grouped by `source`, with average `screening_score` per source
+- Time-to-hire: AVG days between `applicant.created_at` and stage='hired' transition
+- Talent pool: applicants where `is_talent_pool = true`, filterable by `talent_pool_tags` and skills
 
 **Frontend wiring:**
 - Dashboard stats pull real aggregated data
@@ -231,16 +249,22 @@ GET  /api/applications/fitvector              → List my FitVector applications
 GET  /api/applications/fitvector/:id/status   → Get real-time status (seeker side)
 ```
 
+**Key column names (verified against migration):**
+- `fitvector_applications.applicant_user_id` — the seeker's user ID (NOT `user_id`)
+- `fitvector_applications.applicant_id` — FK to `applicants.id` (nullable until employer pipeline record is created)
+- `job_posts.auto_advance_threshold` — INTEGER (0-100), triggers auto-pipeline-advance if seeker score >= value ✅
+- `job_posts.dimension_weights` — JSONB, configurable per job post ✅
+
 **Logic:**
-- When seeker applies via FitVector: create fitvector_applications record + create applicants record in employer's pipeline
-- Link the seeker's tailored_resume_id and match_score
-- If job has auto_advance_threshold and score >= threshold, auto-set stage to 'ai_interviewed' and trigger AI interview invite
-- Status updates: when employer moves applicant in pipeline, the corresponding fitvector_application status updates too (use a database trigger or sync in the API)
+- When seeker applies via FitVector: INSERT into `fitvector_applications` (with `applicant_user_id`) + INSERT into `applicants` (employer's pipeline, with `user_id`), then UPDATE `fitvector_applications.applicant_id` to link them
+- Link the seeker's `tailored_resume_id` and `match_score`
+- If job has `auto_advance_threshold` and score >= threshold, auto-set `pipeline_stage` to 'ai_interviewed' and trigger AI interview invite
+- Status sync: when employer moves applicant's `pipeline_stage`, update corresponding `fitvector_applications.status` too (database trigger or sync in API)
 
 **Frontend wiring:**
 - "Apply via FitVector" button on job detail calls real API
 - Seeker's tracker shows real-time status for FitVector applications
-- Status timeline shows real timestamps
+- Status timeline shows real timestamps from `fitvector_applications.status_history` JSONB
 
 ---
 
@@ -261,10 +285,11 @@ GET  /api/salary/insights                  → Get aggregated salary data (role 
 ```
 
 **Logic:**
-- Posts: create with user_id, support anonymous flag (if anonymous, never expose user_id in GET responses)
-- Voting: one vote per user per target. Toggle behavior (vote again = remove vote). Update upvotes/downvotes count on the post/comment.
-- Salary: INSERT individual reports, but GET endpoint returns only aggregated data (median, P25, P75, count). If count < 10 for a role+location, return "insufficient data".
-- Community moderation: for MVP, just use the status field. No AI moderation yet.
+- Posts: create with `user_id`, support `is_anonymous` flag (if anonymous, never expose `user_id` in GET responses)
+- Voting: one vote per user per target. Toggle behavior (vote again = remove vote). Update `upvotes`/`downvotes` count on the post/comment.
+- Salary: INSERT individual reports into `salary_reports`, but GET endpoint returns only aggregated data (median, P25, P75, count). If count < 10 for a role+location combination, return "insufficient data" response.
+- Community moderation: for MVP, just use the `status` field. No AI moderation yet.
+- The DB already has a `get_salary_aggregation(p_role, p_location)` function — call it directly from the API instead of re-implementing the aggregation logic
 
 **Frontend wiring:**
 - Interview experiences feed pulls real posts
@@ -277,8 +302,8 @@ GET  /api/salary/insights                  → Get aggregated salary data (role 
 
 # Execution Order
 
-1. Run the **database migration prompt** first (creates all tables)
-2. Fix and test **Phase 1A backend** (Gemini API errors)
-3. Then run backend prompts in order: B2-1 → B2-2 → B2-3 → B2-4 → B2-5 → B2-6 → B2-7 → B3-1 → B3-2
-4. Each prompt replaces mock data with real API calls in the already-built frontend
+1. ✅ Run the **database migration** — DONE (`20260327000001_phase2_phase3_tables.sql`)
+2. ✅ Run **seed data** — DONE (`seed_phase2_phase3.sql`)
+3. ⚠️  Fix and test **Phase 1A backend** (Gemini API, seeker auth, job matching) — confirm working before proceeding
+4. ➡️  Run backend wiring prompts in order: **B2-1 → B2-2 → B2-3 → B2-4 → B2-5 → B2-6 → B2-7 → B3-1 → B3-2**
 5. Test each section after wiring before moving to the next

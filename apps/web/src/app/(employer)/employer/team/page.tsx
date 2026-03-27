@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,16 +17,24 @@ import {
   Send,
   Trash2,
   Activity,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import { MOCK_TEAM_MEMBERS } from "@/lib/mock/employer-data";
-import { MOCK_TEAM_ACTIVITY } from "@/lib/mock/scheduling-data";
-import type { TeamMember, TeamMemberRole, TeamActivity } from "@/types/employer";
+import {
+  useCompanyMembers,
+  useInviteMember,
+  useUpdateMember,
+  type MemberWithUser,
+} from "@/hooks/use-employer";
+import { useUser } from "@/hooks/use-user";
+import type { TeamMemberRole, TeamActivity } from "@/types/employer";
 import { TEAM_ROLE_LABELS } from "@/types/employer";
+import type { CompanyMemberRole } from "@fitvector/shared";
 
 // ── Role colors ──────────────────────────────────────────────────────
-const ROLE_COLORS: Record<TeamMemberRole, string> = {
+const ROLE_COLORS: Record<string, string> = {
   admin: "bg-brand-50 text-brand-700 border-brand-200",
   recruiter: "bg-emerald-50 text-emerald-700 border-emerald-200",
   hiring_manager: "bg-amber-50 text-amber-700 border-amber-200",
@@ -39,7 +47,7 @@ const STATUS_COLORS: Record<string, string> = {
   deactivated: "bg-red-50 text-red-700 border-red-200",
 };
 
-const ROLE_DESCRIPTIONS: Record<TeamMemberRole, string> = {
+const ROLE_DESCRIPTIONS: Record<string, string> = {
   admin: "Full access to all features and settings",
   recruiter: "Manage candidates, schedule interviews, view analytics",
   hiring_manager: "Review candidates, provide feedback, make hiring decisions",
@@ -47,22 +55,65 @@ const ROLE_DESCRIPTIONS: Record<TeamMemberRole, string> = {
 };
 
 export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMember[]>(MOCK_TEAM_MEMBERS);
+  const { data: membersData, isLoading, error } = useCompanyMembers();
+  const inviteMember = useInviteMember();
+  const updateMember = useUpdateMember();
+  const { user } = useUser();
   const [showInviteModal, setShowInviteModal] = useState(false);
 
+  const members = membersData?.data || [];
   const active = members.filter((m) => m.status === "active").length;
   const invited = members.filter((m) => m.status === "invited").length;
   const roles = new Set(members.map((m) => m.role)).size;
 
-  function changeRole(id: string, newRole: TeamMemberRole) {
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, role: newRole } : m)),
+  async function changeRole(memberId: string, newRole: CompanyMemberRole) {
+    try {
+      await updateMember.mutateAsync({ memberId, role: newRole });
+    } catch (err) {
+      console.error("Failed to change role:", err);
+    }
+  }
+
+  async function deactivateMember(memberId: string) {
+    try {
+      await updateMember.mutateAsync({ memberId, status: "deactivated" });
+    } catch (err) {
+      console.error("Failed to deactivate member:", err);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div>
+          <div className="h-6 w-48 animate-pulse rounded bg-surface-200" />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-surface-100" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-5">
+                <div className="h-12 animate-pulse rounded bg-surface-100" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="py-12">
+            <div className="h-32 animate-pulse rounded bg-surface-100" />
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
-  function removeMember(id: string) {
-    if (id === "tm-001") return; // can't remove self (admin)
-    setMembers((prev) => prev.filter((m) => m.id !== id));
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4" />
+        Failed to load team data. Please try again.
+      </div>
+    );
   }
 
   return (
@@ -132,8 +183,10 @@ export default function TeamPage() {
                     <MemberRow
                       key={member.id}
                       member={member}
+                      isSelf={member.userId === user?.id}
                       onChangeRole={changeRole}
-                      onRemove={removeMember}
+                      onDeactivate={deactivateMember}
+                      isUpdating={updateMember.isPending}
                     />
                   ))}
                 </tbody>
@@ -142,15 +195,11 @@ export default function TeamPage() {
           </Card>
         </TabsContent>
 
-        {/* Activity log tab */}
+        {/* Activity log tab — placeholder for now */}
         <TabsContent value="activity">
           <Card>
-            <CardContent className="p-3 sm:p-5">
-              <div className="space-y-4">
-                {MOCK_TEAM_ACTIVITY.map((activity) => (
-                  <ActivityRow key={activity.id} activity={activity} />
-                ))}
-              </div>
+            <CardContent className="flex items-center justify-center py-12">
+              <p className="text-sm text-surface-400">Activity log will be available with real-time events</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -160,21 +209,17 @@ export default function TeamPage() {
       {showInviteModal && (
         <InviteMemberModal
           onClose={() => setShowInviteModal(false)}
-          onInvite={(email, role) => {
-            setMembers((prev) => [
-              ...prev,
-              {
-                id: `tm-${Date.now()}`,
-                email,
-                name: null,
-                role,
-                status: "invited",
-                avatarUrl: null,
-                invitedAt: new Date().toISOString(),
-              },
-            ]);
-            setShowInviteModal(false);
+          onInvite={async (email, role) => {
+            try {
+              await inviteMember.mutateAsync({ email, role });
+              setShowInviteModal(false);
+            } catch (err) {
+              // Error is shown in the modal
+              console.error("Invite failed:", err);
+            }
           }}
+          isInviting={inviteMember.isPending}
+          inviteError={inviteMember.error?.message || null}
         />
       )}
     </div>
@@ -184,53 +229,61 @@ export default function TeamPage() {
 // ── Member table row ────────────────────────────────────────────────
 function MemberRow({
   member,
+  isSelf,
   onChangeRole,
-  onRemove,
+  onDeactivate,
+  isUpdating,
 }: {
-  member: TeamMember;
-  onChangeRole: (id: string, role: TeamMemberRole) => void;
-  onRemove: (id: string) => void;
+  member: MemberWithUser;
+  isSelf: boolean;
+  onChangeRole: (memberId: string, role: CompanyMemberRole) => void;
+  onDeactivate: (memberId: string) => void;
+  isUpdating: boolean;
 }) {
-  const initials = member.name
-    ? member.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-    : member.email[0].toUpperCase();
-
-  const isSelf = member.id === "tm-001"; // Mock current user
+  const displayName = member.userName || member.userEmail;
+  const initials = member.userName
+    ? member.userName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : member.userEmail[0].toUpperCase();
 
   return (
     <tr className="border-b border-surface-100 transition-colors hover:bg-surface-50">
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] sm:text-xs font-semibold text-surface-600">
-            {initials}
-          </div>
+          {member.userAvatarUrl ? (
+            <img src={member.userAvatarUrl} alt={displayName} className="h-7 w-7 sm:h-8 sm:w-8 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] sm:text-xs font-semibold text-surface-600">
+              {initials}
+            </div>
+          )}
           <span className="text-xs sm:text-sm font-medium text-surface-800">
-            {member.name || "Pending invite"}
+            {member.userName || "Pending invite"}
           </span>
         </div>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] sm:text-xs text-surface-500">{member.email}</span>
+        <span className="text-[11px] sm:text-xs text-surface-500">{member.userEmail}</span>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         {isSelf ? (
-          <Badge className={cn("border text-[10px] sm:text-[11px]", ROLE_COLORS[member.role])}>
-            {TEAM_ROLE_LABELS[member.role]}
+          <Badge className={cn("border text-[10px] sm:text-[11px]", ROLE_COLORS[member.role] || "")}>
+            {TEAM_ROLE_LABELS[member.role as TeamMemberRole] || member.role}
           </Badge>
         ) : (
           <select
             className="h-7 rounded-md border border-surface-200 bg-white px-2 text-[11px] sm:text-xs text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30"
             value={member.role}
-            onChange={(e) => onChangeRole(member.id, e.target.value as TeamMemberRole)}
+            onChange={(e) => onChangeRole(member.id, e.target.value as CompanyMemberRole)}
+            disabled={isUpdating}
           >
-            {(Object.keys(TEAM_ROLE_LABELS) as TeamMemberRole[]).map((r) => (
-              <option key={r} value={r}>{TEAM_ROLE_LABELS[r]}</option>
+            {(Object.keys(ROLE_DESCRIPTIONS) as CompanyMemberRole[]).map((r) => (
+              <option key={r} value={r}>{TEAM_ROLE_LABELS[r as TeamMemberRole] || r}</option>
             ))}
           </select>
         )}
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <Badge className={cn("border text-[10px] sm:text-[11px] capitalize", STATUS_COLORS[member.status])}>
+        <Badge className={cn("border text-[10px] sm:text-[11px] capitalize", STATUS_COLORS[member.status] || "")}>
           {member.status}
         </Badge>
       </td>
@@ -240,15 +293,16 @@ function MemberRow({
         </span>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        {!isSelf && (
+        {!isSelf && member.status !== "deactivated" && (
           <Button
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-[11px] text-red-500 hover:text-red-700 hover:bg-red-50 gap-1"
-            onClick={() => onRemove(member.id)}
+            onClick={() => onDeactivate(member.id)}
+            disabled={isUpdating}
           >
             <Trash2 className="h-3 w-3" />
-            Remove
+            Deactivate
           </Button>
         )}
       </td>
@@ -256,41 +310,20 @@ function MemberRow({
   );
 }
 
-// ── Activity log row ────────────────────────────────────────────────
-function ActivityRow({ activity }: { activity: TeamActivity }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-100">
-        <Activity className="h-3.5 w-3.5 text-surface-500" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs sm:text-sm text-surface-700">
-          <span className="font-semibold text-surface-800">{activity.actorName}</span>
-          {" "}
-          <Badge className={cn("border text-[9px] mx-1", ROLE_COLORS[activity.actorRole])}>
-            {TEAM_ROLE_LABELS[activity.actorRole]}
-          </Badge>
-          {" "}
-          {activity.description}
-        </p>
-        <p className="mt-0.5 text-[11px] text-surface-400">
-          {formatRelativeTime(activity.timestamp)}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // ── Invite member modal ─────────────────────────────────────────────
 function InviteMemberModal({
   onClose,
   onInvite,
+  isInviting,
+  inviteError,
 }: {
   onClose: () => void;
-  onInvite: (email: string, role: TeamMemberRole) => void;
+  onInvite: (email: string, role: CompanyMemberRole) => void;
+  isInviting: boolean;
+  inviteError: string | null;
 }) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<TeamMemberRole>("viewer");
+  const [role, setRole] = useState<CompanyMemberRole>("viewer");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -317,10 +350,17 @@ function InviteMemberModal({
             />
           </div>
 
+          {inviteError && (
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              {inviteError}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label className="text-xs sm:text-sm">Role</Label>
             <div className="space-y-2">
-              {(Object.keys(ROLE_DESCRIPTIONS) as TeamMemberRole[]).map((r) => (
+              {(Object.keys(ROLE_DESCRIPTIONS) as CompanyMemberRole[]).map((r) => (
                 <label
                   key={r}
                   className={cn(
@@ -340,7 +380,7 @@ function InviteMemberModal({
                   />
                   <div>
                     <p className="text-xs sm:text-sm font-medium text-surface-800">
-                      {TEAM_ROLE_LABELS[r]}
+                      {TEAM_ROLE_LABELS[r as TeamMemberRole] || r}
                     </p>
                     <p className="text-[11px] text-surface-400">{ROLE_DESCRIPTIONS[r]}</p>
                   </div>
@@ -351,11 +391,15 @@ function InviteMemberModal({
 
           <Button
             className="w-full gap-1.5"
-            disabled={!email.includes("@")}
+            disabled={!email.includes("@") || isInviting}
             onClick={() => onInvite(email, role)}
           >
-            <Send className="h-3.5 w-3.5" />
-            Send Invite
+            {isInviting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
+            {isInviting ? "Sending..." : "Send Invite"}
           </Button>
         </CardContent>
       </Card>

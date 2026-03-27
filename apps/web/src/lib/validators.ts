@@ -58,3 +58,38 @@ export const updateApplicationSchema = z.object({
   contactEmail: z.string().email().optional(),
   contactRole: z.string().optional(),
 });
+
+// ─── Employer: Company ────────────────────────────────────────────────────────
+
+export const createCompanySchema = z.object({
+  name: z.string().min(2, "Company name is required").max(200),
+  logoUrl: z.string().url().optional().nullable(),
+  websiteUrl: z.string().url().optional().nullable(),
+  industry: z.string().min(1, "Industry is required"),
+  companySize: z.enum(["1-10", "11-50", "51-200", "201-1000", "1000+"]),
+  description: z.string().min(10, "Description must be at least 10 characters").max(5000),
+  cultureKeywords: z.array(z.string()).default([]),
+  locations: z
+    .array(
+      z.object({
+        city: z.string(),
+        state: z.string().optional(),
+        country: z.string(),
+      })
+    )
+    .default([]),
+});
+
+export const updateCompanySchema = createCompanySchema.partial();
+
+// ─── Employer: Team Members ───────────────────────────────────────────────────
+
+export const inviteMemberSchema = z.object({
+  email: z.string().email("Valid email is required"),
+  role: z.enum(["admin", "recruiter", "hiring_manager", "viewer"]),
+});
+
+export const updateMemberSchema = z.object({
+  role: z.enum(["admin", "recruiter", "hiring_manager", "viewer"]).optional(),
+  status: z.enum(["active", "deactivated"]).optional(),
+});

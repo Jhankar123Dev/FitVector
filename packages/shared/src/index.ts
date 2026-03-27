@@ -44,6 +44,15 @@ export type {
   OutreachType,
   OutreachTone,
   GeneratedOutreach,
+  // Phase 2+3 types
+  CompanySize,
+  CompanyPlanTier,
+  CompanyMemberRole,
+  CompanyMemberStatus,
+  CompanyLocation,
+  CompanyBrandingData,
+  Company,
+  CompanyMember,
 } from './types/index';
 
 export type {

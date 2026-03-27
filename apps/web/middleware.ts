@@ -4,6 +4,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/onboarding/:path*",
+    "/employer/:path*",
     "/login",
     "/signup",
     "/api/((?!auth|health).*)",
