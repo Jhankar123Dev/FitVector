@@ -25,12 +25,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import {
-  MOCK_SCHEDULED_INTERVIEWS,
-  MOCK_CALENDAR_INTEGRATIONS,
-} from "@/lib/mock/scheduling-data";
-import { MOCK_TEAM_MEMBERS, MOCK_APPLICANTS } from "@/lib/mock/employer-data";
-import type { ScheduledInterview, ScheduledInterviewType } from "@/types/employer";
+import { useScheduledInterviews } from "@/hooks/use-scheduling";
+import { useAllApplicants } from "@/hooks/use-applicants";
+import { useCompanyMembers } from "@/hooks/use-employer";
+import type { ScheduledInterview, ScheduledInterviewType, TeamMemberRole } from "@/types/employer";
 import {
   SCHEDULED_INTERVIEW_TYPE_LABELS,
   SCHEDULED_INTERVIEW_TYPE_COLORS,
@@ -77,8 +75,9 @@ function isSameDay(a: Date, b: Date): boolean {
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 8am - 6pm
 
 export default function SchedulingPage() {
-  const [interviews] = useState(MOCK_SCHEDULED_INTERVIEWS);
-  const [calIntegrations] = useState(MOCK_CALENDAR_INTEGRATIONS);
+  const { data: schedulingData, isLoading } = useScheduledInterviews();
+  const interviews = (schedulingData?.data || []) as unknown as ScheduledInterview[];
+  const calIntegrations = { google: false, outlook: false };
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedInterview, setSelectedInterview] = useState<ScheduledInterview | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -528,6 +527,12 @@ function InterviewDetailModal({
 
 // ── Schedule interview modal ────────────────────────────────────────
 function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
+  const { data: applicantsData } = useAllApplicants();
+  const { data: membersData } = useCompanyMembers();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allApplicants = (applicantsData?.data || []) as any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const teamMembers = (membersData?.data || []) as any[];
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
   const [selectedInterviewers, setSelectedInterviewers] = useState<string[]>([]);
@@ -537,15 +542,15 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
   const [time, setTime] = useState("10:00");
 
   const filteredCandidates = useMemo(() => {
-    if (!searchTerm) return MOCK_APPLICANTS.slice(0, 6);
-    return MOCK_APPLICANTS.filter(
+    if (!searchTerm) return allApplicants.slice(0, 6);
+    return allApplicants.filter(
       (a) =>
         a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.email.toLowerCase().includes(searchTerm.toLowerCase()),
     ).slice(0, 6);
   }, [searchTerm]);
 
-  const selectedCandidateObj = MOCK_APPLICANTS.find((a) => a.id === selectedCandidate);
+  const selectedCandidateObj = allApplicants.find((a) => a.id === selectedCandidate);
 
   function toggleInterviewer(id: string) {
     setSelectedInterviewers((prev) =>
@@ -586,7 +591,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
                   )}
                 >
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[9px] font-bold text-surface-600">
-                    {a.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                    {a.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium text-surface-800">{a.name}</p>
@@ -601,7 +606,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
           <div className="space-y-2">
             <Label className="text-xs sm:text-sm">Select Interviewer(s)</Label>
             <div className="space-y-1">
-              {MOCK_TEAM_MEMBERS.filter((m) => m.status === "active").map((m) => (
+              {teamMembers.filter((m) => m.status === "active").map((m) => (
                 <label
                   key={m.id}
                   className={cn(
@@ -619,7 +624,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
                   />
                   <span className="text-xs font-medium text-surface-800">{m.name}</span>
                   <Badge className="border text-[9px] bg-surface-100 text-surface-500 border-surface-200">
-                    {TEAM_ROLE_LABELS[m.role]}
+                    {TEAM_ROLE_LABELS[m.role as TeamMemberRole] || m.role}
                   </Badge>
                 </label>
               ))}
@@ -681,7 +686,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
                 <strong>{selectedCandidateObj.name}</strong> — {SCHEDULED_INTERVIEW_TYPE_LABELS[interviewType]} interview, {duration} min
               </p>
               <p>
-                With: {selectedInterviewers.map((id) => MOCK_TEAM_MEMBERS.find((m) => m.id === id)?.name).filter(Boolean).join(", ")}
+                With: {selectedInterviewers.map((id) => teamMembers.find((m) => m.id === id)?.name).filter(Boolean).join(", ")}
               </p>
               {date && <p>{date} at {time}</p>}
             </div>

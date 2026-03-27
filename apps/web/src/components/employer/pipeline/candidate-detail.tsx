@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import type { Applicant, PipelineStage, CandidateNote, CandidateVote, VoteValue } from "@/types/employer";
+import type { Applicant, PipelineStage, CandidateNote, CandidateVote, VoteValue, TeamMemberRole } from "@/types/employer";
 import {
   PIPELINE_STAGE_LABELS,
   BUCKET_LABELS,
@@ -30,8 +30,7 @@ import {
   VOTE_LABELS,
   VOTE_COLORS,
 } from "@/types/employer";
-import { MOCK_TEAM_MEMBERS } from "@/lib/mock/employer-data";
-import { MOCK_CANDIDATE_VOTES } from "@/lib/mock/scheduling-data";
+import { useApplicantNotes, useAddNote, useApplicantVotes, useCastVote } from "@/hooks/use-notes-votes";
 
 // ── Score bar component ─────────────────────────────────────────────
 function ScoreBar({ label, value }: { label: string; value: number }) {
@@ -75,10 +74,12 @@ export function CandidateDetail({
   onReject,
 }: CandidateDetailProps) {
   const [noteText, setNoteText] = useState("");
-  const [notes, setNotes] = useState<CandidateNote[]>(applicant.notes);
-  const [votes, setVotes] = useState<CandidateVote[]>(
-    MOCK_CANDIDATE_VOTES.filter((v) => v.candidateId === applicant.id),
-  );
+  const { data: notesData } = useApplicantNotes(applicant.id);
+  const { data: votesData } = useApplicantVotes(applicant.id);
+  const addNoteMutation = useAddNote();
+  const castVoteMutation = useCastVote();
+  const notes = (notesData?.data || applicant.notes || []) as unknown as CandidateNote[];
+  const votes = (votesData?.data || []) as unknown as CandidateVote[];
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -108,31 +109,12 @@ export function CandidateDetail({
       content: noteText.trim(),
       createdAt: new Date().toISOString(),
     };
-    setNotes((prev) => [n, ...prev]);
+    addNoteMutation.mutate({ applicantId: applicant.id, body: noteText.trim() });
     setNoteText("");
   }
 
   function castVote(value: VoteValue) {
-    const existing = votes.find((v) => v.voterId === "tm-001");
-    if (existing) {
-      setVotes((prev) =>
-        prev.map((v) => (v.voterId === "tm-001" ? { ...v, vote: value } : v)),
-      );
-    } else {
-      setVotes((prev) => [
-        ...prev,
-        {
-          id: `vote-${Date.now()}`,
-          candidateId: applicant.id,
-          voterId: "tm-001",
-          voterName: "Arjun Mehta",
-          voterRole: "admin" as const,
-          vote: value,
-          comment: null,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-    }
+    castVoteMutation.mutate({ applicantId: applicant.id, vote: value });
   }
 
   function handleNoteKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -166,7 +148,7 @@ export function CandidateDetail({
 
   const filteredTeam = useMemo(
     () =>
-      MOCK_TEAM_MEMBERS.filter(
+      ([] as Array<{ id: string; name: string | null; role: TeamMemberRole }>).filter(
         (m) => m.name && m.name.toLowerCase().includes(mentionFilter),
       ),
     [mentionFilter],
@@ -714,7 +696,7 @@ export function CandidateDetail({
 }
 
 // ── Render note content with @mention highlighting ──────────────────
-const TEAM_NAMES = MOCK_TEAM_MEMBERS.filter((m) => m.name).map((m) => m.name!);
+const TEAM_NAMES: string[] = []; // Will be populated from API team members in future
 
 function RenderNoteContent({ content }: { content: string }) {
   // Split on @Name patterns and highlight them

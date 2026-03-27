@@ -209,3 +209,38 @@ export const submitAssessmentSchema = z.object({
     codeSubmission: z.string().optional(),
   })).min(1),
 });
+
+// ─── Employer: Scheduling ─────────────────────────────────────────────────────
+
+export const scheduleInterviewSchema = z.object({
+  jobPostId: z.string().uuid(),
+  interviewerId: z.string().uuid(),
+  interviewType: z.enum(["phone_screen", "technical", "behavioral", "culture_fit", "hiring_manager", "panel"]).default("technical"),
+  scheduledAt: z.string().min(1, "Scheduled time is required"),
+  durationMinutes: z.number().int().min(15).max(180).default(60),
+  meetingLink: z.string().url().optional().nullable(),
+});
+
+export const rescheduleInterviewSchema = z.object({
+  scheduledAt: z.string().optional(),
+  status: z.enum(["scheduled", "completed", "cancelled", "rescheduled", "no_show"]).optional(),
+  durationMinutes: z.number().int().min(15).max(180).optional(),
+  meetingLink: z.string().url().optional().nullable(),
+});
+
+export const submitFeedbackSchema = z.object({
+  rating: z.enum(["strong_hire", "hire", "no_hire", "strong_no_hire"]),
+  feedback: z.record(z.unknown()).optional(),
+  notes: z.string().max(5000).optional(),
+});
+
+// ─── Employer: Notes + Votes ──────────────────────────────────────────────────
+
+export const addNoteSchema = z.object({
+  body: z.string().min(1, "Note content is required").max(5000),
+  mentions: z.array(z.string().uuid()).default([]),
+});
+
+export const castVoteSchema = z.object({
+  vote: z.enum(["strong_hire", "hire", "no_hire", "strong_no_hire"]),
+});
