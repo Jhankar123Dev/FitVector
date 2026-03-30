@@ -24,8 +24,8 @@ const onboardingFullSchema = z.object({
   targetLocations: z.array(z.string()).min(1, "Add at least one location"),
   preferredWorkMode: z.enum(["onsite", "remote", "hybrid"]).optional(),
   preferredJobTypes: z.array(z.enum(["fulltime", "parttime", "internship", "contract"])).default(["fulltime"]),
-  expectedSalaryMin: z.number().optional(),
-  expectedSalaryMax: z.number().optional(),
+  expectedSalaryMin: z.preprocess(v => (typeof v === 'number' && isNaN(v)) ? undefined : v, z.number().optional()),
+  expectedSalaryMax: z.preprocess(v => (typeof v === 'number' && isNaN(v)) ? undefined : v, z.number().optional()),
 });
 
 export type OnboardingFormData = z.infer<typeof onboardingFullSchema>;
@@ -52,8 +52,8 @@ const stepSchemas = [
     targetLocations: z.array(z.string()).min(1, "Add at least one location"),
     preferredWorkMode: z.enum(["onsite", "remote", "hybrid"]).optional(),
     preferredJobTypes: z.array(z.enum(["fulltime", "parttime", "internship", "contract"])),
-    expectedSalaryMin: z.number().optional(),
-    expectedSalaryMax: z.number().optional(),
+    expectedSalaryMin: z.preprocess(v => (typeof v === 'number' && isNaN(v)) ? undefined : v, z.number().optional()),
+    expectedSalaryMax: z.preprocess(v => (typeof v === 'number' && isNaN(v)) ? undefined : v, z.number().optional()),
   }),
   z.object({}), // Step 4 has no required fields (resume upload is optional)
 ];

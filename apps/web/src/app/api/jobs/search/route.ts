@@ -161,59 +161,37 @@ export async function GET(req: NextRequest) {
     if (userSkills.length > 0) {
       const jobsToScore = jobs.slice(0, 25);
       try {
-        const scorePromises = jobsToScore.map((job) =>
-          pythonClient
-            .post<{
-              match_score: number;
-              match_bucket: string;
-              decision_label: string;
-              similarity_raw: number;
-              embedding_score: number | null;
-              deterministic_score: number | null;
-              deterministic_components: {
-                required_skills_match: {
-                  ratio: number;
-                  matched: string[];
-                  missing: string[];
-                  weight: number;
-                };
-                optional_skills_match: {
-                  ratio: number;
-                  matched: string[];
-                  missing: string[];
-                  weight: number;
-                };
-                role_alignment: {
-                  score: number;
-                  user_role: string;
-                  job_role: string;
-                  weight: number;
-                };
-                experience_alignment: {
-                  score: number;
-                  user_years: number;
-                  required_years: number;
-                  shortfall: number;
-                  weight: number;
-                };
-              } | null;
-            }>("/ai/match-score", {
-              user_text: userText,
-              job_text: `Job title: ${job.title}\nRequired skills: ${job.skillsRequired.join(", ")}\n${job.description.slice(0, 500)}`,
-              user_skills: userSkills,
-              job_required_skills: job.skillsRequired,
-              job_nice_to_have_skills: job.skillsNiceToHave,
-              user_role: userTargetRoles[0] || null,
-              job_role: job.title,
-              user_experience_years: null,
-              job_required_experience_years: job.requiredExperienceYears,
-            }, { timeout: 15000 })
-            .catch(() => null),
-        );
+        const batchPayload = jobsToScore.map((job) => ({
+          user_text: userText,
+          job_text: `Job title: ${job.title}\nRequired skills: ${job.skillsRequired.join(", ")}\n${job.description.slice(0, 500)}`,
+          user_skills: userSkills,
+          job_required_skills: job.skillsRequired,
+          job_nice_to_have_skills: job.skillsNiceToHave,
+          user_role: userTargetRoles[0] || null,
+          job_role: job.title,
+          user_experience_years: null,
+          job_required_experience_years: job.requiredExperienceYears,
+        }));
 
-        const scores = await Promise.all(scorePromises);
-        scores.forEach((score, i) => {
-          if (score) {
+        const batchResult = await pythonClient.post<{
+          scores: Array<{
+            match_score: number;
+            match_bucket: string;
+            decision_label: string;
+            similarity_raw: number;
+            embedding_score: number | null;
+            deterministic_score: number | null;
+            deterministic_components: {
+              required_skills_match: { ratio: number; matched: string[]; missing: string[]; weight: number };
+              optional_skills_match: { ratio: number; matched: string[]; missing: string[]; weight: number };
+              role_alignment: { score: number; user_role: string; job_role: string; weight: number };
+              experience_alignment: { score: number; user_years: number; required_years: number; shortfall: number; weight: number };
+            } | null;
+          }>;
+        }>("/ai/match-scores", { jobs: batchPayload }, { timeout: 30000 });
+
+        batchResult.scores.forEach((score, i) => {
+          if (score && score.match_score > 0) {
             jobsToScore[i].matchScore = score.match_score;
             jobsToScore[i].matchBucket = score.match_bucket;
             jobsToScore[i].decisionLabel = score.decision_label as DecisionLabel;

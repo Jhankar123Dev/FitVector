@@ -49,8 +49,8 @@ export function LoginForm() {
       if (result?.error) {
         setError(
           role === "employer"
-            ? "Invalid credentials. Make sure you're using the correct portal."
-            : "Invalid email or password. Please try again."
+            ? "No recruiter account found with these credentials. If you signed up as a Job Seeker, switch to the Job Seeker tab."
+            : "Invalid email or password. If you signed up as a Recruiter, switch to the Recruiter tab."
         );
       } else {
         window.location.href = role === "employer" ? "/employer" : "/dashboard";

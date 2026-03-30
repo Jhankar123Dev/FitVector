@@ -3,6 +3,8 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from src.models.scoring import (
+    BatchMatchScoreRequest,
+    BatchMatchScoreResponse,
     GapAnalysisRequest,
     GapAnalysisResponse,
     MatchScoreRequest,
@@ -36,6 +38,46 @@ async def compute_match_score_endpoint(
         logger.error("Match score error: %s", exc)
         raise HTTPException(
             status_code=500, detail=f"Match score computation failed: {str(exc)}"
+        )
+
+
+@router.post("/match-scores", response_model=BatchMatchScoreResponse)
+async def compute_match_scores_batch(
+    request: BatchMatchScoreRequest,
+) -> BatchMatchScoreResponse:
+    """Compute match scores for multiple jobs in a single request.
+
+    Accepts a list of MatchScoreRequest objects and returns scores in the same order.
+    """
+    import asyncio
+
+    try:
+        scores = await asyncio.gather(
+            *[compute_match_score(job) for job in request.jobs],
+            return_exceptions=True,
+        )
+        results = []
+        for score in scores:
+            if isinstance(score, Exception):
+                logger.warning("Batch score item failed: %s", score)
+                # Return a zero-score placeholder so the list stays aligned
+                from src.models.scoring import DeterministicComponents
+                results.append(MatchScoreResponse(
+                    match_score=0,
+                    match_bucket="weak_fit",
+                    decision_label="explore",
+                    similarity_raw=0.0,
+                    embedding_score=None,
+                    deterministic_score=None,
+                    deterministic_components=None,
+                ))
+            else:
+                results.append(score)
+        return BatchMatchScoreResponse(scores=results)
+    except Exception as exc:
+        logger.error("Batch match score error: %s", exc)
+        raise HTTPException(
+            status_code=500, detail=f"Batch match score failed: {str(exc)}"
         )
 
 

@@ -131,6 +131,17 @@ class GapAnalysisResponse(BaseModel):
     recommendations: list[str] = Field(default_factory=list)
 
 
+# ─── Batch match score models ────────────────────────────────────────────────
+
+
+class BatchMatchScoreRequest(BaseModel):
+    jobs: list[MatchScoreRequest]
+
+
+class BatchMatchScoreResponse(BaseModel):
+    scores: list[MatchScoreResponse]
+
+
 # ─── Skills to Learn analytics models ───────────────────────────────────────
 
 

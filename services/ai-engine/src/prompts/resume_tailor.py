@@ -112,7 +112,7 @@ DEFAULT_LATEX_TEMPLATE = r"""\documentclass[letterpaper,11pt]{article}
 
 \begin{document}
 
-%----------HEADING----------
+%%----------HEADING----------
 \begin{center}
     \textbf{\Huge \scshape %(name)s} \\ \vspace{1pt}
     \small %(role_title)s \\ \vspace{2pt}
@@ -121,29 +121,29 @@ DEFAULT_LATEX_TEMPLATE = r"""\documentclass[letterpaper,11pt]{article}
     \href{%(github_url)s}{\underline{GitHub}}
 \end{center}
 
-%-----------SUMMARY-----------
+%%-----------SUMMARY-----------
 \section{Summary}
 %(summary)s
 
-%-----------EXPERIENCE-----------
+%%-----------EXPERIENCE-----------
 \section{Experience}
   \resumeSubHeadingListStart
 %(experience_entries)s
   \resumeSubHeadingListEnd
 
-%-----------PROJECTS-----------
+%%-----------PROJECTS-----------
 \section{Projects}
   \resumeSubHeadingListStart
 %(project_entries)s
   \resumeSubHeadingListEnd
 
-%-----------EDUCATION-----------
+%%-----------EDUCATION-----------
 \section{Education}
   \resumeSubHeadingListStart
 %(education_entries)s
   \resumeSubHeadingListEnd
 
-%-----------SKILLS-----------
+%%-----------SKILLS-----------
 \section{Skills}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{

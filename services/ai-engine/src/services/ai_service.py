@@ -74,7 +74,10 @@ async def _call_gemini(
                     "temperature": temperature,
                 },
             )
-            return response.text
+            text = response.text
+            if not text or not text.strip():
+                raise ValueError(f"Gemini returned empty response for task '{task}'")
+            return text
         except Exception as exc:
             err_str = str(exc)
             is_rate_limit = "429" in err_str or "RESOURCE_EXHAUSTED" in err_str

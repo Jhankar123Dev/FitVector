@@ -1,7 +1,7 @@
 """Embedding generation and match scoring service.
 
-Uses HuggingFace all-MiniLM-L6-v2 (384-dim) for local vector embeddings and
-cosine similarity for match scoring with calibrated thresholds.
+Uses Gemini embedding API (gemini-embedding-001, 768-dim) for vector embeddings
+and cosine similarity for match scoring with calibrated thresholds.
 
 Blended scoring: 70% embedding + 30% deterministic.
 """
@@ -12,8 +12,6 @@ import json
 import logging
 import math
 from typing import Any
-
-from sentence_transformers import SentenceTransformer
 
 from src.config import settings
 from src.models.scoring import (
@@ -38,34 +36,32 @@ from src.utils.text import truncate_words
 
 logger = logging.getLogger("fitvector.embedding")
 
-# ─── Embedding generation (local HuggingFace model) ─────────────────────────
+# ─── Embedding generation (Gemini embedding API) ────────────────────────────
 
-# Load model once at startup (~80MB download on first run, then cached)
-_embedding_model: SentenceTransformer | None = None
-
-
-def _get_embedding_model() -> SentenceTransformer:
-    global _embedding_model
-    if _embedding_model is None:
-        logger.info("Loading embedding model all-MiniLM-L6-v2...")
-        _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-        logger.info("Embedding model loaded (384 dimensions)")
-    return _embedding_model
-
-
-async def generate_embeddings_batch(texts: list[str]) -> list[list[float]]:
-    """Generate embeddings for a batch of texts using local HuggingFace model."""
-    if not texts:
-        return []
-    model = _get_embedding_model()
-    embeddings = model.encode(texts, normalize_embeddings=True)
-    return embeddings.tolist()
+_EMBEDDING_MODEL = "gemini-embedding-001"
 
 
 async def generate_embedding(text: str) -> list[float]:
-    """Generate a single embedding vector."""
-    result = await generate_embeddings_batch([text])
-    return result[0]
+    """Generate a single embedding vector using Gemini embedding API."""
+    from google import genai
+
+    client = genai.Client(api_key=settings.gemini_api_key)
+    result = client.models.embed_content(
+        model=_EMBEDDING_MODEL,
+        contents=text,
+    )
+    return result.embeddings[0].values
+
+
+async def generate_embeddings_batch(texts: list[str]) -> list[list[float]]:
+    """Generate embeddings for a batch of texts using Gemini embedding API."""
+    if not texts:
+        return []
+    results = []
+    for text in texts:
+        emb = await generate_embedding(text)
+        results.append(emb)
+    return results
 
 
 # ─── Text builders (from scoring-engine spec) ───────────────────────────────
