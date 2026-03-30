@@ -38,3 +38,47 @@ export function useReengage() {
       fetchJson(`/api/employer/talent-pool/${id}/reengage`, { method: "POST" }),
   });
 }
+
+// ── On-demand matching search ───────────────────────────────────────
+
+export interface TalentPoolSearchParams {
+  jobPostId: string;
+  maxCandidates?: number;
+  lastActiveAfter?: string;
+  skills?: string[];
+  location?: string;
+}
+
+export interface TalentPoolSearchCandidate {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  skills: string[];
+  matchingSkills: string[];
+  matchScore: number;
+  screeningScore: number;
+  bucket: string | null;
+  tags: string[];
+  resumeUrl: string | null;
+  location: string | null;
+  workMode: string | null;
+  updatedAt: string;
+}
+
+export interface TalentPoolSearchResult {
+  data: TalentPoolSearchCandidate[];
+  cached: boolean;
+  cachedAt?: string;
+}
+
+export function useTalentPoolSearch() {
+  return useMutation<TalentPoolSearchResult, Error, TalentPoolSearchParams>({
+    mutationFn: (params) =>
+      fetchJson("/api/employer/talent-pool/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      }),
+  });
+}

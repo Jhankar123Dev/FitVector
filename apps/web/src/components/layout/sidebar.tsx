@@ -11,6 +11,7 @@ import {
   BarChart3,
   Users,
   Settings,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-user";
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/jobs", label: "Jobs", icon: Search },
   { href: "/dashboard/resume", label: "Resume", icon: FileText },
+  { href: "/dashboard/tests", label: "Tests", icon: ClipboardCheck },
   { href: "/dashboard/outreach", label: "Outreach", icon: Mail },
   { href: "/dashboard/tracker", label: "Tracker", icon: Kanban },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
@@ -41,13 +43,13 @@ export function Sidebar({ className }: SidebarProps) {
         className,
       )}
     >
-      {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-surface-800 px-6">
+      {/* Logo — links to home */}
+      <Link href="/" className="flex h-16 items-center gap-2 border-b border-surface-800 px-6">
         <span className="text-xl font-bold">
           <span className="text-brand-400">Fit</span>
           <span className="text-white">Vector</span>
         </span>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">

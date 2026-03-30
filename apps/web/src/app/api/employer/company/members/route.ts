@@ -182,20 +182,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Add 'employer' to invitee's user_type if not present
-    const { data: inviteeUser } = await supabase
-      .from("users")
-      .select("user_type")
-      .eq("id", invitee.id)
-      .single();
-
-    const inviteeTypes: string[] = inviteeUser?.user_type || [];
-    if (!inviteeTypes.includes("employer")) {
-      await supabase
-        .from("users")
-        .update({ user_type: [...inviteeTypes, "employer"] })
-        .eq("id", invitee.id);
-    }
+    // Ensure invited user has employer role (they must have signed up as employer)
+    // If they're a seeker, the invite stays but they can't use employer features
+    // until they create a separate employer account
 
     console.log(`[Invite] Invited ${parsed.data.email} to ${company.name} as ${parsed.data.role}`);
 

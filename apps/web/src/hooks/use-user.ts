@@ -10,7 +10,7 @@ export interface UserInfo {
   image: string | null;
   planTier: PlanTier;
   onboardingCompleted: boolean;
-  userType: string[];
+  role: "seeker" | "employer";
   companyId: string | null;
 }
 
@@ -25,7 +25,7 @@ export function useUser() {
         image: session.user.image ?? null,
         planTier: session.user.planTier ?? "free",
         onboardingCompleted: session.user.onboardingCompleted ?? false,
-        userType: session.user.userType ?? ["seeker"],
+        role: session.user.role ?? "seeker",
         companyId: session.user.companyId ?? null,
       }
     : null;

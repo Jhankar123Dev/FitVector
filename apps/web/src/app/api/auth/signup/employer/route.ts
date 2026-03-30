@@ -33,8 +33,8 @@ export async function POST(req: Request) {
 
     if (existingUser) {
       const msg =
-        existingUser.role === "employer"
-          ? "This email is already registered as a recruiter account."
+        existingUser.role === "seeker"
+          ? "This email is already registered as a job seeker account."
           : "An account with this email already exists.";
       return NextResponse.json({ error: msg }, { status: 409 });
     }
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     // Hash password with bcrypt (cost factor 10)
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create seeker user
+    // Create employer user
     const { data: newUser, error: insertError } = await supabase
       .from("users")
       .insert({
@@ -53,22 +53,22 @@ export async function POST(req: Request) {
         plan_tier: "free",
         status: "onboarding",
         onboarding_completed: false,
-        role: "seeker",
+        role: "employer",
       })
       .select("id, email, full_name")
       .single();
 
     if (insertError) {
-      console.error("Signup error:", insertError);
+      console.error("Employer signup error:", insertError);
       return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
     }
 
     return NextResponse.json({
       data: { id: newUser.id, email: newUser.email, name: newUser.full_name },
-      message: "Account created successfully",
+      message: "Employer account created successfully",
     });
   } catch (error) {
-    console.error("Signup error:", error);
+    console.error("Employer signup error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

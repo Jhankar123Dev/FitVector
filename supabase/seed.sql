@@ -1,25 +1,32 @@
 -- ============================================================================
 -- Development seed data only — do not run in production
+-- Password for all test users: jhankar123 (bcrypt cost 10)
 -- ============================================================================
 
 -- Fixed UUIDs for deterministic seeding
--- Test user
-INSERT INTO users (id, email, name, avatar_url, auth_provider, email_verified, user_type, plan_tier, user_status, onboarding_completed, last_login_at)
+-- bcrypt(10) hash of "jhankar123"
+-- $2a$10$tcLwwHeaBkbvFUy0MFRPy.59beJi.rrmXUm6HXtO5Gl6bygcY7.4.
+
+-- ============================================================================
+-- Test Seeker User
+-- ============================================================================
+INSERT INTO users (id, email, full_name, avatar_url, auth_provider, password_hash, email_verified, role, plan_tier, status, onboarding_completed, last_login_at)
 VALUES (
     'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d',
     'testuser@fitvector.dev',
     'Arjun Mehta',
     NULL,
-    'email',
+    'credentials',
+    '$2a$10$tcLwwHeaBkbvFUy0MFRPy.59beJi.rrmXUm6HXtO5Gl6bygcY7.4.',
     true,
-    '{seeker}',
+    'seeker',
     'free',
     'active',
     true,
     NOW()
 );
 
--- Test user profile
+-- Test seeker profile
 INSERT INTO user_profiles (id, user_id, current_role, current_company, current_status, experience_level, target_roles, target_locations, preferred_work_mode, preferred_job_types, skills, salary_currency)
 VALUES (
     'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e',
@@ -34,6 +41,50 @@ VALUES (
     '{fulltime}',
     '{"JavaScript", "TypeScript", "React", "Next.js", "Node.js", "TailwindCSS", "PostgreSQL", "Git", "REST APIs", "GraphQL"}',
     'INR'
+);
+
+-- ============================================================================
+-- Test Employer User
+-- ============================================================================
+INSERT INTO users (id, email, full_name, avatar_url, auth_provider, password_hash, email_verified, role, plan_tier, status, onboarding_completed, last_login_at)
+VALUES (
+    '11111111-1111-4111-8111-111111111111',
+    'recruiter@fitvector.dev',
+    'Priya Sharma',
+    NULL,
+    'credentials',
+    '$2a$10$tcLwwHeaBkbvFUy0MFRPy.59beJi.rrmXUm6HXtO5Gl6bygcY7.4.',
+    true,
+    'employer',
+    'free',
+    'active',
+    true,
+    NOW()
+);
+
+-- Test company
+INSERT INTO companies (id, name, logo_url, website_url, industry, company_size, description, created_by, plan_tier)
+VALUES (
+    '22222222-2222-4222-8222-222222222222',
+    'FitVector Technologies',
+    NULL,
+    'https://fitvector.dev',
+    'Technology',
+    '11-50',
+    'AI-powered recruitment platform helping companies find the best talent.',
+    '11111111-1111-4111-8111-111111111111',
+    'starter'
+);
+
+-- Link employer to company as admin
+INSERT INTO company_members (id, company_id, user_id, role, status, invited_by)
+VALUES (
+    '33333333-3333-4333-8333-333333333333',
+    '22222222-2222-4222-8222-222222222222',
+    '11111111-1111-4111-8111-111111111111',
+    'admin',
+    'active',
+    '11111111-1111-4111-8111-111111111111'
 );
 
 -- ============================================================================
@@ -284,7 +335,7 @@ Swiggy is hiring a Next.js Developer to work on our consumer-facing web applicat
 );
 
 -- ============================================================================
--- Sample job matches (2 matches for the test user)
+-- Sample job matches (2 matches for the test seeker)
 -- ============================================================================
 
 INSERT INTO job_matches (id, user_id, job_id, match_score, match_bucket, similarity_raw, is_seen, is_saved, is_dismissed)
@@ -310,4 +361,37 @@ VALUES
     true,
     true,
     false
+);
+
+-- ============================================================================
+-- Sample job post by test employer (for talent pool / assessment testing)
+-- ============================================================================
+
+INSERT INTO job_posts (id, company_id, created_by, title, department, location, is_remote, work_mode, job_type, salary_min, salary_max, description, required_skills, nice_to_have_skills, experience_min, experience_max, status)
+VALUES (
+    '44444444-4444-4444-8444-444444444444',
+    '22222222-2222-4222-8222-222222222222',
+    '11111111-1111-4111-8111-111111111111',
+    'Senior React Developer',
+    'Engineering',
+    'Bangalore, India',
+    false,
+    'hybrid',
+    'fulltime',
+    2500000,
+    4000000,
+    '## Senior React Developer
+
+We are looking for a Senior React Developer to build our next-generation recruitment platform.
+
+### Requirements
+- 4+ years of React/Next.js experience
+- Strong TypeScript skills
+- Experience with PostgreSQL and Supabase
+- Understanding of AI/ML concepts is a plus',
+    '{"React", "TypeScript", "Next.js", "PostgreSQL", "TailwindCSS"}',
+    '{"Supabase", "AI/ML", "Python", "Docker"}',
+    4,
+    8,
+    'active'
 );

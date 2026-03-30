@@ -76,7 +76,7 @@ interface CreateCompanyInput {
 
 /**
  * Create a new company. Invalidates employer queries and refreshes NextAuth session
- * so the JWT picks up the new userType and companyId.
+ * so the JWT picks up the new role and companyId.
  */
 export function useCreateCompany() {
   const qc = useQueryClient();
@@ -92,7 +92,7 @@ export function useCreateCompany() {
         }),
       onSuccess: async () => {
         qc.invalidateQueries({ queryKey: ["employer"] });
-        // Refresh session so JWT gets updated userType + companyId
+        // Refresh session so JWT gets updated role + companyId
         await refreshSession(undefined);
       },
     }

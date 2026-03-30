@@ -30,19 +30,16 @@ export default function EmployerLayout({
   }
 
   // Redirect non-employer users to seeker dashboard
-  if (user && !user.userType.includes("employer")) {
-    // Exception: allow the onboarding page (where they'll become an employer)
-    if (!pathname.startsWith("/employer/onboarding")) {
-      router.replace("/dashboard");
-      return null;
-    }
+  if (user && user.role !== "employer") {
+    router.replace("/dashboard");
+    return null;
   }
 
   // Redirect employers without a company to onboarding
   // (except if they're already on the onboarding page)
   if (
     user &&
-    user.userType.includes("employer") &&
+    user.role === "employer" &&
     !user.companyId &&
     !pathname.startsWith("/employer/onboarding")
   ) {

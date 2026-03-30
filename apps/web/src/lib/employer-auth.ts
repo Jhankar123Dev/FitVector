@@ -78,19 +78,8 @@ export async function getEmployerSession(): Promise<EmployerSessionResult> {
 
   const supabase = createAdminClient();
 
-  // Check user has 'employer' in user_type
-  const { data: user, error: userError } = await supabase
-    .from("users")
-    .select("user_type")
-    .eq("id", session.user.id)
-    .single();
-
-  if (userError || !user) {
-    return { ok: false, error: "User not found", status: 404 };
-  }
-
-  const userType: string[] = user.user_type || [];
-  if (!userType.includes("employer")) {
+  // Check user has 'employer' role (from JWT session)
+  if (session.user.role !== "employer") {
     return { ok: false, error: "Not an employer account", status: 403 };
   }
 

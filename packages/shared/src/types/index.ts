@@ -19,12 +19,15 @@ export type AuthProvider = 'google' | 'github' | 'email';
 
 export type UserStatus = 'active' | 'suspended' | 'deleted';
 
+export type UserRole = 'seeker' | 'employer';
+
 export interface User {
   id: string;
   email: string;
   name: string;
   avatarUrl: string | null;
   authProvider: AuthProvider;
+  role: UserRole;
   planTier: PlanTier;
   userStatus: UserStatus;
   onboardingCompleted: boolean;

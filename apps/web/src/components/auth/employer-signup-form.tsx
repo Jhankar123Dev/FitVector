@@ -6,11 +6,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
+import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { SocialButtons } from "@/components/auth/social-buttons";
 
 const signupSchema = z
   .object({
@@ -26,7 +25,7 @@ const signupSchema = z
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
-export function SignupForm() {
+export function EmployerSignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,7 +42,7 @@ export function SignupForm() {
     setError(null);
 
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch("/api/auth/signup/employer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -60,11 +59,11 @@ export function SignupForm() {
         return;
       }
 
-      // Auto-login after signup to avoid unauthorized error on onboarding
+      // Auto-login after signup
       const signInResult = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        role: "seeker",
+        role: "employer",
         redirect: false,
       });
 
@@ -73,7 +72,7 @@ export function SignupForm() {
         return;
       }
 
-      window.location.href = "/onboarding";
+      window.location.href = "/employer/onboarding";
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -83,20 +82,16 @@ export function SignupForm() {
 
   return (
     <div className="mx-auto flex w-full flex-col justify-center space-y-6 rounded-xl border border-surface-200 bg-white p-8 shadow-card sm:w-[400px]">
-      <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-surface-800">Create your account</h1>
-        <p className="text-sm text-surface-500">Start your AI-powered job search today</p>
-      </div>
-
-      <SocialButtons callbackUrl="/onboarding" />
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <Separator className="w-full" />
+      <div className="flex flex-col items-center space-y-2 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
+          <Building2 className="h-6 w-6 text-brand-600" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-surface-400">Or continue with email</span>
-        </div>
+        <h1 className="text-2xl font-semibold tracking-tight text-surface-800">
+          Create your recruiter account
+        </h1>
+        <p className="text-sm text-surface-500">
+          Start hiring with AI-powered recruitment tools
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -109,7 +104,7 @@ export function SignupForm() {
           <Input
             id="name"
             type="text"
-            placeholder="John Doe"
+            placeholder="Jane Smith"
             autoComplete="name"
             disabled={isLoading}
             {...register("name")}
@@ -118,11 +113,11 @@ export function SignupForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Work Email</Label>
           <Input
             id="email"
             type="email"
-            placeholder="name@example.com"
+            placeholder="you@company.com"
             autoComplete="email"
             disabled={isLoading}
             {...register("email")}
@@ -159,7 +154,7 @@ export function SignupForm() {
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Creating account..." : "Create Account"}
+          {isLoading ? "Creating account..." : "Create Recruiter Account"}
         </Button>
       </form>
 
@@ -167,6 +162,13 @@ export function SignupForm() {
         Already have an account?{" "}
         <Link href="/login" className="font-medium text-brand-500 hover:text-brand-600">
           Sign in
+        </Link>
+      </p>
+
+      <p className="px-8 text-center text-sm text-surface-500">
+        Looking for a job?{" "}
+        <Link href="/signup" className="font-medium text-brand-500 hover:text-brand-600">
+          Sign up as a job seeker
         </Link>
       </p>
 

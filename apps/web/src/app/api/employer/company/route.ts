@@ -90,21 +90,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Add 'employer' to user_type if not already present
-    const { data: currentUser } = await supabase
-      .from("users")
-      .select("user_type")
-      .eq("id", session.user.id)
-      .single();
-
-    const currentTypes: string[] = currentUser?.user_type || [];
-    if (!currentTypes.includes("employer")) {
-      await supabase
-        .from("users")
-        .update({ user_type: [...currentTypes, "employer"] })
-        .eq("id", session.user.id);
-    }
-
     return NextResponse.json(
       {
         data: { company: transformCompany(companyRow) },

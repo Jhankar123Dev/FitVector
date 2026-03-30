@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@/hooks/use-user";
+import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search, FileText, Mail, Kanban } from "lucide-react";
@@ -39,8 +40,16 @@ const QUICK_ACTIONS = [
 
 export default function DashboardPage() {
   const { user } = useUser();
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
 
   const firstName = user?.name?.split(" ")[0] || "there";
+
+  const statCards = [
+    { label: "Active Applications", value: stats?.activeApplications ?? 0 },
+    { label: "Job Matches", value: stats?.jobMatches ?? 0 },
+    { label: "Resumes Created", value: stats?.resumesCreated ?? 0 },
+    { label: "Messages Sent", value: stats?.messagesSent ?? 0 },
+  ];
 
   return (
     <div className="space-y-8">
@@ -77,18 +86,17 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Placeholder stats */}
+      {/* Dynamic stats */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Active Applications", value: "0" },
-          { label: "Job Matches", value: "0" },
-          { label: "Resumes Created", value: "0" },
-          { label: "Messages Sent", value: "0" },
-        ].map((stat) => (
+        {statCards.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="p-6">
               <p className="text-sm text-surface-500">{stat.label}</p>
-              <p className="mt-1 text-3xl font-bold text-surface-800">{stat.value}</p>
+              {statsLoading ? (
+                <div className="mt-1 h-9 w-12 animate-pulse rounded bg-surface-100" />
+              ) : (
+                <p className="mt-1 text-3xl font-bold text-surface-800">{stat.value}</p>
+              )}
             </CardContent>
           </Card>
         ))}

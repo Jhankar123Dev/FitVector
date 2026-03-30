@@ -47,14 +47,14 @@ export async function POST(req: Request) {
     );
 
     const fileExt = file.name.split(".").pop();
-    const storagePath = `${session.user.id}/${Date.now()}.${fileExt}`;
+    const storagePath = `${session.user.id}/original.${fileExt}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const { error: uploadError } = await supabase.storage
-      .from("resumes-raw")
+      .from("resumes")
       .upload(storagePath, arrayBuffer, {
         contentType: file.type,
-        upsert: false,
+        upsert: true,
       });
 
     if (uploadError) {
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     }
 
     // Get public URL for the uploaded file
-    const { data: urlData } = supabase.storage.from("resumes-raw").getPublicUrl(storagePath);
+    const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(storagePath);
     const rawResumeUrl = urlData?.publicUrl || null;
 
     // Proxy to Python AI service for parsing

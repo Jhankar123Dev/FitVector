@@ -7,6 +7,7 @@ export const config = {
     "/employer/:path*",
     "/login",
     "/signup",
+    "/signup/employer",
     "/api/((?!auth|health).*)",
   ],
 };

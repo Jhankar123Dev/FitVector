@@ -2,12 +2,14 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import LinkedIn from "next-auth/providers/linkedin";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 import type { PlanTier } from "@fitvector/shared";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  role: z.enum(["seeker", "employer"]).optional().default("seeker"),
 });
 
 declare module "next-auth" {
@@ -19,7 +21,7 @@ declare module "next-auth" {
       image?: string | null;
       planTier: PlanTier;
       onboardingCompleted: boolean;
-      userType: string[];
+      role: "seeker" | "employer";
       companyId: string | null;
     };
   }
@@ -27,7 +29,7 @@ declare module "next-auth" {
   interface User {
     planTier?: PlanTier;
     onboardingCompleted?: boolean;
-    userType?: string[];
+    role?: "seeker" | "employer";
     companyId?: string | null;
   }
 }
@@ -40,7 +42,7 @@ declare module "next-auth" {
     provider?: string;
     planTier: PlanTier;
     onboardingCompleted: boolean;
-    userType: string[];
+    role: "seeker" | "employer";
     companyId: string | null;
   }
 }
@@ -68,6 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials);
@@ -75,21 +78,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const supabase = await getSupabaseAdmin();
 
-        // Hash the password the same way as signup
-        const encoder = new TextEncoder();
-        const data = encoder.encode(parsed.data.password);
-        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const passwordHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-
+        // Single table query — users holds both seekers and employers
         const { data: user, error } = await supabase
           .from("users")
-          .select("id, email, full_name, password_hash, plan_tier, onboarding_completed, avatar_url")
+          .select("id, email, full_name, password_hash, plan_tier, onboarding_completed, avatar_url, role")
           .eq("email", parsed.data.email)
           .eq("auth_provider", "credentials")
           .single();
 
-        if (error || !user || user.password_hash !== passwordHash) {
+        if (error || !user || !user.password_hash) {
+          return null;
+        }
+
+        // bcrypt comparison (replaces SHA-256)
+        const isValid = await bcrypt.compare(parsed.data.password, user.password_hash);
+        if (!isValid) {
+          return null;
+        }
+
+        // Role mismatch — user exists but selected wrong portal
+        if (user.role !== parsed.data.role) {
           return null;
         }
 
@@ -100,6 +108,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           image: user.avatar_url,
           planTier: user.plan_tier,
           onboardingCompleted: user.onboarding_completed,
+          role: user.role as "seeker" | "employer",
         };
       },
     }),
@@ -114,22 +123,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async signIn({ user, account }) {
-      // For OAuth providers, upsert the user in our database
+      // For OAuth providers, upsert the user in our database (OAuth = seeker-only)
       if (account?.provider && account.provider !== "credentials") {
         const supabase = await getSupabaseAdmin();
 
         const { data: existingUser } = await supabase
           .from("users")
-          .select("id, plan_tier, onboarding_completed")
+          .select("id, plan_tier, onboarding_completed, role")
           .eq("email", user.email!)
           .single();
 
         if (existingUser) {
+          // If the existing user is an employer, block OAuth login
+          // (employers must use credentials via the Recruiter portal)
+          if (existingUser.role === "employer") {
+            return false;
+          }
           user.id = existingUser.id;
           user.planTier = existingUser.plan_tier;
           user.onboardingCompleted = existingUser.onboarding_completed;
+          user.role = existingUser.role as "seeker" | "employer";
         } else {
-          // Create new user for OAuth sign-in
+          // Create new user for OAuth sign-in (always seeker)
           const { data: newUser } = await supabase
             .from("users")
             .insert({
@@ -140,6 +155,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               plan_tier: "free",
               status: "active",
               onboarding_completed: false,
+              role: "seeker",
             })
             .select("id")
             .single();
@@ -148,6 +164,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             user.id = newUser.id;
             user.planTier = "free";
             user.onboardingCompleted = false;
+            user.role = "seeker";
           }
         }
       }
@@ -158,6 +175,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id!;
         token.planTier = user.planTier || "free";
         token.onboardingCompleted = user.onboardingCompleted || false;
+        token.role = user.role || "seeker";
       }
       if (account) {
         token.provider = account.provider;
@@ -169,38 +187,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const supabase = await getSupabaseAdmin();
         const { data: dbUser } = await supabase
           .from("users")
-          .select("id, plan_tier, onboarding_completed, user_type")
+          .select("id, plan_tier, onboarding_completed, role")
           .eq("email", token.email as string)
           .single();
         if (dbUser) {
           token.id = dbUser.id;
           token.planTier = dbUser.plan_tier;
           token.onboardingCompleted = dbUser.onboarding_completed;
-          token.userType = dbUser.user_type || ["seeker"];
+          token.role = dbUser.role as "seeker" | "employer";
         }
       }
 
-      // On initial sign-in (user is present), fetch user_type and companyId from DB
-      // This works uniformly for Credentials, Google, and LinkedIn providers
+      // On initial sign-in, fetch companyId for employers
       if (user && token.id) {
         const supabase = await getSupabaseAdmin();
 
-        // Fetch user_type from DB (OAuth user object won't have it)
-        const { data: dbUser } = await supabase
-          .from("users")
-          .select("user_type")
-          .eq("id", token.id)
-          .single();
-        token.userType = dbUser?.user_type || ["seeker"];
-
-        // Fetch active company membership
-        const { data: membership } = await supabase
-          .from("company_members")
-          .select("company_id")
-          .eq("user_id", token.id)
-          .eq("status", "active")
-          .single();
-        token.companyId = membership?.company_id || null;
+        if (token.role === "employer") {
+          const { data: membership } = await supabase
+            .from("company_members")
+            .select("company_id")
+            .eq("user_id", token.id)
+            .eq("status", "active")
+            .single();
+          token.companyId = membership?.company_id || null;
+        } else {
+          token.companyId = null;
+        }
       }
 
       // Refresh user data from DB on session update (e.g., after company creation)
@@ -208,28 +220,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const supabase = await getSupabaseAdmin();
         const { data: freshUser } = await supabase
           .from("users")
-          .select("plan_tier, onboarding_completed, user_type")
+          .select("plan_tier, onboarding_completed, role")
           .eq("id", token.id)
           .single();
 
         if (freshUser) {
           token.planTier = freshUser.plan_tier;
           token.onboardingCompleted = freshUser.onboarding_completed;
-          token.userType = freshUser.user_type || ["seeker"];
+          token.role = freshUser.role as "seeker" | "employer";
         }
 
-        // Refresh company membership
-        const { data: membership } = await supabase
-          .from("company_members")
-          .select("company_id")
-          .eq("user_id", token.id)
-          .eq("status", "active")
-          .single();
-        token.companyId = membership?.company_id || null;
+        // Refresh company membership for employers
+        if (token.role === "employer") {
+          const { data: membership } = await supabase
+            .from("company_members")
+            .select("company_id")
+            .eq("user_id", token.id)
+            .eq("status", "active")
+            .single();
+          token.companyId = membership?.company_id || null;
+        } else {
+          token.companyId = null;
+        }
       }
 
-      // Ensure defaults for tokens that were created before this update
-      if (!token.userType) token.userType = ["seeker"];
+      // Ensure defaults for tokens created before this update
+      if (!token.role) token.role = "seeker";
       if (token.companyId === undefined) token.companyId = null;
 
       return token;
@@ -238,7 +254,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.id = token.id as string;
       session.user.planTier = (token.planTier as PlanTier) ?? "free";
       session.user.onboardingCompleted = (token.onboardingCompleted as boolean) ?? false;
-      session.user.userType = (token.userType as string[]) ?? ["seeker"];
+      session.user.role = (token.role as "seeker" | "employer") ?? "seeker";
       session.user.companyId = (token.companyId as string | null) ?? null;
       return session;
     },
@@ -253,9 +269,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       // Redirect authenticated users away from auth pages
-      if (isLoggedIn && (pathname === "/login" || pathname === "/signup")) {
-        const redirectTo = authResult.user.onboardingCompleted ? "/dashboard" : "/onboarding";
+      if (isLoggedIn && (pathname === "/login" || pathname === "/signup" || pathname.startsWith("/signup/"))) {
+        const role = authResult.user.role as "seeker" | "employer" | undefined;
+        let redirectTo: string;
+        if (role === "employer") {
+          redirectTo = authResult.user.onboardingCompleted ? "/employer" : "/employer/onboarding";
+        } else {
+          redirectTo = authResult.user.onboardingCompleted ? "/dashboard" : "/onboarding";
+        }
         return Response.redirect(new URL(redirectTo, request.nextUrl.origin));
+      }
+
+      // Role-based route enforcement
+      if (isLoggedIn) {
+        const role = authResult.user.role as "seeker" | "employer" | undefined;
+
+        // Seeker trying to access employer routes
+        if (role === "seeker" && pathname.startsWith("/employer")) {
+          return Response.redirect(new URL("/dashboard", request.nextUrl.origin));
+        }
+
+        // Employer trying to access seeker routes
+        if (role === "employer" && (pathname.startsWith("/dashboard") || pathname === "/onboarding")) {
+          const dest = authResult.user.onboardingCompleted ? "/employer" : "/employer/onboarding";
+          return Response.redirect(new URL(dest, request.nextUrl.origin));
+        }
       }
 
       return true;

@@ -173,15 +173,15 @@ export default function HomePage() {
               Search across multiple job boards, tailor your resume for each application, and
               generate personalized outreach — all powered by AI.
             </p>
-            <div className="mt-10 flex items-center justify-center gap-4">
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" asChild>
                 <Link href="/signup">
-                  Get Started Free
+                  I&apos;m Looking for a Job
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="/#how-it-works">See How It Works</Link>
+                <Link href="/signup/employer">I&apos;m Hiring</Link>
               </Button>
             </div>
             <p className="mt-4 text-sm text-surface-400">No credit card required. Free plan available.</p>

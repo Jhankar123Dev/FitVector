@@ -17,10 +17,17 @@ import {
   Sparkles,
   Tag,
   Filter,
+  Crosshair,
+  Clock,
+  Loader2,
+  CheckCircle2,
+  MapPin,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import { useTalentPool, useUpdateTags, useReengage } from "@/hooks/use-talent-pool";
+import { useTalentPool, useUpdateTags, useReengage, useTalentPoolSearch } from "@/hooks/use-talent-pool";
+import type { TalentPoolSearchCandidate, TalentPoolSearchResult } from "@/hooks/use-talent-pool";
 import { useEmployerJobs } from "@/hooks/use-employer-jobs";
 import type { TalentPoolCandidate } from "@/types/employer";
 import { SOURCE_LABELS } from "@/types/employer";
@@ -54,6 +61,7 @@ export default function TalentPoolPage() {
   const { data: jobsData } = useEmployerJobs();
   const updateTags = useUpdateTags();
   const reengage = useReengage();
+  const talentSearch = useTalentPoolSearch();
 
   const candidates = (talentData?.data || []) as unknown as TalentPoolCandidate[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,6 +73,28 @@ export default function TalentPoolPage() {
   const [reengageCandidate, setReengageCandidate] = useState<TalentPoolCandidate | null>(null);
   const [addingTagFor, setAddingTagFor] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
+
+  // ── Find Matches state ──────────────────────────────────────────
+  const [matchJobPostId, setMatchJobPostId] = useState("");
+  const [matchMaxCandidates, setMatchMaxCandidates] = useState(20);
+  const [matchLastActive, setMatchLastActive] = useState("");
+  const [matchSkills, setMatchSkills] = useState("");
+  const [matchLocation, setMatchLocation] = useState("");
+
+  function handleFindMatches() {
+    if (!matchJobPostId) return;
+    talentSearch.mutate({
+      jobPostId: matchJobPostId,
+      maxCandidates: matchMaxCandidates,
+      ...(matchLastActive ? { lastActiveAfter: new Date(matchLastActive).toISOString() } : {}),
+      ...(matchSkills.trim() ? { skills: matchSkills.split(",").map((s) => s.trim()).filter(Boolean) } : {}),
+      ...(matchLocation.trim() ? { location: matchLocation.trim() } : {}),
+    });
+  }
+
+  function getCacheAgeMinutes(cachedAt: string): number {
+    return Math.round((Date.now() - new Date(cachedAt).getTime()) / 60000);
+  }
 
   // Get all unique tags
   const allTags = useMemo(() => {
@@ -148,6 +178,227 @@ export default function TalentPoolPage() {
           Candidates saved for future opportunities
         </p>
       </div>
+
+      {/* ── Find Matches section ────────────────────────────────── */}
+      <Card>
+        <CardContent className="space-y-4 p-4 sm:p-5">
+          <div className="flex items-center gap-2">
+            <Crosshair className="h-4 w-4 text-brand-600" />
+            <h2 className="text-sm sm:text-base font-semibold text-surface-800">
+              Find Matches for a Job
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Job post selector */}
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+              <Label className="text-xs text-surface-600">Job Post</Label>
+              <select
+                value={matchJobPostId}
+                onChange={(e) => setMatchJobPostId(e.target.value)}
+                className="w-full rounded-md border border-surface-200 bg-white px-3 py-2 text-sm text-surface-800 outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400"
+              >
+                <option value="">Select a job post...</option>
+                {MOCK_JOB_POSTS.filter((j) => j.status === "active" || j.status === "draft").map(
+                  (job) => (
+                    <option key={job.id} value={job.id}>
+                      {job.title}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+
+            {/* Max candidates */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-surface-600">Max Candidates</Label>
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={matchMaxCandidates}
+                onChange={(e) => setMatchMaxCandidates(Math.min(100, Math.max(1, Number(e.target.value) || 20)))}
+                className="text-sm"
+              />
+            </div>
+
+            {/* Last active date */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-surface-600">Last Active After</Label>
+              <Input
+                type="date"
+                value={matchLastActive}
+                onChange={(e) => setMatchLastActive(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+
+            {/* Skills filter */}
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+              <Label className="text-xs text-surface-600">Skills (comma-separated)</Label>
+              <Input
+                placeholder="e.g. React, Node.js, Python"
+                value={matchSkills}
+                onChange={(e) => setMatchSkills(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+
+            {/* Location filter */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-surface-600">Location</Label>
+              <Input
+                placeholder="e.g. Bangalore"
+                value={matchLocation}
+                onChange={(e) => setMatchLocation(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+
+            {/* Search button */}
+            <div className="flex items-end">
+              <Button
+                onClick={handleFindMatches}
+                disabled={!matchJobPostId || talentSearch.isPending}
+                className="w-full gap-2"
+              >
+                {talentSearch.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Crosshair className="h-4 w-4" />
+                )}
+                Find Matches for This Job
+              </Button>
+            </div>
+          </div>
+
+          {/* Error */}
+          {talentSearch.isError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {talentSearch.error.message || "Search failed. Please try again."}
+            </div>
+          )}
+
+          {/* Results */}
+          {talentSearch.data && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm font-medium text-surface-800">
+                    {talentSearch.data.data.length} matching candidate{talentSearch.data.data.length !== 1 ? "s" : ""} found
+                  </span>
+                </div>
+                {talentSearch.data.cached && talentSearch.data.cachedAt && (
+                  <div className="flex items-center gap-1 text-[11px] text-surface-400">
+                    <Clock className="h-3 w-3" />
+                    Cached from {getCacheAgeMinutes(talentSearch.data.cachedAt)} min ago
+                  </div>
+                )}
+              </div>
+
+              {talentSearch.data.data.length === 0 ? (
+                <div className="rounded-lg border border-surface-200 bg-surface-50 py-8 text-center">
+                  <Database className="mx-auto h-8 w-8 text-surface-300" />
+                  <p className="mt-2 text-sm text-surface-500">No matching candidates found</p>
+                  <p className="mt-1 text-xs text-surface-400">Try broadening your filters.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-surface-200">
+                  <table className="w-full min-w-[700px]">
+                    <thead>
+                      <tr className="border-b border-surface-200 bg-surface-50">
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Candidate</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Matching Skills</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Match</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Score</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Location</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Tags</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {talentSearch.data.data.map((c: TalentPoolSearchCandidate) => (
+                        <tr key={c.id} className="border-b border-surface-100 transition-colors hover:bg-surface-50">
+                          <td className="px-3 py-2.5">
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-medium text-surface-800">{c.name}</p>
+                              <p className="truncate text-[11px] text-surface-500">{c.email}</p>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                              {c.matchingSkills.slice(0, 4).map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 border border-emerald-200"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                              {c.matchingSkills.length > 4 && (
+                                <span className="text-[10px] text-surface-400">
+                                  +{c.matchingSkills.length - 4}
+                                </span>
+                              )}
+                              {c.matchingSkills.length === 0 && (
+                                <span className="text-[10px] text-surface-400 italic">None</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold",
+                                c.matchScore >= 70
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : c.matchScore >= 40
+                                    ? "bg-amber-50 text-amber-700"
+                                    : "bg-red-50 text-red-700",
+                              )}
+                            >
+                              {c.matchScore}%
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold", getScoreColor(c.screeningScore))}>
+                              {c.screeningScore}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            {c.location ? (
+                              <div className="flex items-center gap-1 text-[11px] text-surface-600">
+                                <MapPin className="h-3 w-3 shrink-0 text-surface-400" />
+                                {c.location}
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-surface-400 italic">N/A</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="flex flex-wrap gap-1 max-w-[150px]">
+                              {c.tags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className={cn("rounded-full border px-1.5 py-0.5 text-[9px] font-medium", getTagColor(tag))}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {c.tags.length > 3 && (
+                                <span className="text-[9px] text-surface-400">+{c.tags.length - 3}</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ── Suggestion banner ─────────────────────────────────── */}
       {matchingSuggestion && (

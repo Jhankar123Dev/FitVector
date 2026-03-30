@@ -51,8 +51,8 @@ export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps)
         className,
       )}
     >
-      {/* Company header */}
-      <div className="flex h-14 items-center gap-2.5 border-b border-surface-800 px-4">
+      {/* Company header — links to home */}
+      <Link href="/" className="flex h-14 items-center gap-2.5 border-b border-surface-800 px-4">
         {isLoading ? (
           <>
             <div className="h-7 w-7 shrink-0 animate-pulse rounded-lg bg-surface-700" />
@@ -94,7 +94,7 @@ export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps)
             </div>
           </>
         )}
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto scrollbar-dark px-2.5 py-3">

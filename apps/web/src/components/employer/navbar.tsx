@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Menu, LogOut, User, ArrowLeftRight } from "lucide-react";
+import { Bell, Menu, LogOut, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useRef, useEffect } from "react";
@@ -57,15 +57,6 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
 
       {/* Right: actions */}
       <div className="flex items-center gap-3">
-        {/* Switch to job seeker */}
-        <Link
-          href="/dashboard"
-          className="hidden items-center gap-1.5 rounded-lg border border-surface-200 px-3 py-1.5 text-xs font-medium text-surface-600 transition-colors hover:bg-surface-50 hover:text-surface-800 sm:inline-flex"
-        >
-          <ArrowLeftRight className="h-3.5 w-3.5" />
-          Job Seeker
-        </Link>
-
         {/* Notifications */}
         <Button
           variant="ghost"
@@ -107,12 +98,12 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
                   Settings
                 </Link>
                 <Link
-                  href="/dashboard"
+                  href="/employer/settings"
                   className="flex items-center gap-2 px-4 py-2 text-sm text-surface-600 transition-colors hover:bg-surface-50 hover:text-surface-800 sm:hidden"
                   onClick={() => setShowDropdown(false)}
                 >
-                  <ArrowLeftRight className="h-4 w-4" />
-                  Switch to Job Seeker
+                  <Settings className="h-4 w-4" />
+                  Settings
                 </Link>
                 <button
                   onClick={() => {
