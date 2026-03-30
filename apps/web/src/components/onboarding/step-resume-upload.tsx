@@ -214,14 +214,14 @@ export function StepResumeUpload() {
           <div className="space-y-2">
             <Label>Professional Summary</Label>
             <Textarea
-              defaultValue={parsedData.summary}
+              defaultValue={parsedData.summary ?? ""}
               rows={3}
               className="text-sm"
             />
           </div>
 
           {/* Experience */}
-          {parsedData.experience.length > 0 && (
+          {(parsedData.experience?.length ?? 0) > 0 && (
             <div className="space-y-2">
               <Label>Experience</Label>
               {parsedData.experience.map((exp, i) => (
@@ -231,12 +231,12 @@ export function StepResumeUpload() {
                       <div>
                         <p className="font-medium">{exp.role}</p>
                         <p className="text-sm text-muted-foreground">
-                          {exp.company} &middot; {exp.startDate} - {exp.endDate}
+                          {exp.company} &middot; {(exp as any).start_date ?? exp.startDate} - {(exp as any).end_date ?? exp.endDate}
                         </p>
                       </div>
                     </div>
                     <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                      {exp.bullets.slice(0, 3).map((bullet, j) => (
+                      {(exp.bullets ?? []).slice(0, 3).map((bullet, j) => (
                         <li key={j}>{bullet}</li>
                       ))}
                     </ul>
@@ -247,17 +247,17 @@ export function StepResumeUpload() {
           )}
 
           {/* Education */}
-          {parsedData.education.length > 0 && (
+          {(parsedData.education?.length ?? 0) > 0 && (
             <div className="space-y-2">
               <Label>Education</Label>
               {parsedData.education.map((edu, i) => (
                 <Card key={i}>
                   <CardContent className="p-4">
                     <p className="font-medium">
-                      {edu.degree} in {edu.field}
+                      {edu.degree}{edu.field ? ` in ${edu.field}` : ""}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {edu.institution} &middot; {edu.graduationYear}
+                      {edu.institution} &middot; {(edu as any).year ?? edu.graduationYear}
                     </p>
                   </CardContent>
                 </Card>
