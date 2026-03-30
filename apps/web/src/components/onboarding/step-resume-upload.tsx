@@ -81,8 +81,41 @@ export function StepResumeUpload() {
       }
 
       const result = await res.json();
-      setParsedData(result.data.parsed);
-      setEditableSkills(result.data.parsed.skills || []);
+      const raw = result.data.parsed;
+      // Normalise: Gemini returns snake_case nested under contact
+      const parsed: ParsedResume = {
+        name: raw?.contact?.name || raw?.name || "",
+        email: raw?.contact?.email || raw?.email || "",
+        phone: raw?.contact?.phone || raw?.phone || "",
+        location: raw?.contact?.location || raw?.location || "",
+        summary: raw?.summary || "",
+        experience: (raw?.experience || []).map((e: any) => ({
+          company: e.company || "",
+          role: e.role || e.title || "",
+          startDate: e.start_date || e.startDate || "",
+          endDate: e.end_date || e.endDate || "Present",
+          bullets: e.bullets || [],
+          technologies: e.technologies || [],
+        })),
+        education: (raw?.education || []).map((e: any) => ({
+          institution: e.institution || e.school || "",
+          degree: e.degree || "",
+          field: e.field || e.major || "",
+          graduationYear: e.year || e.graduation_year || e.graduationYear || 0,
+        })),
+        skills: raw?.skills || [],
+        projects: (raw?.projects || []).map((p: any) => ({
+          name: p.name || p.title || "",
+          description: Array.isArray(p.bullets) ? p.bullets.join(" ") : (p.description || ""),
+          technologies: p.technologies || [],
+          url: p.url || "",
+        })),
+        certifications: (raw?.certifications || []).map((c: any) =>
+          typeof c === "string" ? { name: c, issuer: "", year: 0 } : c
+        ),
+      };
+      setParsedData(parsed);
+      setEditableSkills(parsed.skills || []);
       setUploadState("success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -119,10 +152,15 @@ export function StepResumeUpload() {
     setEditableSkills(editableSkills.filter((s) => s !== skill));
   };
 
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const handleSaveParsedData = async () => {
     if (!parsedData) return;
+    setSaving(true);
+    setSaveSuccess(false);
     try {
-      await fetch("/api/user/profile", {
+      const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -130,8 +168,11 @@ export function StepResumeUpload() {
           skills: editableSkills,
         }),
       });
+      if (res.ok) setSaveSuccess(true);
     } catch {
-      // Non-critical — will save on onboarding completion
+      // Non-critical
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -265,6 +306,20 @@ export function StepResumeUpload() {
             </div>
           )}
 
+          {/* Certifications */}
+          {(parsedData.certifications?.length ?? 0) > 0 && (
+            <div className="space-y-2">
+              <Label>Certifications</Label>
+              <div className="flex flex-wrap gap-2">
+                {parsedData.certifications.map((cert, i) => (
+                  <Badge key={i} variant="outline" className="py-1 text-xs">
+                    {typeof cert === "string" ? cert : cert.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Skills */}
           <div className="space-y-2">
             <Label>Skills</Label>
@@ -297,9 +352,16 @@ export function StepResumeUpload() {
             </div>
           </div>
 
-          <Button type="button" variant="outline" onClick={handleSaveParsedData}>
-            Save Changes
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button type="button" variant="outline" disabled={saving} onClick={handleSaveParsedData}>
+              {saving ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Saving...</> : "Save Changes"}
+            </Button>
+            {saveSuccess && (
+              <span className="flex items-center gap-1 text-sm text-green-600">
+                <CheckCircle2 className="h-4 w-4" /> Saved
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -219,9 +219,9 @@ def _generate_version_name(
     return f"{company}_{role}_{month_year}"
 
 
-_PARSE_RESUME_SYSTEM_PROMPT = """You are a resume parser. Extract structured data from the resume text provided.
+_PARSE_RESUME_SYSTEM_PROMPT = """You are an expert ATS (Applicant Tracking System) data extraction engine. Your job is to extract EVERY piece of information from the resume text with 100% accuracy. Do not skip, summarize, or truncate anything.
 
-Return ONLY a valid JSON object with this exact structure (no markdown fences, no extra text):
+Return ONLY a valid JSON object (no markdown fences, no extra text, no comments) matching EXACTLY this schema:
 {
   "contact": {
     "name": "Full Name",
@@ -232,8 +232,8 @@ Return ONLY a valid JSON object with this exact structure (no markdown fences, n
     "github": "https://github.com/...",
     "portfolio": ""
   },
-  "summary": "Professional summary or objective",
-  "target_role": "Inferred target job title",
+  "summary": "Full professional summary exactly as written",
+  "target_role": "Inferred target job title from most recent role or resume direction",
   "experience": [
     {
       "role": "Job Title",
@@ -241,7 +241,15 @@ Return ONLY a valid JSON object with this exact structure (no markdown fences, n
       "start_date": "Jan 2022",
       "end_date": "Present",
       "location": "City, State",
-      "bullets": ["Achievement or responsibility 1", "Achievement 2"]
+      "bullets": ["Full achievement bullet 1", "Full achievement bullet 2"]
+    },
+    {
+      "role": "Previous Job Title",
+      "company": "Previous Company",
+      "start_date": "Jun 2020",
+      "end_date": "Dec 2021",
+      "location": "City, State",
+      "bullets": ["Achievement 1", "Achievement 2"]
     }
   ],
   "education": [
@@ -257,7 +265,7 @@ Return ONLY a valid JSON object with this exact structure (no markdown fences, n
     {
       "name": "Project Name",
       "technologies": ["Python", "React"],
-      "bullets": ["What it does, impact"]
+      "bullets": ["What it does and its impact"]
     }
   ],
   "skills": ["Python", "React", "SQL"],
@@ -265,12 +273,14 @@ Return ONLY a valid JSON object with this exact structure (no markdown fences, n
   "languages": ["English", "Spanish"]
 }
 
-Rules:
-- Use empty string "" for missing text fields, empty array [] for missing list fields
-- Infer target_role from the most recent job title or overall resume direction
-- skills should be a flat list of all technical and soft skills mentioned
-- If the resume has no projects section, return empty array for projects
-- Keep bullets concise (under 120 chars each)
+CRITICAL EXTRACTION RULES — READ CAREFULLY:
+1. EXTRACT ALL JOBS: You MUST extract EVERY SINGLE work experience listed in the resume. NEVER skip an employer. Look carefully for all companies mentioned.
+2. DIFFERENTIATE JOBS VS PROJECTS: If an entry has a Company Name, Job Title, and Date Range, it MUST go into the "experience" array, NOT "projects".
+3. NO SUMMARIZATION: Extract ALL bullet points for every job word-for-word. Do not summarize.
+4. DATE FORMATTING: If a job says "Present" or has no end date, use "Present" as end_date.
+5. BLANK FIELDS: Use empty string "" for missing text fields, empty array [] for missing list fields.
+6. SKILLS: `skills` must be a flat list of ALL technical and soft skills found anywhere in the document.
+7. JSON INTEGRITY: The JSON MUST be complete and valid. Never stop mid-object. Ensure all brackets are closed.
 """
 
 
@@ -314,7 +324,7 @@ async def parse_resume_file(file_bytes: bytes, content_type: str) -> ParseResume
         task="parse_resume",
         system_prompt=_PARSE_RESUME_SYSTEM_PROMPT,
         user_prompt=f"Parse this resume:\n\n{truncated_text}",
-        max_tokens=2048,
+        max_tokens=4096,
         temperature=0.1,
     )
 
@@ -328,9 +338,42 @@ async def parse_resume_file(file_bytes: bytes, content_type: str) -> ParseResume
     try:
         parsed_data = json.loads(clean)
     except json.JSONDecodeError as exc:
-        logger.warning("Gemini returned non-JSON for resume parse: %s", exc)
-        # Return minimal structure so UI doesn't break
-        parsed_data = {"raw_text": raw_text[:500], "parse_error": str(exc)}
+        logger.warning("Gemini returned non-JSON for resume parse: %s — attempting repair", exc)
+        # Attempt to repair truncated JSON by closing open structures
+        repaired = clean
+        # Count unclosed brackets/braces
+        open_braces = repaired.count("{") - repaired.count("}")
+        open_brackets = repaired.count("[") - repaired.count("]")
+        # If last char is mid-string, close it
+        if repaired and repaired[-1] not in ('"', '}', ']'):
+            # Trim to last complete key-value pair
+            last_comma = repaired.rfind(",")
+            last_brace = repaired.rfind("}")
+            last_bracket = repaired.rfind("]")
+            trim_to = max(last_comma, last_brace, last_bracket)
+            if trim_to > 0:
+                repaired = repaired[:trim_to]
+                open_braces = repaired.count("{") - repaired.count("}")
+                open_brackets = repaired.count("[") - repaired.count("]")
+        # Close open arrays first, then objects
+        repaired += "]" * open_brackets + "}" * open_braces
+        try:
+            parsed_data = json.loads(repaired)
+            logger.info("JSON repair succeeded")
+        except json.JSONDecodeError:
+            logger.warning("JSON repair failed — returning minimal structure")
+            parsed_data = {
+                "contact": {"name": "", "email": "", "phone": "", "location": ""},
+                "summary": "",
+                "target_role": "",
+                "experience": [],
+                "education": [],
+                "skills": [],
+                "projects": [],
+                "certifications": [],
+                "languages": [],
+                "parse_error": str(exc),
+            }
 
     return ParseResumeResponse(parsed_data=parsed_data)
 
