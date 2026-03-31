@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationDropdown } from "./notification-dropdown";
 import { useUser } from "@/hooks/use-user";
+import { useNotifications, useMarkAllRead } from "@/hooks/use-notifications";
 import { useState, useRef, useEffect, useMemo } from "react";
-import { MOCK_NOTIFICATIONS } from "@/lib/mock/seeker-marketplace-data";
-import type { SeekerNotification } from "@/types/marketplace";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -18,9 +17,11 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   const { user } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<SeekerNotification[]>(MOCK_NOTIFICATIONS);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const { data: notifications = [] } = useNotifications();
+  const markAllRead = useMarkAllRead();
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.isRead).length,
@@ -42,7 +43,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   }, []);
 
   const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    markAllRead.mutate();
   };
 
   const initials = user?.name

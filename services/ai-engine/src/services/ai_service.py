@@ -39,9 +39,7 @@ def _get_gemini() -> genai.Client:
 
 
 def get_model_for_task(task: str) -> str:
-    """Select Gemini model based on task complexity."""
-    if task == "tailor_resume":
-        return "gemini-2.5-pro"
+    """Select Gemini model for task. Uses gemini-2.5-flash for all tasks (free-tier safe)."""
     return "gemini-2.5-flash"
 
 

@@ -10,6 +10,7 @@ interface KanbanColumnProps {
   color: string;
   applications: TrackerApplication[];
   onCardClick: (app: TrackerApplication) => void;
+  onStatusChange: (id: string, newStatus: string) => void;
 }
 
 export function KanbanColumn({
@@ -18,6 +19,7 @@ export function KanbanColumn({
   color,
   applications,
   onCardClick,
+  onStatusChange,
 }: KanbanColumnProps) {
   return (
     <div className="flex h-full w-72 shrink-0 flex-col rounded-lg bg-muted/50">
@@ -49,6 +51,7 @@ export function KanbanColumn({
                 application={app}
                 index={index}
                 onClick={onCardClick}
+                onStatusChange={onStatusChange}
               />
             ))}
             {provided.placeholder}

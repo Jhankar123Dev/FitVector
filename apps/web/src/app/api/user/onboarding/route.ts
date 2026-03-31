@@ -12,8 +12,8 @@ const onboardingSchema = z.object({
   preferredWorkMode: z.enum(["onsite", "remote", "hybrid"]).optional(),
   preferredJobTypes: z.array(z.enum(["fulltime", "parttime", "internship", "contract"])).optional(),
   preferredIndustries: z.array(z.string()).optional(),
-  expectedSalaryMin: z.number().optional(),
-  expectedSalaryMax: z.number().optional(),
+  expectedSalaryMin: z.number().nullish(),
+  expectedSalaryMax: z.number().nullish(),
 });
 
 export async function POST(req: Request) {

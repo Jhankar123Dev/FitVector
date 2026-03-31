@@ -122,8 +122,8 @@ export function OnboardingWizard() {
           targetLocations: data.targetLocations,
           preferredWorkMode: data.preferredWorkMode,
           preferredJobTypes: data.preferredJobTypes,
-          expectedSalaryMin: data.expectedSalaryMin,
-          expectedSalaryMax: data.expectedSalaryMax,
+          expectedSalaryMin: typeof data.expectedSalaryMin === 'number' && !isNaN(data.expectedSalaryMin) ? data.expectedSalaryMin : undefined,
+          expectedSalaryMax: typeof data.expectedSalaryMax === 'number' && !isNaN(data.expectedSalaryMax) ? data.expectedSalaryMax : undefined,
         }),
       });
 

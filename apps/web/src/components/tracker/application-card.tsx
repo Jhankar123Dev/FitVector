@@ -8,10 +8,20 @@ import { Draggable } from "react-beautiful-dnd";
 import { isFitVectorApp, FV_STATUS_CONFIG } from "@/types/marketplace";
 import type { FVApplicationStatus } from "@/types/marketplace";
 
+const STATUS_OPTIONS = [
+  { value: "saved", label: "Saved" },
+  { value: "applied", label: "Applied" },
+  { value: "screening", label: "Screening" },
+  { value: "interview", label: "Interview" },
+  { value: "offer", label: "Offer" },
+  { value: "rejected", label: "Rejected" },
+];
+
 interface ApplicationCardProps {
   application: TrackerApplication;
   index: number;
   onClick: (app: TrackerApplication) => void;
+  onStatusChange: (id: string, newStatus: string) => void;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -23,7 +33,7 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
-export function ApplicationCard({ application, index, onClick }: ApplicationCardProps) {
+export function ApplicationCard({ application, index, onClick, onStatusChange }: ApplicationCardProps) {
   const isFV = isFitVectorApp(application.status);
   const fvConfig = isFV
     ? FV_STATUS_CONFIG[application.status as FVApplicationStatus]
@@ -90,6 +100,26 @@ export function ApplicationCard({ application, index, onClick }: ApplicationCard
                   </span>
                 )}
               </div>
+
+              {/* Status selector — visible for non-FV apps */}
+              {!isFV && (
+                <div
+                  className="mt-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <select
+                    value={application.status}
+                    onChange={(e) => onStatusChange(application.id, e.target.value)}
+                    className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    {STATUS_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -71,6 +71,7 @@ export function KanbanBoard({
             color={col.color}
             applications={grouped[col.id] || []}
             onCardClick={onCardClick}
+            onStatusChange={onStatusChange}
           />
         ))}
       </div>

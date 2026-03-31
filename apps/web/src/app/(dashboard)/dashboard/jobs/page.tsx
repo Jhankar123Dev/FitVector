@@ -16,7 +16,6 @@ import { FitVectorApplyModal } from "@/components/jobs/fitvector-apply-modal";
 import { useJobSearch } from "@/hooks/use-jobs";
 import { useUser } from "@/hooks/use-user";
 import type { JobSearchParams, JobSearchResult } from "@/types/job";
-import { MOCK_FITVECTOR_JOBS } from "@/lib/mock/seeker-marketplace-data";
 
 const DEFAULT_FILTERS: JobFilters = {
   location: "",
@@ -48,15 +47,8 @@ export default function JobsPage() {
   } = useJobSearch(searchParams);
 
   const allJobs = useMemo(() => {
-    const apiJobs = data?.pages ? data.pages.flatMap((page) => page.data.jobs) : [];
-    // Prepend FitVector marketplace jobs when search is active
-    if (searchParams) {
-      const fvIds = new Set(MOCK_FITVECTOR_JOBS.map((j) => j.id));
-      const deduped = apiJobs.filter((j) => !fvIds.has(j.id));
-      return [...MOCK_FITVECTOR_JOBS, ...deduped];
-    }
-    return apiJobs;
-  }, [data, searchParams]);
+    return data?.pages ? data.pages.flatMap((page) => page.data.jobs) : [];
+  }, [data]);
 
   const totalJobs = data?.pages?.[0]?.data.total ?? 0;
   const usage = data?.pages?.[0]?.data.usage;

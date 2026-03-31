@@ -311,7 +311,15 @@ Provide your analysis as JSON:
             user_prompt=user_prompt,
             max_tokens=2000,
         )
-        parsed = json.loads(raw_text)
+        # Strip markdown fences if the model wraps the JSON
+        clean = raw_text.strip()
+        if clean.startswith("```"):
+            import re as _re
+            clean = _re.sub(r"^```(?:json)?\s*", "", clean)
+            clean = _re.sub(r"\s*```$", "", clean).strip()
+        if not clean:
+            raise ValueError("Gemini returned empty response for gap analysis")
+        parsed = json.loads(clean)
 
         return GapAnalysisResponse(
             matching_skills=[
