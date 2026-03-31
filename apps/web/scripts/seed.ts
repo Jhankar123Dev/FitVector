@@ -45,7 +45,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 
 const CONFIG = {
   SEED_EMAIL_DOMAIN: "@seed.fitvector.dev",
-  SEED_PASSWORD: "SeedPass123!",
+  SEED_PASSWORD: "jhankar123",
   SUPER_ADMINS: 1,
   EMPLOYERS: 10,
   SEEKERS: 50,
@@ -132,7 +132,8 @@ const COMPANY_INDUSTRIES = [
 ];
 
 const COMPANY_SIZES = ["1-10", "11-50", "51-200", "201-1000", "1000+"] as const;
-const PLAN_TIERS = ["free", "pro", "premium"] as const;
+const PLAN_TIERS = ["free", "starter", "pro", "elite"] as const;
+const COMPANY_PLAN_TIERS = ["starter", "growth", "business", "enterprise"] as const;
 const EXPERIENCE_LEVELS = ["fresher", "1_3", "3_7", "7_15"] as const;
 const WORK_MODES = ["remote", "hybrid", "onsite"] as const;
 const JOB_TYPES = ["fulltime", "parttime", "contract"] as const;
@@ -204,7 +205,7 @@ async function seedSuperAdmin(): Promise<void> {
     status: "active",
     onboarding_completed: true,
     auth_provider: "credentials",
-    plan_tier: "premium",
+    plan_tier: "elite",
     email_verified: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -251,7 +252,7 @@ async function seedEmployers(): Promise<{ employerIds: string[]; companyIds: str
     culture_keywords: pickN(["innovation", "remote-first", "inclusive", "fast-paced", "startup", "data-driven", "collaborative", "growth"], 3),
     locations: [{ city: faker.location.city(), country: "India" }],
     created_by: emp.id,
-    plan_tier: emp.plan_tier,
+    plan_tier: pick([...COMPANY_PLAN_TIERS]),
     created_at: emp.created_at,
     updated_at: now,
   }));
@@ -373,6 +374,7 @@ async function seedJobs(employerIds: string[]): Promise<string[]> {
       source: "direct",
       sources: ["direct"],
       fingerprint: faker.string.alphanumeric(32),
+      url: faker.internet.url(),
       title: pick(JOB_TITLES_BY_DOMAIN[domain]),
       company_name: faker.company.name(),
       location: pick(INDIAN_CITIES),
@@ -518,7 +520,7 @@ async function main() {
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`\n✅ Seeding complete in ${elapsed}s`);
-  console.log(`\n📋 Test credentials (all use password: SeedPass123!)`);
+  console.log(`\n📋 Test credentials (all use password: jhankar123)`);
   console.log(`   Seeker:    seeker_1@seed.fitvector.dev`);
   console.log(`   Employer:  employer_1@seed.fitvector.dev`);
   console.log(`   SuperAdmin: superadmin@seed.fitvector.dev`);
