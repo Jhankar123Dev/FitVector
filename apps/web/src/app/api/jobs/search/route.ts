@@ -54,7 +54,63 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Call Python scraping service
+    // ── Fetch direct (employer-posted) jobs from DB ───────────────────────────
+    const roleKeywords = role.toLowerCase().split(/\s+/).filter(Boolean);
+    let directQuery = supabase
+      .from("jobs")
+      .select("id,title,company_name,location,work_mode,job_type,description,skills_required,skills_nice_to_have,salary_min,salary_max,salary_currency,url,posted_at,source,posted_by_employer_id")
+      .eq("source", "direct")
+      .eq("is_active", true)
+      .order("posted_at", { ascending: false })
+      .limit(20);
+
+    // Text filter — match role against title/description
+    if (roleKeywords.length > 0) {
+      const orFilters = roleKeywords.map((kw) => `title.ilike.%${kw}%`).join(",");
+      directQuery = directQuery.or(orFilters);
+    }
+    if (location) {
+      directQuery = directQuery.ilike("location", `%${location}%`);
+    }
+    if (workMode) {
+      directQuery = directQuery.eq("work_mode", workMode);
+    }
+    if (jobType) {
+      directQuery = directQuery.eq("job_type", jobType);
+    }
+
+    const { data: directRows } = await directQuery;
+
+    const directJobs = (directRows || []).map((row) => ({
+      id: row.id,
+      title: row.title,
+      companyName: row.company_name,
+      companyLogoUrl: null as string | null,
+      location: row.location || "",
+      workMode: row.work_mode || null,
+      jobType: row.job_type || null,
+      salaryMin: row.salary_min || null,
+      salaryMax: row.salary_max || null,
+      salaryCurrency: row.salary_currency || "INR",
+      postedAt: row.posted_at,
+      sources: [row.source || "direct"] as string[],
+      url: row.url,
+      matchScore: null as number | null,
+      matchBucket: null as string | null,
+      decisionLabel: null as DecisionLabel | null,
+      embeddingScore: null as number | null,
+      deterministicScore: null as number | null,
+      deterministicComponents: null as Record<string, unknown> | null,
+      skillsRequired: row.skills_required || [],
+      skillsNiceToHave: row.skills_nice_to_have || [],
+      requiredExperienceYears: null as number | null,
+      isEasyApply: true,
+      isSaved: false,
+      description: row.description || "",
+      isDirect: true,
+    }));
+
+    // ── Call Python scraping service ──────────────────────────────────────────
     const jobsPerSearch = PLAN_LIMITS[planTier].jobs_per_search;
     const resultsWanted = jobsPerSearch === -1 ? 50 : jobsPerSearch;
 
@@ -122,8 +178,8 @@ export async function GET(req: NextRequest) {
           .join("\n")
       : null;
 
-    // Transform jobs
-    const jobs = scrapeResult.jobs.map((job, idx) => {
+    // Transform scraped jobs
+    const scrapedJobs = scrapeResult.jobs.map((job, idx) => {
       const jobId = `job_${Buffer.from(
         `${job.title}|${job.company_name}|${job.source}`,
       ).toString("base64url").slice(0, 16)}_${idx}`;
@@ -132,7 +188,7 @@ export async function GET(req: NextRequest) {
         id: jobId,
         title: job.title,
         companyName: job.company_name,
-        companyLogoUrl: null,
+        companyLogoUrl: null as string | null,
         location: job.location,
         workMode: job.work_mode || (workMode || null),
         jobType: job.job_type || jobType || null,
@@ -140,7 +196,7 @@ export async function GET(req: NextRequest) {
         salaryMax: job.salary_max,
         salaryCurrency: "INR",
         postedAt: job.posted_at,
-        sources: [job.source],
+        sources: [job.source] as string[],
         url: job.url,
         matchScore: null as number | null,
         matchBucket: null as string | null,
@@ -154,8 +210,18 @@ export async function GET(req: NextRequest) {
         isEasyApply: false,
         isSaved: false,
         description: job.description,
+        isDirect: false,
       };
     });
+
+    // Direct jobs first, then scraped (deduplicated by title+company)
+    const directTitles = new Set(
+      directJobs.map((j) => `${j.title.toLowerCase()}|${j.companyName.toLowerCase()}`),
+    );
+    const dedupedScraped = scrapedJobs.filter(
+      (j) => !directTitles.has(`${j.title.toLowerCase()}|${j.companyName.toLowerCase()}`),
+    );
+    const jobs = [...directJobs, ...dedupedScraped];
 
     // Score jobs using blended scoring (all plan tiers get deterministic scoring)
     if (userSkills.length > 0) {
@@ -234,8 +300,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Sort by match score descending
-    jobs.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
+    // Sort: direct jobs first (pinned), then by match score descending
+    jobs.sort((a, b) => {
+      if (a.isDirect && !b.isDirect) return -1;
+      if (!a.isDirect && b.isDirect) return 1;
+      return (b.matchScore ?? -1) - (a.matchScore ?? -1);
+    });
 
     // Filter by decision label if requested
     let filteredJobs = jobs;

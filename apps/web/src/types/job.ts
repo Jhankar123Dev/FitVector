@@ -95,6 +95,7 @@ export interface JobSearchResult {
   isEasyApply: boolean;
   isSaved: boolean;
   description: string;
+  isDirect?: boolean;
 }
 
 export interface JobSearchResponse {

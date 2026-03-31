@@ -50,11 +50,12 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
   const salary = formatSalary(job.salaryMin, job.salaryMax);
   const timeAgo = formatTimeAgo(job.postedAt);
   const isFitVector = job.sources.includes("fitvector");
+  const isDirect = job.isDirect;
 
   return (
     <Card
       className={`cursor-pointer transition-all hover:shadow-card-hover ${
-        isFitVector ? "border-l-2 border-l-accent-500 " : ""
+        isDirect ? "border-l-2 border-l-brand-500 " : isFitVector ? "border-l-2 border-l-accent-500 " : ""
       }${
         isSelected
           ? "border-brand-500 ring-1 ring-brand-500"
@@ -69,7 +70,12 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
               <h3 className="truncate text-sm font-semibold leading-tight text-surface-800">
                 {job.title}
               </h3>
-              {isFitVector && (
+              {isDirect && (
+                <Badge className="shrink-0 bg-brand-50 px-1.5 py-0 text-[10px] text-brand-700 hover:bg-brand-100">
+                  Direct
+                </Badge>
+              )}
+              {isFitVector && !isDirect && (
                 <Badge className="shrink-0 gap-0.5 bg-accent-50 px-1.5 py-0 text-[10px] text-accent-700 hover:bg-accent-100">
                   <Zap className="h-2.5 w-2.5" />
                   FitVector

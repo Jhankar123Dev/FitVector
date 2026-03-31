@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -53,7 +53,16 @@ export function LoginForm() {
             : "Invalid email or password. If you signed up as a Recruiter, switch to the Recruiter tab."
         );
       } else {
-        window.location.href = role === "employer" ? "/employer" : "/dashboard";
+        // Fetch the real session to get the actual role (handles superadmin)
+        const session = await getSession();
+        const actualRole = session?.user?.role;
+        if (actualRole === "superadmin") {
+          window.location.href = "/admin";
+        } else if (actualRole === "employer") {
+          window.location.href = "/employer";
+        } else {
+          window.location.href = "/dashboard";
+        }
       }
     } catch {
       setError("Something went wrong. Please try again.");

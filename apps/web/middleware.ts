@@ -5,6 +5,7 @@ export const config = {
     "/dashboard/:path*",
     "/onboarding/:path*",
     "/employer/:path*",
+    "/admin/:path*",
     "/login",
     "/signup",
     "/signup/employer",

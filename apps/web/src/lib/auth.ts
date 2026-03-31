@@ -21,7 +21,7 @@ declare module "next-auth" {
       image?: string | null;
       planTier: PlanTier;
       onboardingCompleted: boolean;
-      role: "seeker" | "employer";
+      role: "seeker" | "employer" | "superadmin";
       companyId: string | null;
     };
   }
@@ -29,7 +29,7 @@ declare module "next-auth" {
   interface User {
     planTier?: PlanTier;
     onboardingCompleted?: boolean;
-    role?: "seeker" | "employer";
+    role?: "seeker" | "employer" | "superadmin";
     companyId?: string | null;
   }
 }
@@ -42,7 +42,7 @@ declare module "next-auth" {
     provider?: string;
     planTier: PlanTier;
     onboardingCompleted: boolean;
-    role: "seeker" | "employer";
+    role: "seeker" | "employer" | "superadmin";
     companyId: string | null;
   }
 }
@@ -96,8 +96,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        // Role mismatch — user exists but selected wrong portal
-        if (user.role !== parsed.data.role) {
+        // Superadmins can log in without a role toggle match
+        if (user.role !== "superadmin" && user.role !== parsed.data.role) {
           return null;
         }
 
@@ -108,7 +108,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           image: user.avatar_url,
           planTier: user.plan_tier,
           onboardingCompleted: user.onboarding_completed,
-          role: user.role as "seeker" | "employer",
+          role: user.role as "seeker" | "employer" | "superadmin",
         };
       },
     }),
@@ -194,7 +194,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.id = dbUser.id;
           token.planTier = dbUser.plan_tier;
           token.onboardingCompleted = dbUser.onboarding_completed;
-          token.role = dbUser.role as "seeker" | "employer";
+          token.role = dbUser.role as "seeker" | "employer" | "superadmin";
         }
       }
 
@@ -227,7 +227,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (freshUser) {
           token.planTier = freshUser.plan_tier;
           token.onboardingCompleted = freshUser.onboarding_completed;
-          token.role = freshUser.role as "seeker" | "employer";
+          token.role = freshUser.role as "seeker" | "employer" | "superadmin";
         }
 
         // Refresh company membership for employers
@@ -254,7 +254,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.id = token.id as string;
       session.user.planTier = (token.planTier as PlanTier) ?? "free";
       session.user.onboardingCompleted = (token.onboardingCompleted as boolean) ?? false;
-      session.user.role = (token.role as "seeker" | "employer") ?? "seeker";
+      session.user.role = (token.role as "seeker" | "employer" | "superadmin") ?? "seeker";
       session.user.companyId = (token.companyId as string | null) ?? null;
       return session;
     },
@@ -262,27 +262,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const isLoggedIn = !!authResult?.user;
       const { pathname } = request.nextUrl;
       const isOnProtectedRoute =
-        pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding") || pathname.startsWith("/employer");
+        pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding") || pathname.startsWith("/employer") || pathname.startsWith("/admin");
 
       if (isOnProtectedRoute && !isLoggedIn) {
         return false;
       }
 
+      const role = authResult?.user?.role as "seeker" | "employer" | "superadmin" | undefined;
+
       // Redirect authenticated users away from auth pages
       if (isLoggedIn && (pathname === "/login" || pathname === "/signup" || pathname.startsWith("/signup/"))) {
-        const role = authResult.user.role as "seeker" | "employer" | undefined;
         let redirectTo: string;
-        if (role === "employer") {
-          redirectTo = authResult.user.onboardingCompleted ? "/employer" : "/employer/onboarding";
+        if (role === "superadmin") {
+          redirectTo = "/admin";
+        } else if (role === "employer") {
+          redirectTo = authResult!.user.onboardingCompleted ? "/employer" : "/employer/onboarding";
         } else {
-          redirectTo = authResult.user.onboardingCompleted ? "/dashboard" : "/onboarding";
+          redirectTo = authResult!.user.onboardingCompleted ? "/dashboard" : "/onboarding";
         }
         return Response.redirect(new URL(redirectTo, request.nextUrl.origin));
       }
 
       // Role-based route enforcement
       if (isLoggedIn) {
-        const role = authResult.user.role as "seeker" | "employer" | undefined;
+        // Non-superadmin trying to access /admin
+        if (role !== "superadmin" && pathname.startsWith("/admin")) {
+          return Response.redirect(new URL("/dashboard", request.nextUrl.origin));
+        }
+
+        // Superadmins bypass all other role checks
+        if (role === "superadmin") {
+          return true;
+        }
 
         // Seeker trying to access employer routes
         if (role === "seeker" && pathname.startsWith("/employer")) {
@@ -291,7 +302,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Employer trying to access seeker routes
         if (role === "employer" && (pathname.startsWith("/dashboard") || pathname === "/onboarding")) {
-          const dest = authResult.user.onboardingCompleted ? "/employer" : "/employer/onboarding";
+          const dest = authResult!.user.onboardingCompleted ? "/employer" : "/employer/onboarding";
           return Response.redirect(new URL(dest, request.nextUrl.origin));
         }
       }
