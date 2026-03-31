@@ -51,14 +51,15 @@ export default function AdminCompaniesPage() {
   const totalPages = Math.ceil(total / (data?.limit || 50));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-surface-900">Companies</h1>
-        <p className="mt-1 text-sm text-surface-500">{total} registered companies</p>
+        <h1 className="text-xl font-bold text-surface-900 sm:text-2xl">Companies</h1>
+        <p className="mt-0.5 text-xs text-surface-500 sm:mt-1 sm:text-sm">{total} registered companies</p>
       </div>
 
       {/* Search */}
-      <div className="relative w-64">
+      <div className="relative w-full sm:w-64">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
         <Input
           placeholder="Search company name..."
@@ -68,8 +69,8 @@ export default function AdminCompaniesPage() {
         />
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-surface-200 bg-white">
+      {/* Desktop table */}
+      <div className="hidden overflow-hidden rounded-xl border border-surface-200 bg-white md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-surface-200 bg-surface-50">
@@ -92,9 +93,7 @@ export default function AdminCompaniesPage() {
               ))
             ) : companies.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-surface-400">
-                  No companies found
-                </td>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-surface-400">No companies found</td>
               </tr>
             ) : (
               companies.map((company) => (
@@ -112,9 +111,7 @@ export default function AdminCompaniesPage() {
                   <td className="px-4 py-3 text-xs text-surface-500">{company.industry || "—"}</td>
                   <td className="px-4 py-3 text-xs capitalize text-surface-500">{company.companySize || "—"}</td>
                   <td className="px-4 py-3">
-                    <Badge className={PLAN_COLORS[company.planTier] || "bg-surface-100 text-surface-600"}>
-                      {company.planTier}
-                    </Badge>
+                    <Badge className={PLAN_COLORS[company.planTier] || "bg-surface-100 text-surface-600"}>{company.planTier}</Badge>
                   </td>
                   <td className="px-4 py-3 text-xs font-medium text-surface-700">{company.jobPostCount}</td>
                   <td className="px-4 py-3 text-xs text-surface-500">{formatDate(company.createdAt)}</td>
@@ -125,15 +122,50 @@ export default function AdminCompaniesPage() {
         </table>
       </div>
 
+      {/* Mobile cards */}
+      <div className="space-y-2 md:hidden">
+        {isLoading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-surface-100" />
+          ))
+        ) : companies.length === 0 ? (
+          <p className="py-8 text-center text-sm text-surface-400">No companies found</p>
+        ) : (
+          companies.map((company) => (
+            <div key={company.id} className="rounded-xl border border-surface-200 bg-white p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-medium text-surface-800">{company.name}</p>
+                    {company.websiteUrl && (
+                      <a href={company.websiteUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3 w-3 shrink-0 text-surface-400" />
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-xs text-surface-400">{company.industry || "—"}</p>
+                </div>
+                <Badge className={PLAN_COLORS[company.planTier] || "bg-surface-100 text-surface-600"}>
+                  {company.planTier}
+                </Badge>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-surface-500">
+                {company.companySize && <span className="capitalize">{company.companySize}</span>}
+                <span>{company.jobPostCount} job posts</span>
+                <span className="ml-auto">{formatDate(company.createdAt)}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-xs text-surface-500">
-            Page {page} of {totalPages}
-          </span>
+          <span className="text-xs text-surface-500">Page {page} of {totalPages}</span>
           <Button size="sm" variant="outline" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
             <ChevronRight className="h-4 w-4" />
           </Button>

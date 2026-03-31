@@ -1,6 +1,6 @@
 "use client";
 
-import { Droppable } from "react-beautiful-dnd";
+import { Droppable } from "@hello-pangea/dnd";
 import { ApplicationCard } from "./application-card";
 import type { TrackerApplication } from "@/hooks/use-tracker";
 

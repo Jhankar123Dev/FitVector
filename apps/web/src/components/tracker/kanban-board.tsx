@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { DragDropContext, type DropResult } from "react-beautiful-dnd";
+import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { KanbanColumn } from "./kanban-column";
 import { APPLICATION_STATUSES } from "@fitvector/shared";
 import type { TrackerApplication } from "@/hooks/use-tracker";

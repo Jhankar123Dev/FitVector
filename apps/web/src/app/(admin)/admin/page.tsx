@@ -31,14 +31,14 @@ function StatCard({
 }) {
   return (
     <Card>
-      <CardContent className="flex items-start gap-4 p-5">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
-          <Icon className="h-5 w-5 text-white" />
+      <CardContent className="flex items-start gap-3 p-4 sm:gap-4 sm:p-5">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${color}`}>
+          <Icon className="h-4 w-4 text-white sm:h-5 sm:w-5" />
         </div>
-        <div>
-          <p className="text-2xl font-bold text-surface-900">{value.toLocaleString()}</p>
-          <p className="text-sm text-surface-500">{label}</p>
-          {sub && <p className="mt-0.5 text-xs text-surface-400">{sub}</p>}
+        <div className="min-w-0">
+          <p className="text-xl font-bold text-surface-900 sm:text-2xl">{Number(value).toLocaleString()}</p>
+          <p className="text-xs text-surface-500 sm:text-sm">{label}</p>
+          {sub && <p className="mt-0.5 truncate text-xs text-surface-400">{sub}</p>}
         </div>
       </CardContent>
     </Card>
@@ -60,21 +60,21 @@ export default function AdminOverviewPage() {
   const stats = data?.data;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-surface-900">Platform Overview</h1>
-        <p className="mt-1 text-sm text-surface-500">Real-time snapshot of FitVector data</p>
+        <h1 className="text-xl font-bold text-surface-900 sm:text-2xl">Platform Overview</h1>
+        <p className="mt-0.5 text-xs text-surface-500 sm:mt-1 sm:text-sm">Real-time snapshot of FitVector data</p>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-surface-100" />
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-surface-100 sm:h-24" />
           ))}
         </div>
       ) : stats ? (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
             <StatCard
               label="Total Users"
               value={stats.totalUsers}
@@ -119,12 +119,12 @@ export default function AdminOverviewPage() {
 
           {/* Role breakdown */}
           <Card>
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <h2 className="mb-3 text-sm font-semibold text-surface-700">Users by Role</h2>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 sm:gap-6">
                 {Object.entries(stats.roleBreakdown).map(([role, count]) => (
                   <div key={role} className="text-center">
-                    <p className="text-xl font-bold text-surface-900">{count}</p>
+                    <p className="text-lg font-bold text-surface-900 sm:text-xl">{count}</p>
                     <p className="text-xs capitalize text-surface-500">{role}</p>
                   </div>
                 ))}
