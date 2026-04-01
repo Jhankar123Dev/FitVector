@@ -29,6 +29,7 @@ function buildSearchUrl(params: JobSearchParams, page: number): string {
   if (params.salaryMin) sp.set("salaryMin", String(params.salaryMin));
   if (params.salaryMax) sp.set("salaryMax", String(params.salaryMax));
   if (params.decisionLabel) sp.set("decisionLabel", params.decisionLabel);
+  if (params.view && params.view !== "all") sp.set("view", params.view);
   sp.set("page", String(page));
   sp.set("limit", String(params.limit || 25));
   return `/api/jobs/search?${sp.toString()}`;

@@ -28,6 +28,8 @@ export const DECISION_LABEL_CONFIG: Record<
 
 // ─── Job Search Types ───────────────────────────────────────────────────────
 
+export type JobView = "all" | "fitvector" | "external";
+
 export interface JobSearchParams {
   role: string;
   location?: string;
@@ -40,6 +42,7 @@ export interface JobSearchParams {
   page?: number;
   limit?: number;
   decisionLabel?: DecisionLabel;
+  view?: JobView;
 }
 
 export interface DeterministicComponents {
@@ -96,6 +99,9 @@ export interface JobSearchResult {
   isSaved: boolean;
   description: string;
   isDirect?: boolean;
+  jobPostId?: string;
+  applicationDeadline?: string | null;
+  openingsCount?: number | null;
 }
 
 export interface JobSearchResponse {

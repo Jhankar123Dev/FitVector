@@ -21,6 +21,7 @@ interface JobFiltersProps {
   filters: JobFilters;
   onChange: (filters: JobFilters) => void;
   onReset: () => void;
+  hideHoursOld?: boolean;
 }
 
 const WORK_MODES = [
@@ -52,7 +53,7 @@ const DECISION_LABELS = [
   { value: "explore", label: "Explore", color: "border-gray-400 bg-gray-50 text-gray-600" },
 ] as const;
 
-export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps) {
+export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = false }: JobFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const hasFilters =
@@ -181,27 +182,29 @@ export function JobFiltersPanel({ filters, onChange, onReset }: JobFiltersProps)
             </div>
           </div>
 
-          {/* Date Posted */}
-          <div>
-            <Label className="text-xs">Date Posted</Label>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {DATE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  className={`rounded-md border px-2 py-1 text-xs transition-colors ${
-                    filters.hoursOld === opt.value
-                      ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-surface-200 text-surface-500 hover:border-surface-300"
-                  }`}
-                  onClick={() =>
-                    onChange({ ...filters, hoursOld: opt.value })
-                  }
-                >
-                  {opt.label}
-                </button>
-              ))}
+          {/* Date Posted — hidden for FitVector tab */}
+          {!hideHoursOld && (
+            <div>
+              <Label className="text-xs">Date Posted</Label>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {DATE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                      filters.hoursOld === opt.value
+                        ? "border-brand-500 bg-brand-50 text-brand-700"
+                        : "border-surface-200 text-surface-500 hover:border-surface-300"
+                    }`}
+                    onClick={() =>
+                      onChange({ ...filters, hoursOld: opt.value })
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Decision Label (mobile) */}
           <div className="sm:hidden">
