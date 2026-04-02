@@ -18,10 +18,8 @@ import {
   ChevronRight,
   ExternalLink,
   X,
-  Users,
   CheckCircle2,
   Calendar,
-  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
@@ -77,7 +75,6 @@ const HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 8am - 6pm
 export default function SchedulingPage() {
   const { data: schedulingData, isLoading } = useScheduledInterviews();
   const interviews = (schedulingData?.data || []) as unknown as ScheduledInterview[];
-  const calIntegrations = { google: false, outlook: false };
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedInterview, setSelectedInterview] = useState<ScheduledInterview | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -145,32 +142,6 @@ export default function SchedulingPage() {
           </Card>
         ))}
       </div>
-
-      {/* ── Calendar integrations banner ───────────────────────── */}
-      <Card>
-        <CardContent className="flex flex-wrap items-center gap-3 p-3 sm:p-4">
-          <span className="text-xs sm:text-sm font-medium text-surface-700">Calendar Sync:</span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-[11px] sm:text-xs"
-          >
-            <Link2 className="h-3 w-3" />
-            {calIntegrations.google ? "Google Calendar ✓" : "Connect Google Calendar"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-[11px] sm:text-xs"
-          >
-            <Link2 className="h-3 w-3" />
-            {calIntegrations.outlook ? "Outlook ✓" : "Connect Outlook"}
-          </Button>
-          {!calIntegrations.google && !calIntegrations.outlook && (
-            <span className="text-[11px] text-surface-400">No calendars connected</span>
-          )}
-        </CardContent>
-      </Card>
 
       {/* ── Tabs ───────────────────────────────────────────────── */}
       <Tabs defaultValue="calendar">

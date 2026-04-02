@@ -20,6 +20,7 @@ import { OutreachPreview, OutreachLoading } from "@/components/outreach/outreach
 import { useJobSearch } from "@/hooks/use-jobs";
 import { useUser } from "@/hooks/use-user";
 import type { JobSearchParams, JobSearchResult, JobView } from "@/types/job";
+import { toast } from "sonner";
 
 interface OutreachResult {
   type: OutreachButtonType;

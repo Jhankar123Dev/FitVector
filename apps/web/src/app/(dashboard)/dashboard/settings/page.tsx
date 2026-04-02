@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Save, User, CreditCard, Bell, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { CalendarSyncCard } from "@/components/settings/calendar-sync-card";
 
 export default function SettingsPage() {
   const { user } = useUser();
@@ -120,6 +121,9 @@ export default function SettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Calendar Sync */}
+      <CalendarSyncCard />
 
       {/* FitVector Verified */}
       <Card>

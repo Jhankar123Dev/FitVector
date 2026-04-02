@@ -20,6 +20,7 @@ import {
   Check,
 } from "lucide-react";
 import { useEmployer, useUpdateCompany } from "@/hooks/use-employer";
+import { CalendarSyncCard } from "@/components/settings/calendar-sync-card";
 
 export default function EmployerSettingsPage() {
   const { data: employerData, isLoading, error } = useEmployer();
@@ -232,6 +233,9 @@ export default function EmployerSettingsPage() {
           ))}
         </CardContent>
       </Card>
+
+      {/* Calendar Sync */}
+      <CalendarSyncCard />
 
       {/* Security */}
       <Card>
