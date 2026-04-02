@@ -64,6 +64,8 @@ export async function POST(req: Request) {
       outreach_type: "linkedin_message",
       body: result.body,
       tone: body.tone || "professional",
+      job_title: body.jobTitle || null,
+      company_name: body.companyName || null,
     });
 
     await supabase.from("usage_logs").insert({

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, Download, ExternalLink, Loader2 } from "lucide-react";
+import { ZoomIn, ZoomOut, Download, ExternalLink, Loader2, AlertTriangle } from "lucide-react";
 
 interface PdfViewerProps {
   /** DB id of the tailored_resumes row — used to hit the compile-on-demand route */
@@ -14,6 +14,8 @@ interface PdfViewerProps {
 export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps) {
   const [zoom, setZoom] = useState(100);
   const [pdfLoading, setPdfLoading] = useState(true);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const compilePdfUrl = resumeId
     ? `/api/user/resumes/${resumeId}/pdf`
@@ -37,6 +39,42 @@ export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps
     URL.revokeObjectURL(url);
   }, [latexSource, versionName]);
 
+  const handleDownloadPdf = useCallback(async () => {
+    if (!compilePdfUrl) return;
+    setDownloadingPdf(true);
+    setPdfError(null);
+    try {
+      const res = await fetch(compilePdfUrl);
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "Unknown error");
+        setPdfError(`PDF compilation failed: ${msg}`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${versionName}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setPdfError(
+        "Could not reach the PDF compiler. Make sure the Python service is running, or download the .tex file and compile it in Overleaf."
+      );
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }, [compilePdfUrl, versionName]);
+
+  const handleIframeLoad = useCallback(() => {
+    setPdfLoading(false);
+  }, []);
+
+  const handleIframeError = useCallback(() => {
+    setPdfLoading(false);
+    setPdfError("PDF preview failed to load.");
+  }, []);
+
   return (
     <div className="flex h-full flex-col">
       {/* Toolbar */}
@@ -53,11 +91,19 @@ export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps
         <div className="flex items-center gap-1">
           {compilePdfUrl && (
             <>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs" asChild>
-                <a href={compilePdfUrl} download={`${versionName}.pdf`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+              >
+                {downloadingPdf ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
                   <Download className="h-3 w-3" />
-                  PDF
-                </a>
+                )}
+                {downloadingPdf ? "Compiling…" : "PDF"}
               </Button>
               <Button variant="ghost" size="sm" asChild>
                 <a href={compilePdfUrl} target="_blank" rel="noopener noreferrer">
@@ -72,6 +118,14 @@ export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps
           </Button>
         </div>
       </div>
+
+      {/* Error banner */}
+      {pdfError && (
+        <div className="flex items-start gap-2 border-b bg-red-50 px-3 py-2 text-xs text-red-700">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>{pdfError}</span>
+        </div>
+      )}
 
       {/* PDF preview area */}
       <div className="relative flex-1 overflow-auto bg-gray-200 p-4">
@@ -96,7 +150,8 @@ export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps
                 src={`${compilePdfUrl}#toolbar=0`}
                 className="h-[11in] w-[8.5in] bg-white shadow-lg"
                 title="Resume PDF preview"
-                onLoad={() => setPdfLoading(false)}
+                onLoad={handleIframeLoad}
+                onError={handleIframeError}
               />
             </div>
           </>

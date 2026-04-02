@@ -6,7 +6,7 @@ const PYTHON_SERVICE_SECRET = process.env.PYTHON_SERVICE_SECRET || "";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
   try {
     const session = await auth();
@@ -14,7 +14,7 @@ export async function GET(
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const supabase = createAdminClient();
 
     // Fetch LaTeX source — only the owner can access their resume

@@ -1,22 +1,32 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SearchX, Loader2, MapPin, Zap, Globe, LayoutGrid, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { JobList } from "@/components/jobs/job-list";
 import { JobDetailPanel } from "@/components/jobs/job-detail";
 import { JobFiltersPanel } from "@/components/jobs/job-filters";
 import type { JobFilters } from "@/components/jobs/job-filters";
+import type { OutreachButtonType } from "@/components/jobs/action-bar";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { UpgradePrompt } from "@/components/shared/upgrade-prompt";
 import { TailorDialog } from "@/components/resume/tailor-dialog";
 import { FitVectorApplyModal } from "@/components/jobs/fitvector-apply-modal";
+import { OutreachPreview, OutreachLoading } from "@/components/outreach/outreach-preview";
 import { useJobSearch } from "@/hooks/use-jobs";
 import { useUser } from "@/hooks/use-user";
 import type { JobSearchParams, JobSearchResult, JobView } from "@/types/job";
+
+interface OutreachResult {
+  type: OutreachButtonType;
+  subject?: string | null;
+  subjectAlternatives?: string[];
+  body: string;
+}
 
 const DEFAULT_FILTERS: JobFilters = {
   location: "",
@@ -67,6 +77,13 @@ export default function JobsPage() {
   const [tailorJob, setTailorJob] = useState<JobSearchResult | null>(null);
   const [applyJob, setApplyJob] = useState<JobSearchResult | null>(null);
 
+  // Outreach state — loadingType drives button spinners; result opens the Sheet
+  const [loadingOutreachType, setLoadingOutreachType] = useState<OutreachButtonType | null>(null);
+  const [outreachResult, setOutreachResult] = useState<OutreachResult | null>(null);
+
+  // Saved jobs (local optimistic state keyed by job id)
+  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
+
   const {
     data,
     isLoading,
@@ -97,6 +114,8 @@ export default function JobsPage() {
       }
       router.replace(`?${params.toString()}`, { scroll: false });
 
+      setOutreachResult(null);
+      setLoadingOutreachType(null);
       // Re-trigger search with new view if already searched
       if (jobSearchParams) {
         setJobSearchParams((prev) => prev ? { ...prev, view: tab } : prev);
@@ -104,6 +123,98 @@ export default function JobsPage() {
     },
     [router, searchParams, jobSearchParams],
   );
+
+  // Generic outreach generator — drives button loading state + opens Sheet with result
+  const generateOutreach = useCallback(async (type: OutreachButtonType) => {
+    if (!selectedJob || loadingOutreachType) return;
+    setLoadingOutreachType(type);
+    setOutreachResult(null);
+
+    try {
+      const endpoint =
+        type === "cold_email" ? "/api/ai/cold-email"
+        : type === "linkedin" ? "/api/ai/linkedin-msg"
+        : "/api/ai/referral-msg";
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: selectedJob.title,
+          companyName: selectedJob.companyName,
+          jobDescription: selectedJob.description,
+          tone: "professional",
+        }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        const msg = json.upgrade
+          ? `Monthly ${type === "cold_email" ? "cold email" : type === "linkedin" ? "LinkedIn message" : "referral"} limit reached — upgrade your plan.`
+          : json.error || "Failed to generate message";
+        // Show inline error in the Sheet area instead of a toast
+        setOutreachResult({ type, subject: null, body: `⚠️ ${msg}` });
+        return;
+      }
+
+      setOutreachResult({
+        type,
+        subject: json.data.subject ?? null,
+        subjectAlternatives: json.data.subjectAlternatives ?? [],
+        body: json.data.body,
+      });
+    } catch {
+      setOutreachResult({ type, subject: null, body: "⚠️ Something went wrong. Please try again." });
+    } finally {
+      setLoadingOutreachType(null);
+    }
+  }, [selectedJob, loadingOutreachType]);
+
+  const handleColdEmail  = useCallback(() => generateOutreach("cold_email"), [generateOutreach]);
+  const handleLinkedInMsg = useCallback(() => generateOutreach("linkedin"),   [generateOutreach]);
+  const handleReferral   = useCallback(() => generateOutreach("referral"),    [generateOutreach]);
+
+  const handleToggleSave = useCallback(async () => {
+    if (!selectedJob) return;
+    const alreadySaved = savedJobIds.has(selectedJob.id);
+    if (alreadySaved) {
+      // Just toggle off locally — no delete API needed for now
+      setSavedJobIds((prev) => { const n = new Set(prev); n.delete(selectedJob.id); return n; });
+      toast.success("Removed from saved");
+      return;
+    }
+    // Optimistic update
+    setSavedJobIds((prev) => new Set(prev).add(selectedJob.id));
+    try {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const res = await fetch("/api/tracker", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(isUUID.test(selectedJob.id) ? { jobId: selectedJob.id } : {}),
+          jobTitle: selectedJob.title,
+          companyName: selectedJob.companyName,
+          ...(selectedJob.companyLogoUrl ? { companyLogoUrl: selectedJob.companyLogoUrl } : {}),
+          ...(selectedJob.location ? { location: selectedJob.location } : {}),
+          ...(selectedJob.url ? { jobUrl: selectedJob.url } : {}),
+          status: "saved",
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setSavedJobIds((prev) => { const n = new Set(prev); n.delete(selectedJob.id); return n; });
+        if (json.upgrade) toast.error("Application limit reached — upgrade your plan.");
+        else toast.error(json.error || "Failed to save job");
+      } else if (json.data?.alreadyExists) {
+        toast.info("Already in your tracker");
+      } else {
+        toast.success("Saved to tracker");
+      }
+    } catch {
+      setSavedJobIds((prev) => { const n = new Set(prev); n.delete(selectedJob.id); return n; });
+      toast.error("Failed to save. Please try again.");
+    }
+  }, [selectedJob, savedJobIds]);
 
   const handleSearch = useCallback(() => {
     if (!query.trim()) return;
@@ -356,7 +467,7 @@ export default function JobsPage() {
                   <JobList
                     jobs={allJobs}
                     selectedJobId={selectedJob?.id ?? null}
-                    onSelectJob={setSelectedJob}
+                    onSelectJob={(job) => { setSelectedJob(job); setOutreachResult(null); setLoadingOutreachType(null); }}
                     hasNextPage={hasNextPage}
                     isFetchingNextPage={isFetchingNextPage}
                     onLoadMore={() => fetchNextPage()}
@@ -367,11 +478,16 @@ export default function JobsPage() {
                 {selectedJob && !tailorJob && (
                   <div className="flex-1 overflow-y-auto rounded-lg border">
                     <JobDetailPanel
-                      job={selectedJob}
+                      job={{ ...selectedJob, isSaved: savedJobIds.has(selectedJob.id) }}
                       userSkills={[]}
-                      onBack={() => setSelectedJob(null)}
+                      loadingOutreachType={loadingOutreachType}
+                      onBack={() => { setSelectedJob(null); setOutreachResult(null); }}
                       onTailorResume={() => setTailorJob(selectedJob)}
                       onFitVectorApply={() => setApplyJob(selectedJob)}
+                      onColdEmail={handleColdEmail}
+                      onLinkedInMsg={handleLinkedInMsg}
+                      onReferral={handleReferral}
+                      onToggleSave={handleToggleSave}
                     />
                   </div>
                 )}
@@ -391,6 +507,50 @@ export default function JobsPage() {
           )}
         </>
       )}
+
+      {/* Outreach result Sheet — slides in from right, impossible to miss */}
+      <Sheet
+        open={!!outreachResult || !!loadingOutreachType}
+        onOpenChange={(open) => {
+          if (!open && !loadingOutreachType) setOutreachResult(null);
+        }}
+      >
+        <SheetContent side="right" className="flex w-full max-w-lg flex-col gap-4 overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>
+              {loadingOutreachType === "cold_email" || outreachResult?.type === "cold_email"
+                ? "Cold Email"
+                : loadingOutreachType === "linkedin" || outreachResult?.type === "linkedin"
+                  ? "LinkedIn Message"
+                  : "Referral Request"}
+              {selectedJob && (
+                <span className="ml-2 text-sm font-normal text-surface-500">
+                  · {selectedJob.companyName}
+                </span>
+              )}
+            </SheetTitle>
+          </SheetHeader>
+
+          {loadingOutreachType && !outreachResult && (
+            <OutreachLoading type={loadingOutreachType} />
+          )}
+
+          {outreachResult && (
+            <OutreachPreview
+              type={
+                outreachResult.type === "cold_email" ? "cold_email"
+                : outreachResult.type === "linkedin" ? "linkedin"
+                : "referral"
+              }
+              subject={outreachResult.subject}
+              subjectAlternatives={outreachResult.subjectAlternatives}
+              body={outreachResult.body}
+              companyName={selectedJob?.companyName}
+              onClose={() => setOutreachResult(null)}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* FitVector Apply Modal */}
       {applyJob && (

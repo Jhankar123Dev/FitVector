@@ -73,6 +73,8 @@ export async function POST(req: Request) {
         body: result.body,
         tone: tone || "professional",
         recruiter_name: recruiterName || null,
+        job_title: jobTitle || null,
+        company_name: companyName || null,
       })
       .select("id")
       .single();

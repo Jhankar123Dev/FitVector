@@ -65,6 +65,8 @@ export async function POST(req: Request) {
       outreach_type: "referral_request",
       body: result.body,
       recruiter_name: body.connectionName || null,
+      job_title: body.jobTitle || null,
+      company_name: body.companyName || null,
     });
 
     await supabase.from("usage_logs").insert({

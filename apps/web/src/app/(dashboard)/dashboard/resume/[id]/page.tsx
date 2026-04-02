@@ -1,6 +1,5 @@
 "use client";
 
-import { use } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PdfViewer } from "@/components/resume/pdf-viewer";
@@ -12,9 +11,9 @@ import Link from "next/link";
 export default function ResumeDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = use(params);
+  const { id } = params;
   const { data: resume, isLoading, isError } = useResumeDetail(id);
 
   if (isLoading) {

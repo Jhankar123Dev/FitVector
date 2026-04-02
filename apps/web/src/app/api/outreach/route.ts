@@ -12,10 +12,10 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("generated_outreach")
-      .select("id, outreach_type, subject, body, tone, recruiter_name, created_at")
+      .select("id, outreach_type, subject, body, tone, recruiter_name, job_title, company_name, created_at")
       .eq("user_id", session.user.id)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(200);
 
     if (error) {
       return Response.json({ error: "Failed to load outreach" }, { status: 500 });
@@ -28,6 +28,8 @@ export async function GET() {
       body: o.body,
       tone: o.tone,
       recruiterName: o.recruiter_name,
+      jobTitle: o.job_title,
+      companyName: o.company_name,
       createdAt: o.created_at,
     }));
 

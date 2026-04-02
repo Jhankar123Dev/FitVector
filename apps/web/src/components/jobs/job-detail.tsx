@@ -6,6 +6,7 @@ import { MatchScoreBadge } from "./match-score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { SourceBadge } from "./source-badge";
 import { ActionBar } from "./action-bar";
+import type { OutreachButtonType } from "./action-bar";
 import { GapAnalysisPanel } from "./gap-analysis-panel";
 import {
   MapPin,
@@ -25,6 +26,11 @@ interface JobDetailProps {
   onBack: () => void;
   onTailorResume?: () => void;
   onFitVectorApply?: () => void;
+  onColdEmail?: () => void;
+  onLinkedInMsg?: () => void;
+  onReferral?: () => void;
+  onToggleSave?: () => void;
+  loadingOutreachType?: OutreachButtonType | null;
 }
 
 function formatTimeAgo(dateStr: string | null): string {
@@ -57,7 +63,7 @@ function formatSalary(min: number | null, max: number | null): string | null {
   return null;
 }
 
-export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume, onFitVectorApply }: JobDetailProps) {
+export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume, onFitVectorApply, onColdEmail, onLinkedInMsg, onReferral, onToggleSave, loadingOutreachType }: JobDetailProps) {
   const salary = formatSalary(job.salaryMin, job.salaryMax);
   const timeAgo = formatTimeAgo(job.postedAt);
 
@@ -215,7 +221,16 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume, o
       </div>
 
       {/* Action bar */}
-      <ActionBar job={job} onTailorResume={onTailorResume} onFitVectorApply={onFitVectorApply} />
+      <ActionBar
+        job={job}
+        loadingType={loadingOutreachType}
+        onTailorResume={onTailorResume}
+        onFitVectorApply={onFitVectorApply}
+        onColdEmail={onColdEmail}
+        onLinkedInMsg={onLinkedInMsg}
+        onReferral={onReferral}
+        onToggleSave={onToggleSave}
+      />
     </div>
   );
 }

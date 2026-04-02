@@ -9,31 +9,70 @@ import {
   Bookmark,
   BookmarkCheck,
   Zap,
+  UserPlus,
+  Loader2,
 } from "lucide-react";
 import type { JobSearchResult } from "@/types/job";
 
+export type OutreachButtonType = "cold_email" | "linkedin" | "referral";
+
 interface ActionBarProps {
   job: JobSearchResult;
+  loadingType?: OutreachButtonType | null;
   onTailorResume?: () => void;
   onColdEmail?: () => void;
   onLinkedInMsg?: () => void;
+  onReferral?: () => void;
   onToggleSave?: () => void;
   onFitVectorApply?: () => void;
 }
 
 export function ActionBar({
   job,
+  loadingType,
   onTailorResume,
   onColdEmail,
   onLinkedInMsg,
+  onReferral,
   onToggleSave,
   onFitVectorApply,
 }: ActionBarProps) {
   const isFitVector = job.sources.includes("fitvector");
+  const isAnyLoading = !!loadingType;
+
+  function OutreachBtn({
+    type,
+    icon: Icon,
+    label,
+    onClick,
+  }: {
+    type: OutreachButtonType;
+    icon: React.ElementType;
+    label: string;
+    onClick?: () => void;
+  }) {
+    const isThis = loadingType === type;
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onClick}
+        disabled={isAnyLoading}
+        className="gap-1.5"
+      >
+        {isThis ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Icon className="h-3.5 w-3.5" />
+        )}
+        {isThis ? "Generating…" : label}
+      </Button>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-t bg-background p-4">
-      {/* FitVector Apply */}
+      {/* FitVector Apply / External Apply */}
       {isFitVector ? (
         <Button
           size="sm"
@@ -44,7 +83,6 @@ export function ActionBar({
           Apply via FitVector
         </Button>
       ) : (
-        /* Apply externally */
         job.url && (
           <Button size="sm" asChild>
             <a href={job.url} target="_blank" rel="noopener noreferrer">
@@ -61,17 +99,10 @@ export function ActionBar({
         Tailor Resume
       </Button>
 
-      {/* Cold Email */}
-      <Button variant="outline" size="sm" onClick={onColdEmail}>
-        <Mail className="mr-1.5 h-3.5 w-3.5" />
-        Cold Email
-      </Button>
-
-      {/* LinkedIn Message */}
-      <Button variant="outline" size="sm" onClick={onLinkedInMsg}>
-        <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
-        InMail
-      </Button>
+      {/* Outreach buttons */}
+      <OutreachBtn type="cold_email" icon={Mail} label="Cold Email" onClick={onColdEmail} />
+      <OutreachBtn type="linkedin" icon={MessageSquare} label="InMail" onClick={onLinkedInMsg} />
+      <OutreachBtn type="referral" icon={UserPlus} label="Ask Referral" onClick={onReferral} />
 
       {/* Save */}
       <Button
