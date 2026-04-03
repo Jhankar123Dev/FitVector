@@ -60,15 +60,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-          scope:
-            "openid email profile https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events",
-        },
-      },
+      // Calendar scopes are handled separately via /api/calendar/google/connect
+      // to keep login and calendar authorization fully decoupled
     }),
     LinkedIn({
       clientId: process.env.LINKEDIN_CLIENT_ID,
@@ -152,17 +145,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           user.planTier = existingUser.plan_tier;
           user.onboardingCompleted = existingUser.onboarding_completed;
           user.role = existingUser.role as "seeker" | "employer";
-
-          // If re-authorising Google with calendar scopes, persist the refresh token
-          if (account.provider === "google" && account.refresh_token) {
-            await supabase
-              .from("users")
-              .update({
-                google_refresh_token: account.refresh_token,
-                google_calendar_connected: true,
-              })
-              .eq("id", existingUser.id);
-          }
         } else {
           // Create new user for OAuth sign-in (always seeker)
           const { data: newUser } = await supabase
@@ -176,12 +158,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               status: "active",
               onboarding_completed: false,
               role: "seeker",
-              ...(account.provider === "google" && account.refresh_token
-                ? {
-                    google_refresh_token: account.refresh_token,
-                    google_calendar_connected: true,
-                  }
-                : {}),
             })
             .select("id")
             .single();

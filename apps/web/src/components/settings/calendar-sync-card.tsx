@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { signIn } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Link2, CheckCircle2, Loader2 } from "lucide-react";
+import { CalendarDays, Link2, CheckCircle2, Loader2, AlertCircle, XCircle } from "lucide-react";
 
 interface CalendarStatus {
   googleConnected: boolean;
@@ -13,7 +12,9 @@ interface CalendarStatus {
 }
 
 export function CalendarSyncCard() {
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const calendarParam = searchParams.get("calendar"); // "connected" | "error" | "denied"
+
   const [status, setStatus] = useState<CalendarStatus>({
     googleConnected: false,
     outlookConnected: false,
@@ -27,16 +28,15 @@ export function CalendarSyncCard() {
       .then((json) => {
         if (json.data) setStatus(json.data);
       })
-      .catch(() => {/* silently ignore — non-critical */})
+      .catch(() => { /* non-critical — silently ignore */ })
       .finally(() => setLoading(false));
-  }, []);
+  }, [calendarParam]); // re-fetch after OAuth redirect so status is fresh
 
-  const handleConnectGoogle = async () => {
+  const handleConnectGoogle = () => {
     setConnectingGoogle(true);
-    // Pass callbackUrl so user returns to the same settings page after OAuth
-    await signIn("google", { callbackUrl: pathname });
-    // signIn redirects; setConnectingGoogle(false) won't be reached in normal flow
-    setConnectingGoogle(false);
+    // Navigate to our custom OAuth connect route — does NOT go through NextAuth
+    window.location.href = "/api/calendar/google/connect";
+    // page navigates away; connectingGoogle state shows spinner until redirect
   };
 
   const noneConnected = !status.googleConnected && !status.outlookConnected;
@@ -54,7 +54,29 @@ export function CalendarSyncCard() {
           Connect your calendar to auto-schedule interviews and track deadlines
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
+
+        {/* Feedback banners from OAuth redirect */}
+        {calendarParam === "connected" && (
+          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            Google Calendar connected successfully!
+          </div>
+        )}
+        {calendarParam === "denied" && (
+          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <XCircle className="h-3.5 w-3.5 shrink-0" />
+            Access was denied. Click the button below to try again.
+          </div>
+        )}
+        {calendarParam === "error" && (
+          <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            Something went wrong during connection. Please try again.
+          </div>
+        )}
+
+        {/* Connection buttons */}
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-surface-400">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -107,7 +129,7 @@ export function CalendarSyncCard() {
               </Button>
             )}
 
-            {noneConnected && (
+            {noneConnected && !calendarParam && (
               <span className="text-xs text-surface-400">No calendars connected</span>
             )}
           </div>
