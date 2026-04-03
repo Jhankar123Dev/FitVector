@@ -56,10 +56,41 @@ export async function GET(
       .eq("applicant_id", id)
       .order("created_at", { ascending: false });
 
+    // Resolve a signed PDF URL (1-hour TTL) if the applicant has a stored PDF
+    let resumePdfUrl: string | null = null;
+    try {
+      // Look up the fitvector_applications row for this applicant to get tailored_resume_id
+      const { data: fvApp } = await supabase
+        .from("fitvector_applications")
+        .select("tailored_resume_id")
+        .eq("applicant_id", id)
+        .single();
+
+      if (fvApp?.tailored_resume_id) {
+        const { data: resumeRow } = await supabase
+          .from("tailored_resumes")
+          .select("pdf_url")
+          .eq("id", fvApp.tailored_resume_id)
+          .single();
+
+        if (resumeRow?.pdf_url) {
+          // pdf_url is a storage path — generate a 1-hour signed URL
+          const { data: signed } = await supabase.storage
+            .from("resume-pdfs")
+            .createSignedUrl(resumeRow.pdf_url, 3600);
+
+          resumePdfUrl = signed?.signedUrl ?? null;
+        }
+      }
+    } catch {
+      // Non-critical — employer can still view parsed resume data
+    }
+
     return NextResponse.json({
       data: {
         ...applicant,
         jobTitle: jobPost.title,
+        resumePdfUrl,
         notes: (notes || []).map((n) => ({
           id: n.id,
           authorId: n.author_id,

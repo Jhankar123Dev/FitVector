@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || "http://localhost:8000";
+const PYTHON_SERVICE_SECRET = process.env.PYTHON_SERVICE_SECRET || "";
+
 // ─── POST: One-click apply via FitVector ─────────────────────────────────────
 
 export async function POST(
@@ -141,6 +144,58 @@ export async function POST(
       });
     } catch {
       // Non-critical — seeker tracker entry
+    }
+
+    // 4. Best-effort PDF generation + storage
+    // Generate once and cache in resume-pdfs bucket (private).
+    // Any failure here is non-fatal — the application is already created.
+    if (body.resumeId) {
+      try {
+        // Check if a PDF already exists for this resume
+        const { data: resumeRow } = await supabase
+          .from("tailored_resumes")
+          .select("latex_source, pdf_url")
+          .eq("id", body.resumeId)
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (resumeRow?.latex_source && !resumeRow.pdf_url) {
+          // Compile via Python service (binary response — cannot use pythonClient)
+          const compileRes = await fetch(`${PYTHON_SERVICE_URL}/ai/compile-pdf`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Internal-Key": PYTHON_SERVICE_SECRET,
+            },
+            body: JSON.stringify({ latex_source: resumeRow.latex_source }),
+            signal: AbortSignal.timeout(30000),
+          });
+
+          if (compileRes.ok) {
+            const pdfBytes = await compileRes.arrayBuffer();
+            const storagePath = `${session.user.id}/${body.resumeId}.pdf`;
+
+            const { error: uploadError } = await supabase.storage
+              .from("resume-pdfs")
+              .upload(storagePath, pdfBytes, {
+                contentType: "application/pdf",
+                upsert: true,
+              });
+
+            if (!uploadError) {
+              // Store the path (not a URL) — signed URLs are generated on demand
+              await supabase
+                .from("tailored_resumes")
+                .update({ pdf_url: storagePath })
+                .eq("id", body.resumeId)
+                .eq("user_id", session.user.id);
+            }
+          }
+        }
+      } catch (pdfErr) {
+        // Non-critical — PDF generation failed but application was submitted
+        console.warn("PDF generation failed (non-fatal):", pdfErr);
+      }
     }
 
     return NextResponse.json({
