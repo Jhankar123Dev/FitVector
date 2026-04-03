@@ -10,7 +10,18 @@ export interface TrackerApplication {
   companyLogoUrl: string | null;
   location: string | null;
   jobUrl: string | null;
+  /** Local tracker status (drag-drop writable) */
   status: string;
+  /**
+   * Live status from fitvector_applications — present only for FitVector
+   * applications. When non-null this is the source of truth for column
+   * placement; `status` is ignored for column routing.
+   *
+   * Values: "applied" | "under_review" | "interview_invited" |
+   *         "interviewed" | "decision_pending" | "offered" |
+   *         "rejected" | "withdrawn"
+   */
+  fitvectorStatus: string | null;
   statusHistory: Array<{ status: string; changed_at: string }>;
   notes: string | null;
   nextFollowupDate: string | null;

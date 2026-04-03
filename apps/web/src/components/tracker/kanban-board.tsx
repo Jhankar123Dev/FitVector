@@ -5,8 +5,6 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { KanbanColumn } from "./kanban-column";
 import { APPLICATION_STATUSES } from "@fitvector/shared";
 import type { TrackerApplication } from "@/hooks/use-tracker";
-import { isFitVectorApp, FV_STATUS_CONFIG } from "@/types/marketplace";
-import type { FVApplicationStatus } from "@/types/marketplace";
 
 // Kanban columns (6 visible — withdrawn excluded)
 const KANBAN_COLUMNS = [
@@ -43,18 +41,31 @@ export function KanbanBoard({
     [applications, onStatusChange],
   );
 
-  // Group applications by status (map FitVector statuses to kanban columns)
+  // Map live fitvector_applications.status → kanban column id.
+  // These values come directly from the DB check constraint on fitvector_applications.
+  const FV_STATUS_TO_COLUMN: Record<string, string> = {
+    applied: "applied",
+    under_review: "screening",
+    interview_invited: "interview",
+    interviewed: "interview",
+    decision_pending: "interview",
+    offered: "offer",
+    rejected: "rejected",
+    withdrawn: "rejected", // treat withdrawn as rejected in the view
+  };
+
+  // Group applications by status.
+  // For FitVector applications (fitvectorStatus is non-null), the live
+  // fitvectorStatus is the source of truth for column placement.
+  // For manually-tracked applications, use the local `status` field.
   const grouped: Record<string, TrackerApplication[]> = {};
   for (const col of KANBAN_COLUMNS) {
     grouped[col.id] = [];
   }
   for (const app of applications) {
-    if (isFitVectorApp(app.status)) {
-      const fvConfig = FV_STATUS_CONFIG[app.status as FVApplicationStatus];
-      const column = fvConfig?.trackerColumn || "applied";
-      if (grouped[column]) {
-        grouped[column].push(app);
-      }
+    if (app.fitvectorStatus) {
+      const column = FV_STATUS_TO_COLUMN[app.fitvectorStatus] ?? "applied";
+      if (grouped[column]) grouped[column].push(app);
     } else if (grouped[app.status]) {
       grouped[app.status].push(app);
     }

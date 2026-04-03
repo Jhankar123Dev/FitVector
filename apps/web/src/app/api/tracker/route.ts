@@ -37,26 +37,57 @@ export async function GET(req: Request) {
       return Response.json({ error: "Failed to load applications" }, { status: 500 });
     }
 
-    const formatted = (applications || []).map((a) => ({
-      id: a.id,
-      jobId: a.job_id,
-      jobTitle: a.job_title,
-      companyName: a.company_name,
-      companyLogoUrl: a.company_logo_url,
-      location: a.location,
-      jobUrl: a.job_url,
-      status: a.status,
-      statusHistory: a.status_history || [],
-      notes: a.notes,
-      nextFollowupDate: a.next_followup_date,
-      positionOrder: a.position_order,
-      contactName: a.contact_name,
-      contactEmail: a.contact_email,
-      contactRole: a.contact_role,
-      tailoredResumeId: a.tailored_resume_id,
-      appliedAt: a.applied_at,
-      createdAt: a.created_at,
-    }));
+    // ── Option B: read live status from fitvector_applications ──────
+    // fitvector_app_id column exists after migration 20260403000001.
+    // If the column is absent (migration not yet run), fitvector_app_id
+    // will be undefined on every row, making fvAppIds empty — safe fallback.
+    const fvAppIds = (applications || [])
+      .map((a) => (a as Record<string, unknown>).fitvector_app_id as string | null)
+      .filter((id): id is string => !!id);
+
+    // Map: fitvector_applications.id → live status string
+    const fvStatusMap: Record<string, string> = {};
+
+    if (fvAppIds.length > 0) {
+      const { data: fvApps } = await supabase
+        .from("fitvector_applications")
+        .select("id, status")
+        .in("id", fvAppIds);
+
+      for (const fv of fvApps || []) {
+        fvStatusMap[fv.id] = fv.status;
+      }
+    }
+
+    const formatted = (applications || []).map((a) => {
+      const row = a as Record<string, unknown>;
+      const fvAppId = row.fitvector_app_id as string | null;
+      const fitvectorStatus = fvAppId ? (fvStatusMap[fvAppId] ?? null) : null;
+
+      return {
+        id: a.id,
+        jobId: a.job_id,
+        jobTitle: a.job_title,
+        companyName: a.company_name,
+        companyLogoUrl: a.company_logo_url,
+        location: a.location,
+        jobUrl: a.job_url,
+        // `status` stays as-is (drag-drop writes to this)
+        status: a.status,
+        // `fitvectorStatus` is the live source-of-truth for FV applications
+        fitvectorStatus,
+        statusHistory: a.status_history || [],
+        notes: a.notes,
+        nextFollowupDate: a.next_followup_date,
+        positionOrder: a.position_order,
+        contactName: a.contact_name,
+        contactEmail: a.contact_email,
+        contactRole: a.contact_role,
+        tailoredResumeId: a.tailored_resume_id,
+        appliedAt: a.applied_at,
+        createdAt: a.created_at,
+      };
+    });
 
     return Response.json({ data: formatted });
   } catch (error) {
