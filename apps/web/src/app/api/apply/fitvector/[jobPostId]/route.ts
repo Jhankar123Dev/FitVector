@@ -127,6 +127,7 @@ export async function POST(
     }
 
     // 3. Also create in the seeker's applications tracker
+    // Store fitvector_app_id so employer status changes can be synced back
     try {
       await supabase.from("applications").insert({
         user_id: session.user.id,
@@ -136,6 +137,7 @@ export async function POST(
         status: "applied",
         notes: `Applied via FitVector (Match: ${matchScore || "N/A"}%)`,
         applied_at: now,
+        fitvector_app_id: fvApp.id,
       });
     } catch {
       // Non-critical — seeker tracker entry

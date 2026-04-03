@@ -83,7 +83,17 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
               )}
             </div>
             <p className="mt-0.5 text-sm text-surface-500">
-              {job.companyName}
+              {job.companyId ? (
+                <a
+                  href={`/dashboard/companies/${job.companyId}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="hover:text-brand-500 hover:underline transition-colors"
+                >
+                  {job.companyName}
+                </a>
+              ) : (
+                job.companyName
+              )}
             </p>
           </div>
           <div className="flex flex-col items-end gap-1">

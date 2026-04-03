@@ -18,6 +18,8 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CandidateCard } from "@/components/employer/pipeline/candidate-card";
@@ -55,7 +57,8 @@ export default function PipelinePage() {
 
   // Real data hooks
   const { data: jobData } = useEmployerJob(jobId);
-  const { data: applicantsData, isLoading } = useApplicants(jobId);
+  const [page, setPage] = useState(1);
+  const { data: applicantsData, isLoading } = useApplicants(jobId, { page: String(page) });
   const changeStage = useChangeApplicantStage();
   const rejectMutation = useRejectApplicant();
   const screenApplicant = useScreenApplicant();
@@ -151,8 +154,12 @@ export default function PipelinePage() {
     screenApplicant.mutate(id);
   }
 
+  // Screen only the currently selected applicants (not all-at-once)
   function handleBulkScreen() {
-    bulkScreenMutation.mutate(jobId);
+    for (const id of selectedIds) {
+      screenApplicant.mutate(id);
+    }
+    clearSelection();
   }
 
   function bulkAdvance() {
@@ -195,7 +202,7 @@ export default function PipelinePage() {
                 {job?.title || "Loading..."}
               </h1>
               <p className="truncate text-[11px] sm:text-xs text-surface-500">
-                {filtered.length} candidates &middot;{" "}
+                {applicantsData?.total ?? filtered.length} total &middot; {filtered.length} showing &middot;{" "}
                 {job?.location || ""} &middot; {job?.department || ""}
               </p>
             </div>
@@ -253,6 +260,16 @@ export default function PipelinePage() {
               {selectedIds.size} selected
             </span>
             <div className="ml-auto flex flex-wrap items-center gap-1.5 sm:gap-2">
+              {/* Run AI Screening — only show for unscreened applicants */}
+              <Button
+                size="sm"
+                onClick={handleBulkScreen}
+                disabled={screenApplicant.isPending}
+                className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5 bg-brand-600 hover:bg-brand-700 text-white"
+              >
+                <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                {screenApplicant.isPending ? "Screening…" : `AI Screen (${selectedIds.size})`}
+              </Button>
               <Button size="sm" onClick={bulkAdvance} className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5">
                 <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 Advance
@@ -279,7 +296,7 @@ export default function PipelinePage() {
                 disabled={inviteInterview.isPending}
               >
                 <Send className="h-3.5 w-3.5" />
-                {inviteInterview.isPending ? "Sending..." : "Send AI Interview"}
+                {inviteInterview.isPending ? "Sending…" : "Send AI Interview"}
               </Button>
               <Button variant="outline" size="sm" className="hidden md:inline-flex gap-1.5 h-8">
                 <ClipboardCheck className="h-3.5 w-3.5" />
@@ -544,6 +561,23 @@ export default function PipelinePage() {
                   </tbody>
                 </table>
               </div>
+              {applicantsData?.hasMore && (
+                <div className="flex justify-center border-t border-surface-100 px-4 py-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={isLoading}
+                    className="gap-2"
+                  >
+                    {isLoading ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...</>
+                    ) : (
+                      <>Load more candidates</>
+                    )}
+                  </Button>
+                </div>
+              )}
             </Card>
           </div>
         )}

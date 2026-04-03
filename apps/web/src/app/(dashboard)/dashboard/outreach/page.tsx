@@ -357,16 +357,41 @@ function JobGroupCard({
 export default function OutreachPage() {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [allEntries, setAllEntries] = useState<OutreachEntry[]>([]);
+  const [offset, setOffset] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const LIMIT = 20;
 
-  const { data: outreachList, isLoading } = useQuery<OutreachEntry[]>({
-    queryKey: ["outreach-history"],
+  const { isLoading } = useQuery({
+    queryKey: ["outreach-history", 0],
     queryFn: async () => {
-      const res = await fetch("/api/outreach");
-      if (!res.ok) return [];
-      const json = await res.json();
-      return json.data || [];
+      const res = await fetch(`/api/outreach?offset=0&limit=${LIMIT}`);
+      if (!res.ok) return null;
+      const json = await res.json() as { data?: OutreachEntry[]; total?: number; hasMore?: boolean };
+      setAllEntries(json.data || []);
+      setTotal(json.total ?? 0);
+      setHasMore(json.hasMore ?? false);
+      setOffset(LIMIT);
+      return json;
     },
   });
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/outreach?offset=${offset}&limit=${LIMIT}`);
+      if (!res.ok) return;
+      const json = await res.json() as { data?: OutreachEntry[]; total?: number; hasMore?: boolean };
+      setAllEntries((prev) => [...prev, ...(json.data || [])]);
+      setTotal(json.total ?? total);
+      setHasMore(json.hasMore ?? false);
+      setOffset((prev) => prev + LIMIT);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -375,13 +400,14 @@ export default function OutreachPage() {
     },
     onMutate: (id) => setDeletingId(id),
     onSettled: () => setDeletingId(null),
-    onSuccess: () => {
+    onSuccess: (_, deletedId) => {
+      setAllEntries((prev) => prev.filter((e) => e.id !== deletedId));
+      setTotal((prev) => Math.max(0, prev - 1));
       queryClient.invalidateQueries({ queryKey: ["outreach-history"] });
     },
   });
 
-  const groups = groupByJob(outreachList || []);
-  const totalCount = outreachList?.length ?? 0;
+  const groups = groupByJob(allEntries);
 
   return (
     <div className="space-y-6">
@@ -395,9 +421,9 @@ export default function OutreachPage() {
             Your generated messages, grouped by job
           </p>
         </div>
-        {totalCount > 0 && (
+        {total > 0 && (
           <Badge variant="outline" className="mt-1 shrink-0 text-xs text-surface-500">
-            {totalCount} total
+            {allEntries.length} of {total}
           </Badge>
         )}
       </div>
@@ -422,6 +448,25 @@ export default function OutreachPage() {
               deletingId={deletingId}
             />
           ))}
+
+          {/* Load more */}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="gap-2"
+              >
+                {loadingMore ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...</>
+                ) : (
+                  <>Load more messages</>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

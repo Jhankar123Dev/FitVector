@@ -179,7 +179,7 @@ export default function CreateJobPage() {
 
   // ── Screening question helpers ────────────────────────────────────
   function addScreeningQuestion() {
-    if (!sqQuestion.trim() || form.screeningQuestions.length >= 5) return;
+    if (!sqQuestion.trim() || form.screeningQuestions.length >= 10) return;
     const newQ: ScreeningQuestion = {
       id: `sq-${Date.now()}`,
       question: sqQuestion.trim(),
@@ -802,13 +802,13 @@ export default function CreateJobPage() {
                   Screening Questions
                 </h2>
                 <p className="text-sm text-surface-500">
-                  Add up to 5 custom questions for applicants (optional)
+                  Add up to 10 custom questions for applicants (optional)
                 </p>
               </div>
             </div>
 
             {/* Question builder */}
-            {form.screeningQuestions.length < 5 && (
+            {form.screeningQuestions.length < 10 && (
               <div className="space-y-3 rounded-lg border border-surface-200 bg-surface-50 p-4">
                 <div className="space-y-2">
                   <Label>Question</Label>

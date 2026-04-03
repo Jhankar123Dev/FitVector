@@ -64,6 +64,54 @@ export async function PUT(
       return NextResponse.json({ error: "Failed to update stage" }, { status: 500 });
     }
 
+    // ── Sync seeker tracker & FitVector application status ──────────
+    const now = new Date().toISOString();
+
+    // Map pipeline stage → FV app status
+    const FV_STATUS_MAP: Record<string, string> = {
+      ai_screened: "under_review",
+      ai_interviewed: "under_review",
+      assessment: "under_review",
+      human_interview: "interview_invited",
+      offer: "offered",
+      hired: "offered",
+    };
+    // Map pipeline stage → tracker application_status enum
+    const TRACKER_STATUS_MAP: Record<string, string> = {
+      ai_screened: "screening",
+      ai_interviewed: "interview",
+      assessment: "interview",
+      human_interview: "interview",
+      offer: "offer",
+      hired: "offer",
+    };
+
+    const fvStatus = FV_STATUS_MAP[parsed.data.stage];
+    const trackerStatus = TRACKER_STATUS_MAP[parsed.data.stage];
+
+    if (fvStatus || trackerStatus) {
+      const { data: fvApp } = await supabase
+        .from("fitvector_applications")
+        .select("id")
+        .eq("applicant_id", id)
+        .single();
+
+      if (fvApp) {
+        if (fvStatus) {
+          await supabase
+            .from("fitvector_applications")
+            .update({ status: fvStatus, status_updated_at: now })
+            .eq("id", fvApp.id);
+        }
+        if (trackerStatus) {
+          await supabase
+            .from("applications")
+            .update({ status: trackerStatus })
+            .eq("fitvector_app_id", fvApp.id);
+        }
+      }
+    }
+
     return NextResponse.json({
       data: transformApplicant(updated),
       message: `Moved to ${parsed.data.stage}`,

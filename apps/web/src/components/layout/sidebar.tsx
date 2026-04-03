@@ -13,6 +13,7 @@ import {
   Users,
   Settings,
   ClipboardCheck,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-user";
@@ -20,6 +21,7 @@ import { useUser } from "@/hooks/use-user";
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/jobs", label: "Jobs", icon: Search },
+  { href: "/dashboard/companies", label: "Companies", icon: Building2 },
   { href: "/dashboard/resume", label: "Resume", icon: FileText },
   { href: "/dashboard/tests", label: "Tests", icon: ClipboardCheck },
   { href: "/dashboard/outreach", label: "Outreach", icon: Mail },

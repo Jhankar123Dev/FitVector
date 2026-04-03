@@ -67,6 +67,28 @@ export async function PUT(
       return NextResponse.json({ error: "Failed to reject applicant" }, { status: 500 });
     }
 
+    // ── Sync seeker tracker & FitVector application status ──────────
+    const now = new Date().toISOString();
+    const { data: fvApp } = await supabase
+      .from("fitvector_applications")
+      .select("id")
+      .eq("applicant_id", id)
+      .single();
+
+    if (fvApp) {
+      // Update FV application status
+      await supabase
+        .from("fitvector_applications")
+        .update({ status: "rejected", status_updated_at: now })
+        .eq("id", fvApp.id);
+
+      // Sync seeker's tracker card
+      await supabase
+        .from("applications")
+        .update({ status: "rejected" })
+        .eq("fitvector_app_id", fvApp.id);
+    }
+
     return NextResponse.json({
       data: transformApplicant(updated),
       message: "Applicant rejected",

@@ -66,9 +66,23 @@ export async function GET(
       query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,role_title.ilike.%${search}%`);
     }
 
+    // Pagination
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+    const limit = Math.min(100, parseInt(url.searchParams.get("limit") || "50", 10));
+    const offset = (page - 1) * limit;
+
     // Sort
     const sortColumn = sort === "score" ? "screening_score" : sort === "name" ? "name" : "created_at";
-    query = query.order(sortColumn, { ascending: order === "asc", nullsFirst: false });
+
+    // Get total count
+    const { count: totalCount } = await supabase
+      .from("applicants")
+      .select("*", { count: "exact", head: true })
+      .eq("job_post_id", jobPostId);
+
+    query = query
+      .order(sortColumn, { ascending: order === "asc", nullsFirst: false })
+      .range(offset, offset + limit - 1);
 
     const { data: rows, error } = await query;
 
@@ -77,8 +91,53 @@ export async function GET(
       return NextResponse.json({ error: "Failed to fetch applicants" }, { status: 500 });
     }
 
-    const applicants = (rows || []).map(transformApplicant);
-    return NextResponse.json({ data: applicants });
+    // ── Enrich with PDF URL from tailored_resumes via fitvector_applications ──
+    const applicantIds = (rows || []).map((r) => r.id as string);
+    let pdfByApplicantId: Record<string, string> = {};
+
+    if (applicantIds.length > 0) {
+      const { data: fvApps } = await supabase
+        .from("fitvector_applications")
+        .select("applicant_id, tailored_resume_id")
+        .in("applicant_id", applicantIds)
+        .not("tailored_resume_id", "is", null);
+
+      const resumeIds = (fvApps || [])
+        .map((a) => a.tailored_resume_id as string)
+        .filter(Boolean);
+
+      if (resumeIds.length > 0) {
+        const { data: resumes } = await supabase
+          .from("tailored_resumes")
+          .select("id, pdf_url")
+          .in("id", resumeIds)
+          .not("pdf_url", "is", null);
+
+        const pdfByResumeId: Record<string, string> = {};
+        for (const r of resumes || []) {
+          if (r.pdf_url) pdfByResumeId[r.id] = r.pdf_url;
+        }
+
+        for (const fv of fvApps || []) {
+          if (fv.tailored_resume_id && pdfByResumeId[fv.tailored_resume_id]) {
+            pdfByApplicantId[fv.applicant_id] = pdfByResumeId[fv.tailored_resume_id];
+          }
+        }
+      }
+    }
+
+    const applicants = (rows || []).map((row) => ({
+      ...transformApplicant(row),
+      resumePdfUrl: pdfByApplicantId[row.id as string] ?? null,
+    }));
+
+    return NextResponse.json({
+      data: applicants,
+      total: totalCount ?? 0,
+      page,
+      limit,
+      hasMore: offset + limit < (totalCount ?? 0),
+    });
   } catch (error) {
     console.error("Applicants GET error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

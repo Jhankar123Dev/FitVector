@@ -358,6 +358,7 @@ export interface Applicant {
   screeningSummary: string;
   screeningBreakdown: ScreeningBreakdown;
   parsedResume: ParsedResume;
+  resumePdfUrl: string | null; // PDF from tailored_resumes, null if not generated yet
   notes: CandidateNote[];
   appliedAt: string;
   updatedAt: string;

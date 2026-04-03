@@ -99,6 +99,7 @@ export interface JobSearchResult {
   isSaved: boolean;
   description: string;
   isDirect?: boolean;
+  companyId?: string | null;
   jobPostId?: string;
   applicationDeadline?: string | null;
   openingsCount?: number | null;

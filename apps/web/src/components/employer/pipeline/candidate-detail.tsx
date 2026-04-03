@@ -258,10 +258,19 @@ export function CandidateDetail({
                   {applicant.parsedResume.summary}
                 </p>
 
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <FileText className="h-3.5 w-3.5" />
-                  View PDF
-                </Button>
+                {applicant.resumePdfUrl ? (
+                  <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                    <a href={applicant.resumePdfUrl} target="_blank" rel="noopener noreferrer">
+                      <FileText className="h-3.5 w-3.5" />
+                      View PDF
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" className="gap-1.5" disabled>
+                    <FileText className="h-3.5 w-3.5" />
+                    PDF not available
+                  </Button>
+                )}
 
                 {/* Experience */}
                 <div>
@@ -269,7 +278,7 @@ export function CandidateDetail({
                     Experience
                   </h4>
                   <div className="space-y-3">
-                    {applicant.parsedResume.experience.map((exp, i) => (
+                    {(applicant.parsedResume.experience ?? []).map((exp, i) => (
                       <div
                         key={i}
                         className="rounded-lg border border-surface-200 p-3"
@@ -284,7 +293,7 @@ export function CandidateDetail({
                         </div>
                         <p className="text-xs text-surface-500">{exp.company}</p>
                         <ul className="mt-2 space-y-1">
-                          {exp.highlights.map((h, j) => (
+                          {(exp.highlights ?? []).map((h, j) => (
                             <li
                               key={j}
                               className="text-xs text-surface-600 before:mr-1.5 before:content-['•']"
@@ -303,7 +312,7 @@ export function CandidateDetail({
                   <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
                     Education
                   </h4>
-                  {applicant.parsedResume.education.map((edu, i) => (
+                  {(applicant.parsedResume.education ?? []).map((edu, i) => (
                     <div key={i} className="rounded-lg border border-surface-200 p-3">
                       <p className="text-sm font-medium text-surface-800">
                         {edu.degree}
@@ -321,7 +330,7 @@ export function CandidateDetail({
                     Skills
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
-                    {applicant.parsedResume.skills.map((s) => (
+                    {(applicant.parsedResume.skills ?? []).map((s) => (
                       <Badge key={s} variant="secondary">
                         {s}
                       </Badge>
@@ -330,12 +339,12 @@ export function CandidateDetail({
                 </div>
 
                 {/* Projects */}
-                {applicant.parsedResume.projects.length > 0 && (
+                {(applicant.parsedResume.projects ?? []).length > 0 && (
                   <div>
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
                       Projects
                     </h4>
-                    {applicant.parsedResume.projects.map((p, i) => (
+                    {(applicant.parsedResume.projects ?? []).map((p, i) => (
                       <div key={i} className="rounded-lg border border-surface-200 p-3">
                         <p className="text-sm font-medium text-surface-800">
                           {p.name}

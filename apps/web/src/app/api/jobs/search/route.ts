@@ -8,7 +8,7 @@ import type { DecisionLabel } from "@/types/job";
 
 // ── Row mapper helpers ────────────────────────────────────────────────────────
 
-type Company = { name: string; logo_url: string | null } | null;
+type Company = { id: string; name: string; logo_url: string | null } | null;
 
 function mapJobPost(row: {
   id: string; title: string; department: string | null; location: string | null;
@@ -21,6 +21,7 @@ function mapJobPost(row: {
   const co = Array.isArray(row.companies) ? row.companies[0] : row.companies;
   return {
     id: row.id,
+    companyId: co?.id ?? null,
     title: row.title,
     companyName: co?.name ?? "Unknown Company",
     companyLogoUrl: co?.logo_url ?? null,

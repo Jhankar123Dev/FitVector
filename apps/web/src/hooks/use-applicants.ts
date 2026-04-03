@@ -24,7 +24,7 @@ export function useApplicants(jobPostId: string | null, filters?: Record<string,
   const params = new URLSearchParams(filters || {}).toString();
   const qs = params ? `?${params}` : "";
 
-  return useQuery<{ data: Record<string, unknown>[] }>({
+  return useQuery<{ data: Record<string, unknown>[]; total: number; page: number; limit: number; hasMore: boolean }>({
     queryKey: ["employer", "applicants", jobPostId, filters],
     queryFn: () => fetchJson(`/api/employer/jobs/${jobPostId}/applicants${qs}`),
     enabled: !!jobPostId,
