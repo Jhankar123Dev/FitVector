@@ -17,10 +17,12 @@ import {
   Loader2,
   ArrowRight,
   PartyPopper,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-user";
-import { useFitVectorApply } from "@/hooks/use-fitvector-apply";
+import { useFitVectorApply, useFitVectorApplications } from "@/hooks/use-fitvector-apply";
 import type { JobSearchResult } from "@/types/job";
 import type { ScreeningAnswer } from "@/types/marketplace";
 
@@ -109,12 +111,20 @@ export function FitVectorApplyModal({
   // The job post ID driving this application — job.jobPostId is the DB row
   const jobPostId = job.jobPostId ?? job.id;
 
+  // Proactively check if already applied (uses cached data if available)
+  const { data: myApplications } = useFitVectorApplications();
+  const alreadyApplied = (myApplications?.data ?? []).some(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (app: any) => app.jobId === jobPostId || app.employerJobPostId === jobPostId,
+  );
+
   // ── State ─────────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<"idle" | "submitting" | "success">("idle");
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
   const [answers, setAnswers] = useState<ScreeningAnswer[]>([]);
   const [interestNote, setInterestNote] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // ── Fetch real resumes ────────────────────────────────────────────────────
   const { data: resumes = [], isLoading: resumesLoading } = useQuery<ResumeOption[]>({
@@ -205,6 +215,7 @@ export function FitVectorApplyModal({
 
   // Submit via real API
   const handleSubmit = async () => {
+    setErrorMessage(null);
     setPhase("submitting");
     try {
       await fitVectorApply.mutateAsync({
@@ -224,6 +235,8 @@ export function FitVectorApplyModal({
       setTimeout(() => setShowConfetti(false), 3000);
     } catch (err) {
       console.error("Apply failed:", err);
+      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      setErrorMessage(msg);
       setPhase("idle");
     }
   };
@@ -488,10 +501,36 @@ export function FitVectorApplyModal({
                     </div>
                   </div>
 
+                  {/* ── Error / Already-Applied Banner ── */}
+                  {(alreadyApplied || errorMessage) && (
+                    alreadyApplied || errorMessage?.toLowerCase().includes("already applied") ? (
+                      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                        <div className="flex-1 text-sm">
+                          <p className="font-medium text-amber-800">Already applied</p>
+                          <p className="mt-0.5 text-amber-700">
+                            You&apos;ve already submitted an application for this role.{" "}
+                            <a
+                              href="/dashboard/tracker"
+                              className="font-medium underline underline-offset-2 hover:text-amber-900"
+                            >
+                              Track your application →
+                            </a>
+                          </p>
+                        </div>
+                      </div>
+                    ) : errorMessage ? (
+                      <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                        <p className="text-sm text-red-700">{errorMessage}</p>
+                      </div>
+                    ) : null
+                  )}
+
                   {/* ── Submit Button ── */}
                   <Button
                     onClick={handleSubmit}
-                    disabled={phase === "submitting" || !selectedResumeId}
+                    disabled={phase === "submitting" || !selectedResumeId || alreadyApplied}
                     className="w-full gap-2 bg-accent-500 text-white hover:bg-accent-600"
                   >
                     {phase === "submitting" ? (

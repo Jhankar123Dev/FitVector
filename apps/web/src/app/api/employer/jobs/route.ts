@@ -115,30 +115,39 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Failed to fetch job posts" }, { status: 500 });
     }
 
-    // For each job post, compute pipeline stage counts from applicants table
-    const jobPosts = await Promise.all(
-      (rows || []).map(async (row) => {
-        const jp = transformJobPost(row);
+    // Fetch all applicant pipeline stages for all jobs in ONE query (not N).
+    const jobIds = (rows || []).map((r) => r.id);
+    let allStageCounts: { job_post_id: string; pipeline_stage: string }[] = [];
+    if (jobIds.length) {
+      const { data } = await supabase
+        .from("applicants")
+        .select("job_post_id, pipeline_stage")
+        .in("job_post_id", jobIds);
+      allStageCounts = data || [];
+    }
 
-        // Get pipeline stage counts
-        const { data: stageCounts } = await supabase
-          .from("applicants")
-          .select("pipeline_stage")
-          .eq("job_post_id", row.id);
+    // Group stages by job_post_id in JS — O(n) single pass
+    const screenedStages = new Set(["ai_screened", "ai_interviewed", "assessment", "human_interview", "offer", "hired"]);
+    const interviewedStages = new Set(["ai_interviewed", "human_interview", "offer", "hired"]);
 
-        const stages = stageCounts || [];
-        const screenedStages = ["ai_screened", "ai_interviewed", "assessment", "human_interview", "offer", "hired"];
-        const interviewedStages = ["ai_interviewed", "human_interview", "offer", "hired"];
-
-        return {
-          ...jp,
-          // Computed counts for the frontend JobPost type
-          screenedCount: stages.filter((s) => screenedStages.includes(s.pipeline_stage)).length,
-          interviewedCount: stages.filter((s) => interviewedStages.includes(s.pipeline_stage)).length,
-          hiredCount: stages.filter((s) => s.pipeline_stage === "hired").length,
-        };
-      })
+    const stagesByJob = allStageCounts.reduce(
+      (acc, row) => {
+        (acc[row.job_post_id] ??= []).push(row.pipeline_stage);
+        return acc;
+      },
+      {} as Record<string, string[]>,
     );
+
+    const jobPosts = (rows || []).map((row) => {
+      const jp = transformJobPost(row);
+      const stages = stagesByJob[row.id] ?? [];
+      return {
+        ...jp,
+        screenedCount: stages.filter((s) => screenedStages.has(s)).length,
+        interviewedCount: stages.filter((s) => interviewedStages.has(s)).length,
+        hiredCount: stages.filter((s) => s === "hired").length,
+      };
+    });
 
     return NextResponse.json({ data: jobPosts });
   } catch (error) {

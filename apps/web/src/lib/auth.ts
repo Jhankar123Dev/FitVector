@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import type { PlanTier } from "@fitvector/shared";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -47,14 +48,6 @@ declare module "next-auth" {
   }
 }
 
-async function getSupabaseAdmin() {
-  const { createClient } = await import("@supabase/supabase-js");
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
-}
-
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
@@ -78,7 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const supabase = await getSupabaseAdmin();
+        const supabase = createAdminClient();
 
         // Single table query — users holds both seekers and employers
         const { data: user, error } = await supabase
@@ -127,7 +120,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       // For OAuth providers, upsert the user in our database (OAuth = seeker-only)
       if (account?.provider && account.provider !== "credentials") {
-        const supabase = await getSupabaseAdmin();
+        const supabase = createAdminClient();
 
         const { data: existingUser } = await supabase
           .from("users")
@@ -183,10 +176,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.provider = account.provider;
       }
 
+      // Single shared client for all DB lookups in this callback
+      const supabase = createAdminClient();
+
       // If id is not a UUID (OAuth providers give numeric sub IDs), look up real Supabase UUID by email
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (token.id && !isUUID.test(String(token.id)) && token.email) {
-        const supabase = await getSupabaseAdmin();
         const { data: dbUser } = await supabase
           .from("users")
           .select("id, plan_tier, onboarding_completed, role")
@@ -202,8 +197,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // On initial sign-in, fetch companyId for employers
       if (user && token.id) {
-        const supabase = await getSupabaseAdmin();
-
         if (token.role === "employer") {
           const { data: membership } = await supabase
             .from("company_members")
@@ -219,7 +212,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // Refresh user data from DB on session update (e.g., after company creation)
       if (trigger === "update") {
-        const supabase = await getSupabaseAdmin();
         const { data: freshUser } = await supabase
           .from("users")
           .select("plan_tier, onboarding_completed, role")

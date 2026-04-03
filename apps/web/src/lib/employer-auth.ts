@@ -83,7 +83,9 @@ export async function getEmployerSession(): Promise<EmployerSessionResult> {
     return { ok: false, error: "Not an employer account", status: 403 };
   }
 
-  // Fetch active company membership with joined company data
+  // Fetch active company membership with joined company data.
+  // Select only the columns that transformCompany / transformMember actually read —
+  // omitting plan_payment_id and other unused fields reduces wire payload.
   const { data: memberRow, error: memberError } = await supabase
     .from("company_members")
     .select(
@@ -92,7 +94,7 @@ export async function getEmployerSession(): Promise<EmployerSessionResult> {
       companies (
         id, name, logo_url, website_url, industry, company_size, description,
         culture_keywords, locations, branding, created_by, plan_tier, plan_expiry,
-        plan_payment_id, created_at, updated_at
+        created_at, updated_at
       )
     `
     )

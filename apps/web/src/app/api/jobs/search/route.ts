@@ -318,80 +318,146 @@ export async function GET(req: NextRequest) {
 
     const jobs = [...deduped, ...dedupedScraped];
 
-    // Score jobs using blended scoring (all plan tiers get deterministic scoring)
+    // ── Match scoring ─────────────────────────────────────────────────────────
+    // FitVector tab: pure JS deterministic scoring — zero network calls.
+    // All/External tabs: blended scoring via Python (embedding + deterministic).
     if (userSkills.length > 0) {
-      const jobsToScore = jobs.slice(0, 25);
-      try {
-        const batchPayload = jobsToScore.map((job) => ({
-          user_text: userText,
-          job_text: `Job title: ${job.title}\nRequired skills: ${job.skillsRequired.join(", ")}\n${job.description.slice(0, 500)}`,
-          user_skills: userSkills,
-          job_required_skills: job.skillsRequired,
-          job_nice_to_have_skills: job.skillsNiceToHave,
-          user_role: userTargetRoles[0] || null,
-          job_role: job.title,
-          user_experience_years: null,
-          job_required_experience_years: job.requiredExperienceYears,
-        }));
+      if (view === "fitvector") {
+        // Local deterministic scoring — <1ms, no Python roundtrip.
+        // Weights: required skills 60%, nice-to-have 20%, role keyword 20%.
+        const userSkillsLower = new Set(userSkills.map((s) => s.toLowerCase()));
+        const userRoleKeywords = (userTargetRoles[0] || "")
+          .toLowerCase()
+          .split(/\s+/)
+          .filter(Boolean);
 
-        const batchResult = await pythonClient.post<{
-          scores: Array<{
-            match_score: number;
-            match_bucket: string;
-            decision_label: string;
-            similarity_raw: number;
-            embedding_score: number | null;
-            deterministic_score: number | null;
-            deterministic_components: {
-              required_skills_match: { ratio: number; matched: string[]; missing: string[]; weight: number };
-              optional_skills_match: { ratio: number; matched: string[]; missing: string[]; weight: number };
-              role_alignment: { score: number; user_role: string; job_role: string; weight: number };
-              experience_alignment: { score: number; user_years: number; required_years: number; shortfall: number; weight: number };
-            } | null;
-          }>;
-        }>("/ai/match-scores", { jobs: batchPayload }, { timeout: 30000 });
+        // Cast to any[] to allow property mutation on the inferred union type
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (jobs as any[]).forEach((job: Record<string, unknown>) => {
+          const req = (job.skillsRequired as string[]).map((s) => s.toLowerCase());
+          const nice = (job.skillsNiceToHave as string[]).map((s) => s.toLowerCase());
 
-        batchResult.scores.forEach((score, i) => {
-          if (score && score.match_score > 0) {
-            jobsToScore[i].matchScore = score.match_score;
-            jobsToScore[i].matchBucket = score.match_bucket;
-            jobsToScore[i].decisionLabel = score.decision_label as DecisionLabel;
-            jobsToScore[i].embeddingScore = score.embedding_score;
-            jobsToScore[i].deterministicScore = score.deterministic_score;
-            if (score.deterministic_components) {
-              const dc = score.deterministic_components;
-              jobsToScore[i].deterministicComponents = {
-                requiredSkillsMatch: {
-                  ratio: dc.required_skills_match.ratio,
-                  matched: dc.required_skills_match.matched,
-                  missing: dc.required_skills_match.missing,
-                  weight: dc.required_skills_match.weight,
-                },
-                optionalSkillsMatch: {
-                  ratio: dc.optional_skills_match.ratio,
-                  matched: dc.optional_skills_match.matched,
-                  missing: dc.optional_skills_match.missing,
-                  weight: dc.optional_skills_match.weight,
-                },
-                roleAlignment: {
-                  score: dc.role_alignment.score,
-                  userRole: dc.role_alignment.user_role,
-                  jobRole: dc.role_alignment.job_role,
-                  weight: dc.role_alignment.weight,
-                },
-                experienceAlignment: {
-                  score: dc.experience_alignment.score,
-                  userYears: dc.experience_alignment.user_years,
-                  requiredYears: dc.experience_alignment.required_years,
-                  shortfall: dc.experience_alignment.shortfall,
-                  weight: dc.experience_alignment.weight,
-                },
-              };
-            }
-          }
+          const reqMatched = req.filter((s) => userSkillsLower.has(s));
+          const niceMatched = nice.filter((s) => userSkillsLower.has(s));
+
+          const reqRatio = req.length > 0 ? reqMatched.length / req.length : 0;
+          const niceRatio = nice.length > 0 ? niceMatched.length / nice.length : 0;
+
+          const jobTitleLower = (job.title as string).toLowerCase();
+          const roleScore =
+            userRoleKeywords.length > 0
+              ? userRoleKeywords.filter((kw) => jobTitleLower.includes(kw)).length /
+                userRoleKeywords.length
+              : 0;
+
+          const blended = reqRatio * 0.6 + niceRatio * 0.2 + roleScore * 0.2;
+          const jobScore = Math.round(blended * 100);
+
+          Object.assign(job, {
+            matchScore: jobScore,
+            deterministicScore: jobScore,
+            matchBucket: jobScore >= 75 ? "strong" : jobScore >= 50 ? "good" : "weak",
+            decisionLabel: (
+              jobScore >= 75 ? "apply_now" : jobScore >= 50 ? "prepare_then_apply" : "explore"
+            ) as DecisionLabel,
+            deterministicComponents: {
+              requiredSkillsMatch: {
+                ratio: reqRatio,
+                matched: reqMatched,
+                missing: req.filter((s) => !userSkillsLower.has(s)),
+                weight: 0.6,
+              },
+              optionalSkillsMatch: {
+                ratio: niceRatio,
+                matched: niceMatched,
+                missing: nice.filter((s) => !userSkillsLower.has(s)),
+                weight: 0.2,
+              },
+              roleAlignment: {
+                score: roleScore,
+                userRole: userTargetRoles[0] || "",
+                jobRole: job.title as string,
+                weight: 0.2,
+              },
+              experienceAlignment: { score: 0, userYears: 0, requiredYears: 0, shortfall: 0, weight: 0 },
+            },
+          });
         });
-      } catch {
-        // Scoring is best-effort — don't fail the search
+      } else {
+        // External / All tabs: blended Python scoring (embedding + deterministic).
+        const jobsToScore = jobs.slice(0, 25);
+        try {
+          const batchPayload = jobsToScore.map((job) => ({
+            user_text: userText,
+            job_text: `Job title: ${job.title}\nRequired skills: ${job.skillsRequired.join(", ")}\n${job.description.slice(0, 500)}`,
+            user_skills: userSkills,
+            job_required_skills: job.skillsRequired,
+            job_nice_to_have_skills: job.skillsNiceToHave,
+            user_role: userTargetRoles[0] || null,
+            job_role: job.title,
+            user_experience_years: null,
+            job_required_experience_years: job.requiredExperienceYears,
+          }));
+
+          const batchResult = await pythonClient.post<{
+            scores: Array<{
+              match_score: number;
+              match_bucket: string;
+              decision_label: string;
+              similarity_raw: number;
+              embedding_score: number | null;
+              deterministic_score: number | null;
+              deterministic_components: {
+                required_skills_match: { ratio: number; matched: string[]; missing: string[]; weight: number };
+                optional_skills_match: { ratio: number; matched: string[]; missing: string[]; weight: number };
+                role_alignment: { score: number; user_role: string; job_role: string; weight: number };
+                experience_alignment: { score: number; user_years: number; required_years: number; shortfall: number; weight: number };
+              } | null;
+            }>;
+          }>("/ai/match-scores", { jobs: batchPayload }, { timeout: 30000 });
+
+          batchResult.scores.forEach((score, i) => {
+            if (score && score.match_score > 0) {
+              jobsToScore[i].matchScore = score.match_score;
+              jobsToScore[i].matchBucket = score.match_bucket;
+              jobsToScore[i].decisionLabel = score.decision_label as DecisionLabel;
+              jobsToScore[i].embeddingScore = score.embedding_score;
+              jobsToScore[i].deterministicScore = score.deterministic_score;
+              if (score.deterministic_components) {
+                const dc = score.deterministic_components;
+                jobsToScore[i].deterministicComponents = {
+                  requiredSkillsMatch: {
+                    ratio: dc.required_skills_match.ratio,
+                    matched: dc.required_skills_match.matched,
+                    missing: dc.required_skills_match.missing,
+                    weight: dc.required_skills_match.weight,
+                  },
+                  optionalSkillsMatch: {
+                    ratio: dc.optional_skills_match.ratio,
+                    matched: dc.optional_skills_match.matched,
+                    missing: dc.optional_skills_match.missing,
+                    weight: dc.optional_skills_match.weight,
+                  },
+                  roleAlignment: {
+                    score: dc.role_alignment.score,
+                    userRole: dc.role_alignment.user_role,
+                    jobRole: dc.role_alignment.job_role,
+                    weight: dc.role_alignment.weight,
+                  },
+                  experienceAlignment: {
+                    score: dc.experience_alignment.score,
+                    userYears: dc.experience_alignment.user_years,
+                    requiredYears: dc.experience_alignment.required_years,
+                    shortfall: dc.experience_alignment.shortfall,
+                    weight: dc.experience_alignment.weight,
+                  },
+                };
+              }
+            }
+          });
+        } catch {
+          // Scoring is best-effort — don't fail the search
+        }
       }
     }
 
