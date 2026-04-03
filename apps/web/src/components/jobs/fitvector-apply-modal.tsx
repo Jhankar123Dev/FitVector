@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,13 +23,22 @@ import { useUser } from "@/hooks/use-user";
 import { useFitVectorApply } from "@/hooks/use-fitvector-apply";
 import type { JobSearchResult } from "@/types/job";
 import type { ScreeningAnswer } from "@/types/marketplace";
-import {
-  MOCK_SEEKER_RESUMES,
-  MOCK_AI_SCREENING_ANSWERS,
-  MOCK_AI_INTEREST_NOTES,
-  FITVECTOR_JOB_POST_MAP,
-} from "@/lib/mock/seeker-marketplace-data";
-import { MOCK_JOB_POSTS } from "@/lib/mock/employer-data";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+interface ScreeningQuestion {
+  id: string;
+  question: string;
+  type: "short_answer" | "yes_no" | "multiple_choice";
+  required: boolean;
+}
+
+interface ResumeOption {
+  id: string;
+  versionName: string;
+  jobTitle: string | null;
+  companyName: string | null;
+}
 
 // ─── Confetti ──────────────────────────────────────────────────────────────
 
@@ -96,24 +106,79 @@ export function FitVectorApplyModal({
   const fitVectorApply = useFitVectorApply();
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  // State
+  // The job post ID driving this application — job.jobPostId is the DB row
+  const jobPostId = job.jobPostId ?? job.id;
+
+  // ── State ─────────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<"idle" | "submitting" | "success">("idle");
-  const [selectedResumeId, setSelectedResumeId] = useState(
-    MOCK_SEEKER_RESUMES[2]?.id || MOCK_SEEKER_RESUMES[0].id,
-  );
-  const [answers, setAnswers] = useState<ScreeningAnswer[]>(() =>
-    MOCK_AI_SCREENING_ANSWERS[job.id] || [],
-  );
+  const [selectedResumeId, setSelectedResumeId] = useState<string>("");
+  const [answers, setAnswers] = useState<ScreeningAnswer[]>([]);
   const [interestNote, setInterestNote] = useState("");
-  const [aiAssistLoading, setAiAssistLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Get screening questions from employer data
-  const employerJobPostId = FITVECTOR_JOB_POST_MAP[job.id];
-  const employerJobPost = MOCK_JOB_POSTS.find((jp) => jp.id === employerJobPostId);
-  const screeningQuestions = employerJobPost?.screeningQuestions || [];
+  // ── Fetch real resumes ────────────────────────────────────────────────────
+  const { data: resumes = [], isLoading: resumesLoading } = useQuery<ResumeOption[]>({
+    queryKey: ["user-resumes-apply"],
+    queryFn: async () => {
+      const res = await fetch("/api/user/resumes");
+      const json = await res.json() as { data?: ResumeOption[] };
+      return json.data ?? [];
+    },
+    staleTime: 2 * 60 * 1000,
+  });
 
-  const selectedResume = MOCK_SEEKER_RESUMES.find((r) => r.id === selectedResumeId);
+  // Auto-select first resume once loaded
+  useEffect(() => {
+    if (resumes.length > 0 && !selectedResumeId) {
+      setSelectedResumeId(resumes[0].id);
+    }
+  }, [resumes, selectedResumeId]);
+
+  // ── Fetch screening questions ─────────────────────────────────────────────
+  const { data: jobPostData, isLoading: questionsLoading } = useQuery<{
+    id: string;
+    title: string;
+    screeningQuestions: ScreeningQuestion[];
+  }>({
+    queryKey: ["job-post-questions", jobPostId],
+    queryFn: async () => {
+      const res = await fetch(`/api/jobs/post/${jobPostId}`);
+      if (!res.ok) return { id: jobPostId, title: job.title, screeningQuestions: [] };
+      const json = await res.json() as { data?: { id: string; title: string; screeningQuestions: ScreeningQuestion[] } };
+      return json.data ?? { id: jobPostId, title: job.title, screeningQuestions: [] };
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!jobPostId,
+  });
+
+  const screeningQuestions = jobPostData?.screeningQuestions ?? [];
+
+  // Initialise blank answers when questions load
+  useEffect(() => {
+    if (screeningQuestions.length > 0 && answers.length === 0) {
+      setAnswers(
+        screeningQuestions.map((q) => ({
+          questionId: q.id,
+          question: q.question,
+          type: q.type,
+          answer: "",
+          aiSuggested: false,
+        })),
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screeningQuestions.length]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  const selectedResume = resumes.find((r) => r.id === selectedResumeId);
+
+  function resumeLabel(r: ResumeOption): string {
+    if (r.versionName) return r.versionName;
+    if (r.jobTitle && r.companyName) return `${r.jobTitle} @ ${r.companyName}`;
+    if (r.jobTitle) return r.jobTitle;
+    return "Untitled Resume";
+  }
 
   // Close on backdrop click
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -131,20 +196,11 @@ export function FitVectorApplyModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose, phase]);
 
-  // Update screening answer
+  // Update a single screening answer
   const updateAnswer = (questionId: string, value: string) => {
     setAnswers((prev) =>
       prev.map((a) => (a.questionId === questionId ? { ...a, answer: value } : a)),
     );
-  };
-
-  // AI Assist for interest note
-  const handleAiAssist = () => {
-    setAiAssistLoading(true);
-    setTimeout(() => {
-      setInterestNote(MOCK_AI_INTEREST_NOTES[job.id] || "");
-      setAiAssistLoading(false);
-    }, 1000);
   };
 
   // Submit via real API
@@ -152,9 +208,9 @@ export function FitVectorApplyModal({
     setPhase("submitting");
     try {
       await fitVectorApply.mutateAsync({
-        jobPostId: employerJobPostId || job.id,
+        jobPostId,
         resumeId: selectedResumeId,
-        resumeName: selectedResume?.name || "Resume",
+        resumeName: selectedResume ? resumeLabel(selectedResume) : "Resume",
         matchScore: job.matchScore ?? undefined,
         screeningAnswers: answers.map((a) => ({
           questionId: a.questionId,
@@ -168,12 +224,12 @@ export function FitVectorApplyModal({
       setTimeout(() => setShowConfetti(false), 3000);
     } catch (err) {
       console.error("Apply failed:", err);
-      setPhase("idle"); // Allow retry
+      setPhase("idle");
     }
   };
 
-  // Answered count
   const answeredCount = answers.filter((a) => a.answer.trim()).length;
+  const dataLoading = resumesLoading || questionsLoading;
 
   return (
     <div
@@ -194,8 +250,10 @@ export function FitVectorApplyModal({
               Application Submitted!
             </h2>
             <p className="mt-2 text-sm text-surface-500">
-              You applied to <span className="font-medium text-surface-700">{job.title}</span>{" "}
-              at <span className="font-medium text-surface-700">{job.companyName}</span>
+              You applied to{" "}
+              <span className="font-medium text-surface-700">{job.title}</span>{" "}
+              at{" "}
+              <span className="font-medium text-surface-700">{job.companyName}</span>
             </p>
             <Badge variant="success" className="mt-3">
               Applied via FitVector
@@ -255,200 +313,201 @@ export function FitVectorApplyModal({
             </CardHeader>
 
             <CardContent className="space-y-5 pb-6">
-              {/* ── Resume Selector ── */}
-              <div>
-                <Label className="text-sm font-medium">Resume</Label>
-                <p className="mb-2 text-xs text-surface-400">
-                  Select which resume to submit with your application
-                </p>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={selectedResumeId}
-                    onChange={(e) => setSelectedResumeId(e.target.value)}
-                    className="flex-1 rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm text-surface-700 outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
-                  >
-                    {MOCK_SEEKER_RESUMES.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                  <Button variant="outline" size="sm" className="shrink-0 gap-1.5 text-xs">
-                    <FileText className="h-3 w-3" />
-                    Tailor New
-                  </Button>
-                </div>
-              </div>
-
-              {/* ── Screening Questions ── */}
-              {screeningQuestions.length > 0 && (
-                <div>
-                  <Label className="text-sm font-medium">Screening Questions</Label>
-                  <p className="mb-3 text-xs text-surface-400">
-                    AI-suggested answers based on your profile — review and edit as needed
-                  </p>
-                  <div className="space-y-4">
-                    {screeningQuestions.map((q) => {
-                      const answer = answers.find((a) => a.questionId === q.id);
-                      return (
-                        <div key={q.id} className="space-y-1.5">
-                          <div className="flex items-start gap-2">
-                            <p className="text-sm font-medium text-surface-700">
-                              {q.question}
-                              {q.required && (
-                                <span className="ml-1 text-red-500">*</span>
-                              )}
-                            </p>
-                          </div>
-
-                          {q.type === "short_answer" && (
-                            <div className="relative">
-                              <Textarea
-                                value={answer?.answer || ""}
-                                onChange={(e) => updateAnswer(q.id, e.target.value)}
-                                rows={3}
-                                className="text-sm"
-                                placeholder="Your answer..."
-                              />
-                              {answer?.aiSuggested && answer.answer && (
-                                <Badge
-                                  className="absolute right-2 top-2 gap-1 bg-accent-50 text-accent-700 hover:bg-accent-100"
-                                >
-                                  <Sparkles className="h-2.5 w-2.5" />
-                                  AI Suggested
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-
-                          {q.type === "yes_no" && (
-                            <div className="flex gap-3">
-                              {["yes", "no"].map((val) => (
-                                <button
-                                  key={val}
-                                  onClick={() => updateAnswer(q.id, val)}
-                                  className={cn(
-                                    "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
-                                    answer?.answer === val
-                                      ? "border-brand-300 bg-brand-50 text-brand-700"
-                                      : "border-surface-200 text-surface-500 hover:border-surface-300",
-                                  )}
-                                >
-                                  {val === "yes" ? "Yes" : "No"}
-                                </button>
-                              ))}
-                              {answer?.aiSuggested && answer.answer && (
-                                <Badge className="gap-1 bg-accent-50 text-accent-700 hover:bg-accent-100">
-                                  <Sparkles className="h-2.5 w-2.5" />
-                                  AI
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+              {/* ── Loading skeleton ── */}
+              {dataLoading && (
+                <div className="flex items-center gap-2 py-4 text-sm text-surface-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading application details…
                 </div>
               )}
 
-              {screeningQuestions.length === 0 && (
-                <div className="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3">
-                  <p className="text-xs text-surface-500">
-                    No screening questions for this position
-                  </p>
-                </div>
-              )}
-
-              {/* ── Why I'm Interested ── */}
-              <div>
-                <div className="flex items-center justify-between">
+              {!dataLoading && (
+                <>
+                  {/* ── Resume Selector ── */}
                   <div>
-                    <Label className="text-sm font-medium">
-                      Why I&apos;m Interested{" "}
-                      <span className="font-normal text-surface-400">(optional)</span>
-                    </Label>
-                    <p className="text-xs text-surface-400">
-                      A short note to stand out to the hiring team
+                    <Label className="text-sm font-medium">Resume</Label>
+                    <p className="mb-2 text-xs text-surface-400">
+                      Select which resume to submit with your application
                     </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAiAssist}
-                    disabled={aiAssistLoading}
-                    className="gap-1.5 text-xs"
-                  >
-                    {aiAssistLoading ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                    {resumes.length === 0 ? (
+                      <p className="text-xs text-surface-400">
+                        No resumes found.{" "}
+                        <a href="/dashboard/resume" className="text-brand-600 underline">
+                          Create one first
+                        </a>
+                        .
+                      </p>
                     ) : (
-                      <Sparkles className="h-3 w-3 text-brand-500" />
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={selectedResumeId}
+                          onChange={(e) => setSelectedResumeId(e.target.value)}
+                          className="flex-1 rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm text-surface-700 outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                        >
+                          {resumes.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {resumeLabel(r)}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0 gap-1.5 text-xs"
+                          asChild
+                        >
+                          <a href="/dashboard/resume">
+                            <FileText className="h-3 w-3" />
+                            Tailor New
+                          </a>
+                        </Button>
+                      </div>
                     )}
-                    AI Assist
-                  </Button>
-                </div>
-                <Textarea
-                  value={interestNote}
-                  onChange={(e) => setInterestNote(e.target.value)}
-                  rows={3}
-                  className="mt-2 text-sm"
-                  placeholder="Tell the employer why you're excited about this role..."
-                />
-              </div>
+                  </div>
 
-              {/* ── Review Section ── */}
-              <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-4">
-                <h4 className="text-sm font-semibold text-surface-800">Review</h4>
-                <div className="mt-2 space-y-1.5 text-xs text-surface-600">
-                  <p>
-                    Applying as{" "}
-                    <span className="font-medium text-surface-800">
-                      {user?.name || "User"}
-                    </span>{" "}
-                    with resume{" "}
-                    <span className="font-medium text-surface-800">
-                      {selectedResume?.name}
-                    </span>
-                  </p>
-                  <p>
-                    Match score:{" "}
-                    <span className="font-medium text-surface-800">{job.matchScore}%</span>
-                  </p>
+                  {/* ── Screening Questions ── */}
                   {screeningQuestions.length > 0 && (
-                    <p>
-                      Screening questions answered:{" "}
-                      <span className="font-medium text-surface-800">
-                        {answeredCount} of {screeningQuestions.length}
-                      </span>
-                    </p>
-                  )}
-                  {interestNote && (
-                    <p className="flex items-center gap-1 text-accent-700">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Cover note included
-                    </p>
-                  )}
-                </div>
-              </div>
+                    <div>
+                      <Label className="text-sm font-medium">Screening Questions</Label>
+                      <p className="mb-3 text-xs text-surface-400">
+                        Answer the employer&apos;s screening questions
+                      </p>
+                      <div className="space-y-4">
+                        {screeningQuestions.map((q) => {
+                          const answer = answers.find((a) => a.questionId === q.id);
+                          return (
+                            <div key={q.id} className="space-y-1.5">
+                              <p className="text-sm font-medium text-surface-700">
+                                {q.question}
+                                {q.required && (
+                                  <span className="ml-1 text-red-500">*</span>
+                                )}
+                              </p>
 
-              {/* ── Submit Button ── */}
-              <Button
-                onClick={handleSubmit}
-                disabled={phase === "submitting"}
-                className="w-full gap-2 bg-accent-500 text-white hover:bg-accent-600"
-              >
-                {phase === "submitting" ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4" />
-                    Submit Application
-                  </>
-                )}
-              </Button>
+                              {q.type === "short_answer" && (
+                                <Textarea
+                                  value={answer?.answer || ""}
+                                  onChange={(e) => updateAnswer(q.id, e.target.value)}
+                                  rows={3}
+                                  className="text-sm"
+                                  placeholder="Your answer…"
+                                />
+                              )}
+
+                              {q.type === "yes_no" && (
+                                <div className="flex gap-3">
+                                  {["yes", "no"].map((val) => (
+                                    <button
+                                      key={val}
+                                      onClick={() => updateAnswer(q.id, val)}
+                                      className={cn(
+                                        "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
+                                        answer?.answer === val
+                                          ? "border-brand-300 bg-brand-50 text-brand-700"
+                                          : "border-surface-200 text-surface-500 hover:border-surface-300",
+                                      )}
+                                    >
+                                      {val === "yes" ? "Yes" : "No"}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {screeningQuestions.length === 0 && (
+                    <div className="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3">
+                      <p className="text-xs text-surface-500">
+                        No screening questions for this position
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ── Why I'm Interested ── */}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-medium">
+                          Why I&apos;m Interested{" "}
+                          <span className="font-normal text-surface-400">(optional)</span>
+                        </Label>
+                        <p className="text-xs text-surface-400">
+                          A short note to stand out to the hiring team
+                        </p>
+                      </div>
+                    </div>
+                    <Textarea
+                      value={interestNote}
+                      onChange={(e) => setInterestNote(e.target.value)}
+                      rows={3}
+                      className="mt-2 text-sm"
+                      placeholder="Tell the employer why you're excited about this role…"
+                    />
+                  </div>
+
+                  {/* ── Review Section ── */}
+                  <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-4">
+                    <h4 className="text-sm font-semibold text-surface-800">Review</h4>
+                    <div className="mt-2 space-y-1.5 text-xs text-surface-600">
+                      <p>
+                        Applying as{" "}
+                        <span className="font-medium text-surface-800">
+                          {user?.name || "User"}
+                        </span>{" "}
+                        {selectedResume && (
+                          <>
+                            with resume{" "}
+                            <span className="font-medium text-surface-800">
+                              {resumeLabel(selectedResume)}
+                            </span>
+                          </>
+                        )}
+                      </p>
+                      <p>
+                        Match score:{" "}
+                        <span className="font-medium text-surface-800">{job.matchScore}%</span>
+                      </p>
+                      {screeningQuestions.length > 0 && (
+                        <p>
+                          Screening questions answered:{" "}
+                          <span className="font-medium text-surface-800">
+                            {answeredCount} of {screeningQuestions.length}
+                          </span>
+                        </p>
+                      )}
+                      {interestNote && (
+                        <p className="flex items-center gap-1 text-accent-700">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Cover note included
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── Submit Button ── */}
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={phase === "submitting" || !selectedResumeId}
+                    className="w-full gap-2 bg-accent-500 text-white hover:bg-accent-600"
+                  >
+                    {phase === "submitting" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Submitting…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Submit Application
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
             </CardContent>
           </>
         )}

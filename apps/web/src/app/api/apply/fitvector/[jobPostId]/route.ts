@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ jobPostId: string }> }
+  { params }: { params: { jobPostId: string } }
 ) {
   try {
     const session = await auth();
@@ -14,14 +14,24 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { jobPostId } = await params;
+    const { jobPostId } = params;
     const body = await req.json().catch(() => ({}));
+
+    // UUID validation — block mock IDs like "res-001" from reaching Supabase
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (body.resumeId && !UUID_RE.test(String(body.resumeId))) {
+      return NextResponse.json(
+        { error: "Invalid resume ID — please select a valid resume" },
+        { status: 400 },
+      );
+    }
+
     const supabase = createAdminClient();
 
     // Fetch job post
     const { data: jobPost } = await supabase
       .from("job_posts")
-      .select("id, company_id, title, auto_advance_threshold, required_skills, description")
+      .select("id, company_id, title, required_skills, description")
       .eq("id", jobPostId)
       .eq("status", "active")
       .single();
@@ -116,32 +126,7 @@ export async function POST(
       return NextResponse.json({ error: "Failed to submit application" }, { status: 500 });
     }
 
-    // 3. Auto-advance if score meets threshold
-    if (
-      jobPost.auto_advance_threshold &&
-      matchScore &&
-      matchScore >= jobPost.auto_advance_threshold
-    ) {
-      await supabase
-        .from("applicants")
-        .update({ pipeline_stage: "ai_screened" })
-        .eq("id", applicant.id);
-
-      // Update FV app status
-      await supabase
-        .from("fitvector_applications")
-        .update({
-          status: "under_review",
-          status_timeline: [
-            { status: "fv_applied", label: "Applied via FitVector", timestamp: now },
-            { status: "fv_under_review", label: "Under Review (Auto-advanced)", timestamp: now },
-          ],
-          status_updated_at: now,
-        })
-        .eq("id", fvApp.id);
-    }
-
-    // 4. Also create in the seeker's applications tracker
+    // 3. Also create in the seeker's applications tracker
     try {
       await supabase.from("applications").insert({
         user_id: session.user.id,
