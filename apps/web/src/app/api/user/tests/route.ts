@@ -47,7 +47,7 @@ export async function GET() {
         created_at,
         assessments:assessment_id (
           id,
-          title,
+          name,
           assessment_type,
           time_limit_minutes,
           difficulty,
@@ -78,7 +78,7 @@ export async function GET() {
 
       return {
         id: sub.id,
-        assessmentName: (assessment?.title as string) ?? "Untitled Assessment",
+        assessmentName: (assessment?.name as string) ?? "Untitled Assessment",
         assessmentType: (assessment?.assessment_type as string) ?? "unknown",
         jobTitle: (jobPost?.title as string) ?? "Unknown Position",
         status: sub.status,
