@@ -132,6 +132,29 @@ export function useScreenApplicant() {
 }
 
 /**
+ * Send an assessment to an applicant (moves them to assessment stage).
+ */
+export function useSendAssessment() {
+  const qc = useQueryClient();
+  return useMutation<
+    { data: Record<string, unknown> },
+    Error,
+    string // applicant ID
+  >({
+    mutationFn: (id) =>
+      fetchJson(`/api/employer/applicants/${id}/stage`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: "assessment" }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["employer", "applicants"] });
+      qc.invalidateQueries({ queryKey: ["employer", "applicant"] });
+    },
+  });
+}
+
+/**
  * Bulk screen all unscreened applicants for a job post.
  */
 export function useBulkScreen() {

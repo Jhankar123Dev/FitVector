@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Calendar, Building2 } from "lucide-react";
+import { FileText, Download, Calendar, Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ResumeVersion } from "@/types/resume";
 import Link from "next/link";
@@ -21,6 +22,63 @@ function formatDate(dateStr: string): string {
   } catch {
     return dateStr;
   }
+}
+
+function DownloadButton({ versionId, versionName }: { versionId: string; versionName: string }) {
+  const [downloading, setDownloading] = useState(false);
+  const [dlError, setDlError] = useState<string | null>(null);
+
+  async function handleDownload() {
+    setDownloading(true);
+    setDlError(null);
+    try {
+      const res = await fetch(`/api/user/resumes/${versionId}/pdf`);
+      if (!res.ok) {
+        const text = await res.text();
+        const msg = text.includes("compilation failed")
+          ? "PDF compilation failed — resume may be missing LaTeX content."
+          : text.includes("not found")
+            ? "Resume not found."
+            : "PDF generation failed. Please try again.";
+        setDlError(msg);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${versionName}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setDlError("Download failed — please check your connection.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <Button
+        variant="ghost"
+        size="sm"
+        title="Download PDF"
+        disabled={downloading}
+        onClick={handleDownload}
+      >
+        {downloading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Download className="h-3.5 w-3.5" />
+        )}
+      </Button>
+      {dlError && (
+        <p className="max-w-[160px] text-right text-[10px] text-red-500">{dlError}</p>
+      )}
+    </div>
+  );
 }
 
 export function VersionList({ versions }: VersionListProps) {
@@ -72,14 +130,7 @@ export function VersionList({ versions }: VersionListProps) {
                   View
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" asChild title="Download PDF">
-                <a
-                  href={`/api/user/resumes/${version.id}/pdf`}
-                  download={`${version.versionName}.pdf`}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                </a>
-              </Button>
+              <DownloadButton versionId={version.id} versionName={version.versionName} />
             </div>
           </CardContent>
         </Card>

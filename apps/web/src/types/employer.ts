@@ -272,8 +272,8 @@ export const PIPELINE_STAGE_LABELS: Record<PipelineStage, string> = {
 export const PIPELINE_COLUMNS: PipelineStage[] = [
   "applied",
   "ai_screened",
-  "ai_interviewed",
   "assessment",
+  "ai_interviewed",
   "human_interview",
   "offer",
   "hired",

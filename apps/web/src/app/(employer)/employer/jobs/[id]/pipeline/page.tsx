@@ -30,6 +30,7 @@ import {
   useRejectApplicant,
   useScreenApplicant,
   useBulkScreen,
+  useSendAssessment,
 } from "@/hooks/use-applicants";
 import { useEmployerJob } from "@/hooks/use-employer-jobs";
 import { useInviteInterview } from "@/hooks/use-interviews";
@@ -64,6 +65,7 @@ export default function PipelinePage() {
   const screenApplicant = useScreenApplicant();
   const bulkScreenMutation = useBulkScreen();
   const inviteInterview = useInviteInterview();
+  const sendAssessment = useSendAssessment();
 
   const job = jobData?.data;
   const applicants = (applicantsData?.data || []) as unknown as Applicant[];
@@ -126,22 +128,23 @@ export default function PipelinePage() {
   }
 
   // ── Stage transitions ───────────────────────────────────────────
+  // Pipeline order: applied → ai_screened → assessment → ai_interviewed → human_interview → offer → hired
   const NEXT_STAGE: Record<string, PipelineStage> = {
-    applied: "ai_screened",
-    ai_screened: "ai_interviewed",
-    ai_interviewed: "assessment",
-    assessment: "human_interview",
+    applied:         "ai_screened",
+    ai_screened:     "assessment",
+    assessment:      "ai_interviewed",
+    ai_interviewed:  "human_interview",
     human_interview: "offer",
-    offer: "hired",
+    offer:           "hired",
   };
 
   const PREV_STAGE: Record<string, PipelineStage> = {
-    ai_screened: "applied",
-    ai_interviewed: "ai_screened",
-    assessment: "ai_interviewed",
-    human_interview: "assessment",
-    offer: "human_interview",
-    hired: "offer",
+    ai_screened:     "applied",
+    assessment:      "ai_screened",
+    ai_interviewed:  "assessment",
+    human_interview: "ai_interviewed",
+    offer:           "human_interview",
+    hired:           "offer",
   };
 
   function advanceApplicant(id: string) {
@@ -317,9 +320,20 @@ export default function PipelinePage() {
                 <Send className="h-3.5 w-3.5" />
                 {inviteInterview.isPending ? "Sending…" : "Send AI Interview"}
               </Button>
-              <Button variant="outline" size="sm" className="hidden md:inline-flex gap-1.5 h-8">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:inline-flex gap-1.5 h-8"
+                disabled={sendAssessment.isPending}
+                onClick={() => {
+                  for (const id of selectedIds) {
+                    sendAssessment.mutate(id);
+                  }
+                  clearSelection();
+                }}
+              >
                 <ClipboardCheck className="h-3.5 w-3.5" />
-                Send Assessment
+                {sendAssessment.isPending ? "Sending…" : "Send Assessment"}
               </Button>
               <Button variant="ghost" size="sm" onClick={clearSelection} className="h-7 text-xs sm:h-8 sm:text-sm">
                 Clear

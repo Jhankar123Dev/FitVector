@@ -21,9 +21,17 @@ export async function POST(
       return NextResponse.json({ error: "Interview not found" }, { status: 404 });
     }
 
+    // Already started — idempotent, allow resume
+    if (interview.status === "started") {
+      return NextResponse.json({
+        data: { id: interview.id, status: "started", startedAt: null },
+        message: "Interview resumed",
+      });
+    }
+
     if (interview.status !== "invited") {
       return NextResponse.json(
-        { error: `Cannot start: interview status is '${interview.status}'` },
+        { error: `Interview is no longer available (status: ${interview.status})` },
         { status: 400 }
       );
     }

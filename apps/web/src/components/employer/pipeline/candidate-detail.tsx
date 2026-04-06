@@ -691,7 +691,17 @@ export function CandidateDetail({
                   onClick={() => onAdvance(applicant.id)}
                 >
                   <ArrowRight className="h-4 w-4" />
-                  Advance
+                  {applicant.pipelineStage === "ai_screened"
+                    ? "Send Assessment"
+                    : applicant.pipelineStage === "assessment"
+                      ? "Send AI Interview"
+                      : applicant.pipelineStage === "ai_interviewed"
+                        ? "Schedule Interview"
+                        : applicant.pipelineStage === "human_interview"
+                          ? "Make Offer"
+                          : applicant.pipelineStage === "offer"
+                            ? "Mark Hired"
+                            : "Advance"}
                 </Button>
                 <Button
                   variant="outline"
