@@ -22,6 +22,7 @@ export interface TrackerApplication {
    *         "rejected" | "withdrawn"
    */
   fitvectorStatus: string | null;
+  matchScore: number | null;
   interviewLink: string | null;
   statusHistory: Array<{ status: string; changed_at: string }>;
   notes: string | null;

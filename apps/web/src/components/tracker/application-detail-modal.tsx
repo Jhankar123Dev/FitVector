@@ -21,6 +21,7 @@ import {
   Rocket,
   CheckCircle2,
   Sparkles,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { APPLICATION_STATUSES } from "@fitvector/shared";
@@ -272,50 +273,70 @@ export function ApplicationDetailModal({
             />
           </div>
 
-          {/* Contact info */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Contact Name</Label>
-              <Input
-                value={contactName}
-                onChange={(e) => { setContactName(e.target.value); setIsDirty(true); }}
-                placeholder="Recruiter name"
-                className="mt-1"
-              />
+          {/* Interview link — FitVector apps only */}
+          {isFV && application.interviewLink && (
+            <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
+              <p className="mb-2 text-xs font-medium text-violet-800">Interview Invited</p>
+              <a
+                href={application.interviewLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700"
+              >
+                <Video className="h-3.5 w-3.5" />
+                Start Interview
+              </a>
             </div>
-            <div>
-              <Label className="text-xs">Contact Email</Label>
-              <Input
-                value={contactEmail}
-                onChange={(e) => { setContactEmail(e.target.value); setIsDirty(true); }}
-                placeholder="recruiter@company.com"
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs">Contact Role</Label>
-            <Input
-              value={contactRole}
-              onChange={(e) => { setContactRole(e.target.value); setIsDirty(true); }}
-              placeholder="e.g. HR Manager"
-              className="mt-1"
-            />
-          </div>
+          )}
 
-          {/* Follow-up date */}
-          <div>
-            <Label className="text-xs flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              Next Follow-up
-            </Label>
-            <Input
-              type="date"
-              value={followupDate}
-              onChange={(e) => { setFollowupDate(e.target.value); setIsDirty(true); }}
-              className="mt-1"
-            />
-          </div>
+          {/* Contact info — personal apps only */}
+          {!isFV && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Contact Name</Label>
+                  <Input
+                    value={contactName}
+                    onChange={(e) => { setContactName(e.target.value); setIsDirty(true); }}
+                    placeholder="Recruiter name"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Contact Email</Label>
+                  <Input
+                    value={contactEmail}
+                    onChange={(e) => { setContactEmail(e.target.value); setIsDirty(true); }}
+                    placeholder="recruiter@company.com"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Contact Role</Label>
+                <Input
+                  value={contactRole}
+                  onChange={(e) => { setContactRole(e.target.value); setIsDirty(true); }}
+                  placeholder="e.g. HR Manager"
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Follow-up date — personal apps only */}
+              <div>
+                <Label className="text-xs flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Next Follow-up
+                </Label>
+                <Input
+                  type="date"
+                  value={followupDate}
+                  onChange={(e) => { setFollowupDate(e.target.value); setIsDirty(true); }}
+                  className="mt-1"
+                />
+              </div>
+            </>
+          )}
 
           {/* Actions */}
           <div className="flex items-center gap-2 border-t pt-3">

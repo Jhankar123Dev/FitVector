@@ -12,6 +12,7 @@ import {
   Briefcase,
   FileText,
   ArrowRight,
+  ArrowLeft,
   XCircle,
   CalendarDays,
   ClipboardCheck,
@@ -64,6 +65,7 @@ interface CandidateDetailProps {
   applicant: Applicant;
   onClose: () => void;
   onAdvance: (id: string) => void;
+  onGoBack: (id: string) => void;
   onReject: (id: string) => void;
 }
 
@@ -71,6 +73,7 @@ export function CandidateDetail({
   applicant,
   onClose,
   onAdvance,
+  onGoBack,
   onReject,
 }: CandidateDetailProps) {
   const [noteText, setNoteText] = useState("");
@@ -671,6 +674,18 @@ export function CandidateDetail({
           {applicant.pipelineStage !== "hired" &&
             applicant.pipelineStage !== "rejected" && (
               <>
+                {applicant.pipelineStage !== "applied" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onGoBack(applicant.id)}
+                    className="gap-1.5 text-surface-500 hover:text-surface-700"
+                    title="Move to previous stage"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                )}
                 <Button
                   className="flex-1 gap-1.5"
                   onClick={() => onAdvance(applicant.id)}

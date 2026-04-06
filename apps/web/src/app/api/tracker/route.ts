@@ -49,16 +49,19 @@ export async function GET(req: Request) {
     const fvStatusMap: Record<string, string> = {};
     // Map: fitvector_applications.id → applicant_id (for interview link lookup)
     const fvApplicantIdMap: Record<string, string> = {};
+    // Map: fitvector_applications.id → match score
+    const fvMatchScoreMap: Record<string, number | null> = {};
 
     if (fvAppIds.length > 0) {
       const { data: fvApps } = await supabase
         .from("fitvector_applications")
-        .select("id, status, applicant_id")
+        .select("id, status, applicant_id, match_score")
         .in("id", fvAppIds);
 
       for (const fv of fvApps || []) {
         fvStatusMap[fv.id] = fv.status;
         if (fv.applicant_id) fvApplicantIdMap[fv.id] = fv.applicant_id;
+        fvMatchScoreMap[fv.id] = (fv as Record<string, unknown>).match_score as number | null ?? null;
       }
     }
 
@@ -85,6 +88,7 @@ export async function GET(req: Request) {
       const row = a as Record<string, unknown>;
       const fvAppId = row.fitvector_app_id as string | null;
       const fitvectorStatus = fvAppId ? (fvStatusMap[fvAppId] ?? null) : null;
+      const matchScore = fvAppId ? (fvMatchScoreMap[fvAppId] ?? null) : null;
       const applicantId = fvAppId ? fvApplicantIdMap[fvAppId] : null;
       const interviewLink = applicantId ? (interviewLinkMap[applicantId] ?? null) : null;
 
@@ -98,6 +102,7 @@ export async function GET(req: Request) {
         jobUrl: a.job_url,
         status: a.status,
         fitvectorStatus,
+        matchScore,
         interviewLink,
         statusHistory: a.status_history || [],
         notes: a.notes,

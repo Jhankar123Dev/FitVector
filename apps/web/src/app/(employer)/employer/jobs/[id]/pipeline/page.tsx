@@ -135,12 +135,31 @@ export default function PipelinePage() {
     offer: "hired",
   };
 
+  const PREV_STAGE: Record<string, PipelineStage> = {
+    ai_screened: "applied",
+    ai_interviewed: "ai_screened",
+    assessment: "ai_interviewed",
+    human_interview: "assessment",
+    offer: "human_interview",
+    hired: "offer",
+  };
+
   function advanceApplicant(id: string) {
     const applicant = applicants.find((a) => a.id === id);
     if (!applicant) return;
     const next = NEXT_STAGE[applicant.pipelineStage];
     if (next) {
       changeStage.mutate({ id, stage: next });
+    }
+    setDetailApplicant(null);
+  }
+
+  function goBackApplicant(id: string) {
+    const applicant = applicants.find((a) => a.id === id);
+    if (!applicant) return;
+    const prev = PREV_STAGE[applicant.pipelineStage];
+    if (prev) {
+      changeStage.mutate({ id, stage: prev });
     }
     setDetailApplicant(null);
   }
@@ -589,6 +608,7 @@ export default function PipelinePage() {
           applicant={detailApplicant}
           onClose={() => setDetailApplicant(null)}
           onAdvance={advanceApplicant}
+          onGoBack={goBackApplicant}
           onReject={handleRejectApplicant}
         />
       )}
