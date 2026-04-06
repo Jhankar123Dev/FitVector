@@ -16,7 +16,7 @@ function mapJobPost(row: {
   required_skills: string[]; nice_to_have_skills: string[];
   salary_min: number | null; salary_max: number | null; salary_currency: string | null;
   application_deadline: string | null; openings_count: number | null;
-  created_at: string; companies: Company;
+  created_at: string; companies: Company | Company[];
 }) {
   const co = Array.isArray(row.companies) ? row.companies[0] : row.companies;
   return {
@@ -189,7 +189,7 @@ export async function GET(req: NextRequest) {
     if (view === "fitvector" || view === "all") {
       let jpQuery = supabase
         .from("job_posts")
-        .select("id,title,department,location,work_mode,job_type,description,required_skills,nice_to_have_skills,salary_min,salary_max,salary_currency,application_deadline,openings_count,created_at,companies(name,logo_url)")
+        .select("id,title,department,location,work_mode,job_type,description,required_skills,nice_to_have_skills,salary_min,salary_max,salary_currency,application_deadline,openings_count,created_at,companies(id,name,logo_url)")
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(20);

@@ -430,6 +430,7 @@ function mkCandidate(
     ],
     appliedAt,
     updatedAt: appliedAt,
+    resumePdfUrl: null,
   };
 }
 

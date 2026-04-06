@@ -23,6 +23,7 @@ import type { JobSearchResult } from "@/types/job";
 interface JobDetailProps {
   job: JobSearchResult;
   userSkills?: string[];
+  alreadyApplied?: boolean;
   onBack: () => void;
   onTailorResume?: () => void;
   onFitVectorApply?: () => void;
@@ -63,7 +64,7 @@ function formatSalary(min: number | null, max: number | null): string | null {
   return null;
 }
 
-export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume, onFitVectorApply, onColdEmail, onLinkedInMsg, onReferral, onToggleSave, loadingOutreachType }: JobDetailProps) {
+export function JobDetailPanel({ job, userSkills = [], alreadyApplied, onBack, onTailorResume, onFitVectorApply, onColdEmail, onLinkedInMsg, onReferral, onToggleSave, loadingOutreachType }: JobDetailProps) {
   const salary = formatSalary(job.salaryMin, job.salaryMax);
   const timeAgo = formatTimeAgo(job.postedAt);
 
@@ -224,6 +225,7 @@ export function JobDetailPanel({ job, userSkills = [], onBack, onTailorResume, o
       <ActionBar
         job={job}
         loadingType={loadingOutreachType}
+        alreadyApplied={alreadyApplied}
         onTailorResume={onTailorResume}
         onFitVectorApply={onFitVectorApply}
         onColdEmail={onColdEmail}

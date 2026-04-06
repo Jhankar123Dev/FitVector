@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     const { data: profile } = await supabase
       .from("user_profiles")
-      .select("target_roles, skills")
+      .select("target_roles, skills, parsed_resume_json")
       .eq("user_id", userId)
       .single();
 
@@ -41,19 +41,33 @@ export async function POST(req: Request) {
       .eq("id", userId)
       .single();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsedResume = (profile?.parsed_resume_json as any) || null;
+    const latestRole = parsedResume?.experience?.[0];
+    const experienceSummary = latestRole
+      ? `${latestRole.title || ""} at ${latestRole.company || ""}`.trim()
+      : profile?.target_roles?.[0] || "";
+    const userSkills: string[] = profile?.skills || [];
+    const jobDescLower = (body.jobDescription || "").toLowerCase();
+    const matchedSkills = userSkills.filter((s) => jobDescLower.includes(s.toLowerCase())).slice(0, 8);
+
     const result = await pythonClient.post<{
       body: string;
       personalization_points: string[];
     }>("/ai/referral-message", {
       user_profile: {
         name: user?.full_name || "Candidate",
-        skills: profile?.skills || [],
+        skills: userSkills,
+        matched_skills: matchedSkills,
+        experience_summary: experienceSummary,
+        current_title: latestRole?.title || null,
+        current_company: latestRole?.company || null,
         relationship_context: body.relationshipContext || "",
       },
       job: {
         title: body.jobTitle,
         company_name: body.companyName,
-        description: body.jobDescription?.slice(0, 300) || "",
+        description: body.jobDescription?.slice(0, 1200) || "",
       },
       outreach_type: "referral_request",
       tone: "professional",

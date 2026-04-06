@@ -34,7 +34,8 @@ export function KanbanBoard({
 
       const newStatus = destination.droppableId;
       const app = applications.find((a) => a.id === draggableId);
-      if (!app || app.status === newStatus) return;
+      // Block moves for FitVector apps — employer controls their stage
+      if (!app || app.fitvectorStatus !== null || app.status === newStatus) return;
 
       onStatusChange(draggableId, newStatus);
     },

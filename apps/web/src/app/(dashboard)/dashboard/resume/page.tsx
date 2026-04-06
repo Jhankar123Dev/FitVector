@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { FileText, Plus, Upload, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { FileText, Plus, Upload, CheckCircle2, Loader2, AlertCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VersionList } from "@/components/resume/version-list";
@@ -11,11 +11,12 @@ import { useResumeVersions } from "@/hooks/use-resume";
 import { useUser } from "@/hooks/use-user";
 import { useUsage } from "@/hooks/use-usage";
 
-function BaseResumeUpload({ hasResume }: { hasResume: boolean }) {
+function BaseResumeUpload({ hasResume, resumeData }: { hasResume: boolean; resumeData?: Record<string, unknown> | null }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showParsed, setShowParsed] = useState(false);
 
   const handleFile = useCallback(async (file: File) => {
     setUploading(true);
@@ -52,18 +53,30 @@ function BaseResumeUpload({ hasResume }: { hasResume: boolean }) {
           </div>
           {success && <CheckCircle2 className="h-4 w-4 text-accent-500" />}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {uploading ? (
-            <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Uploading...</>
-          ) : (
-            <><Upload className="mr-1.5 h-3.5 w-3.5" /> {hasResume ? "Replace" : "Upload"} Resume</>
+        <div className="flex items-center gap-2">
+          {hasResume && resumeData && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowParsed(!showParsed)}
+            >
+              <Eye className="mr-1.5 h-3.5 w-3.5" />
+              {showParsed ? "Hide" : "View"}
+            </Button>
           )}
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? (
+              <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Uploading...</>
+            ) : (
+              <><Upload className="mr-1.5 h-3.5 w-3.5" /> {hasResume ? "Replace" : "Upload"} Resume</>
+            )}
+          </Button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -74,6 +87,22 @@ function BaseResumeUpload({ hasResume }: { hasResume: boolean }) {
       </div>
       {error && <p className="mt-2 flex items-center gap-1 text-xs text-red-600"><AlertCircle className="h-3 w-3" />{error}</p>}
       {success && <p className="mt-2 text-xs text-accent-600">Resume uploaded and parsed successfully!</p>}
+      {showParsed && resumeData && (
+        <div className="mt-3 rounded-lg border border-surface-200 bg-surface-50 p-3 text-xs text-surface-700 space-y-1">
+          {!!resumeData.name && <p><span className="font-medium">Name:</span> {String(resumeData.name)}</p>}
+          {!!resumeData.email && <p><span className="font-medium">Email:</span> {String(resumeData.email)}</p>}
+          {Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && (
+            <p><span className="font-medium">Skills:</span> {(resumeData.skills as string[]).slice(0, 10).join(", ")}{(resumeData.skills as string[]).length > 10 ? ` +${(resumeData.skills as string[]).length - 10} more` : ""}</p>
+          )}
+          {Array.isArray(resumeData.experience) && (
+            <p><span className="font-medium">Experience entries:</span> {(resumeData.experience as unknown[]).length}</p>
+          )}
+          {Array.isArray(resumeData.education) && (
+            <p><span className="font-medium">Education entries:</span> {(resumeData.education as unknown[]).length}</p>
+          )}
+          <p className="text-surface-400 pt-1">Stored in your profile · Used for AI resume tailoring</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -109,7 +138,7 @@ export default function ResumePage() {
       </div>
 
       {/* Base resume upload */}
-      <BaseResumeUpload hasResume={!!(user as any)?.resume_data} />
+      <BaseResumeUpload hasResume={!!(user as any)?.resume_data} resumeData={(user as any)?.resume_data} />
 
       {/* How it works */}
       <div className="rounded-xl border border-surface-200 bg-surface-50 p-4">

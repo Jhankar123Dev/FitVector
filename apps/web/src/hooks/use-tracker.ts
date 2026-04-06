@@ -22,6 +22,7 @@ export interface TrackerApplication {
    *         "rejected" | "withdrawn"
    */
   fitvectorStatus: string | null;
+  interviewLink: string | null;
   statusHistory: Array<{ status: string; changed_at: string }>;
   notes: string | null;
   nextFollowupDate: string | null;
@@ -98,6 +99,22 @@ export function useUpdateApplication() {
       });
       if (!res.ok) throw new Error("Failed to update");
       return res.json();
+    },
+    onMutate: async ({ id, status }) => {
+      if (!status) return;
+      await qc.cancelQueries({ queryKey: ["tracker"] });
+      const previous = qc.getQueriesData<TrackerApplication[]>({ queryKey: ["tracker"] });
+      qc.setQueriesData<TrackerApplication[]>({ queryKey: ["tracker"] }, (old) =>
+        old?.map((app) => (app.id === id ? { ...app, status } : app)) ?? [],
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        for (const [key, data] of ctx.previous) {
+          qc.setQueryData(key, data);
+        }
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tracker"] }),
   });

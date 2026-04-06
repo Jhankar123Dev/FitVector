@@ -70,11 +70,12 @@ export async function PUT(
     // Map pipeline stage → FV app status
     const FV_STATUS_MAP: Record<string, string> = {
       ai_screened: "under_review",
-      ai_interviewed: "under_review",
-      assessment: "under_review",
+      ai_interviewed: "interviewed",
+      assessment: "decision_pending",
       human_interview: "interview_invited",
       offer: "offered",
       hired: "offered",
+      rejected: "rejected",
     };
     // Map pipeline stage → tracker application_status enum
     const TRACKER_STATUS_MAP: Record<string, string> = {
@@ -84,6 +85,7 @@ export async function PUT(
       human_interview: "interview",
       offer: "offer",
       hired: "offer",
+      rejected: "rejected",
     };
 
     const fvStatus = FV_STATUS_MAP[parsed.data.stage];

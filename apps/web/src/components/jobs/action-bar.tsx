@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   ExternalLink,
   FileText,
@@ -11,6 +12,7 @@ import {
   Zap,
   UserPlus,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import type { JobSearchResult } from "@/types/job";
 
@@ -19,6 +21,7 @@ export type OutreachButtonType = "cold_email" | "linkedin" | "referral";
 interface ActionBarProps {
   job: JobSearchResult;
   loadingType?: OutreachButtonType | null;
+  alreadyApplied?: boolean;
   onTailorResume?: () => void;
   onColdEmail?: () => void;
   onLinkedInMsg?: () => void;
@@ -30,6 +33,7 @@ interface ActionBarProps {
 export function ActionBar({
   job,
   loadingType,
+  alreadyApplied,
   onTailorResume,
   onColdEmail,
   onLinkedInMsg,
@@ -74,14 +78,21 @@ export function ActionBar({
     <div className="flex flex-wrap items-center gap-2 border-t bg-background p-4">
       {/* FitVector Apply / External Apply */}
       {isFitVector ? (
-        <Button
-          size="sm"
-          onClick={onFitVectorApply}
-          className="gap-1.5 bg-accent-500 text-white hover:bg-accent-600"
-        >
-          <Zap className="h-3.5 w-3.5" />
-          Apply via FitVector
-        </Button>
+        alreadyApplied ? (
+          <Badge className="gap-1.5 bg-green-100 px-3 py-1.5 text-green-700 hover:bg-green-100">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Applied
+          </Badge>
+        ) : (
+          <Button
+            size="sm"
+            onClick={onFitVectorApply}
+            className="gap-1.5 bg-accent-500 text-white hover:bg-accent-600"
+          >
+            <Zap className="h-3.5 w-3.5" />
+            Apply via FitVector
+          </Button>
+        )
       ) : (
         job.url && (
           <Button size="sm" asChild>

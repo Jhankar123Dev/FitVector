@@ -47,15 +47,37 @@ export async function GET(req: Request) {
 
     // Map: fitvector_applications.id → live status string
     const fvStatusMap: Record<string, string> = {};
+    // Map: fitvector_applications.id → applicant_id (for interview link lookup)
+    const fvApplicantIdMap: Record<string, string> = {};
 
     if (fvAppIds.length > 0) {
       const { data: fvApps } = await supabase
         .from("fitvector_applications")
-        .select("id, status")
+        .select("id, status, applicant_id")
         .in("id", fvAppIds);
 
       for (const fv of fvApps || []) {
         fvStatusMap[fv.id] = fv.status;
+        if (fv.applicant_id) fvApplicantIdMap[fv.id] = fv.applicant_id;
+      }
+    }
+
+    // Fetch interview links for apps with interview_invited status
+    const interviewInvitedApplicantIds = Object.entries(fvStatusMap)
+      .filter(([, status]) => status === "interview_invited")
+      .map(([fvId]) => fvApplicantIdMap[fvId])
+      .filter(Boolean);
+
+    const interviewLinkMap: Record<string, string> = {};
+    if (interviewInvitedApplicantIds.length > 0) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+      const { data: interviews } = await supabase
+        .from("ai_interviews")
+        .select("id, applicant_id")
+        .in("applicant_id", interviewInvitedApplicantIds)
+        .in("status", ["invited", "started"]);
+      for (const iv of interviews || []) {
+        interviewLinkMap[iv.applicant_id] = `${baseUrl}/interview/${iv.id}`;
       }
     }
 
@@ -63,6 +85,8 @@ export async function GET(req: Request) {
       const row = a as Record<string, unknown>;
       const fvAppId = row.fitvector_app_id as string | null;
       const fitvectorStatus = fvAppId ? (fvStatusMap[fvAppId] ?? null) : null;
+      const applicantId = fvAppId ? fvApplicantIdMap[fvAppId] : null;
+      const interviewLink = applicantId ? (interviewLinkMap[applicantId] ?? null) : null;
 
       return {
         id: a.id,
@@ -72,10 +96,9 @@ export async function GET(req: Request) {
         companyLogoUrl: a.company_logo_url,
         location: a.location,
         jobUrl: a.job_url,
-        // `status` stays as-is (drag-drop writes to this)
         status: a.status,
-        // `fitvectorStatus` is the live source-of-truth for FV applications
         fitvectorStatus,
+        interviewLink,
         statusHistory: a.status_history || [],
         notes: a.notes,
         nextFollowupDate: a.next_followup_date,

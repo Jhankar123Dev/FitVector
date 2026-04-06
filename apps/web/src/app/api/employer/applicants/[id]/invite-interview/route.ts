@@ -89,9 +89,41 @@ export async function POST(
       return NextResponse.json({ error: "Failed to create interview" }, { status: 500 });
     }
 
-    // Log the "email" (no real email for now)
+    // Build the interview link for the candidate
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const interviewLink = `${baseUrl}/interview/${interview.id}`;
+
+    // Auto-transition applicant stage to ai_interview
+    await supabase
+      .from("applicants")
+      .update({ pipeline_stage: "ai_interview" })
+      .eq("id", applicantId);
+
+    // Sync seeker tracker and FitVector application status
+    const { data: fvApp } = await supabase
+      .from("fitvector_applications")
+      .select("id")
+      .eq("applicant_id", applicantId)
+      .single();
+
+    if (fvApp) {
+      await supabase
+        .from("fitvector_applications")
+        .update({ status: "interview_invited", status_updated_at: new Date().toISOString() })
+        .eq("id", fvApp.id);
+      await supabase
+        .from("applications")
+        .update({ status: "interview" })
+        .eq("fitvector_app_id", fvApp.id);
+    }
+
+    // NOTE: interviewLink is derived from interview.id — no need to store separately.
+    // The seeker can access it at /interview/{interview.id} using their auth context.
+
+    // TODO: Send actual email when email service is configured (e.g. Resend)
+    // await sendEmail({ to: applicant.email, subject: `Interview invitation for ${jobPost.title}`, body: `... ${interviewLink}` });
     console.log(
-      `[AI Interview Invite] Sent to ${applicant.email} for "${jobPost.title}" — token: ${interview.id}`
+      `[AI Interview Invite] ${applicant.email} | "${jobPost.title}" | link: ${interviewLink}`
     );
 
     return NextResponse.json(
@@ -102,6 +134,7 @@ export async function POST(
           jobPost.title,
         ),
         token: interview.id,
+        interviewLink,
         message: "Interview invite sent",
       },
       { status: 201 }

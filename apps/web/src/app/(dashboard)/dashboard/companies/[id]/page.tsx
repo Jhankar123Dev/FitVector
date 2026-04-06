@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -9,12 +10,15 @@ import {
   Users,
   Briefcase,
   IndianRupee,
-  ExternalLink,
+  Zap,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { FitVectorApplyModal } from "@/components/jobs/fitvector-apply-modal";
+import { useFitVectorApplications } from "@/hooks/use-fitvector-apply";
+import type { JobSearchResult } from "@/types/job";
 
 interface ActiveJob {
   id: string;
@@ -78,8 +82,53 @@ function CompanyInitials({ name }: { name: string }) {
   );
 }
 
-function JobRow({ job }: { job: ActiveJob }) {
+function JobRow({
+  job,
+  companyName,
+  companyLogoUrl,
+  alreadyApplied,
+  onApply,
+}: {
+  job: ActiveJob;
+  companyName: string;
+  companyLogoUrl: string | null;
+  alreadyApplied: boolean;
+  onApply: (job: JobSearchResult) => void;
+}) {
   const salary = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency);
+
+  function handleApply() {
+    const jobAsResult: JobSearchResult = {
+      id: job.id,
+      jobPostId: job.id,
+      title: job.title,
+      companyName,
+      companyLogoUrl,
+      location: job.location ?? "",
+      workMode: job.workMode,
+      jobType: job.jobType,
+      salaryMin: job.salaryMin,
+      salaryMax: job.salaryMax,
+      salaryCurrency: job.salaryCurrency,
+      postedAt: job.postedAt,
+      sources: ["fitvector"],
+      url: "",
+      matchScore: null,
+      matchBucket: null,
+      decisionLabel: null,
+      embeddingScore: null,
+      deterministicScore: null,
+      deterministicComponents: null,
+      skillsRequired: job.requiredSkills,
+      skillsNiceToHave: job.niceToHaveSkills,
+      isEasyApply: true,
+      isSaved: false,
+      description: job.description ?? "",
+      applicationDeadline: job.applicationDeadline,
+      openingsCount: job.openingsCount,
+    };
+    onApply(jobAsResult);
+  }
 
   return (
     <Card className="transition-all hover:border-surface-300 hover:shadow-sm">
@@ -137,12 +186,20 @@ function JobRow({ job }: { job: ActiveJob }) {
             )}
           </div>
 
-          <Link href={`/dashboard/jobs?q=${encodeURIComponent(job.title)}`}>
-            <Button size="sm" variant="outline" className="shrink-0 gap-1.5">
+          {alreadyApplied ? (
+            <Badge className="shrink-0 gap-1 bg-green-100 px-3 py-1.5 text-green-700 hover:bg-green-100">
+              Applied
+            </Badge>
+          ) : (
+            <Button
+              size="sm"
+              onClick={handleApply}
+              className="shrink-0 gap-1.5 bg-accent-500 text-white hover:bg-accent-600"
+            >
+              <Zap className="h-3 w-3" />
               Apply
-              <ExternalLink className="h-3 w-3" />
             </Button>
-          </Link>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -155,6 +212,14 @@ export default function CompanyDetailPage({
   params: { id: string };
 }) {
   const { id } = params;
+  const [applyJob, setApplyJob] = useState<JobSearchResult | null>(null);
+  const { data: fvApplications } = useFitVectorApplications();
+
+  const appliedJobIds = new Set(
+    (fvApplications?.data ?? []).map(
+      (a) => (a as { job_post_id?: string }).job_post_id ?? "",
+    ),
+  );
 
   const { data, isLoading, isError } = useQuery<{ data: CompanyDetail }>({
     queryKey: ["company-detail", id],
@@ -316,11 +381,26 @@ export default function CompanyDetailPage({
         ) : (
           <div className="space-y-3">
             {company.activeJobs.map((job) => (
-              <JobRow key={job.id} job={job} />
+              <JobRow
+                key={job.id}
+                job={job}
+                companyName={company.name}
+                companyLogoUrl={company.logoUrl}
+                alreadyApplied={appliedJobIds.has(job.id)}
+                onApply={setApplyJob}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {applyJob && (
+        <FitVectorApplyModal
+          job={applyJob}
+          onClose={() => setApplyJob(null)}
+          onSubmitted={() => setApplyJob(null)}
+        />
+      )}
     </div>
   );
 }

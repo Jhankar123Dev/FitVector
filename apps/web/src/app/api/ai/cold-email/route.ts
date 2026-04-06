@@ -42,6 +42,19 @@ export async function POST(req: Request) {
       .eq("id", userId)
       .single();
 
+    // Extract useful context from parsed resume JSON
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsedResume = (profile?.parsed_resume_json as any) || null;
+    const latestRole = parsedResume?.experience?.[0];
+    const experienceSummary = latestRole
+      ? `${latestRole.title || ""} at ${latestRole.company || ""}`.trim()
+      : profile?.target_roles?.[0] || "";
+
+    // Compute skills intersection with job description for personalization
+    const userSkills: string[] = profile?.skills || [];
+    const jobDescLower = (jobDescription || "").toLowerCase();
+    const matchedSkills = userSkills.filter((s) => jobDescLower.includes(s.toLowerCase())).slice(0, 8);
+
     const result = await pythonClient.post<{
       subject: string | null;
       subject_alternatives: string[] | null;
@@ -50,13 +63,18 @@ export async function POST(req: Request) {
     }>("/ai/cold-email", {
       user_profile: {
         name: user?.full_name || "Candidate",
-        skills: profile?.skills || [],
-        experience_summary: profile?.target_roles?.[0] || "",
+        skills: userSkills,
+        matched_skills: matchedSkills,
+        experience_summary: experienceSummary,
+        current_title: latestRole?.title || null,
+        current_company: latestRole?.company || null,
+        years_of_experience: parsedResume?.total_experience_years || null,
+        target_roles: profile?.target_roles || [],
       },
       job: {
         title: jobTitle,
         company_name: companyName,
-        description: jobDescription?.slice(0, 500) || "",
+        description: jobDescription?.slice(0, 1500) || "",
       },
       outreach_type: "cold_email",
       tone: tone || "professional",

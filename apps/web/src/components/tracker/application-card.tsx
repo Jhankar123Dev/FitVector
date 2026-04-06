@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Calendar, MessageSquare, Zap } from "lucide-react";
+import { Building2, Calendar, MessageSquare, Zap, Video } from "lucide-react";
 import type { TrackerApplication } from "@/hooks/use-tracker";
 import { Draggable } from "@hello-pangea/dnd";
 import { isFitVectorApp, FV_STATUS_CONFIG } from "@/types/marketplace";
@@ -56,11 +56,15 @@ function formatDate(dateStr: string | null): string {
 }
 
 export function ApplicationCard({ application, index, onClick, onStatusChange }: ApplicationCardProps) {
-  const isFV = isFitVectorApp(application.status);
-  const fvConfig = isFV ? FV_STATUS_CONFIG[application.status as FVApplicationStatus] : null;
+  const isFV = isFitVectorApp(application.status) || application.fitvectorStatus !== null;
+  const fvConfig = application.fitvectorStatus
+    ? FV_STATUS_CONFIG[application.fitvectorStatus as FVApplicationStatus]
+    : isFitVectorApp(application.status)
+      ? FV_STATUS_CONFIG[application.status as FVApplicationStatus]
+      : null;
 
   return (
-    <Draggable draggableId={application.id} index={index}>
+    <Draggable draggableId={application.id} index={index} isDragDisabled={isFV}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
@@ -99,6 +103,21 @@ export function ApplicationCard({ application, index, onClick, onStatusChange }:
                 >
                   {fvConfig.label}
                 </span>
+              )}
+              {isFV && (
+                <p className="mt-0.5 text-[9px] text-muted-foreground/60">Managed by employer</p>
+              )}
+              {application.interviewLink && (
+                <a
+                  href={application.interviewLink}
+                  onClick={(e) => e.stopPropagation()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-200"
+                >
+                  <Video className="h-2.5 w-2.5" />
+                  Start Interview
+                </a>
               )}
 
               {/* Meta + status row */}

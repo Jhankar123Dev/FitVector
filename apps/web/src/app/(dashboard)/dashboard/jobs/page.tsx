@@ -18,6 +18,7 @@ import { TailorDialog } from "@/components/resume/tailor-dialog";
 import { FitVectorApplyModal } from "@/components/jobs/fitvector-apply-modal";
 import { OutreachPreview, OutreachLoading } from "@/components/outreach/outreach-preview";
 import { useJobSearch } from "@/hooks/use-jobs";
+import { useFitVectorApplications } from "@/hooks/use-fitvector-apply";
 import { useUser } from "@/hooks/use-user";
 import type { JobSearchParams, JobSearchResult, JobView } from "@/types/job";
 import { toast } from "sonner";
@@ -64,6 +65,7 @@ export default function JobsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const { data: fvApplications } = useFitVectorApplications();
 
   // Read initial tab from URL
   const urlTab = searchParams.get("tab") as JobView | null;
@@ -481,6 +483,9 @@ export default function JobsPage() {
                     <JobDetailPanel
                       job={{ ...selectedJob, isSaved: savedJobIds.has(selectedJob.id) }}
                       userSkills={[]}
+                      alreadyApplied={fvApplications?.data?.some(
+                        (a) => (a as { job_post_id?: string }).job_post_id === selectedJob.id,
+                      )}
                       loadingOutreachType={loadingOutreachType}
                       onBack={() => { setSelectedJob(null); setOutreachResult(null); }}
                       onTailorResume={() => setTailorJob(selectedJob)}
