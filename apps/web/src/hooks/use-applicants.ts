@@ -145,7 +145,7 @@ export function useSendAssessment() {
       fetchJson(`/api/employer/applicants/${id}/stage`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage: "assessment" }),
+        body: JSON.stringify({ stage: "assessment_pending" }),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employer", "applicants"] });

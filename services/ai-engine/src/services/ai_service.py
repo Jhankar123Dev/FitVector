@@ -609,3 +609,107 @@ async def generate_outreach(request: OutreachRequest) -> OutreachResponse:
                 body=f"Hi {request.recruiter_name or 'there'},\n\nI saw a {job_title} opening at {company} that I'd love to apply for. Given our connection, I was wondering if you'd be open to referring me. Happy to share my resume and chat.\n\nThanks!",
                 personalization_points=["Fallback template"],
             )
+
+
+# ─── Interview Evaluation ────────────────────────────────────────────────────
+
+_EVALUATE_INTERVIEW_SYSTEM_PROMPT = """You are an expert technical recruiter evaluating a candidate's AI interview.
+
+Given a job title, optional job description, and a Q&A transcript, produce a structured evaluation.
+
+Return ONLY valid JSON matching this exact schema:
+{
+  "score": <integer 0-100>,
+  "summary": "<2-3 sentence narrative of overall performance>",
+  "strengths": ["<strength 1>", "<strength 2>", ...],
+  "areas_for_improvement": ["<area 1>", "<area 2>", ...],
+  "recommendation": "<one of: strong_hire | hire | no_hire | strong_no_hire>"
+}
+
+Scoring guide:
+- 85-100: Exceptional — exceeds requirements, strong hire
+- 70-84: Good — meets requirements well, hire
+- 50-69: Average — meets some requirements, borderline
+- 0-49: Below expectations — no hire
+
+Keep strengths and areas_for_improvement to 2–4 items each. Be concise and specific."""
+
+
+class _InterviewEvalSchema(BaseModel):
+    score: int
+    summary: str
+    strengths: list[str]
+    areas_for_improvement: list[str]
+    recommendation: str
+
+
+async def evaluate_interview(
+    job_title: str,
+    job_description: str,
+    transcript: list[dict[str, str]],
+) -> "EvaluateInterviewResponse":  # type: ignore[name-defined]  # imported at call site
+    """Evaluate an AI interview transcript using Gemini Flash.
+
+    Returns a structured evaluation with score, summary, strengths,
+    areas for improvement, and a hire recommendation.
+    Falls back to a neutral evaluation if Gemini fails.
+    """
+    from src.routers.interview import EvaluateInterviewResponse  # avoid circular import
+
+    transcript_text = "\n\n".join(
+        f"Q: {entry['question']}\nA: {entry['answer']}"
+        for entry in transcript
+    )
+
+    user_prompt = f"""Job Title: {job_title}
+{f'Job Description: {job_description[:800]}' if job_description else ''}
+
+Interview Transcript:
+{transcript_text}
+
+Evaluate this candidate."""
+
+    try:
+        raw_json = await _call_gemini(
+            task="evaluate_interview",
+            system_prompt=_EVALUATE_INTERVIEW_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            max_tokens=1024,
+            temperature=0.2,
+            response_mime_type="application/json",
+            response_schema=_InterviewEvalSchema,
+        )
+
+        clean = _clean_gemini_json_response(raw_json)
+
+        try:
+            data = json.loads(clean, strict=False)
+        except json.JSONDecodeError:
+            data = repair_json(clean, return_objects=True)
+            if not isinstance(data, dict):
+                raise ValueError("repair_json returned non-dict for interview evaluation")
+
+        # Clamp score to valid range
+        score = max(0, min(100, int(data.get("score", 50))))
+        recommendation = data.get("recommendation", "no_hire")
+        if recommendation not in {"strong_hire", "hire", "no_hire", "strong_no_hire"}:
+            recommendation = "no_hire"
+
+        return EvaluateInterviewResponse(
+            score=score,
+            summary=data.get("summary", "Evaluation completed."),
+            strengths=data.get("strengths", []),
+            areas_for_improvement=data.get("areas_for_improvement", []),
+            recommendation=recommendation,
+        )
+
+    except Exception as exc:
+        logger.error("Interview evaluation failed: %s", exc)
+        # Fallback: return a neutral mid-range evaluation so the pipeline isn't blocked
+        return EvaluateInterviewResponse(
+            score=50,
+            summary="Automatic evaluation was unavailable. Please review the transcript manually.",
+            strengths=["Completed the interview"],
+            areas_for_improvement=["Manual review required"],
+            recommendation="no_hire",
+        )

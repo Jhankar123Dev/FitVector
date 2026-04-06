@@ -418,7 +418,7 @@ export function CandidateDetail({
 
               {/* ── AI Interview Tab ──────────────────────────────── */}
               <TabsContent value="ai_interview" className="mt-0">
-                {["ai_interviewed", "assessment", "human_interview", "offer", "hired"].includes(
+                {["ai_interviewed", "human_interview", "offer", "hired"].includes(
                   applicant.pipelineStage,
                 ) ? (
                   <div className="space-y-4">
@@ -463,7 +463,7 @@ export function CandidateDetail({
 
               {/* ── Assessment Tab ────────────────────────────────── */}
               <TabsContent value="assessment" className="mt-0">
-                {["assessment", "human_interview", "offer", "hired"].includes(
+                {["assessment_pending", "assessment_completed", "ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired"].includes(
                   applicant.pipelineStage,
                 ) ? (
                   <div className="rounded-lg bg-surface-50 p-4">
@@ -693,15 +693,19 @@ export function CandidateDetail({
                   <ArrowRight className="h-4 w-4" />
                   {applicant.pipelineStage === "ai_screened"
                     ? "Send Assessment"
-                    : applicant.pipelineStage === "assessment"
-                      ? "Send AI Interview"
-                      : applicant.pipelineStage === "ai_interviewed"
-                        ? "Schedule Interview"
-                        : applicant.pipelineStage === "human_interview"
-                          ? "Make Offer"
-                          : applicant.pipelineStage === "offer"
-                            ? "Mark Hired"
-                            : "Advance"}
+                    : applicant.pipelineStage === "assessment_pending"
+                      ? "Mark Test Complete"
+                      : applicant.pipelineStage === "assessment_completed"
+                        ? "Send AI Interview"
+                        : applicant.pipelineStage === "ai_interview_pending"
+                          ? "Mark Interview Given"
+                          : applicant.pipelineStage === "ai_interviewed"
+                            ? "Schedule Interview"
+                            : applicant.pipelineStage === "human_interview"
+                              ? "Make Offer"
+                              : applicant.pipelineStage === "offer"
+                                ? "Mark Hired"
+                                : "Advance"}
                 </Button>
                 <Button
                   variant="outline"

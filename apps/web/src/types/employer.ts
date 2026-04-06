@@ -251,28 +251,34 @@ export interface ActivityItem {
 export type PipelineStage =
   | "applied"
   | "ai_screened"
+  | "assessment_pending"
+  | "assessment_completed"
+  | "ai_interview_pending"
   | "ai_interviewed"
-  | "assessment"
   | "human_interview"
   | "offer"
   | "hired"
   | "rejected";
 
 export const PIPELINE_STAGE_LABELS: Record<PipelineStage, string> = {
-  applied: "Applied",
-  ai_screened: "AI Screened",
-  ai_interviewed: "AI Interviewed",
-  assessment: "Assessment",
-  human_interview: "Human Interview",
-  offer: "Offer",
-  hired: "Hired",
-  rejected: "Rejected",
+  applied:              "Applied",
+  ai_screened:          "AI Screened",
+  assessment_pending:   "Test Pending",
+  assessment_completed: "Test Completed",
+  ai_interview_pending: "Interview Pending",
+  ai_interviewed:       "Interview Given",
+  human_interview:      "Human Interview",
+  offer:                "Offer",
+  hired:                "Hired",
+  rejected:             "Rejected",
 };
 
 export const PIPELINE_COLUMNS: PipelineStage[] = [
   "applied",
   "ai_screened",
-  "assessment",
+  "assessment_pending",
+  "assessment_completed",
+  "ai_interview_pending",
   "ai_interviewed",
   "human_interview",
   "offer",

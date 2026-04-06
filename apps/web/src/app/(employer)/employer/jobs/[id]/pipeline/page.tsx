@@ -39,14 +39,16 @@ import { PIPELINE_STAGE_LABELS, PIPELINE_COLUMNS } from "@/types/employer";
 
 // ── Column colors ───────────────────────────────────────────────────
 const COLUMN_COLORS: Record<PipelineStage, string> = {
-  applied: "border-t-surface-400",
-  ai_screened: "border-t-brand-400",
-  ai_interviewed: "border-t-brand-600",
-  assessment: "border-t-amber-500",
-  human_interview: "border-t-sky-500",
-  offer: "border-t-emerald-500",
-  hired: "border-t-emerald-600",
-  rejected: "border-t-red-400",
+  applied:              "border-t-surface-400",
+  ai_screened:          "border-t-brand-400",
+  assessment_pending:   "border-t-amber-400",
+  assessment_completed: "border-t-amber-600",
+  ai_interview_pending: "border-t-violet-400",
+  ai_interviewed:       "border-t-brand-600",
+  human_interview:      "border-t-sky-500",
+  offer:                "border-t-emerald-500",
+  hired:                "border-t-emerald-600",
+  rejected:             "border-t-red-400",
 };
 
 type ViewMode = "kanban" | "table";
@@ -104,7 +106,9 @@ export default function PipelinePage() {
   // ── Group by stage ──────────────────────────────────────────────
   const byStage = useMemo(() => {
     const map: Record<PipelineStage, Applicant[]> = {
-      applied: [], ai_screened: [], ai_interviewed: [], assessment: [],
+      applied: [], ai_screened: [],
+      assessment_pending: [], assessment_completed: [],
+      ai_interview_pending: [], ai_interviewed: [],
       human_interview: [], offer: [], hired: [], rejected: [],
     };
     for (const a of filtered) {
@@ -128,23 +132,27 @@ export default function PipelinePage() {
   }
 
   // ── Stage transitions ───────────────────────────────────────────
-  // Pipeline order: applied → ai_screened → assessment → ai_interviewed → human_interview → offer → hired
+  // Pipeline order: applied → ai_screened → assessment_pending → assessment_completed → ai_interview_pending → ai_interviewed → human_interview → offer → hired
   const NEXT_STAGE: Record<string, PipelineStage> = {
-    applied:         "ai_screened",
-    ai_screened:     "assessment",
-    assessment:      "ai_interviewed",
-    ai_interviewed:  "human_interview",
-    human_interview: "offer",
-    offer:           "hired",
+    applied:              "ai_screened",
+    ai_screened:          "assessment_pending",
+    assessment_pending:   "assessment_completed",
+    assessment_completed: "ai_interview_pending",
+    ai_interview_pending: "ai_interviewed",
+    ai_interviewed:       "human_interview",
+    human_interview:      "offer",
+    offer:                "hired",
   };
 
   const PREV_STAGE: Record<string, PipelineStage> = {
-    ai_screened:     "applied",
-    assessment:      "ai_screened",
-    ai_interviewed:  "assessment",
-    human_interview: "ai_interviewed",
-    offer:           "human_interview",
-    hired:           "offer",
+    ai_screened:          "applied",
+    assessment_pending:   "ai_screened",
+    assessment_completed: "assessment_pending",
+    ai_interview_pending: "assessment_completed",
+    ai_interviewed:       "ai_interview_pending",
+    human_interview:      "ai_interviewed",
+    offer:                "human_interview",
+    hired:                "offer",
   };
 
   function advanceApplicant(id: string) {
@@ -323,7 +331,7 @@ export default function PipelinePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="hidden md:inline-flex gap-1.5 h-8"
+                className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5"
                 disabled={sendAssessment.isPending}
                 onClick={() => {
                   for (const id of selectedIds) {
@@ -332,7 +340,7 @@ export default function PipelinePage() {
                   clearSelection();
                 }}
               >
-                <ClipboardCheck className="h-3.5 w-3.5" />
+                <ClipboardCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 {sendAssessment.isPending ? "Sending…" : "Send Assessment"}
               </Button>
               <Button variant="ghost" size="sm" onClick={clearSelection} className="h-7 text-xs sm:h-8 sm:text-sm">

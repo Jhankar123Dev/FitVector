@@ -93,10 +93,10 @@ export async function POST(
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const interviewLink = `${baseUrl}/interview/${interview.id}`;
 
-    // Auto-transition applicant stage to ai_interview
+    // Auto-transition applicant stage to ai_interview_pending
     await supabase
       .from("applicants")
-      .update({ pipeline_stage: "ai_interview" })
+      .update({ pipeline_stage: "ai_interview_pending" })
       .eq("id", applicantId);
 
     // Sync seeker tracker and FitVector application status

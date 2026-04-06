@@ -68,25 +68,29 @@ export async function PUT(
     const now = new Date().toISOString();
 
     // Map pipeline stage → FV app status (seeker-visible status)
-    // Pipeline order: applied → ai_screened → assessment → ai_interviewed → human_interview → offer → hired
+    // Pipeline order: applied → ai_screened → assessment_pending → assessment_completed → ai_interview_pending → ai_interviewed → human_interview → offer → hired
     const FV_STATUS_MAP: Record<string, string> = {
-      ai_screened:     "under_review",    // being reviewed/screened
-      assessment:      "under_review",    // still under review (assessment phase)
-      ai_interviewed:  "interviewed",     // AI interview done
-      human_interview: "interviewed",     // human interview (same seeker bucket)
-      offer:           "offered",         // offer extended
-      hired:           "offered",         // hired (stays as offered on seeker side)
-      rejected:        "rejected",
+      ai_screened:          "under_review",   // being reviewed/screened
+      assessment_pending:   "under_review",   // test assigned, not yet completed
+      assessment_completed: "under_review",   // test completed, awaiting next step
+      ai_interview_pending: "under_review",   // interview invited, not yet taken
+      ai_interviewed:       "interviewed",    // AI interview done
+      human_interview:      "interviewed",    // human interview (same seeker bucket)
+      offer:                "offered",        // offer extended
+      hired:                "offered",        // hired (stays as offered on seeker side)
+      rejected:             "rejected",
     };
     // Map pipeline stage → tracker application_status enum
     const TRACKER_STATUS_MAP: Record<string, string> = {
-      ai_screened:     "screening",
-      assessment:      "screening",
-      ai_interviewed:  "interview",
-      human_interview: "interview",
-      offer:           "offer",
-      hired:           "offer",
-      rejected:        "rejected",
+      ai_screened:          "screening",
+      assessment_pending:   "screening",
+      assessment_completed: "screening",
+      ai_interview_pending: "interview",
+      ai_interviewed:       "interview",
+      human_interview:      "interview",
+      offer:                "offer",
+      hired:                "offer",
+      rejected:             "rejected",
     };
 
     const fvStatus = FV_STATUS_MAP[parsed.data.stage];
