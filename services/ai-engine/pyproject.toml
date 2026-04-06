@@ -19,6 +19,7 @@ dependencies = [
     "redis>=5.0",
     "bullmq>=1.0",
     "numpy>=2.0",
+    "json-repair>=0.30",
 ]
 
 [project.optional-dependencies]

@@ -25,8 +25,15 @@ export async function GET(
       .eq("user_id", session.user.id)
       .single();
 
-    if (error || !resume?.latex_source) {
+    if (error || !resume) {
       return new Response("Resume not found", { status: 404 });
+    }
+
+    if (!resume.latex_source) {
+      return new Response(
+        "PDF not available for this resume. Please use Tailor Resume to generate a version first.",
+        { status: 422 },
+      );
     }
 
     // Compile via Python service (Tectonic)

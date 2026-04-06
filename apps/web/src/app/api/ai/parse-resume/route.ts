@@ -107,6 +107,26 @@ export async function POST(req: Request) {
         { onConflict: "user_id" },
       );
 
+    // Insert a "Base Resume" row into tailored_resumes so it immediately
+    // appears in the apply modal dropdown. Delete any existing Base Resume
+    // first so re-uploads don't create duplicates.
+    await supabase
+      .from("tailored_resumes")
+      .delete()
+      .eq("user_id", session.user.id)
+      .eq("version_name", "Base Resume");
+
+    await supabase
+      .from("tailored_resumes")
+      .insert({
+        user_id: session.user.id,
+        version_name: "Base Resume",
+        template_id: "base",
+        latex_source: "", // no LaTeX for base resume — PDF download not supported
+        job_title: null,
+        company_name: null,
+      });
+
     return NextResponse.json({
       data: {
         parsed: parsedResume,

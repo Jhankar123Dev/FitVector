@@ -81,6 +81,10 @@ async def parse_resume(file: UploadFile = File(...)) -> ParseResumeResponse:
         return result
     except HTTPException:
         raise
+    except ValueError as exc:
+        # AI returned unrecoverable output — user-facing error, not a server fault
+        logger.warning("Resume parse failed (unrecoverable AI response): %s", exc)
+        raise HTTPException(status_code=422, detail=str(exc))
     except Exception as exc:
         logger.error("Parse resume error: %s", exc)
         raise HTTPException(status_code=500, detail=f"Resume parsing failed: {str(exc)}")

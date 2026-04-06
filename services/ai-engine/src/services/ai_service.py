@@ -16,6 +16,9 @@ from datetime import datetime
 from typing import Any
 
 from google import genai
+from google.genai import types as genai_types
+from json_repair import repair_json
+from pydantic import BaseModel
 
 from src.config import settings
 from src.models.resume import ParseResumeResponse, TailorResumeRequest, TailorResumeResponse
@@ -50,11 +53,17 @@ async def _call_gemini(
     max_tokens: int = 4000,
     temperature: float = 0.3,
     _retries: int = 3,
+    response_mime_type: str | None = None,
+    response_schema: Any | None = None,
 ) -> str:
     """Unified helper to call Gemini with the right model for the task.
 
     Auto-retries up to _retries times on 429 RESOURCE_EXHAUSTED,
     honouring the retryDelay from the error response.
+
+    Pass response_mime_type="application/json" + response_schema=<PydanticModel>
+    to enforce both valid JSON and exact output shape at the API level.
+    Only use these for JSON-returning tasks, never for LaTeX generation.
     """
     import asyncio
 
@@ -66,11 +75,13 @@ async def _call_gemini(
             response = client.models.generate_content(
                 model=model,
                 contents=user_prompt,
-                config={
-                    "system_instruction": system_prompt,
-                    "max_output_tokens": max_tokens,
-                    "temperature": temperature,
-                },
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    max_output_tokens=max_tokens,
+                    temperature=temperature,
+                    response_mime_type=response_mime_type,
+                    response_schema=response_schema,
+                ),
             )
             text = response.text
             if not text or not text.strip():
@@ -220,7 +231,54 @@ def _generate_version_name(
     return f"{company}_{role}_{month_year}"
 
 
+# ─── Pydantic schema for Gemini response_schema (Option B) ──────────────────
+# Passed to GenerateContentConfig.response_schema so the Gemini API constrains
+# its output to this exact shape at the token-sampling level.
+
+class _ContactSchema(BaseModel):
+    name: str = ""
+    email: str = ""
+    phone: str = ""
+    location: str = ""
+    linkedin: str = ""
+    github: str = ""
+    portfolio: str = ""
+
+class _ExperienceSchema(BaseModel):
+    role: str = ""
+    company: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    location: str = ""
+    bullets: list[str] = []
+
+class _EducationSchema(BaseModel):
+    institution: str = ""
+    degree: str = ""
+    field: str = ""
+    year: str = ""
+    gpa: str = ""
+
+class _ProjectSchema(BaseModel):
+    name: str = ""
+    technologies: list[str] = []
+    bullets: list[str] = []
+
+class _ResumeParseSchema(BaseModel):
+    contact: _ContactSchema = _ContactSchema()
+    summary: str = ""
+    target_role: str = ""
+    experience: list[_ExperienceSchema] = []
+    education: list[_EducationSchema] = []
+    projects: list[_ProjectSchema] = []
+    skills: list[str] = []
+    certifications: list[str] = []
+    languages: list[str] = []
+
+
 _PARSE_RESUME_SYSTEM_PROMPT = """You are an expert ATS (Applicant Tracking System) data extraction engine. Your job is to extract EVERY piece of information from the resume text with 100% accuracy. Do not skip, summarize, or truncate anything.
+
+IMPORTANT: Output ONLY a single raw JSON object. No markdown. No code fences (no ```json). No explanatory text before or after. Your response must start with { and end with }. Nothing else.
 
 Return ONLY a valid JSON object (no markdown fences, no extra text, no comments) matching EXACTLY this schema:
 {
@@ -285,6 +343,38 @@ CRITICAL EXTRACTION RULES — READ CAREFULLY:
 """
 
 
+def _clean_gemini_json_response(raw: str) -> str:
+    """Robustly strip markdown fences and extract clean JSON from a Gemini response.
+
+    Handles: ```json fences, surrounding prose, // comments, trailing commas.
+    Applied before json.loads() as a defensive layer even when response_mime_type
+    is set, in case of SDK version edge-cases.
+    """
+    text = raw.strip()
+
+    # Strip ```json ... ``` or ``` ... ``` fences (any casing)
+    text = re.sub(r"^```(?:json|JSON|Json)?\s*\n?", "", text)
+    text = re.sub(r"\n?```\s*$", "", text)
+    text = text.strip()
+
+    # If there's prose before/after the JSON object, extract first { ... }
+    start = text.find("{")
+    end = text.rfind("}")
+    if start > 0 and end > start:
+        text = text[start : end + 1]
+    elif start == -1:
+        # No JSON object found at all — return as-is and let json.loads fail naturally
+        return text
+
+    # Remove single-line // comments (not valid JSON)
+    text = re.sub(r"//[^\n]*\n", "\n", text)
+
+    # Remove trailing commas before } or ] (common Gemini mistake)
+    text = re.sub(r",\s*([}\]])", r"\1", text)
+
+    return text.strip()
+
+
 def _extract_text_from_pdf(file_bytes: bytes) -> str:
     """Extract plain text from PDF bytes using PyMuPDF."""
     import fitz  # PyMuPDF
@@ -320,61 +410,43 @@ async def parse_resume_file(file_bytes: bytes, content_type: str) -> ParseResume
     # Truncate to avoid hitting token limits (~12k chars ≈ 3k tokens)
     truncated_text = raw_text[:12000]
 
-    # Step 2: Call Gemini Flash for structured extraction
+    # Step 2: Call Gemini Flash for structured extraction.
+    # response_mime_type + response_schema together enforce both valid JSON
+    # AND the exact output shape at the Gemini API token-sampling level.
     raw_json = await _call_gemini(
         task="parse_resume",
         system_prompt=_PARSE_RESUME_SYSTEM_PROMPT,
         user_prompt=f"Parse this resume:\n\n{truncated_text}",
         max_tokens=4096,
         temperature=0.1,
+        response_mime_type="application/json",
+        response_schema=_ResumeParseSchema,
     )
 
-    # Step 3: Parse JSON response
-    # Strip markdown fences if model adds them
-    clean = raw_json.strip()
-    if clean.startswith("```"):
-        clean = re.sub(r"^```(?:json)?\s*", "", clean)
-        clean = re.sub(r"\s*```$", "", clean)
+    # Step 3: Parse JSON response.
+    # _clean_gemini_json_response strips residual markdown fences and prose
+    # before we attempt parsing — makes json_repair's job easier.
+    clean = _clean_gemini_json_response(raw_json)
 
     try:
-        parsed_data = json.loads(clean)
+        # strict=False handles raw control characters (newlines, tabs) inside
+        # JSON string values — covers PDF content Gemini embeds literally.
+        parsed_data = json.loads(clean, strict=False)
     except json.JSONDecodeError as exc:
         logger.warning("Gemini returned non-JSON for resume parse: %s — attempting repair", exc)
-        # Attempt to repair truncated JSON by closing open structures
-        repaired = clean
-        # Count unclosed brackets/braces
-        open_braces = repaired.count("{") - repaired.count("}")
-        open_brackets = repaired.count("[") - repaired.count("]")
-        # If last char is mid-string, close it
-        if repaired and repaired[-1] not in ('"', '}', ']'):
-            # Trim to last complete key-value pair
-            last_comma = repaired.rfind(",")
-            last_brace = repaired.rfind("}")
-            last_bracket = repaired.rfind("]")
-            trim_to = max(last_comma, last_brace, last_bracket)
-            if trim_to > 0:
-                repaired = repaired[:trim_to]
-                open_braces = repaired.count("{") - repaired.count("}")
-                open_brackets = repaired.count("[") - repaired.count("]")
-        # Close open arrays first, then objects
-        repaired += "]" * open_brackets + "}" * open_braces
         try:
-            parsed_data = json.loads(repaired)
-            logger.info("JSON repair succeeded")
-        except json.JSONDecodeError:
-            logger.warning("JSON repair failed — returning minimal structure")
-            parsed_data = {
-                "contact": {"name": "", "email": "", "phone": "", "location": ""},
-                "summary": "",
-                "target_role": "",
-                "experience": [],
-                "education": [],
-                "skills": [],
-                "projects": [],
-                "certifications": [],
-                "languages": [],
-                "parse_error": str(exc),
-            }
+            # json_repair handles all structural issues: missing commas,
+            # trailing commas, unquoted keys, truncated output, etc.
+            parsed_data = repair_json(clean, return_objects=True)
+            if not isinstance(parsed_data, dict):
+                raise ValueError("repair_json returned non-dict")
+            logger.info("json-repair succeeded")
+        except Exception:
+            logger.warning("json-repair failed — raising error to caller")
+            raise ValueError(
+                "Resume parsing failed — the AI returned an unreadable response. "
+                "Please try re-uploading your resume."
+            )
 
     return ParseResumeResponse(parsed_data=parsed_data)
 
