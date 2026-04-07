@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import type { Applicant, PipelineStage, CandidateNote, CandidateVote, VoteValue, TeamMemberRole } from "@/types/employer";
+import type { Applicant, PipelineStage, CandidateNote, CandidateVote, VoteValue, TeamMemberRole, HumanInterview } from "@/types/employer";
 import {
   PIPELINE_STAGE_LABELS,
   BUCKET_LABELS,
@@ -32,6 +32,87 @@ import {
   VOTE_COLORS,
 } from "@/types/employer";
 import { useApplicantNotes, useAddNote, useApplicantVotes, useCastVote } from "@/hooks/use-notes-votes";
+
+// ── Human Interviews Panel ──────────────────────────────────────────
+
+const INTERVIEW_STATUS_STYLES: Record<string, string> = {
+  scheduled:   "bg-blue-50 text-blue-700",
+  completed:   "bg-emerald-50 text-emerald-700",
+  cancelled:   "bg-surface-100 text-surface-500",
+  rescheduled: "bg-amber-50 text-amber-700",
+  no_show:     "bg-red-50 text-red-600",
+};
+
+const PARTICIPANT_ROLE_LABELS: Record<string, string> = {
+  lead:            "Lead",
+  interviewer:     "Interviewer",
+  shadow:          "Shadow",
+  hiring_manager:  "Hiring Manager",
+};
+
+function HumanInterviewsPanel({ interviews }: { interviews: HumanInterview[] }) {
+  function formatDt(iso: string | null) {
+    if (!iso) return "TBD";
+    try {
+      return new Date(iso).toLocaleString("en-IN", {
+        day: "numeric", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      });
+    } catch { return iso; }
+  }
+
+  if (interviews.length === 0) {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-surface-200 py-12 text-center">
+        <CalendarDays className="mx-auto h-8 w-8 text-surface-300" />
+        <p className="mt-2 text-sm text-surface-500">No human interviews scheduled</p>
+        <p className="mt-1 text-xs text-surface-400">
+          Use the Scheduling tab to set one up.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {interviews.map((iv) => (
+        <div key={iv.id} className="rounded-lg border border-surface-200 p-4 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-surface-700">
+              Round {iv.roundNumber}
+              {iv.interviewType && (
+                <span className="ml-1.5 font-normal text-surface-500">— {iv.interviewType}</span>
+              )}
+            </p>
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", INTERVIEW_STATUS_STYLES[iv.status] ?? "bg-surface-100 text-surface-500")}>
+              {iv.status.replace("_", " ")}
+            </span>
+          </div>
+
+          <p className="flex items-center gap-1.5 text-xs text-surface-500">
+            <CalendarDays className="h-3 w-3 shrink-0" />
+            {formatDt(iv.scheduledAt)}
+          </p>
+
+          {iv.participants.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {iv.participants.map((p) => (
+                <span key={p.userId} className="inline-flex items-center gap-1 rounded-full bg-surface-100 px-2 py-0.5 text-[10px] text-surface-600">
+                  {p.name}
+                  <span className="text-surface-400">· {PARTICIPANT_ROLE_LABELS[p.role] ?? p.role}</span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {iv.notes && (
+            <p className="text-[11px] text-surface-500 italic">{iv.notes}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // ── Score bar component ─────────────────────────────────────────────
 function ScoreBar({ label, value }: { label: string; value: number }) {
@@ -484,33 +565,7 @@ export function CandidateDetail({
 
               {/* ── Human Interview Tab ───────────────────────────── */}
               <TabsContent value="human_interview" className="mt-0">
-                {["human_interview", "offer", "hired"].includes(
-                  applicant.pipelineStage,
-                ) ? (
-                  <div className="space-y-4">
-                    <div className="rounded-lg border border-surface-200 p-4">
-                      <p className="text-xs font-semibold text-surface-500">
-                        Scheduled Interview
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-surface-800">
-                        Technical Round with Rahul Gupta
-                      </p>
-                      <p className="text-xs text-surface-500">
-                        March 30, 2026 at 2:00 PM IST
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      View Feedback
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border-2 border-dashed border-surface-200 py-12 text-center">
-                    <CalendarDays className="mx-auto h-8 w-8 text-surface-300" />
-                    <p className="mt-2 text-sm text-surface-500">
-                      No human interview scheduled
-                    </p>
-                  </div>
-                )}
+                <HumanInterviewsPanel interviews={applicant.humanInterviews ?? []} />
               </TabsContent>
 
               {/* ── Notes Tab ─────────────────────────────────────── */}
@@ -692,11 +747,11 @@ export function CandidateDetail({
                 >
                   <ArrowRight className="h-4 w-4" />
                   {applicant.pipelineStage === "ai_screened"
-                    ? "Send Assessment"
+                    ? "Advance → Auto-send Assessment"
                     : applicant.pipelineStage === "assessment_pending"
                       ? "Mark Test Complete"
                       : applicant.pipelineStage === "assessment_completed"
-                        ? "Send AI Interview"
+                        ? "Advance → Auto-send AI Interview"
                         : applicant.pipelineStage === "ai_interview_pending"
                           ? "Mark Interview Given"
                           : applicant.pipelineStage === "ai_interviewed"

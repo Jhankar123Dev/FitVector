@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 
   let query = supabase
     .from("companies")
-    .select("id, name, industry, company_size, plan_tier, created_at, website_url", { count: "exact" })
+    .select("id, name, industry, company_size, plan_tier, created_at, website_url, is_transparent_pipeline", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -55,6 +55,7 @@ export async function GET(req: Request) {
       companySize: c.company_size,
       planTier: c.plan_tier,
       websiteUrl: c.website_url,
+      isTransparentPipeline: (c as Record<string, unknown>).is_transparent_pipeline === true,
       createdAt: c.created_at,
       jobPostCount: countByCompany[c.id] || 0,
     })),

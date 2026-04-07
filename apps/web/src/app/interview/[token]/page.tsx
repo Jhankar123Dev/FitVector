@@ -12,7 +12,9 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
+  AlertTriangle,
 } from "lucide-react";
+import { useProctoringTracker } from "@/hooks/use-proctoring-tracker";
 
 type InterviewState = "loading" | "welcome" | "questions" | "submitting" | "complete" | "error";
 
@@ -32,6 +34,15 @@ export default function CandidateInterviewPage() {
   const [info, setInfo] = useState<InterviewInfo | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // ── Proctoring — always-on for AI interviews, timestamped signals ──
+  const { proctoringWarning, dismissWarning, getSignals } = useProctoringTracker({
+    sessionId: token,
+    enabled: state === "questions" || state === "submitting",
+    trackTabSwitches: true,
+    trackCopyPaste: true,
+    persistToStorage: false,
+  });
 
   // Fetch interview info
   useEffect(() => {
@@ -82,6 +93,7 @@ export default function CandidateInterviewPage() {
           question: q,
           answer: answers[i] || "",
         })),
+        clientSignals: getSignals(),
       };
       const res = await fetch(`/api/interview/${token}/complete`, {
         method: "POST",
@@ -186,6 +198,9 @@ export default function CandidateInterviewPage() {
                 AI Interview Coming Soon — for now, please answer these questions
                 in text form. Your responses will be evaluated by our AI system.
               </p>
+              <p className="mt-1.5 text-amber-600">
+                Tab switches and copy/paste activity are monitored during this interview.
+              </p>
             </div>
 
             <Button onClick={handleStart} size="lg" className="w-full gap-2">
@@ -201,7 +216,24 @@ export default function CandidateInterviewPage() {
   // ─── Questions ────────────────────────────────────────────────────
   if ((state === "questions" || state === "submitting") && info) {
     return (
-      <div className="min-h-screen bg-surface-50 py-8 px-4">
+      <div className="min-h-screen bg-surface-50">
+        {/* Proctoring warning banner */}
+        {proctoringWarning && (
+          <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-amber-800 sm:text-sm">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+              {proctoringWarning}
+            </div>
+            <button
+              onClick={dismissWarning}
+              className="shrink-0 text-lg font-bold leading-none text-amber-600 hover:text-amber-800"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <div className="py-8 px-4">
         <div className="mx-auto max-w-2xl space-y-6">
           {/* Header */}
           <div className="text-center">
@@ -260,6 +292,7 @@ export default function CandidateInterviewPage() {
               {state === "submitting" ? "Submitting..." : "Submit Interview"}
             </Button>
           </div>
+        </div>
         </div>
       </div>
     );

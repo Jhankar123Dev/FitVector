@@ -43,6 +43,48 @@ export async function GET(
 
     const applicant = transformApplicant(row);
 
+    // Fetch all human interview rounds for this applicant
+    const { data: humanInterviewRows } = await supabase
+      .from("human_interviews")
+      .select("id, round_number, interview_type, scheduled_at, status, feedback, rating, notes, calendar_event_id")
+      .eq("applicant_id", id)
+      .order("round_number", { ascending: true });
+
+    // Fetch participants for all rounds in one query
+    const interviewIds = (humanInterviewRows || []).map((r) => r.id);
+    const participantMap: Record<string, Array<{ userId: string; name: string; role: string; responseStatus: string }>> = {};
+
+    if (interviewIds.length > 0) {
+      const { data: participantRows } = await supabase
+        .from("interview_participants")
+        .select("human_interview_id, user_id, role, response_status, users(full_name)")
+        .in("human_interview_id", interviewIds);
+
+      for (const p of participantRows || []) {
+        if (!participantMap[p.human_interview_id]) participantMap[p.human_interview_id] = [];
+        participantMap[p.human_interview_id].push({
+          userId: p.user_id,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          name: (p as any).users?.full_name || "Team Member",
+          role: p.role,
+          responseStatus: p.response_status,
+        });
+      }
+    }
+
+    const humanInterviews = (humanInterviewRows || []).map((r) => ({
+      id: r.id,
+      roundNumber: r.round_number,
+      interviewType: r.interview_type ?? null,
+      scheduledAt: r.scheduled_at ?? null,
+      status: r.status,
+      feedback: r.feedback ?? null,
+      rating: r.rating ?? null,
+      notes: r.notes ?? null,
+      calendarEventId: (r as Record<string, unknown>).calendar_event_id as string | null ?? null,
+      participants: participantMap[r.id] || [],
+    }));
+
     // Also fetch notes and votes for this applicant
     const { data: notes } = await supabase
       .from("candidate_notes")
@@ -91,6 +133,7 @@ export async function GET(
         ...applicant,
         jobTitle: jobPost.title,
         resumePdfUrl,
+        humanInterviews,
         notes: (notes || []).map((n) => ({
           id: n.id,
           authorId: n.author_id,

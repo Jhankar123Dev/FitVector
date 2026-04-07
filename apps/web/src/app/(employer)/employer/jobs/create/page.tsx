@@ -191,6 +191,7 @@ export default function CreateJobPage() {
   const [sqQuestion, setSqQuestion] = useState("");
   const [sqType, setSqType] = useState<ScreeningQuestionType>("short_answer");
   const [sqOptions, setSqOptions] = useState("");
+  const [sqRequired, setSqRequired] = useState(true);
 
   const progress = (step / STEPS.length) * 100;
 
@@ -231,12 +232,13 @@ export default function CreateJobPage() {
               .map((o) => o.trim())
               .filter(Boolean)
           : undefined,
-      required: true,
+      required: sqRequired,
     };
     update({ screeningQuestions: [...form.screeningQuestions, newQ] });
     setSqQuestion("");
     setSqOptions("");
     setSqType("short_answer");
+    setSqRequired(true);
   }
 
   function removeScreeningQuestion(id: string) {
@@ -885,6 +887,24 @@ export default function CreateJobPage() {
                     </div>
                   )}
                 </div>
+                {/* Required toggle */}
+                <label className="flex cursor-pointer items-center gap-2 self-start">
+                  <div
+                    onClick={() => setSqRequired((p) => !p)}
+                    className={cn(
+                      "relative h-5 w-9 rounded-full transition-colors",
+                      sqRequired ? "bg-brand-500" : "bg-surface-300",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
+                        sqRequired ? "translate-x-4" : "translate-x-0.5",
+                      )}
+                    />
+                  </div>
+                  <span className="text-xs text-surface-600">Required</span>
+                </label>
                 <Button
                   size="sm"
                   onClick={addScreeningQuestion}

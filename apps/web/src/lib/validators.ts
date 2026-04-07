@@ -152,12 +152,9 @@ export const changeJobStatusSchema = z.object({
 // ─── Employer: Applicant Pipeline ─────────────────────────────────────────────
 
 export const changeStageSchema = z.object({
-  stage: z.enum([
-    "applied", "ai_screened",
-    "assessment_pending", "assessment_completed",
-    "ai_interview_pending", "ai_interviewed",
-    "human_interview", "offer", "hired", "rejected", "on_hold",
-  ]),
+  // Accept any non-empty string so custom pipeline stages (set per-job) are not rejected.
+  // Known stage values are still written correctly — no DB CHECK constraint on this column.
+  stage: z.string().min(1),
 });
 
 export const rejectApplicantSchema = z.object({
@@ -178,6 +175,10 @@ export const completeInterviewSchema = z.object({
     question: z.string(),
     answer: z.string().min(1),
   })).min(1, "At least one answer is required"),
+  clientSignals: z.array(z.object({
+    type: z.enum(["tab_switch", "copy", "cut", "paste", "focus_lost"]),
+    at: z.string(),
+  })).optional().default([]),
 });
 
 // ─── Employer: Assessments ────────────────────────────────────────────────────

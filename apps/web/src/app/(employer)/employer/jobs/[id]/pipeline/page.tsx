@@ -40,11 +40,12 @@ import { useEmployerJob } from "@/hooks/use-employer-jobs";
 import { useInviteInterview } from "@/hooks/use-interviews";
 import { useAssessments, useAssignAssessment } from "@/hooks/use-assessments";
 import type { Applicant, PipelineStage } from "@/types/employer";
-import { PIPELINE_STAGE_LABELS, PIPELINE_COLUMNS } from "@/types/employer";
+import { PIPELINE_STAGE_LABELS, PIPELINE_COLUMNS, getStageName } from "@/types/employer";
 // PIPELINE_COLUMNS used as global fallback for jobPipelineStages when job data not yet loaded
 
 // ── Column colors ───────────────────────────────────────────────────
-const COLUMN_COLORS: Record<PipelineStage, string> = {
+// Record<string, string> so custom stage keys don't return undefined
+const COLUMN_COLORS: Record<string, string> = {
   applied:              "border-t-surface-400",
   ai_screened:          "border-t-brand-400",
   assessment_pending:   "border-t-amber-400",
@@ -90,7 +91,7 @@ export default function PipelinePage() {
 
   // ── Pipeline config modal ────────────────────────────────────────
   const [showPipelineConfig, setShowPipelineConfig] = useState(false);
-  const [editingStages, setEditingStages] = useState<PipelineStage[]>([]);
+  const [editingStages, setEditingStages] = useState<string[]>([]);
   const [pipelineSaving, setPipelineSaving] = useState(false);
 
   const DEFAULT_PIPELINE_ALL: PipelineStage[] = [
@@ -148,9 +149,9 @@ export default function PipelinePage() {
 
   // ── Per-job pipeline config derived from job.pipelineStages ────────────────
   // Falls back to full default order if job data not yet loaded.
-  const jobPipelineStages = useMemo<PipelineStage[]>(() => {
+  const jobPipelineStages = useMemo<string[]>(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const stages = (job as any)?.pipelineStages as PipelineStage[] | undefined;
+    const stages = (job as any)?.pipelineStages as string[] | undefined;
     if (stages && stages.length >= 2) return stages;
     return PIPELINE_COLUMNS; // global default from types/employer.ts
   }, [job]);
@@ -174,8 +175,8 @@ export default function PipelinePage() {
   // ── Group by stage ──────────────────────────────────────────────
   const byStage = useMemo(() => {
     // Initialise map with all possible stages (job stages + rejected)
-    const allStages: PipelineStage[] = [...jobPipelineStages, "rejected"];
-    const map = Object.fromEntries(allStages.map((s) => [s, []])) as unknown as Record<PipelineStage, Applicant[]>;
+    const allStages: string[] = [...jobPipelineStages, "rejected"];
+    const map = Object.fromEntries(allStages.map((s) => [s, []])) as Record<string, Applicant[]>;
     for (const a of filtered) {
       if (map[a.pipelineStage]) {
         map[a.pipelineStage].push(a);
@@ -524,13 +525,13 @@ export default function PipelinePage() {
                   key={stage}
                   className={cn(
                     "flex w-[220px] sm:w-[250px] md:w-[260px] shrink-0 flex-col rounded-lg border-t-[3px] bg-surface-50",
-                    COLUMN_COLORS[stage],
+                    COLUMN_COLORS[stage] ?? "border-t-surface-300",
                   )}
                 >
                   {/* Column header */}
                   <div className="flex items-center justify-between px-2.5 py-2 sm:px-3 sm:py-2.5">
                     <span className="text-[11px] sm:text-xs font-semibold text-surface-700">
-                      {PIPELINE_STAGE_LABELS[stage]}
+                      {getStageName(stage)}
                     </span>
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                       {items.length}
@@ -739,9 +740,7 @@ export default function PipelinePage() {
               { assessmentId, applicantIds: ids, jobPostId: jobId },
               {
                 onSuccess: () => {
-                  for (const id of ids) {
-                    changeStage.mutate({ id, stage: "assessment_pending" });
-                  }
+                  // Stage auto-advances to assessment_pending inside the assign API route
                   setBulkAssessmentModal(false);
                   clearSelection();
                 },
@@ -793,7 +792,7 @@ export default function PipelinePage() {
                 {editingStages.map((stage, i) => (
                   <div key={stage} className="flex items-center gap-1">
                     <span className="rounded-full bg-brand-50 border border-brand-200 px-2 py-0.5 text-[10px] font-medium text-brand-700">
-                      {PIPELINE_STAGE_LABELS[stage]}
+                      {getStageName(stage)}
                     </span>
                     {i < editingStages.length - 1 && <span className="text-surface-300 text-[10px]">→</span>}
                   </div>

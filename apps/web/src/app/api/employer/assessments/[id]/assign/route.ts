@@ -67,6 +67,32 @@ export async function POST(
       // Non-critical, continue
     }
 
+    // Auto-advance applicants to assessment_pending stage
+    const applicantIds = parsed.data.applicantIds;
+    if (applicantIds.length > 0) {
+      await supabase
+        .from("applicants")
+        .update({ pipeline_stage: "assessment_pending" })
+        .in("id", applicantIds);
+
+      // Sync FV status for each applicant
+      for (const applicantId of applicantIds) {
+        const { data: fvApp } = await supabase
+          .from("fitvector_applications")
+          .select("id")
+          .eq("applicant_id", applicantId)
+          .single();
+
+        if (fvApp) {
+          const now = new Date().toISOString();
+          await supabase
+            .from("fitvector_applications")
+            .update({ status: "under_review", status_updated_at: now })
+            .eq("id", fvApp.id);
+        }
+      }
+    }
+
     // Log invites
     for (const sub of created || []) {
       console.log(`[Assessment Invite] Assigned ${assessment.name} to applicant ${sub.applicant_id} — token: ${sub.id}`);

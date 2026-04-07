@@ -65,6 +65,57 @@ export async function GET(req: Request) {
       }
     }
 
+    // Fetch rawPipelineStage + isTransparentPipeline for each applicant
+    const applicantIds = Object.values(fvApplicantIdMap).filter(Boolean);
+    const rawPipelineStageMap: Record<string, string | null> = {};
+    const transparentPipelineMap: Record<string, boolean> = {};
+
+    if (applicantIds.length > 0) {
+      const { data: applicantRows } = await supabase
+        .from("applicants")
+        .select("id, pipeline_stage, job_post_id")
+        .in("id", applicantIds);
+
+      const jobPostIds = (applicantRows || [])
+        .map((r) => (r as Record<string, unknown>).job_post_id as string | null)
+        .filter((id): id is string => !!id);
+
+      const jobPostCompanyMap: Record<string, string> = {};
+      if (jobPostIds.length > 0) {
+        const { data: jpRows } = await supabase
+          .from("job_posts")
+          .select("id, company_id")
+          .in("id", jobPostIds);
+        for (const jp of jpRows || []) {
+          jobPostCompanyMap[jp.id] = jp.company_id;
+        }
+      }
+
+      const companyIds = [...new Set(Object.values(jobPostCompanyMap))];
+      const companyTransparentMap: Record<string, boolean> = {};
+      if (companyIds.length > 0) {
+        const { data: companyRows } = await supabase
+          .from("companies")
+          .select("id, is_transparent_pipeline")
+          .in("id", companyIds);
+        for (const c of companyRows || []) {
+          companyTransparentMap[c.id] =
+            (c as Record<string, unknown>).is_transparent_pipeline === true;
+        }
+      }
+
+      for (const ap of applicantRows || []) {
+        const apRow = ap as Record<string, unknown>;
+        rawPipelineStageMap[ap.id] = (apRow.pipeline_stage as string | null) ?? null;
+        const companyId = apRow.job_post_id
+          ? jobPostCompanyMap[apRow.job_post_id as string]
+          : null;
+        transparentPipelineMap[ap.id] = companyId
+          ? (companyTransparentMap[companyId] ?? false)
+          : false;
+      }
+    }
+
     // Fetch interview links for apps with interview_invited status
     const interviewInvitedApplicantIds = Object.entries(fvStatusMap)
       .filter(([, status]) => status === "interview_invited")
@@ -91,6 +142,8 @@ export async function GET(req: Request) {
       const matchScore = fvAppId ? (fvMatchScoreMap[fvAppId] ?? null) : null;
       const applicantId = fvAppId ? fvApplicantIdMap[fvAppId] : null;
       const interviewLink = applicantId ? (interviewLinkMap[applicantId] ?? null) : null;
+      const rawPipelineStage = applicantId ? (rawPipelineStageMap[applicantId] ?? null) : null;
+      const isTransparentPipeline = applicantId ? (transparentPipelineMap[applicantId] ?? false) : false;
 
       return {
         id: a.id,
@@ -102,6 +155,8 @@ export async function GET(req: Request) {
         jobUrl: a.job_url,
         status: a.status,
         fitvectorStatus,
+        rawPipelineStage,
+        isTransparentPipeline,
         matchScore,
         interviewLink,
         statusHistory: a.status_history || [],

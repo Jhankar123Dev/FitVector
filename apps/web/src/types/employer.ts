@@ -46,6 +46,8 @@ export interface Company {
   cultureKeywords: string[];
   locations: string[];
   planTier: "starter" | "growth" | "business" | "enterprise";
+  /** Super Admin toggle: show raw pipeline stage names to candidates instead of generic bucket labels */
+  isTransparentPipeline: boolean;
   createdAt: string;
 }
 
@@ -387,8 +389,33 @@ export interface Applicant {
   parsedResume: ParsedResume;
   resumePdfUrl: string | null; // PDF from tailored_resumes, null if not generated yet
   notes: CandidateNote[];
+  humanInterviews: HumanInterview[];
   appliedAt: string;
   updatedAt: string;
+}
+
+// ── Human Interview types ───────────────────────────────────────────
+
+export type HumanInterviewStatus = "scheduled" | "completed" | "cancelled" | "rescheduled" | "no_show";
+
+export interface HumanInterviewParticipant {
+  userId: string;
+  name: string;
+  role: "lead" | "interviewer" | "shadow" | "hiring_manager";
+  responseStatus: "needsAction" | "accepted" | "declined" | "tentative";
+}
+
+export interface HumanInterview {
+  id: string;
+  roundNumber: number;
+  interviewType: string | null;
+  scheduledAt: string | null;
+  status: HumanInterviewStatus;
+  feedback: Record<string, unknown> | null;
+  rating: string | null;
+  notes: string | null;
+  calendarEventId: string | null;
+  participants: HumanInterviewParticipant[];
 }
 
 // ── AI Interview types ──────────────────────────────────────────────

@@ -7,6 +7,7 @@ import type { TrackerApplication } from "@/hooks/use-tracker";
 import { Draggable } from "@hello-pangea/dnd";
 import { isFitVectorApp, FV_STATUS_CONFIG } from "@/types/marketplace";
 import type { FVApplicationStatus } from "@/types/marketplace";
+import { getStageName } from "@/types/employer";
 
 // Native <select> — renders above overflow-y-auto scroll containers (OS-level, never clipped)
 const STATUS_STYLES: Record<string, string> = {
@@ -101,7 +102,9 @@ export function ApplicationCard({ application, index, onClick, onStatusChange }:
                   className="mt-1.5 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
                   style={{ backgroundColor: fvConfig.color }}
                 >
-                  {fvConfig.label}
+                  {application.isTransparentPipeline && application.rawPipelineStage
+                    ? getStageName(application.rawPipelineStage)
+                    : fvConfig.label}
                 </span>
               )}
               {isFV && (

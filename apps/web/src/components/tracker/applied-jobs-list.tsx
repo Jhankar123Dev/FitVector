@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Calendar, Zap, Video, Star } from "lucide-react";
 import type { TrackerApplication } from "@/hooks/use-tracker";
+import { getStageName } from "@/types/employer";
 // Map raw DB fitvector_applications.status values → display config
 const FV_RAW_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   applied:          { label: "Applied", color: "#3B82F6" },
@@ -111,7 +112,9 @@ export function AppliedJobsList({ applications, onCardClick }: AppliedJobsListPr
                       className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
                       style={{ backgroundColor: statusConfig.color }}
                     >
-                      {statusConfig.label}
+                      {app.isTransparentPipeline && app.rawPipelineStage
+                        ? getStageName(app.rawPipelineStage)
+                        : statusConfig.label}
                     </span>
                   )}
                   {app.interviewLink && (

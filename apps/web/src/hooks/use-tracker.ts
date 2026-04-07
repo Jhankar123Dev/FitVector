@@ -22,6 +22,16 @@ export interface TrackerApplication {
    *         "rejected" | "withdrawn"
    */
   fitvectorStatus: string | null;
+  /**
+   * Raw applicants.pipeline_stage value (e.g. "phone_screen", "devops_review").
+   * Only populated for FitVector applications.
+   */
+  rawPipelineStage: string | null;
+  /**
+   * When true, display rawPipelineStage (formatted) instead of the generic
+   * fitvectorStatus bucket label. Controlled by Super Admin per company.
+   */
+  isTransparentPipeline: boolean;
   matchScore: number | null;
   interviewLink: string | null;
   statusHistory: Array<{ status: string; changed_at: string }>;

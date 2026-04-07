@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useProctoringTracker } from "@/hooks/use-proctoring-tracker";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -39,20 +40,6 @@ interface AssessmentData {
   questionCount: number;
 }
 
-// sessionStorage key for proctoring counts, scoped per submission ID
-function proctoringKey(id: string) { return `proctoring_${id}`; }
-
-function readProctoringCounts(id: string): { tabSwitches: number; copyPasteAttempts: number } {
-  try {
-    const raw = sessionStorage.getItem(proctoringKey(id));
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return { tabSwitches: 0, copyPasteAttempts: 0 };
-}
-
-function writeProctoringCounts(id: string, counts: { tabSwitches: number; copyPasteAttempts: number }) {
-  try { sessionStorage.setItem(proctoringKey(id), JSON.stringify(counts)); } catch { /* ignore */ }
-}
 
 export default function TakeAssessmentPage() {
   const { id } = useParams<{ id: string }>();
@@ -66,11 +53,6 @@ export default function TakeAssessmentPage() {
   const [submitResult, setSubmitResult] = useState<Record<string, unknown> | null>(null);
   const [loadError, setLoadError] = useState("");
 
-  // ── Proctoring state — initialised from sessionStorage so reloads don't reset ──
-  const [tabSwitches, setTabSwitches] = useState(0);
-  const [copyPasteAttempts, setCopyPasteAttempts] = useState(0);
-  const [proctoringWarning, setProctoringWarning] = useState<string | null>(null);
-
   // Fetch assessment data from API
   useEffect(() => {
     async function load() {
@@ -82,10 +64,6 @@ export default function TakeAssessmentPage() {
           return;
         }
         setAssessmentData(json.data);
-        // Restore proctoring counts from sessionStorage on load
-        const saved = readProctoringCounts(id);
-        setTabSwitches(saved.tabSwitches);
-        setCopyPasteAttempts(saved.copyPasteAttempts);
         if (json.data.status === "started") {
           // Already started — go to test view
           setTimeLeft((json.data.timeLimitMinutes || 30) * 60);
@@ -113,6 +91,18 @@ export default function TakeAssessmentPage() {
     settings: assessmentData.settings,
   } : null;
 
+  // ── Proctoring — via shared hook (sessionStorage-persisted, reload-safe) ──
+  // Must be placed after `assessment` derivation so proctoring settings are readable.
+  const proctoring = (assessment?.settings as Record<string, Record<string, boolean>>)?.proctoring ?? {};
+  const { tabSwitches, copyPasteAttempts, proctoringWarning, dismissWarning, getProctoringData } =
+    useProctoringTracker({
+      sessionId: id,
+      enabled: view === "test",
+      trackTabSwitches: proctoring.tabSwitchDetection !== false,
+      trackCopyPaste: proctoring.copyPasteDetection !== false,
+      persistToStorage: true,
+    });
+
   // Initialise timer
   useEffect(() => {
     if (assessment && view === "intro") setTimeLeft((assessment.duration || 30) * 60);
@@ -126,49 +116,6 @@ export default function TakeAssessmentPage() {
     return () => clearInterval(t);
   }, [view, timeLeft]);
 
-  // ── Proctoring event listeners — active only during the test ──────────────
-  useEffect(() => {
-    if (view !== "test" || !assessment) return;
-
-    const proctoring = (assessment.settings as Record<string, Record<string, boolean>>)?.proctoring ?? {};
-
-    const handleVisibility = () => {
-      if (!proctoring.tabSwitchDetection) return;
-      if (document.visibilityState === "hidden") {
-        setTabSwitches((prev) => {
-          const next = prev + 1;
-          const counts = readProctoringCounts(id);
-          writeProctoringCounts(id, { ...counts, tabSwitches: next });
-          return next;
-        });
-        setProctoringWarning("Tab switch detected — this has been recorded.");
-      }
-    };
-
-    const handleCopyPaste = (e: Event) => {
-      if (!proctoring.copyPasteDetection) return;
-      e.preventDefault();
-      setCopyPasteAttempts((prev) => {
-        const next = prev + 1;
-        const counts = readProctoringCounts(id);
-        writeProctoringCounts(id, { ...counts, copyPasteAttempts: next });
-        return next;
-      });
-      setProctoringWarning("Copy/paste is disabled during this assessment.");
-    };
-
-    document.addEventListener("visibilitychange", handleVisibility);
-    document.addEventListener("copy", handleCopyPaste);
-    document.addEventListener("cut", handleCopyPaste);
-    document.addEventListener("paste", handleCopyPaste);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibility);
-      document.removeEventListener("copy", handleCopyPaste);
-      document.removeEventListener("cut", handleCopyPaste);
-      document.removeEventListener("paste", handleCopyPaste);
-    };
-  }, [view, assessment, id]);
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60);
@@ -438,14 +385,12 @@ export default function TakeAssessmentPage() {
               </Button>
               <Button className="flex-1 gap-1.5" onClick={async () => {
                 try {
-                  // Read final proctoring counts from sessionStorage as source of truth
-                  const finalCounts = readProctoringCounts(id);
                   const payload = {
                     answers: (assessment?.questions || []).map((q: AssessmentQuestion) => ({
                       questionId: q.id,
                       selectedAnswer: answers[q.id] || undefined,
                     })),
-                    proctoringData: finalCounts,
+                    proctoringData: getProctoringData(),
                   };
                   const res = await fetch(`/api/assessment/${id}/submit`, {
                     method: "POST",
@@ -455,7 +400,7 @@ export default function TakeAssessmentPage() {
                   const json = await res.json();
                   setSubmitResult(json.data || {});
                   // Clean up sessionStorage after successful submission
-                  try { sessionStorage.removeItem(proctoringKey(id)); } catch { /* ignore */ }
+                  try { sessionStorage.removeItem(`proctoring_${id}`); } catch { /* ignore */ }
                 } catch { /* fallback */ }
                 setView("results");
               }}>
@@ -482,7 +427,7 @@ export default function TakeAssessmentPage() {
             {proctoringWarning}
           </div>
           <button
-            onClick={() => setProctoringWarning(null)}
+            onClick={dismissWarning}
             className="text-amber-600 hover:text-amber-800 text-lg leading-none font-bold shrink-0"
             aria-label="Dismiss"
           >

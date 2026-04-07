@@ -169,6 +169,14 @@ export function FitVectorApplyModal({
 
   const screeningQuestions = jobPostData?.screeningQuestions ?? [];
 
+  // Gate submit: all required questions must have a non-empty answer
+  const requiredAnswered = screeningQuestions
+    .filter((q) => q.required)
+    .every((q) => {
+      const ans = answers.find((a) => a.questionId === q.id);
+      return ans && ans.answer.trim().length > 0;
+    });
+
   // Initialise blank answers when questions load
   useEffect(() => {
     if (screeningQuestions.length > 0 && answers.length === 0) {
@@ -548,10 +556,17 @@ export function FitVectorApplyModal({
                     ) : null
                   )}
 
+                  {/* Required questions hint */}
+                  {!requiredAnswered && screeningQuestions.some((q) => q.required) && (
+                    <p className="text-center text-[11px] text-red-500">
+                      Please answer all required questions (*) to continue.
+                    </p>
+                  )}
+
                   {/* ── Submit Button ── */}
                   <Button
                     onClick={handleSubmit}
-                    disabled={phase === "submitting" || !selectedResumeId || alreadyApplied}
+                    disabled={phase === "submitting" || !selectedResumeId || alreadyApplied || !requiredAnswered}
                     className="w-full gap-2 bg-accent-500 text-white hover:bg-accent-600"
                   >
                     {phase === "submitting" ? (

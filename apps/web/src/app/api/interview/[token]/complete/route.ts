@@ -69,6 +69,22 @@ export async function POST(
       );
     }
 
+    // Merge client-side signals with any from the evaluation model
+    const clientSignals = parsed.data.clientSignals ?? [];
+    const allSignals = [
+      ...clientSignals.map((s) => `${s.type} at ${s.at}`),
+      ...(Array.isArray(evaluation.cheating_signals) ? evaluation.cheating_signals : []),
+    ];
+    const totalSignalCount = clientSignals.length + (Array.isArray(evaluation.cheating_signals) ? evaluation.cheating_signals.length : 0);
+    const computedConfidence: "low" | "medium" | "high" =
+      totalSignalCount >= 4 ? "high" : totalSignalCount >= 1 ? "medium" : "low";
+    // Client signals take precedence if they indicate higher risk
+    const confidenceRank = { low: 0, medium: 1, high: 2 };
+    const finalConfidence =
+      confidenceRank[computedConfidence] >= confidenceRank[evaluation.cheating_confidence as "low" | "medium" | "high" ?? "low"]
+        ? computedConfidence
+        : (evaluation.cheating_confidence as "low" | "medium" | "high");
+
     // Update interview with results
     const { data: updated, error: updateError } = await supabase
       .from("ai_interviews")
@@ -82,8 +98,8 @@ export async function POST(
         skill_scores: evaluation.skill_scores,
         strengths: evaluation.strengths,
         concerns: evaluation.concerns,
-        cheating_confidence: evaluation.cheating_confidence,
-        cheating_signals: evaluation.cheating_signals,
+        cheating_confidence: finalConfidence,
+        cheating_signals: allSignals,
         communication_assessment: evaluation.communication_assessment,
         ai_recommendation: evaluation.ai_recommendation,
       })

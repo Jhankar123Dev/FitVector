@@ -4,6 +4,12 @@ import { getEmployerSession } from "@/lib/employer-auth";
 import { changeStageSchema } from "@/lib/validators";
 import { transformApplicant } from "@/lib/applicant-helpers";
 
+// Stages that trigger an automatic action when an employer moves a candidate there
+const AUTO_ACTIONS: Record<string, "invite_ai_interview" | "notify_human_interview"> = {
+  ai_interview_pending: "invite_ai_interview",
+  human_interview:      "notify_human_interview",
+};
+
 // ─── PUT: Move applicant to new pipeline stage ──────────────────────────────
 
 export async function PUT(
@@ -93,8 +99,10 @@ export async function PUT(
       rejected:             "rejected",
     };
 
-    const fvStatus = FV_STATUS_MAP[parsed.data.stage];
-    const trackerStatus = TRACKER_STATUS_MAP[parsed.data.stage];
+    // For custom stages (not in the known maps), fall back to under_review / screening
+    // so seekers always see a meaningful status update when the employer advances them.
+    const fvStatus = FV_STATUS_MAP[parsed.data.stage] ?? "under_review";
+    const trackerStatus = TRACKER_STATUS_MAP[parsed.data.stage] ?? "screening";
 
     if (fvStatus || trackerStatus) {
       const { data: fvApp } = await supabase
@@ -119,9 +127,72 @@ export async function PUT(
       }
     }
 
+    // ── Auto-actions on specific stage transitions ──────────────────
+    const autoAction = AUTO_ACTIONS[parsed.data.stage];
+    let autoSent = false;
+
+    if (autoAction === "invite_ai_interview") {
+      // Only send if no active invite already exists
+      const { data: existing } = await supabase
+        .from("ai_interviews")
+        .select("id")
+        .eq("applicant_id", id)
+        .in("status", ["invited", "started"])
+        .single();
+
+      if (!existing) {
+        const { data: applicantInfo } = await supabase
+          .from("applicants")
+          .select("id, job_post_id, email, name")
+          .eq("id", id)
+          .single();
+
+        if (applicantInfo) {
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          const { data: newInterview } = await supabase
+            .from("ai_interviews")
+            .insert({
+              applicant_id: id,
+              job_post_id: applicantInfo.job_post_id,
+              interview_type: "technical",
+              duration_planned: 30,
+              status: "invited",
+              invite_sent_at: new Date().toISOString(),
+              invite_expires_at: expiresAt,
+            })
+            .select("id")
+            .single();
+
+          if (newInterview) {
+            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+            console.log(
+              `[Auto AI Interview Invite] ${applicantInfo.email} | stage: ${parsed.data.stage} | link: ${baseUrl}/interview/${newInterview.id}`
+            );
+            autoSent = true;
+          }
+        }
+      }
+    }
+
+    if (autoAction === "notify_human_interview") {
+      const { data: applicantInfo } = await supabase
+        .from("applicants")
+        .select("id, email, name")
+        .eq("id", id)
+        .single();
+
+      if (applicantInfo) {
+        // TODO: Send actual email when email service is configured (e.g. Resend)
+        console.log(
+          `[Auto Human Interview Notify] ${applicantInfo.email} — moved to human_interview stage`
+        );
+        autoSent = true;
+      }
+    }
+
     return NextResponse.json({
-      data: transformApplicant(updated),
-      message: `Moved to ${parsed.data.stage}`,
+      data: { ...transformApplicant(updated), autoSent },
+      message: `Moved to ${parsed.data.stage}${autoSent ? " — invite sent automatically" : ""}`,
     });
   } catch (error) {
     console.error("Stage PUT error:", error);

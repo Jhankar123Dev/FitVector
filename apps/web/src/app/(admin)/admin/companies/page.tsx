@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search, ChevronLeft, ChevronRight, ExternalLink, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface AdminCompany {
   id: string;
@@ -14,19 +15,73 @@ interface AdminCompany {
   companySize: string | null;
   planTier: string;
   websiteUrl: string | null;
+  isTransparentPipeline: boolean;
   createdAt: string;
   jobPostCount: number;
 }
 
 const PLAN_COLORS: Record<string, string> = {
-  starter: "bg-surface-100 text-surface-600",
-  growth: "bg-blue-100 text-blue-700",
-  business: "bg-purple-100 text-purple-700",
+  starter:    "bg-surface-100 text-surface-600",
+  growth:     "bg-blue-100 text-blue-700",
+  business:   "bg-purple-100 text-purple-700",
   enterprise: "bg-amber-100 text-amber-700",
 };
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// ── Inline toggle component ───────────────────────────────────────────────────
+function TransparentPipelineToggle({
+  companyId,
+  companyName,
+  value,
+}: {
+  companyId: string;
+  companyName: string;
+  value: boolean;
+}) {
+  const qc = useQueryClient();
+  const [optimistic, setOptimistic] = useState<boolean | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: async (newValue: boolean) => {
+      const res = await fetch(`/api/admin/companies/${companyId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isTransparentPipeline: newValue }),
+      });
+      if (!res.ok) throw new Error("Failed to update");
+      return res.json();
+    },
+    onMutate: (newValue) => setOptimistic(newValue),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-companies"] });
+      setOptimistic(null);
+    },
+    onError: () => setOptimistic(null),
+  });
+
+  const current = optimistic ?? value;
+
+  return (
+    <button
+      onClick={() => mutation.mutate(!current)}
+      disabled={mutation.isPending}
+      title={`${current ? "Disable" : "Enable"} Transparent Pipeline for ${companyName}`}
+      className={cn(
+        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50",
+        current ? "bg-brand-500" : "bg-surface-300",
+      )}
+    >
+      <span
+        className={cn(
+          "pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition duration-200",
+          current ? "translate-x-4" : "translate-x-0.5",
+        )}
+      />
+    </button>
+  );
 }
 
 export default function AdminCompaniesPage() {
@@ -69,6 +124,15 @@ export default function AdminCompaniesPage() {
         />
       </div>
 
+      {/* Legend */}
+      <div className="flex items-center gap-2 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-xs text-brand-700">
+        <Eye className="h-3.5 w-3.5 shrink-0" />
+        <span>
+          <strong>Transparent Pipeline</strong> — when enabled, candidates see their exact pipeline stage
+          name (e.g. "Phone Screen") instead of the generic status label (e.g. "Under Review").
+        </span>
+      </div>
+
       {/* Desktop table */}
       <div className="hidden overflow-hidden rounded-xl border border-surface-200 bg-white md:block">
         <table className="w-full text-sm">
@@ -79,6 +143,12 @@ export default function AdminCompaniesPage() {
               <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Size</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Plan</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Job Posts</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">
+                <span className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  Transparent Pipeline
+                </span>
+              </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Created</th>
             </tr>
           </thead>
@@ -86,14 +156,14 @@ export default function AdminCompaniesPage() {
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i} className="border-b border-surface-100">
-                  <td colSpan={6} className="px-4 py-3">
+                  <td colSpan={7} className="px-4 py-3">
                     <div className="h-4 w-full animate-pulse rounded bg-surface-100" />
                   </td>
                 </tr>
               ))
             ) : companies.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-surface-400">No companies found</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-surface-400">No companies found</td>
               </tr>
             ) : (
               companies.map((company) => (
@@ -111,9 +181,26 @@ export default function AdminCompaniesPage() {
                   <td className="px-4 py-3 text-xs text-surface-500">{company.industry || "—"}</td>
                   <td className="px-4 py-3 text-xs capitalize text-surface-500">{company.companySize || "—"}</td>
                   <td className="px-4 py-3">
-                    <Badge className={PLAN_COLORS[company.planTier] || "bg-surface-100 text-surface-600"}>{company.planTier}</Badge>
+                    <Badge className={PLAN_COLORS[company.planTier] || "bg-surface-100 text-surface-600"}>
+                      {company.planTier}
+                    </Badge>
                   </td>
                   <td className="px-4 py-3 text-xs font-medium text-surface-700">{company.jobPostCount}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <TransparentPipelineToggle
+                        companyId={company.id}
+                        companyName={company.name}
+                        value={company.isTransparentPipeline}
+                      />
+                      <span className={cn(
+                        "text-[11px] font-medium",
+                        company.isTransparentPipeline ? "text-brand-600" : "text-surface-400",
+                      )}>
+                        {company.isTransparentPipeline ? "On" : "Off"}
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-xs text-surface-500">{formatDate(company.createdAt)}</td>
                 </tr>
               ))
@@ -152,8 +239,16 @@ export default function AdminCompaniesPage() {
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-surface-500">
                 {company.companySize && <span className="capitalize">{company.companySize}</span>}
                 <span>{company.jobPostCount} job posts</span>
-                <span className="ml-auto">{formatDate(company.createdAt)}</span>
+                <div className="ml-auto flex items-center gap-1.5">
+                  <Eye className="h-3 w-3 text-surface-400" />
+                  <TransparentPipelineToggle
+                    companyId={company.id}
+                    companyName={company.name}
+                    value={company.isTransparentPipeline}
+                  />
+                </div>
               </div>
+              <p className="mt-1 text-right text-[11px] text-surface-400">{formatDate(company.createdAt)}</p>
             </div>
           ))
         )}

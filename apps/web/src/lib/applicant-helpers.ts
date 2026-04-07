@@ -84,6 +84,7 @@ export function transformApplicant(row: Record<string, unknown>) {
     // Placeholder arrays (populated by separate queries in detail view)
     notes: [],
     votes: [],
+    humanInterviews: [],
   };
 }
 
