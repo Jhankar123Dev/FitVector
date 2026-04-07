@@ -139,6 +139,7 @@ export const createJobPostSchema = z.object({
   autoAdvanceThreshold: z.number().int().min(0).max(100).optional().nullable(),
   autoRejectThreshold: z.number().int().min(0).max(100).optional().nullable(),
   dimensionWeights: z.record(z.number()).optional().nullable(),
+  pipelineStages: z.array(z.string()).min(2).optional(),
   status: z.enum(["draft", "active"]).default("draft"),
 });
 
@@ -210,6 +211,10 @@ export const submitAssessmentSchema = z.object({
     selectedAnswer: z.string().optional(),
     codeSubmission: z.string().optional(),
   })).min(1),
+  proctoringData: z.object({
+    tabSwitches: z.number().int().min(0).default(0),
+    copyPasteAttempts: z.number().int().min(0).default(0),
+  }).optional(),
 });
 
 // ─── Employer: Scheduling ─────────────────────────────────────────────────────

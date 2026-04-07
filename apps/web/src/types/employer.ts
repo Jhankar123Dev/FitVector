@@ -93,7 +93,7 @@ export type JobPostStatus = "draft" | "active" | "paused" | "closed" | "filled";
 export type JobPostType = "fulltime" | "parttime" | "contract" | "internship";
 export type WorkMode = "onsite" | "remote" | "hybrid";
 export type InterviewType = "technical" | "behavioral" | "role_specific" | "general";
-export type DifficultyLevel = "junior" | "mid" | "senior";
+export type DifficultyLevel = "easy" | "medium" | "hard";
 export type AssessmentType = "coding_test" | "mcq_quiz" | "case_study" | "assignment";
 export type ScreeningQuestionType = "multiple_choice" | "short_answer" | "yes_no";
 
@@ -183,6 +183,9 @@ export interface JobPostFormData {
 
   // Step 6: Assessment
   assessmentConfig: AssessmentConfig;
+
+  // Step 7: Pipeline configuration (optional — defaults to full pipeline)
+  pipelineStages: PipelineStage[];
 }
 
 export const JOB_TYPE_LABELS: Record<JobPostType, string> = {
@@ -221,9 +224,9 @@ export const ASSESSMENT_TYPE_LABELS: Record<AssessmentType, string> = {
 };
 
 export const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
-  junior: "Junior",
-  mid: "Mid-Level",
-  senior: "Senior",
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard",
 };
 
 // ── Activity feed types ─────────────────────────────────────────────

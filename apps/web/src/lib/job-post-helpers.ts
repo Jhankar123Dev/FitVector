@@ -31,6 +31,10 @@ export function transformJobPost(row: Record<string, unknown>) {
     autoAdvanceThreshold: row.auto_advance_threshold ?? null,
     autoRejectThreshold: row.auto_reject_threshold ?? null,
     dimensionWeights: row.dimension_weights || null,
+    pipelineStages: (row.pipeline_stages as string[]) || [
+      "applied", "ai_screened", "assessment_pending", "assessment_completed",
+      "ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired",
+    ],
     viewsCount: row.views_count || 0,
     applicationsCount: row.applications_count || 0,
     createdAt: row.created_at,

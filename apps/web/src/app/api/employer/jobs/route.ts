@@ -56,6 +56,8 @@ export async function POST(req: Request) {
       auto_advance_threshold: d.autoAdvanceThreshold ?? null,
       auto_reject_threshold: d.autoRejectThreshold ?? null,
       dimension_weights: d.dimensionWeights || null,
+      // pipeline_stages uses DB default if not provided
+      ...(d.pipelineStages ? { pipeline_stages: d.pipelineStages } : {}),
     };
 
     const { data: row, error } = await supabase

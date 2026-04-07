@@ -102,6 +102,7 @@ export async function PUT(
     if (d.autoAdvanceThreshold !== undefined) update.auto_advance_threshold = d.autoAdvanceThreshold;
     if (d.autoRejectThreshold !== undefined) update.auto_reject_threshold = d.autoRejectThreshold;
     if (d.dimensionWeights !== undefined) update.dimension_weights = d.dimensionWeights;
+    if (d.pipelineStages !== undefined) update.pipeline_stages = d.pipelineStages;
 
     if (Object.keys(update).length === 0) {
       return NextResponse.json({ data: transformJobPost(existing), message: "No changes" });

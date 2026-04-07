@@ -37,6 +37,7 @@ import type {
   AssessmentType,
   ScreeningQuestionType,
   ScreeningQuestion,
+  PipelineStage,
 } from "@/types/employer";
 import {
   JOB_TYPE_LABELS,
@@ -44,6 +45,7 @@ import {
   INTERVIEW_TYPE_LABELS,
   ASSESSMENT_TYPE_LABELS,
   DIFFICULTY_LABELS,
+  PIPELINE_STAGE_LABELS,
 } from "@/types/employer";
 
 // ── Step config ─────────────────────────────────────────────────────
@@ -54,8 +56,38 @@ const STEPS = [
   { id: 4, label: "Screening", icon: MessageSquare },
   { id: 5, label: "AI Interview", icon: Bot },
   { id: 6, label: "Assessment", icon: ClipboardCheck },
-  { id: 7, label: "Review", icon: Eye },
+  { id: 7, label: "Pipeline", icon: GripVertical },
+  { id: 8, label: "Review", icon: Eye },
 ];
+
+// ── Pipeline stage config for Step 7 ────────────────────────────────
+const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
+  "applied", "ai_screened", "assessment_pending", "assessment_completed",
+  "ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired",
+];
+
+// Stages that are always mandatory and cannot be removed
+const LOCKED_STAGES = new Set<PipelineStage>(["applied", "ai_screened", "offer", "hired"]);
+
+// Grouping for the toggle UI
+const PIPELINE_STAGE_GROUPS = [
+  {
+    label: "Assessment Block",
+    description: "Send candidates a skills test",
+    stages: ["assessment_pending", "assessment_completed"] as PipelineStage[],
+  },
+  {
+    label: "AI Interview Block",
+    description: "AI-conducted voice/text interview",
+    stages: ["ai_interview_pending", "ai_interviewed"] as PipelineStage[],
+  },
+  {
+    label: "Human Interview",
+    description: "Schedule a call or on-site round",
+    stages: ["human_interview"] as PipelineStage[],
+  },
+];
+
 
 const INITIAL_FORM: JobPostFormData = {
   title: "",
@@ -79,16 +111,17 @@ const INITIAL_FORM: JobPostFormData = {
     interviewType: "technical",
     duration: 20,
     focusAreas: "",
-    difficultyLevel: "mid",
+    difficultyLevel: "medium",
     customQuestions: [],
   },
   assessmentConfig: {
     enabled: false,
     assessmentType: "coding_test",
     timeLimit: 60,
-    difficultyLevel: "mid",
+    difficultyLevel: "medium",
     customQuestions: [],
   },
+  pipelineStages: DEFAULT_PIPELINE_STAGES,
 };
 
 const DEPARTMENTS = [
@@ -273,6 +306,7 @@ export default function CreateJobPage() {
         openingsCount: form.openingsCount,
         interviewPlan: form.interviewConfig?.enabled ? form.interviewConfig : null,
         assessmentConfig: form.assessmentConfig?.enabled ? form.assessmentConfig : null,
+        pipelineStages: form.pipelineStages,
         status: publishNow ? "active" : "draft",
       } as Record<string, unknown> & { title: string; description: string });
       router.push("/employer/jobs");
@@ -1340,8 +1374,88 @@ export default function CreateJobPage() {
         </Card>
       )}
 
-      {/* ═══════════ STEP 7: Review ══════════════════════════════════ */}
+      {/* ═══════════ STEP 7: Pipeline ════════════════════════════════ */}
       {step === 7 && (
+        <Card>
+          <CardContent className="space-y-6 p-6">
+            <div>
+              <h2 className="text-base font-semibold text-surface-800">Pipeline Configuration</h2>
+              <p className="mt-1 text-xs text-surface-500">
+                Choose which stages are part of this job's hiring flow. Core stages (Applied, AI Screened, Offer, Hired) are always included.
+              </p>
+            </div>
+
+            {/* Visual pipeline preview */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {form.pipelineStages.map((stage, i) => (
+                <div key={stage} className="flex items-center gap-1.5">
+                  <span className="rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-[11px] font-medium text-brand-700">
+                    {PIPELINE_STAGE_LABELS[stage]}
+                  </span>
+                  {i < form.pipelineStages.length - 1 && (
+                    <span className="text-surface-300 text-xs">→</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Toggle blocks */}
+            <div className="space-y-3">
+              {PIPELINE_STAGE_GROUPS.map((group) => {
+                const isActive = group.stages.some((s) => form.pipelineStages.includes(s));
+                return (
+                  <div
+                    key={group.label}
+                    className={cn(
+                      "flex items-center justify-between rounded-lg border p-4 transition-colors",
+                      isActive ? "border-brand-200 bg-brand-50/50" : "border-surface-200",
+                    )}
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-surface-800">{group.label}</p>
+                      <p className="text-xs text-surface-500">{group.description}</p>
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {group.stages.map((s) => (
+                          <span key={s} className="text-[10px] rounded bg-surface-100 px-1.5 py-0.5 text-surface-600">
+                            {PIPELINE_STAGE_LABELS[s]}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const current = form.pipelineStages;
+                        let next: PipelineStage[];
+                        if (isActive) {
+                          // Remove all stages in this group
+                          next = current.filter((s) => !group.stages.includes(s));
+                        } else {
+                          // Insert group stages in their canonical position
+                          const allStages = DEFAULT_PIPELINE_STAGES;
+                          next = allStages.filter((s) => current.includes(s) || group.stages.includes(s));
+                        }
+                        update({ pipelineStages: next });
+                      }}
+                      className={cn(
+                        "relative h-6 w-11 rounded-full transition-colors",
+                        isActive ? "bg-brand-500" : "bg-surface-200",
+                      )}
+                    >
+                      <span className={cn(
+                        "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        isActive ? "translate-x-5" : "translate-x-0.5",
+                      )} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ═══════════ STEP 8: Review ══════════════════════════════════ */}
+      {step === 8 && (
         <div className="space-y-4">
           {/* Basic info summary */}
           <Card>
@@ -1527,7 +1641,7 @@ export default function CreateJobPage() {
         </Button>
 
         <div className="flex items-center gap-2">
-          {step === 7 ? (
+          {step === 8 ? (
             <>
               {submitError && (
                 <span className="text-xs text-red-500 mr-2">{submitError}</span>

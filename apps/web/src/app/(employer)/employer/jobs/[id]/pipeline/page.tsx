@@ -23,6 +23,7 @@ import {
   CalendarDays,
   Link2,
   CheckCircle2,
+  GripVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CandidateCard } from "@/components/employer/pipeline/candidate-card";
@@ -40,6 +41,7 @@ import { useInviteInterview } from "@/hooks/use-interviews";
 import { useAssessments, useAssignAssessment } from "@/hooks/use-assessments";
 import type { Applicant, PipelineStage } from "@/types/employer";
 import { PIPELINE_STAGE_LABELS, PIPELINE_COLUMNS } from "@/types/employer";
+// PIPELINE_COLUMNS used as global fallback for jobPipelineStages when job data not yet loaded
 
 // ── Column colors ───────────────────────────────────────────────────
 const COLUMN_COLORS: Record<PipelineStage, string> = {
@@ -86,6 +88,38 @@ export default function PipelinePage() {
   const [assessmentModalApplicant, setAssessmentModalApplicant] = useState<Applicant | null>(null);
   const [bulkAssessmentModal, setBulkAssessmentModal] = useState(false);
 
+  // ── Pipeline config modal ────────────────────────────────────────
+  const [showPipelineConfig, setShowPipelineConfig] = useState(false);
+  const [editingStages, setEditingStages] = useState<PipelineStage[]>([]);
+  const [pipelineSaving, setPipelineSaving] = useState(false);
+
+  const DEFAULT_PIPELINE_ALL: PipelineStage[] = [
+    "applied", "ai_screened", "assessment_pending", "assessment_completed",
+    "ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired",
+  ];
+  const PIPELINE_LOCKED = new Set<PipelineStage>(["applied", "ai_screened", "offer", "hired"]);
+  const PIPELINE_GROUPS = [
+    { label: "Assessment Block", stages: ["assessment_pending", "assessment_completed"] as PipelineStage[] },
+    { label: "AI Interview Block", stages: ["ai_interview_pending", "ai_interviewed"] as PipelineStage[] },
+    { label: "Human Interview", stages: ["human_interview"] as PipelineStage[] },
+  ];
+
+  async function savePipelineConfig() {
+    setPipelineSaving(true);
+    try {
+      await fetch(`/api/employer/jobs/${jobId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pipelineStages: editingStages }),
+      });
+      setShowPipelineConfig(false);
+      // Refresh job data
+      window.location.reload();
+    } finally {
+      setPipelineSaving(false);
+    }
+  }
+
   // ── Filters ─────────────────────────────────────────────────────
   const [showFilters, setShowFilters] = useState(false);
   const [filterScoreMin, setFilterScoreMin] = useState(0);
@@ -112,23 +146,43 @@ export default function PipelinePage() {
     });
   }, [applicants, filterScoreMin, filterScoreMax, filterSkill, filterSource, filterExpMin, filterExpMax]);
 
+  // ── Per-job pipeline config derived from job.pipelineStages ────────────────
+  // Falls back to full default order if job data not yet loaded.
+  const jobPipelineStages = useMemo<PipelineStage[]>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stages = (job as any)?.pipelineStages as PipelineStage[] | undefined;
+    if (stages && stages.length >= 2) return stages;
+    return PIPELINE_COLUMNS; // global default from types/employer.ts
+  }, [job]);
+
+  const NEXT_STAGE = useMemo<Record<string, PipelineStage>>(() => {
+    const map: Record<string, PipelineStage> = {};
+    for (let i = 0; i < jobPipelineStages.length - 1; i++) {
+      map[jobPipelineStages[i]] = jobPipelineStages[i + 1];
+    }
+    return map;
+  }, [jobPipelineStages]);
+
+  const PREV_STAGE = useMemo<Record<string, PipelineStage>>(() => {
+    const map: Record<string, PipelineStage> = {};
+    for (let i = 1; i < jobPipelineStages.length; i++) {
+      map[jobPipelineStages[i]] = jobPipelineStages[i - 1];
+    }
+    return map;
+  }, [jobPipelineStages]);
+
   // ── Group by stage ──────────────────────────────────────────────
   const byStage = useMemo(() => {
-    const map: Record<PipelineStage, Applicant[]> = {
-      applied: [], ai_screened: [],
-      assessment_pending: [], assessment_completed: [],
-      ai_interview_pending: [], ai_interviewed: [],
-      human_interview: [], offer: [], hired: [], rejected: [],
-    };
+    // Initialise map with all possible stages (job stages + rejected)
+    const allStages: PipelineStage[] = [...jobPipelineStages, "rejected"];
+    const map = Object.fromEntries(allStages.map((s) => [s, []])) as unknown as Record<PipelineStage, Applicant[]>;
     for (const a of filtered) {
-      // Guard: skip applicants with legacy/unknown stage values (e.g. old "assessment"
-      // or "ai_interview" rows written before the stage rename) so they don't crash
       if (map[a.pipelineStage]) {
         map[a.pipelineStage].push(a);
       }
     }
     return map;
-  }, [filtered]);
+  }, [filtered, jobPipelineStages]);
 
   // ── Selection helpers ───────────────────────────────────────────
   function toggleSelect(id: string) {
@@ -144,29 +198,8 @@ export default function PipelinePage() {
     setSelectedIds(new Set());
   }
 
+  // NEXT_STAGE and PREV_STAGE are now derived from jobPipelineStages (useMemo above)
   // ── Stage transitions ───────────────────────────────────────────
-  // Pipeline order: applied → ai_screened → assessment_pending → assessment_completed → ai_interview_pending → ai_interviewed → human_interview → offer → hired
-  const NEXT_STAGE: Record<string, PipelineStage> = {
-    applied:              "ai_screened",
-    ai_screened:          "assessment_pending",
-    assessment_pending:   "assessment_completed",
-    assessment_completed: "ai_interview_pending",
-    ai_interview_pending: "ai_interviewed",
-    ai_interviewed:       "human_interview",
-    human_interview:      "offer",
-    offer:                "hired",
-  };
-
-  const PREV_STAGE: Record<string, PipelineStage> = {
-    ai_screened:          "applied",
-    assessment_pending:   "ai_screened",
-    assessment_completed: "assessment_pending",
-    ai_interview_pending: "assessment_completed",
-    ai_interviewed:       "ai_interview_pending",
-    human_interview:      "ai_interviewed",
-    offer:                "human_interview",
-    hired:                "offer",
-  };
 
   function advanceApplicant(id: string) {
     const applicant = applicants.find((a) => a.id === id);
@@ -298,6 +331,20 @@ export default function PipelinePage() {
                 <span className="hidden sm:inline">Table</span>
               </button>
             </div>
+
+            {/* Configure Pipeline */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditingStages(jobPipelineStages);
+                setShowPipelineConfig(true);
+              }}
+              className="gap-1 sm:gap-1.5 h-8 px-2 sm:px-3"
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Pipeline</span>
+            </Button>
 
             {/* Filters toggle */}
             <Button
@@ -470,8 +517,8 @@ export default function PipelinePage() {
             className="flex h-full gap-2 sm:gap-3 px-3 py-3 sm:px-4 sm:py-4 md:px-6"
             style={{ minWidth: "fit-content" }}
           >
-            {PIPELINE_COLUMNS.map((stage) => {
-              const items = byStage[stage];
+            {jobPipelineStages.map((stage) => {
+              const items = byStage[stage] ?? [];
               return (
                 <div
                   key={stage}
@@ -728,6 +775,100 @@ export default function PipelinePage() {
           }}
           isPending={changeStage.isPending}
         />
+      )}
+
+      {/* ── Pipeline config modal ────────────────────────────────── */}
+      {showPipelineConfig && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-surface-200 px-5 py-4">
+              <h3 className="text-sm font-semibold text-surface-800">Configure Pipeline</h3>
+              <button onClick={() => setShowPipelineConfig(false)} className="text-surface-400 hover:text-surface-700 text-xl font-bold leading-none">×</button>
+            </div>
+            <div className="space-y-3 p-5">
+              <p className="text-xs text-surface-500">Toggle stages on or off. Stages with active candidates cannot be removed.</p>
+
+              {/* Preview */}
+              <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-surface-50 p-3">
+                {editingStages.map((stage, i) => (
+                  <div key={stage} className="flex items-center gap-1">
+                    <span className="rounded-full bg-brand-50 border border-brand-200 px-2 py-0.5 text-[10px] font-medium text-brand-700">
+                      {PIPELINE_STAGE_LABELS[stage]}
+                    </span>
+                    {i < editingStages.length - 1 && <span className="text-surface-300 text-[10px]">→</span>}
+                  </div>
+                ))}
+              </div>
+
+              {/* Toggle groups */}
+              {PIPELINE_GROUPS.map((group) => {
+                const isActive = group.stages.some((s) => editingStages.includes(s));
+                // A stage is locked if it has active candidates
+                const hasActiveCandidates = group.stages.some(
+                  (s) => (byStage[s]?.length ?? 0) > 0
+                );
+                return (
+                  <div
+                    key={group.label}
+                    className={cn(
+                      "flex items-center justify-between rounded-lg border p-3 transition-colors",
+                      isActive ? "border-brand-200 bg-brand-50/50" : "border-surface-200",
+                      hasActiveCandidates && "opacity-70",
+                    )}
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-surface-800">{group.label}</p>
+                      {hasActiveCandidates && (
+                        <p className="text-[10px] text-amber-600 mt-0.5">
+                          Has active candidates — move them first to disable
+                        </p>
+                      )}
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {group.stages.map((s) => (
+                          <span key={s} className="text-[9px] rounded bg-surface-100 px-1.5 py-0.5 text-surface-600">
+                            {PIPELINE_STAGE_LABELS[s]}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      disabled={hasActiveCandidates}
+                      onClick={() => {
+                        if (hasActiveCandidates) return;
+                        if (isActive) {
+                          setEditingStages((prev) => prev.filter((s) => !group.stages.includes(s)));
+                        } else {
+                          setEditingStages(DEFAULT_PIPELINE_ALL.filter(
+                            (s) => editingStages.includes(s) || group.stages.includes(s)
+                          ));
+                        }
+                      }}
+                      className={cn(
+                        "relative h-6 w-11 rounded-full transition-colors",
+                        isActive ? "bg-brand-500" : "bg-surface-200",
+                        hasActiveCandidates && "cursor-not-allowed",
+                      )}
+                    >
+                      <span className={cn(
+                        "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        isActive ? "translate-x-5" : "translate-x-0.5",
+                      )} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex gap-2 border-t border-surface-200 px-5 py-4">
+              <Button variant="outline" className="flex-1" onClick={() => setShowPipelineConfig(false)}>
+                Cancel
+              </Button>
+              <Button className="flex-1 gap-1.5" onClick={savePipelineConfig} disabled={pipelineSaving}>
+                {pipelineSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                Save Pipeline
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

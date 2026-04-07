@@ -41,10 +41,14 @@ const TYPE_LABELS: Record<string, string> = {
   assignment: "Assignment",
 };
 
-function formatScore(score: number | null, passingScore: number | null): string {
+function formatScore(score: number | null): string {
   if (score === null) return "--";
-  if (passingScore !== null) return `${score}/${passingScore}`;
-  return `${score}`;
+  return `${score}%`;
+}
+
+function isPassed(score: number | null, passingScore: number | null): boolean | null {
+  if (score === null || passingScore === null) return null;
+  return score >= passingScore;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -131,12 +135,10 @@ export default function CandidateTestsPage() {
                   {tests.map((test) => {
                     const statusCfg =
                       STATUS_CONFIG[test.status] ?? STATUS_CONFIG.submitted;
-                    const displayScore =
-                      test.status === "graded"
-                        ? formatScore(test.finalScore, test.passingScore)
-                        : test.autoScore !== null
-                          ? formatScore(test.autoScore, test.passingScore)
-                          : "--";
+                    const effectiveScore =
+                      test.status === "graded" ? test.finalScore : test.autoScore;
+                    const displayScore = formatScore(effectiveScore);
+                    const passed = isPassed(effectiveScore, test.passingScore);
 
                     return (
                       <tr key={test.id} className="hover:bg-surface-50">
@@ -169,8 +171,22 @@ export default function CandidateTestsPage() {
                             {statusCfg.label}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 font-medium text-surface-700">
-                          {displayScore}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-surface-700">
+                              {displayScore}
+                            </span>
+                            {passed === true && (
+                              <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                                Passed
+                              </Badge>
+                            )}
+                            {passed === false && (
+                              <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">
+                                Failed
+                              </Badge>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-surface-500">
                           {formatDate(

@@ -860,3 +860,112 @@ Screen this candidate and return the JSON evaluation."""
             "screening_summary": f"Fallback screening: {matches} of {len(req_norm)} required skills matched.",
             "bucket": bucket,
         }
+
+
+# ─── Assessment question generation ──────────────────────────────────────────
+
+_GENERATE_QUESTIONS_SYSTEM_PROMPT = """You are an expert technical assessment designer.
+Generate assessment questions exactly as specified. Return a valid JSON array of question objects.
+Each object must follow the schema strictly — no extra fields, no markdown."""
+
+
+class _QuestionOptionSchema(BaseModel):
+    text: str = ""
+
+
+class _GeneratedQuestionSchema(BaseModel):
+    prompt: str = ""
+    type: str = "multiple_choice"
+    options: list[str] = []
+    correctAnswer: str = ""
+    points: int = 10
+    codeLanguage: str = ""
+
+
+class _GeneratedQuestionsSchema(BaseModel):
+    questions: list[_GeneratedQuestionSchema] = []
+
+
+async def generate_questions(
+    topic: str,
+    question_type: str,
+    difficulty: str,
+    count: int,
+    code_language: str | None = None,
+) -> list[dict[str, Any]]:
+    """Generate assessment questions using Gemini Flash.
+
+    Returns a list of QuestionForm-compatible dicts.
+    Falls back to a minimal placeholder set if Gemini fails.
+    """
+    difficulty_guidance = {
+        "easy": "straightforward, testing basic knowledge and recall",
+        "medium": "moderately challenging, testing understanding and application",
+        "hard": "challenging, testing deep knowledge, edge cases, and problem-solving",
+    }.get(difficulty, "moderately challenging")
+
+    type_guidance = {
+        "multiple_choice": "multiple choice with exactly 4 options (A/B/C/D). Set correctAnswer to the full text of the correct option.",
+        "short_answer": "open-ended short answer. Leave options as empty array, set correctAnswer to a model answer.",
+        "code": f"coding problem in {code_language or 'any language'}. Leave options as empty array, set correctAnswer to a sample solution.",
+    }.get(question_type, "multiple choice")
+
+    points_map = {"easy": 5, "medium": 10, "hard": 15}
+    default_points = points_map.get(difficulty, 10)
+
+    user_prompt = f"""Generate exactly {count} {difficulty_guidance} {question_type} questions about: {topic}
+
+Question format: {type_guidance}
+Points per question: {default_points}
+{"Code language: " + code_language if code_language else ""}
+
+Return JSON: {{ "questions": [ {{ "prompt": "...", "type": "{question_type}", "options": [...], "correctAnswer": "...", "points": {default_points}, "codeLanguage": "{code_language or ""}" }}, ... ] }}"""
+
+    try:
+        raw_json = await _call_gemini(
+            task="generate_questions",
+            system_prompt=_GENERATE_QUESTIONS_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            max_tokens=4096,
+            temperature=0.7,
+            response_mime_type="application/json",
+            response_schema=_GeneratedQuestionsSchema,
+        )
+
+        clean = _clean_gemini_json_response(raw_json)
+        try:
+            data = json.loads(clean, strict=False)
+        except json.JSONDecodeError:
+            data = repair_json(clean, return_objects=True)
+            if not isinstance(data, dict):
+                raise ValueError("repair_json returned non-dict for generate_questions")
+
+        raw_questions = data.get("questions", [])
+        questions = []
+        for i, q in enumerate(raw_questions[:count]):
+            questions.append({
+                "id": f"gen-{i}-{int(__import__('time').time())}",
+                "type": q.get("type", question_type),
+                "prompt": q.get("prompt", ""),
+                "options": q.get("options", []),
+                "correctAnswer": q.get("correctAnswer", ""),
+                "points": max(1, int(q.get("points", default_points))),
+                "codeLanguage": q.get("codeLanguage", code_language or ""),
+            })
+        return questions
+
+    except Exception as exc:
+        logger.error("generate_questions Gemini call failed: %s", exc)
+        # Minimal fallback — return placeholder questions so the UI doesn't crash
+        return [
+            {
+                "id": f"gen-fallback-{i}",
+                "type": question_type,
+                "prompt": f"[AI unavailable] Sample {topic} question {i + 1}",
+                "options": ["Option A", "Option B", "Option C", "Option D"] if question_type == "multiple_choice" else [],
+                "correctAnswer": "Option A" if question_type == "multiple_choice" else "",
+                "points": default_points,
+                "codeLanguage": code_language or "",
+            }
+            for i in range(count)
+        ]

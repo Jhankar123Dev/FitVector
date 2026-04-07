@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,21 @@ interface AssessmentData {
   questionCount: number;
 }
 
+// sessionStorage key for proctoring counts, scoped per submission ID
+function proctoringKey(id: string) { return `proctoring_${id}`; }
+
+function readProctoringCounts(id: string): { tabSwitches: number; copyPasteAttempts: number } {
+  try {
+    const raw = sessionStorage.getItem(proctoringKey(id));
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return { tabSwitches: 0, copyPasteAttempts: 0 };
+}
+
+function writeProctoringCounts(id: string, counts: { tabSwitches: number; copyPasteAttempts: number }) {
+  try { sessionStorage.setItem(proctoringKey(id), JSON.stringify(counts)); } catch { /* ignore */ }
+}
+
 export default function TakeAssessmentPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -50,6 +66,11 @@ export default function TakeAssessmentPage() {
   const [submitResult, setSubmitResult] = useState<Record<string, unknown> | null>(null);
   const [loadError, setLoadError] = useState("");
 
+  // ── Proctoring state — initialised from sessionStorage so reloads don't reset ──
+  const [tabSwitches, setTabSwitches] = useState(0);
+  const [copyPasteAttempts, setCopyPasteAttempts] = useState(0);
+  const [proctoringWarning, setProctoringWarning] = useState<string | null>(null);
+
   // Fetch assessment data from API
   useEffect(() => {
     async function load() {
@@ -61,6 +82,10 @@ export default function TakeAssessmentPage() {
           return;
         }
         setAssessmentData(json.data);
+        // Restore proctoring counts from sessionStorage on load
+        const saved = readProctoringCounts(id);
+        setTabSwitches(saved.tabSwitches);
+        setCopyPasteAttempts(saved.copyPasteAttempts);
         if (json.data.status === "started") {
           // Already started — go to test view
           setTimeLeft((json.data.timeLimitMinutes || 30) * 60);
@@ -101,11 +126,72 @@ export default function TakeAssessmentPage() {
     return () => clearInterval(t);
   }, [view, timeLeft]);
 
+  // ── Proctoring event listeners — active only during the test ──────────────
+  useEffect(() => {
+    if (view !== "test" || !assessment) return;
+
+    const proctoring = (assessment.settings as Record<string, Record<string, boolean>>)?.proctoring ?? {};
+
+    const handleVisibility = () => {
+      if (!proctoring.tabSwitchDetection) return;
+      if (document.visibilityState === "hidden") {
+        setTabSwitches((prev) => {
+          const next = prev + 1;
+          const counts = readProctoringCounts(id);
+          writeProctoringCounts(id, { ...counts, tabSwitches: next });
+          return next;
+        });
+        setProctoringWarning("Tab switch detected — this has been recorded.");
+      }
+    };
+
+    const handleCopyPaste = (e: Event) => {
+      if (!proctoring.copyPasteDetection) return;
+      e.preventDefault();
+      setCopyPasteAttempts((prev) => {
+        const next = prev + 1;
+        const counts = readProctoringCounts(id);
+        writeProctoringCounts(id, { ...counts, copyPasteAttempts: next });
+        return next;
+      });
+      setProctoringWarning("Copy/paste is disabled during this assessment.");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    document.addEventListener("copy", handleCopyPaste);
+    document.addEventListener("cut", handleCopyPaste);
+    document.addEventListener("paste", handleCopyPaste);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      document.removeEventListener("copy", handleCopyPaste);
+      document.removeEventListener("cut", handleCopyPaste);
+      document.removeEventListener("paste", handleCopyPaste);
+    };
+  }, [view, assessment, id]);
+
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   }, []);
+
+  // ── Must be before ALL early returns to satisfy Rules of Hooks ──
+  const questions = assessment?.questions ?? [];
+  const score = useMemo(() => {
+    if (view !== "results") return null;
+    let earned = 0;
+    let max = 0;
+    questions.forEach((q) => {
+      max += q.points;
+      const ans = answers[q.id];
+      if (ans && ans === q.correctAnswer) earned += q.points;
+      else if (ans && q.type === "short_answer") earned += Math.round(q.points * 0.5);
+      else if (ans && q.type === "code") earned += Math.round(q.points * 0.4);
+    });
+    const pct = max > 0 ? Math.round((earned / max) * 100) : 0;
+    return { earned, max, pct, passed: pct >= (assessment?.passingScore ?? 60) };
+  }, [view, questions, answers, assessment?.passingScore]);
 
   if (view === "loading") {
     return (
@@ -119,15 +205,17 @@ export default function TakeAssessmentPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent className="p-8 text-center space-y-4">
             <p className="text-sm text-surface-500">{loadError || "Assessment not found."}</p>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard/tests">← Back to My Tests</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const questions = assessment.questions;
   const question = questions[currentQ];
   const totalPoints = questions.reduce((s, q) => s + q.points, 0);
 
@@ -143,22 +231,6 @@ export default function TakeAssessmentPage() {
       return next;
     });
   }
-
-  // Simple mock scoring
-  const score = useMemo(() => {
-    if (view !== "results") return null;
-    let earned = 0;
-    let max = 0;
-    questions.forEach((q) => {
-      max += q.points;
-      const ans = answers[q.id];
-      if (ans && ans === q.correctAnswer) earned += q.points;
-      else if (ans && q.type === "short_answer") earned += Math.round(q.points * 0.5); // partial
-      else if (ans && q.type === "code") earned += Math.round(q.points * 0.4); // partial
-    });
-    const pct = max > 0 ? Math.round((earned / max) * 100) : 0;
-    return { earned, max, pct, passed: pct >= assessment.passingScore };
-  }, [view, questions, answers, assessment.passingScore]);
 
   // ═══════════════════ INTRO SCREEN ═══════════════════════════
   if (view === "intro") {
@@ -233,6 +305,16 @@ export default function TakeAssessmentPage() {
 
   // ═══════════════════ RESULTS SCREEN ═════════════════════════
   if (view === "results" && score) {
+    // Prefer server-computed score (MCQ auto-graded) over client-side score,
+    // because correctAnswers are stripped from questions before being sent to
+    // the candidate — so client-side MCQ scoring always returns 0.
+    const serverPct = typeof (submitResult as Record<string, unknown> | null)?.finalScore === "number"
+      ? (submitResult as Record<string, unknown>).finalScore as number
+      : null;
+    const displayPct = serverPct ?? score.pct;
+    const displayPassed = displayPct >= (assessment?.passingScore ?? 60);
+    const displayEarned = score.max > 0 ? Math.round((displayPct / 100) * score.max) : score.earned;
+
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-lg">
@@ -240,10 +322,10 @@ export default function TakeAssessmentPage() {
             <div
               className={cn(
                 "mx-auto flex h-16 w-16 items-center justify-center rounded-full",
-                score.passed ? "bg-emerald-100" : "bg-red-100",
+                displayPassed ? "bg-emerald-100" : "bg-red-100",
               )}
             >
-              {score.passed ? (
+              {displayPassed ? (
                 <CheckCircle2 className="h-8 w-8 text-emerald-600" />
               ) : (
                 <XCircle className="h-8 w-8 text-red-600" />
@@ -252,10 +334,10 @@ export default function TakeAssessmentPage() {
 
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-surface-800">
-                {score.passed ? "Assessment Passed!" : "Assessment Not Passed"}
+                {displayPassed ? "Assessment Passed!" : "Assessment Not Passed"}
               </h2>
               <p className="mt-1 text-xs sm:text-sm text-surface-500">
-                {score.passed
+                {displayPassed
                   ? "Congratulations! You met the passing threshold."
                   : "Unfortunately you did not meet the passing score this time."}
               </p>
@@ -263,15 +345,15 @@ export default function TakeAssessmentPage() {
 
             <div className="flex items-center justify-center gap-6">
               <div>
-                <p className={cn("text-3xl font-bold", score.passed ? "text-emerald-600" : "text-red-600")}>
-                  {score.pct}%
+                <p className={cn("text-3xl font-bold", displayPassed ? "text-emerald-600" : "text-red-600")}>
+                  {displayPct}%
                 </p>
                 <p className="text-[11px] text-surface-500">Score</p>
               </div>
               <div className="h-10 w-px bg-surface-200" />
               <div>
                 <p className="text-3xl font-bold text-surface-800">
-                  {score.earned}/{score.max}
+                  {displayEarned}/{score.max}
                 </p>
                 <p className="text-[11px] text-surface-500">Points</p>
               </div>
@@ -282,7 +364,14 @@ export default function TakeAssessmentPage() {
                 <p className="text-xs font-semibold text-surface-700">Question Breakdown</p>
                 {questions.map((q, i) => {
                   const ans = answers[q.id];
-                  const correct = ans === q.correctAnswer;
+                  // Use server-graded result if available (correctAnswer is stripped
+                  // from questions, so client-side comparison is always wrong)
+                  const serverGraded = (
+                    (submitResult as Record<string, unknown> | null)
+                      ?.gradedAnswers as Array<{ questionId: string; isCorrect: boolean; pointsEarned: number }> | undefined
+                  )?.find((g) => g.questionId === q.id);
+                  const correct = serverGraded ? serverGraded.isCorrect : false;
+                  const pointsEarned = serverGraded?.pointsEarned ?? 0;
                   return (
                     <div
                       key={q.id}
@@ -297,9 +386,9 @@ export default function TakeAssessmentPage() {
                       <p className="text-xs text-surface-700 flex-1 line-clamp-1">{q.prompt}</p>
                       <span className="text-[10px] font-bold">
                         {correct ? (
-                          <span className="text-emerald-600">✓ {q.points}pts</span>
+                          <span className="text-emerald-600">✓ {pointsEarned}pts</span>
                         ) : ans ? (
-                          <span className="text-amber-600">~ partial</span>
+                          <span className="text-amber-600">✗ 0pts</span>
                         ) : (
                           <span className="text-surface-400">skipped</span>
                         )}
@@ -309,6 +398,10 @@ export default function TakeAssessmentPage() {
                 })}
               </div>
             )}
+
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/dashboard/tests">← Back to My Tests</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -345,11 +438,14 @@ export default function TakeAssessmentPage() {
               </Button>
               <Button className="flex-1 gap-1.5" onClick={async () => {
                 try {
+                  // Read final proctoring counts from sessionStorage as source of truth
+                  const finalCounts = readProctoringCounts(id);
                   const payload = {
                     answers: (assessment?.questions || []).map((q: AssessmentQuestion) => ({
                       questionId: q.id,
                       selectedAnswer: answers[q.id] || undefined,
                     })),
+                    proctoringData: finalCounts,
                   };
                   const res = await fetch(`/api/assessment/${id}/submit`, {
                     method: "POST",
@@ -358,6 +454,8 @@ export default function TakeAssessmentPage() {
                   });
                   const json = await res.json();
                   setSubmitResult(json.data || {});
+                  // Clean up sessionStorage after successful submission
+                  try { sessionStorage.removeItem(proctoringKey(id)); } catch { /* ignore */ }
                 } catch { /* fallback */ }
                 setView("results");
               }}>
@@ -376,6 +474,22 @@ export default function TakeAssessmentPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* ── Proctoring warning banner ─────────────────────────── */}
+      {proctoringWarning && (
+        <div className="sticky top-0 z-40 flex items-center justify-between gap-3 bg-amber-50 border-b border-amber-200 px-4 py-2">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-amber-800">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+            {proctoringWarning}
+          </div>
+          <button
+            onClick={() => setProctoringWarning(null)}
+            className="text-amber-600 hover:text-amber-800 text-lg leading-none font-bold shrink-0"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* ── Sticky timer bar ──────────────────────────────────── */}
       <div className="sticky top-0 z-30 border-b border-surface-200 bg-white px-3 py-2 sm:px-6 sm:py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">

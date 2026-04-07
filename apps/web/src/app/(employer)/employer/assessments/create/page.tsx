@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Papa from "papaparse";
 import { useCreateAssessment } from "@/hooks/use-assessments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,10 @@ import {
   Code2,
   BookOpen,
   FileCode,
+  Sparkles,
+  Upload,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AssessmentType, DifficultyLevel, QuestionType } from "@/types/employer";
@@ -69,7 +74,7 @@ interface AssessmentForm {
 const INITIAL_FORM: AssessmentForm = {
   title: "",
   type: "coding_test",
-  difficulty: "mid",
+  difficulty: "medium",
   duration: 60,
   description: "",
   questions: [],
@@ -95,11 +100,45 @@ function newQuestion(): QuestionForm {
 
 const CODE_LANGUAGES = ["javascript", "typescript", "python", "java", "go", "rust", "c++"];
 
+// ── CSV template columns ──────────────────────────────────────────────────────
+const CSV_TEMPLATE_HEADERS = ["type", "prompt", "option_a", "option_b", "option_c", "option_d", "correct_answer", "points"];
+const CSV_TEMPLATE_EXAMPLES = [
+  ["multiple_choice", "What does HTML stand for?", "HyperText Markup Language", "HyperText Markdown Language", "HighText Machine Language", "HyperText Machine Language", "HyperText Markup Language", "10"],
+  ["multiple_choice", "Which method is used to add an element to the end of an array?", "push()", "pop()", "shift()", "unshift()", "push()", "10"],
+  ["short_answer", "Explain what a closure is in JavaScript.", "", "", "", "", "A closure is a function that retains access to its outer lexical scope.", "15"],
+  ["code", "Write a function that reverses a string.", "", "", "", "", "function reverse(s) { return s.split('').reverse().join(''); }", "20"],
+];
+
+function downloadCsvTemplate() {
+  const rows = [CSV_TEMPLATE_HEADERS, ...CSV_TEMPLATE_EXAMPLES];
+  const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "assessment_questions_template.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function CreateAssessmentPage() {
   const router = useRouter();
   const createAssessment = useCreateAssessment();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<AssessmentForm>(INITIAL_FORM);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+
+  // ── AI generate state ─────────────────────────────────────────
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiPreview, setAiPreview] = useState<QuestionForm[]>([]);
+  const [aiForm, setAiForm] = useState({ topic: "", questionType: "multiple_choice" as QuestionType, difficulty: "medium" as DifficultyLevel, count: 10, codeLanguage: "javascript" });
+
+  // ── CSV import state ──────────────────────────────────────────
+  const [csvPreview, setCsvPreview] = useState<QuestionForm[]>([]);
+  const [showCsvPreview, setShowCsvPreview] = useState(false);
+  const [csvError, setCsvError] = useState("");
 
   const update = useCallback(
     <K extends keyof AssessmentForm>(key: K, value: AssessmentForm[K]) =>
@@ -144,6 +183,96 @@ export default function CreateAssessmentPage() {
     if (!q || q.options.length <= 2) return;
     const opts = q.options.filter((_, i) => i !== idx);
     updateQuestion(qId, { options: opts });
+  }
+
+  // ── AI generation helpers ─────────────────────────────────────
+  async function handleAiGenerate() {
+    if (!aiForm.topic.trim()) { setAiError("Please enter a topic."); return; }
+    setAiGenerating(true);
+    setAiError("");
+    try {
+      const res = await fetch("/api/employer/assessments/generate-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: aiForm.topic,
+          questionType: aiForm.questionType,
+          difficulty: aiForm.difficulty,
+          count: aiForm.count,
+          codeLanguage: aiForm.questionType === "code" ? aiForm.codeLanguage : undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setAiError(json.error || "Generation failed"); return; }
+      const questions: QuestionForm[] = (json.data || []).map((q: Record<string, unknown>, i: number) => ({
+        id: `ai-${Date.now()}-${i}`,
+        type: (q.type as QuestionType) || aiForm.questionType,
+        prompt: (q.prompt as string) || "",
+        options: (q.options as string[]) || [],
+        correctAnswer: (q.correctAnswer as string) || "",
+        points: typeof q.points === "number" ? q.points : 10,
+        codeLanguage: (q.codeLanguage as string) || aiForm.codeLanguage,
+      }));
+      setAiPreview(questions);
+    } catch {
+      setAiError("Network error — please try again.");
+    } finally {
+      setAiGenerating(false);
+    }
+  }
+
+  function confirmAiQuestions() {
+    update("questions", [...form.questions, ...aiPreview]);
+    setAiPreview([]);
+    setShowAiModal(false);
+    setAiForm({ topic: "", questionType: "multiple_choice", difficulty: "medium", count: 10, codeLanguage: "javascript" });
+  }
+
+  // ── CSV import helpers ────────────────────────────────────────
+  function handleCsvFile(file: File) {
+    setCsvError("");
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (h) => h.trim().toLowerCase().replace(/\s+/g, "_"),
+      complete: (results) => {
+        if (results.errors.length > 0) {
+          setCsvError(`CSV parse error: ${results.errors[0].message}`);
+          return;
+        }
+        const questions: QuestionForm[] = results.data
+          .filter((row) => row.prompt?.trim())
+          .map((row, i) => {
+            const type = (row.type?.trim() || "multiple_choice") as QuestionType;
+            const options = [row.option_a, row.option_b, row.option_c, row.option_d]
+              .map((o) => (o || "").trim())
+              .filter(Boolean);
+            return {
+              id: `csv-${Date.now()}-${i}`,
+              type,
+              prompt: row.prompt?.trim() || "",
+              options,
+              correctAnswer: row.correct_answer?.trim() || "",
+              points: parseInt(row.points || "10", 10) || 10,
+              codeLanguage: "javascript",
+            };
+          });
+        if (questions.length === 0) {
+          setCsvError("No valid questions found in the CSV. Make sure the file uses the template format.");
+          return;
+        }
+        setCsvPreview(questions);
+        setShowCsvPreview(true);
+      },
+      error: (err) => setCsvError(`Failed to read file: ${err.message}`),
+    });
+  }
+
+  function confirmCsvQuestions() {
+    update("questions", [...form.questions, ...csvPreview]);
+    setCsvPreview([]);
+    setShowCsvPreview(false);
+    if (csvInputRef.current) csvInputRef.current.value = "";
   }
 
   return (
@@ -414,9 +543,155 @@ export default function CreateAssessmentPage() {
             </Card>
           ))}
 
-          <Button variant="outline" className="w-full gap-1.5" onClick={addQuestion}>
-            <Plus className="h-4 w-4" /> Add Question
-          </Button>
+          {/* ── Question action bar ──────────────────────────── */}
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="gap-1.5" onClick={addQuestion}>
+              <Plus className="h-4 w-4" /> Add Question
+            </Button>
+            <Button variant="outline" className="gap-1.5 text-violet-700 border-violet-200 hover:bg-violet-50" onClick={() => { setShowAiModal(true); setAiPreview([]); setAiError(""); }}>
+              <Sparkles className="h-4 w-4" /> Generate with AI
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => { downloadCsvTemplate(); setTimeout(() => csvInputRef.current?.click(), 300); }}
+            >
+              <Download className="h-3.5 w-3.5" /> Template
+            </Button>
+            <Button variant="outline" className="gap-1.5" onClick={() => csvInputRef.current?.click()}>
+              <Upload className="h-4 w-4" /> Import CSV
+            </Button>
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); }}
+            />
+          </div>
+          {csvError && <p className="text-xs text-red-600">{csvError}</p>}
+        </div>
+      )}
+
+      {/* ═══════════════════ AI GENERATE MODAL ════════════════ */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-md">
+            <CardContent className="space-y-4 p-5 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-violet-600" />
+                  <h3 className="text-sm font-semibold text-surface-800">Generate Questions with AI</h3>
+                </div>
+                <button onClick={() => setShowAiModal(false)} className="text-surface-400 hover:text-surface-700 text-lg font-bold leading-none">×</button>
+              </div>
+
+              {aiPreview.length === 0 ? (
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Topic / Skill *</Label>
+                    <Input placeholder="e.g. JavaScript closures, SQL joins, System Design" value={aiForm.topic} onChange={(e) => setAiForm((p) => ({ ...p, topic: e.target.value }))} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Question Type</Label>
+                      <select className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-brand-500/30" value={aiForm.questionType} onChange={(e) => setAiForm((p) => ({ ...p, questionType: e.target.value as QuestionType }))}>
+                        {(["multiple_choice", "short_answer", "code"] as QuestionType[]).map((t) => (
+                          <option key={t} value={t}>{QUESTION_TYPE_LABELS[t]}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Difficulty</Label>
+                      <select className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-brand-500/30" value={aiForm.difficulty} onChange={(e) => setAiForm((p) => ({ ...p, difficulty: e.target.value as DifficultyLevel }))}>
+                        {(["easy", "medium", "hard"] as DifficultyLevel[]).map((d) => (
+                          <option key={d} value={d}>{DIFFICULTY_LABELS[d]}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {aiForm.questionType === "code" && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Code Language</Label>
+                      <select className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-brand-500/30" value={aiForm.codeLanguage} onChange={(e) => setAiForm((p) => ({ ...p, codeLanguage: e.target.value }))}>
+                        {CODE_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Number of Questions</Label>
+                    <div className="flex gap-2">
+                      {[5, 10, 15, 20].map((n) => (
+                        <button key={n} onClick={() => setAiForm((p) => ({ ...p, count: n }))} className={cn("flex-1 rounded-md border py-1.5 text-xs font-medium transition-colors", aiForm.count === n ? "border-brand-500 bg-brand-50 text-brand-700" : "border-surface-200 text-surface-600 hover:border-surface-300")}>
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {aiError && <p className="text-xs text-red-600">{aiError}</p>}
+                  <Button className="w-full gap-1.5" onClick={handleAiGenerate} disabled={aiGenerating}>
+                    {aiGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating…</> : <><Sparkles className="h-3.5 w-3.5" /> Generate {aiForm.count} Questions</>}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-surface-500">{aiPreview.length} questions generated. Review and remove any you don't want before adding.</p>
+                  <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                    {aiPreview.map((q, i) => (
+                      <div key={q.id} className="flex items-start gap-2 rounded-lg border border-surface-200 p-3">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-700">{i + 1}</span>
+                        <p className="flex-1 text-xs text-surface-700 line-clamp-2">{q.prompt}</p>
+                        <button onClick={() => setAiPreview((p) => p.filter((_, idx) => idx !== i))} className="shrink-0 text-surface-400 hover:text-red-500">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1 text-xs" onClick={() => setAiPreview([])}>← Regenerate</Button>
+                    <Button className="flex-1 gap-1 text-xs" onClick={confirmAiQuestions} disabled={aiPreview.length === 0}>
+                      <Plus className="h-3.5 w-3.5" /> Add {aiPreview.length} Questions
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ═══════════════════ CSV PREVIEW MODAL ════════════════ */}
+      {showCsvPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-lg">
+            <CardContent className="space-y-4 p-5 sm:p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-surface-800">CSV Import Preview</h3>
+                <button onClick={() => { setShowCsvPreview(false); setCsvPreview([]); if (csvInputRef.current) csvInputRef.current.value = ""; }} className="text-surface-400 hover:text-surface-700 text-lg font-bold leading-none">×</button>
+              </div>
+              <p className="text-xs text-surface-500">{csvPreview.length} questions found. Review before importing.</p>
+              <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                {csvPreview.map((q, i) => (
+                  <div key={q.id} className="flex items-start gap-2 rounded-lg border border-surface-200 p-3">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-surface-700 line-clamp-2">{q.prompt}</p>
+                      <p className="mt-0.5 text-[10px] text-surface-400">{QUESTION_TYPE_LABELS[q.type]} · {q.points}pts</p>
+                    </div>
+                    <button onClick={() => setCsvPreview((p) => p.filter((_, idx) => idx !== i))} className="shrink-0 text-surface-400 hover:text-red-500">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 text-xs" onClick={() => { setShowCsvPreview(false); setCsvPreview([]); if (csvInputRef.current) csvInputRef.current.value = ""; }}>Cancel</Button>
+                <Button className="flex-1 gap-1 text-xs" onClick={confirmCsvQuestions} disabled={csvPreview.length === 0}>
+                  <Plus className="h-3.5 w-3.5" /> Import {csvPreview.length} Questions
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

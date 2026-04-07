@@ -48,11 +48,17 @@ export async function POST(
     const elapsedMinutes = (now.getTime() - startedAt.getTime()) / 60000;
     const timeLimit = assessment?.time_limit_minutes || null;
 
-    // Time limit check with 2-minute grace period — NEVER reject, always accept
-    const proctoringFlags: string[] = [];
-    if (timeLimit && elapsedMinutes > timeLimit + 2) {
-      proctoringFlags.push(`submitted_late_by_${Math.round(elapsedMinutes - timeLimit)}_minutes`);
-    }
+    // Build structured proctoring flags object
+    const isLate = !!(timeLimit && elapsedMinutes > timeLimit + 2);
+    const proctoringFlags = {
+      tabSwitches: parsed.data.proctoringData?.tabSwitches ?? 0,
+      copyPasteAttempts: parsed.data.proctoringData?.copyPasteAttempts ?? 0,
+      submittedLate: isLate,
+      lateByMinutes: isLate ? Math.round(elapsedMinutes - timeLimit!) : 0,
+      flagged: isLate
+        || (parsed.data.proctoringData?.tabSwitches ?? 0) >= 3
+        || (parsed.data.proctoringData?.copyPasteAttempts ?? 0) >= 2,
+    };
 
     // Build update
     const update: Record<string, unknown> = {
@@ -65,11 +71,13 @@ export async function POST(
 
     // Auto-grade MCQ assessments
     const assessmentType = assessment?.assessment_type as string;
+    let gradedAnswersForResponse: Array<{ questionId: string; isCorrect: boolean; pointsEarned: number; pointsMax: number }> = [];
     if (assessmentType === "mcq_quiz") {
       const questions = (assessment?.questions || []) as Array<{ id: string; correctAnswer?: string; points?: number }>;
       const { score, gradedAnswers } = autoGradeMCQ(questions, parsed.data.answers);
       update.auto_score = score;
       update.final_score = score;
+      gradedAnswersForResponse = gradedAnswers;
       // Merge grading info into answers
       update.answers = parsed.data.answers.map((a) => {
         const graded = gradedAnswers.find((g) => g.questionId === a.questionId);
@@ -95,11 +103,11 @@ export async function POST(
       return NextResponse.json({ error: "Failed to submit" }, { status: 500 });
     }
 
-    // Advance applicant to 'assessment' pipeline stage
+    // Advance applicant to 'assessment_completed' pipeline stage
     if (submission.applicant_id) {
       await supabase
         .from("applicants")
-        .update({ pipeline_stage: "assessment" })
+        .update({ pipeline_stage: "assessment_completed" })
         .eq("id", submission.applicant_id);
     }
 
@@ -110,7 +118,9 @@ export async function POST(
         autoScore: updated.auto_score,
         finalScore: updated.final_score,
         timeTaken: Math.round(elapsedMinutes),
-        wasLate: proctoringFlags.length > 0,
+        wasLate: proctoringFlags.submittedLate,
+        // Per-question grading so the results screen can show correct/incorrect
+        gradedAnswers: gradedAnswersForResponse,
       },
       message: "Assessment submitted successfully",
     });
