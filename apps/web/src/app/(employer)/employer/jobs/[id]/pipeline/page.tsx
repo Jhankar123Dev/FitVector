@@ -33,11 +33,11 @@ import {
   useRejectApplicant,
   useScreenApplicant,
   useBulkScreen,
-  useSendAssessment,
   useScheduleInterview,
 } from "@/hooks/use-applicants";
 import { useEmployerJob } from "@/hooks/use-employer-jobs";
 import { useInviteInterview } from "@/hooks/use-interviews";
+import { useAssessments, useAssignAssessment } from "@/hooks/use-assessments";
 import type { Applicant, PipelineStage } from "@/types/employer";
 import { PIPELINE_STAGE_LABELS, PIPELINE_COLUMNS } from "@/types/employer";
 
@@ -71,7 +71,7 @@ export default function PipelinePage() {
   const screenApplicant = useScreenApplicant();
   const bulkScreenMutation = useBulkScreen();
   const inviteInterview = useInviteInterview();
-  const sendAssessment = useSendAssessment();
+  const assignAssessment = useAssignAssessment();
   const scheduleInterview = useScheduleInterview();
 
   const job = jobData?.data;
@@ -83,6 +83,8 @@ export default function PipelinePage() {
   const [showRejected, setShowRejected] = useState(false);
   const [scheduleModalApplicant, setScheduleModalApplicant] = useState<Applicant | null>(null);
   const [offerModalApplicant, setOfferModalApplicant] = useState<Applicant | null>(null);
+  const [assessmentModalApplicant, setAssessmentModalApplicant] = useState<Applicant | null>(null);
+  const [bulkAssessmentModal, setBulkAssessmentModal] = useState(false);
 
   // ── Filters ─────────────────────────────────────────────────────
   const [showFilters, setShowFilters] = useState(false);
@@ -170,6 +172,12 @@ export default function PipelinePage() {
     const applicant = applicants.find((a) => a.id === id);
     if (!applicant) return;
     setDetailApplicant(null);
+
+    // Intercept: open assessment picker before moving to assessment_pending
+    if (applicant.pipelineStage === "ai_screened") {
+      setAssessmentModalApplicant(applicant);
+      return;
+    }
 
     // Intercept: open schedule modal before moving to human_interview
     if (applicant.pipelineStage === "ai_interviewed") {
@@ -356,16 +364,10 @@ export default function PipelinePage() {
                 variant="outline"
                 size="sm"
                 className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5"
-                disabled={sendAssessment.isPending}
-                onClick={() => {
-                  for (const id of selectedIds) {
-                    sendAssessment.mutate(id);
-                  }
-                  clearSelection();
-                }}
+                onClick={() => setBulkAssessmentModal(true)}
               >
                 <ClipboardCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                {sendAssessment.isPending ? "Sending…" : "Send Assessment"}
+                Send Assessment
               </Button>
               <Button variant="ghost" size="sm" onClick={clearSelection} className="h-7 text-xs sm:h-8 sm:text-sm">
                 Clear
@@ -659,6 +661,51 @@ export default function PipelinePage() {
         />
       )}
 
+      {assessmentModalApplicant && (
+        <AssessmentPickerModal
+          applicant={assessmentModalApplicant}
+          jobId={jobId}
+          onClose={() => setAssessmentModalApplicant(null)}
+          onConfirm={(assessmentId) => {
+            assignAssessment.mutate(
+              { assessmentId, applicantIds: [assessmentModalApplicant.id], jobPostId: jobId },
+              {
+                onSuccess: () => {
+                  changeStage.mutate({ id: assessmentModalApplicant.id, stage: "assessment_pending" });
+                  setAssessmentModalApplicant(null);
+                },
+              }
+            );
+          }}
+          isPending={assignAssessment.isPending}
+        />
+      )}
+
+      {bulkAssessmentModal && (
+        <AssessmentPickerModal
+          applicant={null}
+          jobId={jobId}
+          onClose={() => setBulkAssessmentModal(false)}
+          onConfirm={(assessmentId) => {
+            const ids = Array.from(selectedIds);
+            assignAssessment.mutate(
+              { assessmentId, applicantIds: ids, jobPostId: jobId },
+              {
+                onSuccess: () => {
+                  for (const id of ids) {
+                    changeStage.mutate({ id, stage: "assessment_pending" });
+                  }
+                  setBulkAssessmentModal(false);
+                  clearSelection();
+                },
+              }
+            );
+          }}
+          isPending={assignAssessment.isPending}
+          bulkCount={selectedIds.size}
+        />
+      )}
+
       {scheduleModalApplicant && (
         <ScheduleInterviewModal
           applicant={scheduleModalApplicant}
@@ -803,6 +850,156 @@ function CandidateTableRow({
         </span>
       </td>
     </tr>
+  );
+}
+
+// ── Assessment Picker Modal ──────────────────────────────────────────────────
+const ASSESSMENT_TYPE_LABELS: Record<string, string> = {
+  coding_test: "Coding Test",
+  mcq_quiz: "MCQ Quiz",
+  case_study: "Case Study",
+  assignment: "Assignment",
+};
+const ASSESSMENT_TYPE_COLORS: Record<string, string> = {
+  coding_test: "bg-violet-50 text-violet-700",
+  mcq_quiz: "bg-sky-50 text-sky-700",
+  case_study: "bg-amber-50 text-amber-700",
+  assignment: "bg-emerald-50 text-emerald-700",
+};
+
+function AssessmentPickerModal({
+  applicant,
+  jobId,
+  onClose,
+  onConfirm,
+  isPending,
+  bulkCount,
+}: {
+  applicant: Applicant | null;
+  jobId: string;
+  onClose: () => void;
+  onConfirm: (assessmentId: string) => void;
+  isPending: boolean;
+  bulkCount?: number;
+}) {
+  const { data: assessmentsData, isLoading } = useAssessments();
+  const assessments = (assessmentsData?.data || []) as Record<string, unknown>[];
+  const [selectedId, setSelectedId] = useState<string>("");
+
+  const candidateLabel = bulkCount
+    ? `${bulkCount} candidates`
+    : applicant?.name ?? "candidate";
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-surface-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 border-b border-surface-200 px-5 py-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50">
+              <ClipboardCheck className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-surface-800">Send Assessment</h3>
+              <p className="text-xs text-surface-500">{candidateLabel}</p>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="px-5 py-4 max-h-[320px] overflow-y-auto">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-surface-400" />
+              </div>
+            ) : assessments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-surface-200 py-10 text-center">
+                <ClipboardCheck className="h-8 w-8 text-surface-300" />
+                <p className="mt-2 text-sm font-medium text-surface-700">No assessments yet</p>
+                <p className="mt-1 text-xs text-surface-500">Create an assessment first, then assign it here.</p>
+                <a
+                  href="/employer/assessments/create"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 text-xs font-medium text-brand-600 hover:text-brand-700 underline underline-offset-2"
+                >
+                  Create Assessment →
+                </a>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-surface-500 mb-3">Select an assessment to assign:</p>
+                {assessments.map((a) => {
+                  const id = a.id as string;
+                  const name = a.name as string;
+                  const type = (a.assessmentType || a.assessment_type) as string;
+                  const difficulty = a.difficulty as string | undefined;
+                  const timeLimit = (a.timeLimitMinutes || a.time_limit_minutes) as number | undefined;
+                  const isSelected = selectedId === id;
+
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setSelectedId(id)}
+                      className={cn(
+                        "w-full rounded-lg border px-3 py-2.5 text-left transition-colors",
+                        isSelected
+                          ? "border-brand-400 bg-brand-50"
+                          : "border-surface-200 hover:border-surface-300 hover:bg-surface-50"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-surface-800 truncate">{name}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            {type && (
+                              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", ASSESSMENT_TYPE_COLORS[type] || "bg-surface-100 text-surface-600")}>
+                                {ASSESSMENT_TYPE_LABELS[type] || type}
+                              </span>
+                            )}
+                            {difficulty && (
+                              <span className="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-medium text-surface-600 capitalize">
+                                {difficulty}
+                              </span>
+                            )}
+                            {timeLimit && (
+                              <span className="text-[10px] text-surface-400">{timeLimit} min</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className={cn(
+                          "mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 transition-colors",
+                          isSelected ? "border-brand-500 bg-brand-500" : "border-surface-300"
+                        )} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 border-t border-surface-200 px-5 py-3">
+            <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => selectedId && onConfirm(selectedId)}
+              disabled={!selectedId || isPending || assessments.length === 0}
+              className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              {isPending ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Assigning…</>
+              ) : (
+                <><ClipboardCheck className="h-3.5 w-3.5" /> Assign &amp; Send</>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
