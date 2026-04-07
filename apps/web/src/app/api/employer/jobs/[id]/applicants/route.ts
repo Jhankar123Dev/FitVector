@@ -126,9 +126,31 @@ export async function GET(
       }
     }
 
+    // ── Enrich with latest test score from assessment_submissions ──────────────
+    let testScoreByApplicantId: Record<string, number> = {};
+    if (applicantIds.length > 0) {
+      const { data: subs } = await supabase
+        .from("assessment_submissions")
+        .select("applicant_id, auto_score, final_score, status")
+        .in("applicant_id", applicantIds)
+        .in("status", ["submitted", "graded"])
+        .order("created_at", { ascending: false });
+
+      // First submission per applicant (latest due to desc order)
+      for (const sub of subs || []) {
+        if (!(sub.applicant_id in testScoreByApplicantId)) {
+          const score = (sub.final_score as number | null) ?? (sub.auto_score as number | null);
+          if (score !== null && score !== undefined) {
+            testScoreByApplicantId[sub.applicant_id] = score;
+          }
+        }
+      }
+    }
+
     const applicants = (rows || []).map((row) => ({
       ...transformApplicant(row),
       resumePdfUrl: pdfByApplicantId[row.id as string] ?? null,
+      testScore: testScoreByApplicantId[row.id as string] ?? null,
     }));
 
     return NextResponse.json({

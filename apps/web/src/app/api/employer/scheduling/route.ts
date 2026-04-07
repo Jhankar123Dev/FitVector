@@ -6,6 +6,7 @@ import { z } from "zod";
 
 const scheduleInterviewBodySchema = z.object({
   applicantId: z.string().uuid(),
+  interviewerId: z.string().uuid().optional(), // first selected interviewer; falls back to session user
   interviewType: z.enum(["phone_screen", "technical", "behavioral", "culture_fit", "hiring_manager", "panel"]).default("technical"),
   scheduledAt: z.string().min(1, "Scheduled time is required"),
   durationMinutes: z.number().int().min(15).max(180).default(60),
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { applicantId, interviewType, scheduledAt, durationMinutes, meetingLink } = parsed.data;
+    const { applicantId, interviewerId, interviewType, scheduledAt, durationMinutes, meetingLink } = parsed.data;
     const supabase = createAdminClient();
 
     // Verify applicant belongs to this company
@@ -101,7 +102,7 @@ export async function POST(req: Request) {
       .insert({
         applicant_id: applicantId,
         job_post_id: applicant.job_post_id,
-        interviewer_id: session.user.id,
+        interviewer_id: interviewerId ?? session.user.id,
         interview_type: interviewType,
         scheduled_at: scheduledAt,
         duration_minutes: durationMinutes,

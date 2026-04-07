@@ -433,16 +433,16 @@ async def parse_resume_file(file_bytes: bytes, content_type: str) -> ParseResume
         # JSON string values — covers PDF content Gemini embeds literally.
         parsed_data = json.loads(clean, strict=False)
     except json.JSONDecodeError as exc:
-        logger.warning("Gemini returned non-JSON for resume parse: %s — attempting repair", exc)
+        logger.debug("Gemini returned non-JSON for resume parse: %s — attempting repair", exc)
         try:
             # json_repair handles all structural issues: missing commas,
             # trailing commas, unquoted keys, truncated output, etc.
             parsed_data = repair_json(clean, return_objects=True)
             if not isinstance(parsed_data, dict):
                 raise ValueError("repair_json returned non-dict")
-            logger.info("json-repair succeeded")
+            logger.debug("json-repair succeeded for resume parse")
         except Exception:
-            logger.warning("json-repair failed — raising error to caller")
+            logger.warning("json-repair failed for resume parse — raising error to caller")
             raise ValueError(
                 "Resume parsing failed — the AI returned an unreadable response. "
                 "Please try re-uploading your resume."

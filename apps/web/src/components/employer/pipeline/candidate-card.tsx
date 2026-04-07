@@ -81,18 +81,26 @@ export function CandidateCard({
 
         {/* Info */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <p className="truncate text-sm font-medium text-surface-800">
               {applicant.name}
             </p>
-            {applicant.screeningScore > 0 && (
+            <span
+              className={cn(
+                "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white",
+                scoreColor(applicant.screeningScore),
+              )}
+            >
+              AI Match: {applicant.screeningScore}
+            </span>
+            {applicant.testScore !== null && applicant.testScore !== undefined && (
               <span
                 className={cn(
                   "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white",
-                  scoreColor(applicant.screeningScore),
+                  scoreColor(applicant.testScore),
                 )}
               >
-                {applicant.screeningScore}
+                Test: {applicant.testScore}
               </span>
             )}
           </div>
@@ -180,18 +188,26 @@ export function CandidateRow({
         <p className="text-xs text-surface-400">{applicant.currentCompany}</p>
       </td>
       <td className="px-4 py-3">
-        {applicant.screeningScore > 0 ? (
+        <div className="flex flex-col gap-1">
           <span
             className={cn(
-              "inline-flex rounded-full px-2 py-0.5 text-xs font-bold",
+              "inline-flex rounded-full px-2 py-0.5 text-xs font-bold w-fit",
               scoreBgColor(applicant.screeningScore),
             )}
           >
-            {applicant.screeningScore}
+            AI Match: {applicant.screeningScore}
           </span>
-        ) : (
-          <span className="text-xs text-surface-400">—</span>
-        )}
+          {applicant.testScore !== null && applicant.testScore !== undefined && (
+            <span
+              className={cn(
+                "inline-flex rounded-full px-2 py-0.5 text-xs font-bold w-fit",
+                scoreBgColor(applicant.testScore),
+              )}
+            >
+              Test: {applicant.testScore}
+            </span>
+          )}
+        </div>
       </td>
       <td className="px-4 py-3">
         <span

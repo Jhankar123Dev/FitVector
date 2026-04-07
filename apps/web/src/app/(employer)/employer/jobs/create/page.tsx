@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,8 @@ import {
   Eye,
   Trash2,
   GripVertical,
+  Lock,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateJobPost } from "@/hooks/use-employer-jobs";
@@ -37,7 +40,6 @@ import type {
   AssessmentType,
   ScreeningQuestionType,
   ScreeningQuestion,
-  PipelineStage,
 } from "@/types/employer";
 import {
   JOB_TYPE_LABELS,
@@ -45,7 +47,7 @@ import {
   INTERVIEW_TYPE_LABELS,
   ASSESSMENT_TYPE_LABELS,
   DIFFICULTY_LABELS,
-  PIPELINE_STAGE_LABELS,
+  getStageName,
 } from "@/types/employer";
 
 // ── Step config ─────────────────────────────────────────────────────
@@ -61,31 +63,35 @@ const STEPS = [
 ];
 
 // ── Pipeline stage config for Step 7 ────────────────────────────────
-const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
-  "applied", "ai_screened", "assessment_pending", "assessment_completed",
-  "ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired",
+
+// Always first two and last two — cannot be moved or removed
+const PIPELINE_LOCKED_HEAD = ["applied", "ai_screened"];
+const PIPELINE_LOCKED_TAIL = ["offer", "hired"];
+const PIPELINE_LOCKED_SET = new Set([...PIPELINE_LOCKED_HEAD, ...PIPELINE_LOCKED_TAIL]);
+
+// Default middle stages between AI Screened and Offer
+const DEFAULT_MIDDLE_STAGES: string[] = [
+  "assessment_pending", "assessment_completed",
+  "ai_interview_pending", "ai_interviewed", "human_interview",
 ];
 
-// Stages that are always mandatory and cannot be removed
-const LOCKED_STAGES = new Set<PipelineStage>(["applied", "ai_screened", "offer", "hired"]);
+const DEFAULT_PIPELINE_STAGES: string[] = [
+  ...PIPELINE_LOCKED_HEAD,
+  ...DEFAULT_MIDDLE_STAGES,
+  ...PIPELINE_LOCKED_TAIL,
+];
 
-// Grouping for the toggle UI
-const PIPELINE_STAGE_GROUPS = [
-  {
-    label: "Assessment Block",
-    description: "Send candidates a skills test",
-    stages: ["assessment_pending", "assessment_completed"] as PipelineStage[],
-  },
-  {
-    label: "AI Interview Block",
-    description: "AI-conducted voice/text interview",
-    stages: ["ai_interview_pending", "ai_interviewed"] as PipelineStage[],
-  },
-  {
-    label: "Human Interview",
-    description: "Schedule a call or on-site round",
-    stages: ["human_interview"] as PipelineStage[],
-  },
+// Preset stage chips the employer can pick from
+const PIPELINE_PRESETS: { value: string; label: string; group: string }[] = [
+  { value: "assessment_pending",    label: "Test Pending",         group: "Assessment" },
+  { value: "assessment_completed",  label: "Test Completed",        group: "Assessment" },
+  { value: "ai_interview_pending",  label: "AI Interview Pending",  group: "AI Interview" },
+  { value: "ai_interviewed",        label: "AI Interviewed",        group: "AI Interview" },
+  { value: "phone_screen",          label: "Phone Screen",          group: "Human Interview" },
+  { value: "human_interview",       label: "Human Interview",       group: "Human Interview" },
+  { value: "background_check",      label: "Background Check",      group: "Other" },
+  { value: "reference_check",       label: "Reference Check",       group: "Other" },
+  { value: "hr_round",              label: "HR Round",              group: "Other" },
 ];
 
 
@@ -170,6 +176,7 @@ export default function CreateJobPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<JobPostFormData>(INITIAL_FORM);
+  const [customStageName, setCustomStageName] = useState("");
   const createJobPost = useCreateJobPost();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -1375,84 +1382,228 @@ export default function CreateJobPage() {
       )}
 
       {/* ═══════════ STEP 7: Pipeline ════════════════════════════════ */}
-      {step === 7 && (
-        <Card>
-          <CardContent className="space-y-6 p-6">
-            <div>
-              <h2 className="text-base font-semibold text-surface-800">Pipeline Configuration</h2>
-              <p className="mt-1 text-xs text-surface-500">
-                Choose which stages are part of this job's hiring flow. Core stages (Applied, AI Screened, Offer, Hired) are always included.
-              </p>
-            </div>
+      {step === 7 && (() => {
+        // Derive the editable middle stages from form state
+        const middleStages = form.pipelineStages.filter((s) => !PIPELINE_LOCKED_SET.has(s));
 
-            {/* Visual pipeline preview */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {form.pipelineStages.map((stage, i) => (
-                <div key={stage} className="flex items-center gap-1.5">
-                  <span className="rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-[11px] font-medium text-brand-700">
-                    {PIPELINE_STAGE_LABELS[stage]}
+        function rebuildPipeline(newMiddle: string[]) {
+          update({ pipelineStages: [...PIPELINE_LOCKED_HEAD, ...newMiddle, ...PIPELINE_LOCKED_TAIL] });
+        }
+
+        function onDragEnd(result: DropResult) {
+          if (!result.destination || result.destination.index === result.source.index) return;
+          const reordered = Array.from(middleStages);
+          const [moved] = reordered.splice(result.source.index, 1);
+          reordered.splice(result.destination.index, 0, moved);
+          rebuildPipeline(reordered);
+        }
+
+        function addPresetStage(value: string) {
+          if (!middleStages.includes(value)) {
+            rebuildPipeline([...middleStages, value]);
+          }
+        }
+
+        function addCustomStage() {
+          const trimmed = customStageName.trim();
+          if (!trimmed) return;
+          rebuildPipeline([...middleStages, trimmed]);
+          setCustomStageName("");
+        }
+
+        function removeStage(index: number) {
+          const updated = middleStages.filter((_, i) => i !== index);
+          rebuildPipeline(updated);
+        }
+
+        // Group presets by category for display
+        const presetGroups = PIPELINE_PRESETS.reduce<Record<string, typeof PIPELINE_PRESETS>>((acc, p) => {
+          if (!acc[p.group]) acc[p.group] = [];
+          acc[p.group].push(p);
+          return acc;
+        }, {});
+
+        return (
+          <Card>
+            <CardContent className="space-y-6 p-6">
+              {/* Header */}
+              <div>
+                <h2 className="text-base font-semibold text-surface-800">Pipeline Configuration</h2>
+                <p className="mt-1 text-xs text-surface-500">
+                  Design your hiring flow. Drag to reorder stages, click a preset to add, or type a custom stage name.
+                  <span className="ml-1 inline-flex items-center gap-0.5 text-surface-400">
+                    <Lock className="h-2.5 w-2.5" /> Locked stages are always included.
                   </span>
-                  {i < form.pipelineStages.length - 1 && (
-                    <span className="text-surface-300 text-xs">→</span>
-                  )}
-                </div>
-              ))}
-            </div>
+                </p>
+              </div>
 
-            {/* Toggle blocks */}
-            <div className="space-y-3">
-              {PIPELINE_STAGE_GROUPS.map((group) => {
-                const isActive = group.stages.some((s) => form.pipelineStages.includes(s));
-                return (
-                  <div
-                    key={group.label}
-                    className={cn(
-                      "flex items-center justify-between rounded-lg border p-4 transition-colors",
-                      isActive ? "border-brand-200 bg-brand-50/50" : "border-surface-200",
+              {/* Full pipeline preview */}
+              <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-surface-50 p-3 border border-surface-200">
+                {form.pipelineStages.map((stage, i) => (
+                  <div key={`preview-${stage}-${i}`} className="flex items-center gap-1.5">
+                    <span className={cn(
+                      "rounded-full px-2.5 py-1 text-[11px] font-medium",
+                      PIPELINE_LOCKED_SET.has(stage)
+                        ? "bg-surface-200 text-surface-600"
+                        : "bg-brand-50 border border-brand-200 text-brand-700",
+                    )}>
+                      {getStageName(stage)}
+                    </span>
+                    {i < form.pipelineStages.length - 1 && (
+                      <ChevronRight className="h-3 w-3 text-surface-300 shrink-0" />
                     )}
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-surface-800">{group.label}</p>
-                      <p className="text-xs text-surface-500">{group.description}</p>
-                      <div className="mt-1.5 flex flex-wrap gap-1">
-                        {group.stages.map((s) => (
-                          <span key={s} className="text-[10px] rounded bg-surface-100 px-1.5 py-0.5 text-surface-600">
-                            {PIPELINE_STAGE_LABELS[s]}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const current = form.pipelineStages;
-                        let next: PipelineStage[];
-                        if (isActive) {
-                          // Remove all stages in this group
-                          next = current.filter((s) => !group.stages.includes(s));
-                        } else {
-                          // Insert group stages in their canonical position
-                          const allStages = DEFAULT_PIPELINE_STAGES;
-                          next = allStages.filter((s) => current.includes(s) || group.stages.includes(s));
-                        }
-                        update({ pipelineStages: next });
-                      }}
-                      className={cn(
-                        "relative h-6 w-11 rounded-full transition-colors",
-                        isActive ? "bg-brand-500" : "bg-surface-200",
-                      )}
-                    >
-                      <span className={cn(
-                        "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                        isActive ? "translate-x-5" : "translate-x-0.5",
-                      )} />
-                    </button>
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                ))}
+              </div>
+
+              {/* Builder */}
+              <div className="space-y-4">
+                {/* Locked head */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {PIPELINE_LOCKED_HEAD.map((stage) => (
+                    <span key={stage} className="flex items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-100 px-3 py-1.5 text-xs font-medium text-surface-500">
+                      <Lock className="h-3 w-3 shrink-0" />
+                      {getStageName(stage)}
+                    </span>
+                  ))}
+                  <ChevronRight className="h-4 w-4 text-surface-300 shrink-0" />
+                </div>
+
+                {/* DnD zone */}
+                <DragDropContext onDragEnd={onDragEnd}>
+                  <Droppable droppableId="pipeline-middle" direction="horizontal">
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={cn(
+                          "flex flex-wrap items-center gap-2 min-h-[52px] rounded-lg border-2 border-dashed p-3 transition-colors",
+                          snapshot.isDraggingOver
+                            ? "border-brand-400 bg-brand-50/40"
+                            : "border-surface-200 bg-surface-50/50",
+                        )}
+                      >
+                        {middleStages.length === 0 && !snapshot.isDraggingOver && (
+                          <p className="text-xs text-surface-400 italic">
+                            No stages added — pick a preset below or type a custom name
+                          </p>
+                        )}
+                        {middleStages.map((stage, index) => (
+                          <Draggable
+                            key={`${stage}-${index}`}
+                            draggableId={`stage-${index}`}
+                            index={index}
+                          >
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={cn(
+                                  "flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1.5 shadow-sm select-none",
+                                  snapshot.isDragging
+                                    ? "border-brand-400 shadow-md ring-1 ring-brand-300"
+                                    : "border-surface-200",
+                                )}
+                              >
+                                <div
+                                  {...provided.dragHandleProps}
+                                  className="cursor-grab text-surface-300 hover:text-surface-500 active:cursor-grabbing"
+                                >
+                                  <GripVertical className="h-3.5 w-3.5" />
+                                </div>
+                                <span className="text-xs font-medium text-surface-700">
+                                  {getStageName(stage)}
+                                </span>
+                                <button
+                                  onClick={() => removeStage(index)}
+                                  className="text-surface-300 hover:text-red-500 transition-colors"
+                                  aria-label={`Remove ${getStageName(stage)}`}
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+
+                {/* Locked tail */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <ChevronRight className="h-4 w-4 text-surface-300 shrink-0" />
+                  {PIPELINE_LOCKED_TAIL.map((stage) => (
+                    <span key={stage} className="flex items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-100 px-3 py-1.5 text-xs font-medium text-surface-500">
+                      <Lock className="h-3 w-3 shrink-0" />
+                      {getStageName(stage)}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Add stages section */}
+                <div className="space-y-3 border-t border-surface-100 pt-4">
+                  <p className="text-xs font-semibold text-surface-600">Add Stages</p>
+
+                  {/* Preset chips grouped */}
+                  <div className="space-y-2">
+                    {Object.entries(presetGroups).map(([group, presets]) => (
+                      <div key={group} className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] font-medium text-surface-400 w-24 shrink-0">{group}</span>
+                        {presets.map((preset) => {
+                          const isAdded = middleStages.includes(preset.value);
+                          return (
+                            <button
+                              key={preset.value}
+                              onClick={() => !isAdded && addPresetStage(preset.value)}
+                              disabled={isAdded}
+                              className={cn(
+                                "flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                                isAdded
+                                  ? "border-surface-200 bg-surface-100 text-surface-400 cursor-default"
+                                  : "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100 cursor-pointer",
+                              )}
+                            >
+                              {isAdded
+                                ? <Check className="h-2.5 w-2.5" />
+                                : <Plus className="h-2.5 w-2.5" />
+                              }
+                              {preset.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Custom stage input */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <Input
+                      placeholder="Custom stage name (e.g. Director Review)…"
+                      value={customStageName}
+                      onChange={(e) => setCustomStageName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { e.preventDefault(); addCustomStage(); }
+                      }}
+                      className="h-8 text-xs max-w-72"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={addCustomStage}
+                      disabled={!customStageName.trim()}
+                      className="h-8 text-xs gap-1 shrink-0"
+                    >
+                      <Plus className="h-3 w-3" /> Add Custom
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* ═══════════ STEP 8: Review ══════════════════════════════════ */}
       {step === 8 && (

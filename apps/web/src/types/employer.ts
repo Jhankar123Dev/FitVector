@@ -185,7 +185,8 @@ export interface JobPostFormData {
   assessmentConfig: AssessmentConfig;
 
   // Step 7: Pipeline configuration (optional — defaults to full pipeline)
-  pipelineStages: PipelineStage[];
+  // string[] allows custom stage names beyond the PipelineStage union
+  pipelineStages: string[];
 }
 
 export const JOB_TYPE_LABELS: Record<JobPostType, string> = {
@@ -276,6 +277,22 @@ export const PIPELINE_STAGE_LABELS: Record<PipelineStage, string> = {
   rejected:             "Rejected",
 };
 
+/**
+ * Returns the human-readable label for any pipeline stage string.
+ * Known stages use the predefined label; unknown/custom stages are
+ * auto-formatted from snake_case or returned as-is.
+ */
+export function getStageName(stage: string): string {
+  const known = PIPELINE_STAGE_LABELS[stage as PipelineStage];
+  if (known) return known;
+  // Humanise snake_case custom stages ("background_check" → "Background Check")
+  // Plain text custom stages are returned unchanged ("My Custom Stage" → "My Custom Stage")
+  if (stage.includes("_")) {
+    return stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return stage;
+}
+
 export const PIPELINE_COLUMNS: PipelineStage[] = [
   "applied",
   "ai_screened",
@@ -362,7 +379,8 @@ export interface Applicant {
   avatarUrl: string | null;
   source: ApplicantSource;
   pipelineStage: PipelineStage;
-  screeningScore: number; // 0-100
+  screeningScore: number; // 0-100 — AI resume match score
+  testScore: number | null;  // latest submitted/graded assessment score, null if no test
   screeningBucket: ScreeningBucket;
   screeningSummary: string;
   screeningBreakdown: ScreeningBreakdown;

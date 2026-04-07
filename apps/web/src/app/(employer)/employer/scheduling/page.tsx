@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 import { useScheduledInterviews } from "@/hooks/use-scheduling";
 import { useAllApplicants } from "@/hooks/use-applicants";
 import { useCompanyMembers } from "@/hooks/use-employer";
@@ -496,14 +497,23 @@ function InterviewDetailModal({
   );
 }
 
+// Maps UI interview type → DB interview_type enum
+const UI_TYPE_TO_DB: Record<ScheduledInterviewType, string> = {
+  phone: "phone_screen",
+  video: "technical",
+  onsite: "panel",
+};
+
 // ── Schedule interview modal ────────────────────────────────────────
 function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient();
   const { data: applicantsData } = useAllApplicants();
   const { data: membersData } = useCompanyMembers();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allApplicants = (applicantsData?.data || []) as any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const teamMembers = (membersData?.data || []) as any[];
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
   const [selectedInterviewers, setSelectedInterviewers] = useState<string[]>([]);
@@ -511,6 +521,8 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
   const [duration, setDuration] = useState(45);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("10:00");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const filteredCandidates = useMemo(() => {
     if (!searchTerm) return allApplicants.slice(0, 6);
@@ -519,7 +531,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
         a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.email.toLowerCase().includes(searchTerm.toLowerCase()),
     ).slice(0, 6);
-  }, [searchTerm]);
+  }, [searchTerm, allApplicants]);
 
   const selectedCandidateObj = allApplicants.find((a) => a.id === selectedCandidate);
 
@@ -529,16 +541,61 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
     );
   }
 
+  async function handleSchedule() {
+    if (!selectedCandidate || !date) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const scheduledAt = new Date(`${date}T${time}:00`).toISOString();
+      const interviewerId = selectedInterviewers[0] ?? undefined;
+      const res = await fetch("/api/employer/scheduling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          applicantId: selectedCandidate,
+          interviewType: UI_TYPE_TO_DB[interviewType],
+          scheduledAt,
+          durationMinutes: duration,
+          ...(interviewerId ? { interviewerId } : {}),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to schedule interview");
+      qc.invalidateQueries({ queryKey: ["employer", "scheduling"] });
+      onClose();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to schedule interview");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const canSubmit = !!selectedCandidate && selectedInterviewers.length > 0 && !!date && !isSubmitting;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <Card className="relative z-10 w-full max-w-lg max-h-[85vh] overflow-y-auto">
+      <Card className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <CardContent className="space-y-5 p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-semibold text-surface-800">Schedule Interview</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
+          </div>
+
+          {/* Google Calendar banner */}
+          <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <Calendar className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
+            <div className="text-xs">
+              <p className="font-semibold text-amber-800">Google Calendar not connected</p>
+              <p className="mt-0.5 text-amber-700">
+                This interview will be saved in FitVector but won&apos;t sync to your Google Calendar.{" "}
+                <a href="/employer/settings" className="underline hover:text-amber-900">
+                  Connect Google Calendar →
+                </a>
+              </p>
+            </div>
           </div>
 
           {/* Search candidate */}
@@ -575,7 +632,10 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
 
           {/* Select interviewers */}
           <div className="space-y-2">
-            <Label className="text-xs sm:text-sm">Select Interviewer(s)</Label>
+            <Label className="text-xs sm:text-sm">
+              Select Interviewer(s)
+              <span className="ml-1 text-[10px] text-surface-400">(first selected will be assigned)</span>
+            </Label>
             <div className="space-y-1">
               {teamMembers.filter((m) => m.status === "active").map((m) => (
                 <label
@@ -626,6 +686,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
                 <option value={30}>30 min</option>
                 <option value={45}>45 min</option>
                 <option value={60}>60 min</option>
+                <option value={90}>90 min</option>
               </select>
             </div>
           </div>
@@ -634,19 +695,11 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
           <div className="grid gap-4 grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs sm:text-sm">Date</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs sm:text-sm">Time</Label>
-              <Input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
+              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
             </div>
           </div>
 
@@ -654,27 +707,43 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
           {selectedCandidateObj && selectedInterviewers.length > 0 && date && (
             <div className="rounded-lg bg-surface-50 p-3 text-xs text-surface-600">
               <p>
-                <strong>{selectedCandidateObj.name}</strong> — {SCHEDULED_INTERVIEW_TYPE_LABELS[interviewType]} interview, {duration} min
+                <strong>{selectedCandidateObj.name}</strong> — {SCHEDULED_INTERVIEW_TYPE_LABELS[interviewType]}, {duration} min
               </p>
               <p>
-                With: {selectedInterviewers.map((id) => teamMembers.find((m) => m.id === id)?.name).filter(Boolean).join(", ")}
+                Interviewer: {teamMembers.find((m) => m.id === selectedInterviewers[0])?.name ?? "—"}
               </p>
-              {date && <p>{date} at {time}</p>}
+              <p>{date} at {time}</p>
             </div>
+          )}
+
+          {/* Error */}
+          {submitError && (
+            <p className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600">
+              {submitError}
+            </p>
           )}
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={onClose}>
+            <Button variant="outline" className="flex-1" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button
               className="flex-1 gap-1.5"
-              disabled={!selectedCandidate || selectedInterviewers.length === 0 || !date}
-              onClick={onClose}
+              disabled={!canSubmit}
+              onClick={handleSchedule}
             >
-              <CalendarDays className="h-3.5 w-3.5" />
-              Schedule
+              {isSubmitting ? (
+                <>
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Scheduling…
+                </>
+              ) : (
+                <>
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  Schedule
+                </>
+              )}
             </Button>
           </div>
         </CardContent>

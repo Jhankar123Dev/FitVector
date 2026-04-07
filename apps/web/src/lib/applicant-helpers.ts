@@ -61,6 +61,7 @@ export function transformApplicant(row: Record<string, unknown>) {
 
     // Screening
     screeningScore: (row.screening_score as number) ?? 0,
+    testScore: null, // enriched separately by jobs/[id]/applicants route
     screeningBreakdown: row.screening_breakdown || null,
     screeningSummary: (row.screening_summary as string) || "",
     screeningBucket: (row.bucket as string) || null,

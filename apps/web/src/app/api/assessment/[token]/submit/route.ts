@@ -105,10 +105,20 @@ export async function POST(
 
     // Advance applicant to 'assessment_completed' pipeline stage
     if (submission.applicant_id) {
-      await supabase
+      const { error: stageErr } = await supabase
         .from("applicants")
         .update({ pipeline_stage: "assessment_completed" })
         .eq("id", submission.applicant_id);
+      if (stageErr) {
+        console.error(
+          `[assessment/submit] Failed to advance pipeline stage for applicant ${submission.applicant_id}:`,
+          stageErr,
+        );
+      }
+    } else {
+      console.warn(
+        `[assessment/submit] Submission ${token} has no applicant_id — pipeline stage not updated`,
+      );
     }
 
     return NextResponse.json({
