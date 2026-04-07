@@ -119,7 +119,11 @@ export default function PipelinePage() {
       human_interview: [], offer: [], hired: [], rejected: [],
     };
     for (const a of filtered) {
-      map[a.pipelineStage].push(a);
+      // Guard: skip applicants with legacy/unknown stage values (e.g. old "assessment"
+      // or "ai_interview" rows written before the stage rename) so they don't crash
+      if (map[a.pipelineStage]) {
+        map[a.pipelineStage].push(a);
+      }
     }
     return map;
   }, [filtered]);
