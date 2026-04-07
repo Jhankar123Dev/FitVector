@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,9 @@ import {
   X,
   CheckCircle2,
   Calendar,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
@@ -224,11 +228,10 @@ export default function SchedulingPage() {
 
                       const hourOffset = iDate.getHours() - 8;
                       const minuteOffset = iDate.getMinutes();
-                      const top = (hourOffset * 60 + minuteOffset); // px (1px per minute at 60px/hour)
-                      const height = interview.duration; // px
+                      const top = (hourOffset * 60 + minuteOffset);
+                      const height = interview.duration;
                       const TypeIcon = TYPE_ICONS[interview.type];
 
-                      // Calculate left position based on day column
                       const colWidth = `calc((100% - 60px) / 7)`;
                       const left = `calc(60px + ${dayIndex} * ${colWidth})`;
 
@@ -504,6 +507,14 @@ const UI_TYPE_TO_DB: Record<ScheduledInterviewType, string> = {
   onsite: "panel",
 };
 
+// ── Free/busy result type (mirrors server shape) ────────────────────
+interface FreeBusyInterviewerResult {
+  userId: string;
+  email: string;
+  busy: { start: string; end: string }[];
+  calendarConnected: boolean;
+}
+
 // ── Schedule interview modal ────────────────────────────────────────
 function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
@@ -521,19 +532,63 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
   const [duration, setDuration] = useState(45);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("10:00");
+  const [addMeetLink, setAddMeetLink] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Availability state
+  const [availability, setAvailability] = useState<FreeBusyInterviewerResult[]>([]);
+  const [checkingAvail, setCheckingAvail] = useState(false);
+
+  // Calendar connection status (dynamic — not hardcoded)
+  const { data: calStatusData } = useQuery({
+    queryKey: ["calendar-status"],
+    queryFn: () => fetch("/api/user/calendar-status").then((r) => r.json()),
+    staleTime: 60_000,
+  });
+  const calendarConnected = calStatusData?.data?.googleConnected === true;
+
   const filteredCandidates = useMemo(() => {
     if (!searchTerm) return allApplicants.slice(0, 6);
-    return allApplicants.filter(
-      (a) =>
-        a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.email.toLowerCase().includes(searchTerm.toLowerCase()),
-    ).slice(0, 6);
+    return allApplicants
+      .filter(
+        (a) =>
+          a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          a.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+      .slice(0, 6);
   }, [searchTerm, allApplicants]);
 
   const selectedCandidateObj = allApplicants.find((a) => a.id === selectedCandidate);
+
+  // Debounced availability check — fires 600ms after date/time/duration/interviewers settle
+  useEffect(() => {
+    if (!date || !time || selectedInterviewers.length === 0) {
+      setAvailability([]);
+      return;
+    }
+    setCheckingAvail(true);
+    const timer = setTimeout(async () => {
+      try {
+        const start = new Date(`${date}T${time}:00`).toISOString();
+        const end = new Date(
+          new Date(`${date}T${time}:00`).getTime() + duration * 60_000,
+        ).toISOString();
+        const res = await fetch("/api/employer/calendar/freebusy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userIds: selectedInterviewers, timeMin: start, timeMax: end }),
+        });
+        const json = await res.json();
+        if (res.ok) setAvailability(json.data || []);
+      } catch {
+        // Availability is best-effort; ignore errors
+      } finally {
+        setCheckingAvail(false);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [date, time, duration, selectedInterviewers]);
 
   function toggleInterviewer(id: string) {
     setSelectedInterviewers((prev) =>
@@ -542,21 +597,21 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
   }
 
   async function handleSchedule() {
-    if (!selectedCandidate || !date) return;
+    if (!selectedCandidate || !date || selectedInterviewers.length === 0) return;
     setIsSubmitting(true);
     setSubmitError(null);
     try {
       const scheduledAt = new Date(`${date}T${time}:00`).toISOString();
-      const interviewerId = selectedInterviewers[0] ?? undefined;
       const res = await fetch("/api/employer/scheduling", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           applicantId: selectedCandidate,
+          interviewerIds: selectedInterviewers,
           interviewType: UI_TYPE_TO_DB[interviewType],
           scheduledAt,
           durationMinutes: duration,
-          ...(interviewerId ? { interviewerId } : {}),
+          addMeetLink: addMeetLink && calendarConnected,
         }),
       });
       const json = await res.json();
@@ -570,7 +625,8 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const canSubmit = !!selectedCandidate && selectedInterviewers.length > 0 && !!date && !isSubmitting;
+  const canSubmit =
+    !!selectedCandidate && selectedInterviewers.length > 0 && !!date && !isSubmitting;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -584,19 +640,42 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
             </Button>
           </div>
 
-          {/* Google Calendar banner */}
-          <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <Calendar className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
-            <div className="text-xs">
-              <p className="font-semibold text-amber-800">Google Calendar not connected</p>
-              <p className="mt-0.5 text-amber-700">
-                This interview will be saved in FitVector but won&apos;t sync to your Google Calendar.{" "}
-                <a href="/employer/settings" className="underline hover:text-amber-900">
-                  Connect Google Calendar →
-                </a>
-              </p>
+          {/* ── Dynamic Google Calendar banner ── */}
+          {calendarConnected ? (
+            <div className="flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+              <CheckCircle className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600" />
+              <div className="text-xs">
+                <p className="font-semibold text-emerald-800">Google Calendar connected</p>
+                <p className="mt-0.5 text-emerald-700">
+                  A calendar invite will be sent to all attendees automatically.
+                </p>
+                {interviewType === "video" && (
+                  <label className="mt-1.5 flex cursor-pointer items-center gap-1.5 text-emerald-700">
+                    <input
+                      type="checkbox"
+                      checked={addMeetLink}
+                      onChange={(e) => setAddMeetLink(e.target.checked)}
+                      className="h-3.5 w-3.5 accent-emerald-600"
+                    />
+                    Auto-generate Google Meet link
+                  </label>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <Calendar className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
+              <div className="text-xs">
+                <p className="font-semibold text-amber-800">Google Calendar not connected</p>
+                <p className="mt-0.5 text-amber-700">
+                  This interview will be saved in FitVector but won&apos;t sync to Google Calendar.{" "}
+                  <a href="/employer/settings" className="underline hover:text-amber-900">
+                    Connect Google Calendar →
+                  </a>
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Search candidate */}
           <div className="space-y-2">
@@ -634,7 +713,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
           <div className="space-y-2">
             <Label className="text-xs sm:text-sm">
               Select Interviewer(s)
-              <span className="ml-1 text-[10px] text-surface-400">(first selected will be assigned)</span>
+              <span className="ml-1 text-[10px] text-surface-400">(first selected = lead)</span>
             </Label>
             <div className="space-y-1">
               {teamMembers.filter((m) => m.status === "active").map((m) => (
@@ -657,6 +736,29 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
                   <Badge className="border text-[9px] bg-surface-100 text-surface-500 border-surface-200">
                     {TEAM_ROLE_LABELS[m.role as TeamMemberRole] || m.role}
                   </Badge>
+                  {/* Availability pill — shown once date+time are set */}
+                  {date && time && (() => {
+                    const avail = availability.find((a) => a.userId === m.id);
+                    if (checkingAvail && selectedInterviewers.includes(m.id)) {
+                      return <Loader2 className="ml-auto h-3 w-3 animate-spin text-surface-400" />;
+                    }
+                    if (!avail) return null;
+                    if (!avail.calendarConnected) {
+                      return (
+                        <span className="ml-auto text-[9px] text-surface-400">No calendar</span>
+                      );
+                    }
+                    const isBusy = avail.busy.length > 0;
+                    return isBusy ? (
+                      <span className="ml-auto flex items-center gap-0.5 text-[9px] font-medium text-red-600">
+                        <AlertCircle className="h-3 w-3" /> Busy
+                      </span>
+                    ) : (
+                      <span className="ml-auto flex items-center gap-0.5 text-[9px] font-medium text-emerald-600">
+                        <CheckCircle className="h-3 w-3" /> Free
+                      </span>
+                    );
+                  })()}
                 </label>
               ))}
             </div>
@@ -711,6 +813,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
               </p>
               <p>
                 Interviewer: {teamMembers.find((m) => m.id === selectedInterviewers[0])?.name ?? "—"}
+                {selectedInterviewers.length > 1 && ` +${selectedInterviewers.length - 1} more`}
               </p>
               <p>{date} at {time}</p>
             </div>
