@@ -20,6 +20,9 @@ import {
   Users,
   Sparkles,
   Loader2,
+  CalendarDays,
+  Link2,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CandidateCard } from "@/components/employer/pipeline/candidate-card";
@@ -31,6 +34,7 @@ import {
   useScreenApplicant,
   useBulkScreen,
   useSendAssessment,
+  useScheduleInterview,
 } from "@/hooks/use-applicants";
 import { useEmployerJob } from "@/hooks/use-employer-jobs";
 import { useInviteInterview } from "@/hooks/use-interviews";
@@ -68,6 +72,7 @@ export default function PipelinePage() {
   const bulkScreenMutation = useBulkScreen();
   const inviteInterview = useInviteInterview();
   const sendAssessment = useSendAssessment();
+  const scheduleInterview = useScheduleInterview();
 
   const job = jobData?.data;
   const applicants = (applicantsData?.data || []) as unknown as Applicant[];
@@ -76,6 +81,8 @@ export default function PipelinePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailApplicant, setDetailApplicant] = useState<Applicant | null>(null);
   const [showRejected, setShowRejected] = useState(false);
+  const [scheduleModalApplicant, setScheduleModalApplicant] = useState<Applicant | null>(null);
+  const [offerModalApplicant, setOfferModalApplicant] = useState<Applicant | null>(null);
 
   // ── Filters ─────────────────────────────────────────────────────
   const [showFilters, setShowFilters] = useState(false);
@@ -158,11 +165,24 @@ export default function PipelinePage() {
   function advanceApplicant(id: string) {
     const applicant = applicants.find((a) => a.id === id);
     if (!applicant) return;
+    setDetailApplicant(null);
+
+    // Intercept: open schedule modal before moving to human_interview
+    if (applicant.pipelineStage === "ai_interviewed") {
+      setScheduleModalApplicant(applicant);
+      return;
+    }
+
+    // Intercept: open offer review before making offer
+    if (applicant.pipelineStage === "human_interview") {
+      setOfferModalApplicant(applicant);
+      return;
+    }
+
     const next = NEXT_STAGE[applicant.pipelineStage];
     if (next) {
       changeStage.mutate({ id, stage: next });
     }
-    setDetailApplicant(null);
   }
 
   function goBackApplicant(id: string) {
@@ -634,6 +654,30 @@ export default function PipelinePage() {
           onReject={handleRejectApplicant}
         />
       )}
+
+      {scheduleModalApplicant && (
+        <ScheduleInterviewModal
+          applicant={scheduleModalApplicant}
+          onClose={() => setScheduleModalApplicant(null)}
+          onConfirm={(data) => {
+            scheduleInterview.mutate({ applicantId: scheduleModalApplicant.id, ...data });
+            setScheduleModalApplicant(null);
+          }}
+          isPending={scheduleInterview.isPending}
+        />
+      )}
+
+      {offerModalApplicant && (
+        <OfferReviewModal
+          applicant={offerModalApplicant}
+          onClose={() => setOfferModalApplicant(null)}
+          onConfirm={() => {
+            changeStage.mutate({ id: offerModalApplicant.id, stage: "offer" });
+            setOfferModalApplicant(null);
+          }}
+          isPending={changeStage.isPending}
+        />
+      )}
     </div>
   );
 }
@@ -755,5 +799,227 @@ function CandidateTableRow({
         </span>
       </td>
     </tr>
+  );
+}
+
+// ── Schedule Interview Modal ─────────────────────────────────────────────────
+function ScheduleInterviewModal({
+  applicant,
+  onClose,
+  onConfirm,
+  isPending,
+}: {
+  applicant: Applicant;
+  onClose: () => void;
+  onConfirm: (data: { interviewType: string; scheduledAt: string; durationMinutes: number; meetingLink?: string }) => void;
+  isPending: boolean;
+}) {
+  const [interviewType, setInterviewType] = useState("technical");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState(60);
+  const [meetingLink, setMeetingLink] = useState("");
+
+  function handleSubmit() {
+    if (!scheduledAt) return;
+    onConfirm({
+      interviewType,
+      scheduledAt: new Date(scheduledAt).toISOString(),
+      durationMinutes,
+      meetingLink: meetingLink.trim() || undefined,
+    });
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-surface-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 border-b border-surface-200 px-5 py-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-50">
+              <CalendarDays className="h-4 w-4 text-sky-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-surface-800">Schedule Human Interview</h3>
+              <p className="text-xs text-surface-500">{applicant.name}</p>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="space-y-4 px-5 py-4">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-surface-700">Interview Type</label>
+              <select
+                value={interviewType}
+                onChange={(e) => setInterviewType(e.target.value)}
+                className="h-9 w-full rounded-lg border border-surface-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              >
+                <option value="technical">Technical</option>
+                <option value="behavioral">Behavioral</option>
+                <option value="phone_screen">Phone Screen</option>
+                <option value="culture_fit">Culture Fit</option>
+                <option value="hiring_manager">Hiring Manager</option>
+                <option value="panel">Panel</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-surface-700">Date & Time <span className="text-red-500">*</span></label>
+              <Input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                className="h-9 text-sm"
+                min={new Date().toISOString().slice(0, 16)}
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-surface-700">Duration (minutes)</label>
+              <Input
+                type="number"
+                min={15}
+                max={180}
+                step={15}
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                className="h-9 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-surface-700">
+                <Link2 className="mr-1 inline h-3 w-3" />
+                Meeting Link (optional)
+              </label>
+              <Input
+                type="url"
+                placeholder="https://meet.google.com/..."
+                value={meetingLink}
+                onChange={(e) => setMeetingLink(e.target.value)}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 border-t border-surface-200 px-5 py-3">
+            <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={!scheduledAt || isPending}
+              className="gap-1.5 bg-sky-600 hover:bg-sky-700 text-white"
+            >
+              {isPending ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Scheduling…</>
+              ) : (
+                <><CalendarDays className="h-3.5 w-3.5" /> Schedule Interview</>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Offer Review Modal ───────────────────────────────────────────────────────
+function OfferReviewModal({
+  applicant,
+  onClose,
+  onConfirm,
+  isPending,
+}: {
+  applicant: Applicant;
+  onClose: () => void;
+  onConfirm: () => void;
+  isPending: boolean;
+}) {
+  const scoreColor =
+    applicant.screeningScore >= 80 ? "text-emerald-700 bg-emerald-50" :
+    applicant.screeningScore >= 60 ? "text-brand-700 bg-brand-50" :
+    applicant.screeningScore >= 40 ? "text-amber-700 bg-amber-50" :
+    "text-red-700 bg-red-50";
+
+  const stagesPassed = [
+    { label: "AI Screened", done: true },
+    { label: "Assessment", done: ["assessment_completed", "ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired"].includes(applicant.pipelineStage) },
+    { label: "AI Interview", done: ["ai_interviewed", "human_interview", "offer", "hired"].includes(applicant.pipelineStage) },
+    { label: "Human Interview", done: applicant.pipelineStage === "human_interview" },
+  ];
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-surface-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 border-b border-surface-200 px-5 py-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-surface-800">Make Offer</h3>
+              <p className="text-xs text-surface-500">{applicant.name}</p>
+            </div>
+          </div>
+
+          {/* Stage review */}
+          <div className="px-5 py-4 space-y-4">
+            <p className="text-xs text-surface-500">Review all completed stages before extending an offer.</p>
+
+            {/* Score */}
+            {applicant.screeningScore > 0 && (
+              <div className="flex items-center justify-between rounded-lg border border-surface-200 px-3 py-2.5">
+                <span className="text-sm text-surface-700">AI Screening Score</span>
+                <span className={cn("rounded-full px-2.5 py-0.5 text-sm font-bold", scoreColor)}>
+                  {applicant.screeningScore}/100
+                </span>
+              </div>
+            )}
+
+            {/* Stages checklist */}
+            <div className="space-y-2">
+              {stagesPassed.map((s) => (
+                <div key={s.label} className="flex items-center gap-2.5 text-sm">
+                  <CheckCircle2 className={cn("h-4 w-4 shrink-0", s.done ? "text-emerald-500" : "text-surface-300")} />
+                  <span className={s.done ? "text-surface-700" : "text-surface-400"}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Screening summary */}
+            {applicant.screeningSummary && (
+              <div className="rounded-lg bg-surface-50 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-surface-400 mb-1">AI Summary</p>
+                <p className="text-xs leading-relaxed text-surface-600">{applicant.screeningSummary}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 border-t border-surface-200 px-5 py-3">
+            <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={onConfirm}
+              disabled={isPending}
+              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {isPending ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Extending…</>
+              ) : (
+                <><CheckCircle2 className="h-3.5 w-3.5" /> Confirm &amp; Extend Offer</>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

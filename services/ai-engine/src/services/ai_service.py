@@ -635,6 +635,15 @@ Scoring guide:
 Keep strengths and areas_for_improvement to 2–4 items each. Be concise and specific."""
 
 
+class EvaluateInterviewResponse(BaseModel):
+    """Public response model — imported by routers/interview.py (no circular dep)."""
+    score: int
+    summary: str
+    strengths: list[str]
+    areas_for_improvement: list[str]
+    recommendation: str
+
+
 class _InterviewEvalSchema(BaseModel):
     score: int
     summary: str
@@ -647,14 +656,13 @@ async def evaluate_interview(
     job_title: str,
     job_description: str,
     transcript: list[dict[str, str]],
-) -> "EvaluateInterviewResponse":  # type: ignore[name-defined]  # imported at call site
+) -> EvaluateInterviewResponse:
     """Evaluate an AI interview transcript using Gemini Flash.
 
     Returns a structured evaluation with score, summary, strengths,
     areas for improvement, and a hire recommendation.
     Falls back to a neutral evaluation if Gemini fails.
     """
-    from src.routers.interview import EvaluateInterviewResponse  # avoid circular import
 
     transcript_text = "\n\n".join(
         f"Q: {entry['question']}\nA: {entry['answer']}"
@@ -713,3 +721,142 @@ Evaluate this candidate."""
             areas_for_improvement=["Manual review required"],
             recommendation="no_hire",
         )
+
+
+# ─── Resume Screening ────────────────────────────────────────────────────────
+
+_SCREEN_RESUME_SYSTEM_PROMPT = """You are an expert technical recruiter screening a candidate's resume against a job description.
+
+Given structured resume JSON, a job description, required skills, and nice-to-have skills, produce a structured screening evaluation.
+
+Return ONLY valid JSON matching this exact schema:
+{
+  "score": <integer 0-100 overall weighted score>,
+  "breakdown": {
+    "skillMatch": <integer 0-100>,
+    "experienceRelevance": <integer 0-100>,
+    "educationFit": <integer 0-100>,
+    "achievementSignals": <integer 0-100>,
+    "cultureFit": <integer 0-100>,
+    "screeningQuestions": <integer 0-100>
+  },
+  "summary": "<2-3 sentence narrative summarising fit for the role>",
+  "bucket": "<one of: strong_fit | good_fit | potential_fit | weak_fit>"
+}
+
+Scoring weights: skillMatch 30%, experienceRelevance 25%, educationFit 10%, achievementSignals 15%, cultureFit 10%, screeningQuestions 10%.
+Bucket thresholds: strong_fit ≥80, good_fit ≥60, potential_fit ≥40, weak_fit <40."""
+
+
+class _ScreenBreakdownSchema(BaseModel):
+    skillMatch: int = 0
+    experienceRelevance: int = 0
+    educationFit: int = 0
+    achievementSignals: int = 0
+    cultureFit: int = 0
+    screeningQuestions: int = 0
+
+
+class _ScreenResumeSchema(BaseModel):
+    score: int = 0
+    breakdown: _ScreenBreakdownSchema
+    summary: str = ""
+    bucket: str = "weak_fit"
+
+
+async def screen_resume(
+    resume: dict[str, Any],
+    job_description: str,
+    required_skills: list[str],
+    nice_to_have_skills: list[str],
+    dimension_weights: dict[str, float] | None = None,
+    screening_responses: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    """Screen a parsed resume against a job using Gemini Flash.
+
+    Returns screening_score, screening_breakdown, screening_summary, bucket.
+    Falls back to a simple skill-overlap score if Gemini fails.
+    """
+    skills_str = ", ".join(required_skills[:30]) if required_skills else "not specified"
+    nice_str = ", ".join(nice_to_have_skills[:15]) if nice_to_have_skills else "none"
+    responses_str = ""
+    if screening_responses:
+        responses_str = "\n\nScreening Q&A:\n" + "\n".join(
+            f"Q: {r.get('question', '')}\nA: {r.get('answer', '')}"
+            for r in screening_responses[:5]
+        )
+
+    # Compact resume representation to stay within token limits
+    contact = resume.get("contact") or {}
+    user_prompt = f"""Candidate: {contact.get('name', 'Unknown')}
+Summary: {(resume.get('summary') or '')[:300]}
+Experience: {json.dumps((resume.get('experience') or [])[:3], ensure_ascii=False)[:600]}
+Education: {json.dumps((resume.get('education') or [])[:2], ensure_ascii=False)[:200]}
+Skills: {', '.join((resume.get('skills') or [])[:30])}
+
+Job Description (excerpt): {job_description[:600]}
+Required Skills: {skills_str}
+Nice-to-Have Skills: {nice_str}{responses_str}
+
+Screen this candidate and return the JSON evaluation."""
+
+    try:
+        raw_json = await _call_gemini(
+            task="screen_resume",
+            system_prompt=_SCREEN_RESUME_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            max_tokens=512,
+            temperature=0.1,
+            response_mime_type="application/json",
+            response_schema=_ScreenResumeSchema,
+        )
+
+        clean = _clean_gemini_json_response(raw_json)
+        try:
+            data = json.loads(clean, strict=False)
+        except json.JSONDecodeError:
+            data = repair_json(clean, return_objects=True)
+            if not isinstance(data, dict):
+                raise ValueError("repair_json returned non-dict for screen_resume")
+
+        score = max(0, min(100, int(data.get("score", 0))))
+        bd = data.get("breakdown") or {}
+        bucket = data.get("bucket", "weak_fit")
+        if bucket not in {"strong_fit", "good_fit", "potential_fit", "weak_fit"}:
+            bucket = "weak_fit"
+
+        return {
+            "screening_score": score,
+            "screening_breakdown": {
+                "skillMatch": max(0, min(100, int(bd.get("skillMatch", 0)))),
+                "experienceRelevance": max(0, min(100, int(bd.get("experienceRelevance", 0)))),
+                "educationFit": max(0, min(100, int(bd.get("educationFit", 0)))),
+                "achievementSignals": max(0, min(100, int(bd.get("achievementSignals", 0)))),
+                "cultureFit": max(0, min(100, int(bd.get("cultureFit", 0)))),
+                "screeningQuestions": max(0, min(100, int(bd.get("screeningQuestions", 0)))),
+            },
+            "screening_summary": data.get("summary", ""),
+            "bucket": bucket,
+        }
+
+    except Exception as exc:
+        logger.error("screen_resume Gemini call failed: %s — using skill-overlap fallback", exc)
+        # Simple skill-overlap fallback
+        resume_skills = [s.lower().strip() for s in (resume.get("skills") or [])]
+        req_norm = [s.lower().strip() for s in required_skills]
+        matches = sum(1 for s in req_norm if s in resume_skills)
+        ratio = matches / len(req_norm) if req_norm else 0.5
+        skill_match = round(ratio * 100)
+        exp_rel = 60
+        overall = round(skill_match * 0.3 + exp_rel * 0.25 + 50 * 0.45)
+        bucket = "strong_fit" if overall >= 80 else "good_fit" if overall >= 60 else "potential_fit" if overall >= 40 else "weak_fit"
+        return {
+            "screening_score": overall,
+            "screening_breakdown": {
+                "skillMatch": skill_match, "experienceRelevance": exp_rel,
+                "educationFit": 50, "achievementSignals": 50,
+                "cultureFit": 50, "screeningQuestions": 50,
+            },
+            "screening_summary": f"Fallback screening: {matches} of {len(req_norm)} required skills matched.",
+            "bucket": bucket,
+        }

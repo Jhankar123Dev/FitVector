@@ -1,6 +1,8 @@
 import logging
+from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, Response, UploadFile
+from pydantic import BaseModel
 
 from src.models.resume import (
     CompilePdfRequest,
@@ -8,7 +10,7 @@ from src.models.resume import (
     TailorResumeRequest,
     TailorResumeResponse,
 )
-from src.services.ai_service import parse_resume_file, tailor_resume
+from src.services.ai_service import parse_resume_file, tailor_resume, screen_resume
 from src.services.pdf_service import compile_latex_to_pdf
 
 logger = logging.getLogger("fitvector.router.resume")
@@ -88,3 +90,36 @@ async def parse_resume(file: UploadFile = File(...)) -> ParseResumeResponse:
     except Exception as exc:
         logger.error("Parse resume error: %s", exc)
         raise HTTPException(status_code=500, detail=f"Resume parsing failed: {str(exc)}")
+
+
+# ── Screen Resume ─────────────────────────────────────────────────────────────
+
+class ScreenResumeRequest(BaseModel):
+    resume: dict[str, Any]
+    jobDescription: str = ""
+    requiredSkills: list[str] = []
+    niceToHaveSkills: list[str] = []
+    dimensionWeights: dict[str, float] | None = None
+    screeningResponses: list[dict[str, Any]] = []
+
+
+@router.post("/screen-resume")
+async def screen_resume_endpoint(request: ScreenResumeRequest) -> dict[str, Any]:
+    """Screen a parsed resume JSON against a job description using Gemini Flash.
+
+    Returns screening_score (0-100), screening_breakdown (6 dimensions),
+    screening_summary (narrative), and bucket classification.
+    Called by the Next.js screen route; falls back to skill-overlap if Gemini fails.
+    """
+    try:
+        return await screen_resume(
+            resume=request.resume,
+            job_description=request.jobDescription,
+            required_skills=request.requiredSkills,
+            nice_to_have_skills=request.niceToHaveSkills,
+            dimension_weights=request.dimensionWeights,
+            screening_responses=request.screeningResponses,
+        )
+    except Exception as exc:
+        logger.error("Screen resume endpoint error: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Screening failed: {str(exc)}")

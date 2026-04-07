@@ -152,7 +152,9 @@ export const changeJobStatusSchema = z.object({
 
 export const changeStageSchema = z.object({
   stage: z.enum([
-    "applied", "ai_screened", "ai_interviewed", "assessment",
+    "applied", "ai_screened",
+    "assessment_pending", "assessment_completed",
+    "ai_interview_pending", "ai_interviewed",
     "human_interview", "offer", "hired", "rejected", "on_hold",
   ]),
 });

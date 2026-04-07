@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from src.services.ai_service import evaluate_interview
+from src.services.ai_service import evaluate_interview, EvaluateInterviewResponse
 
 logger = logging.getLogger("fitvector.router.interview")
 
@@ -21,14 +21,6 @@ class EvaluateInterviewRequest(BaseModel):
     job_title: str
     job_description: str = ""
     transcript: list[TranscriptEntry]
-
-
-class EvaluateInterviewResponse(BaseModel):
-    score: int                      # 0–100 overall score
-    summary: str                    # 2–3 sentence narrative
-    strengths: list[str]            # up to 4 bullet strengths
-    areas_for_improvement: list[str]  # up to 4 bullet areas
-    recommendation: str             # "strong_hire" | "hire" | "no_hire" | "strong_no_hire"
 
 
 # ── Endpoint ──────────────────────────────────────────────────────────────────

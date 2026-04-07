@@ -155,6 +155,29 @@ export function useSendAssessment() {
 }
 
 /**
+ * Schedule a human interview for an applicant (advances stage to human_interview).
+ */
+export function useScheduleInterview() {
+  const qc = useQueryClient();
+  return useMutation<
+    { data: Record<string, unknown> },
+    Error,
+    { applicantId: string; interviewType: string; scheduledAt: string; durationMinutes: number; meetingLink?: string }
+  >({
+    mutationFn: (body) =>
+      fetchJson("/api/employer/scheduling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["employer", "applicants"] });
+      qc.invalidateQueries({ queryKey: ["employer", "applicant"] });
+    },
+  });
+}
+
+/**
  * Bulk screen all unscreened applicants for a job post.
  */
 export function useBulkScreen() {
