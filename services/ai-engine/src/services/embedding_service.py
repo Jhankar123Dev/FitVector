@@ -1,6 +1,6 @@
 """Embedding generation and match scoring service.
 
-Uses Gemini embedding API (gemini-embedding-001, 768-dim) for vector embeddings
+Uses Google text-embedding-004 (768-dim) for vector embeddings
 and cosine similarity for match scoring with calibrated thresholds.
 
 Blended scoring: 70% embedding + 30% deterministic.
@@ -38,7 +38,7 @@ logger = logging.getLogger("fitvector.embedding")
 
 # ─── Embedding generation (Gemini embedding API) ────────────────────────────
 
-_EMBEDDING_MODEL = "gemini-embedding-001"
+_EMBEDDING_MODEL = "text-embedding-004"
 
 
 async def generate_embedding(text: str) -> list[float]:

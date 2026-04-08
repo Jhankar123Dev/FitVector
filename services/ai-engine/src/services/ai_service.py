@@ -41,21 +41,28 @@ def _get_gemini() -> genai.Client:
     return _gemini_client
 
 
-# ─── Gemini model fallback chain ─────────────────────────────────────────────
-# Tried in order. On 503 UNAVAILABLE the next model is tried immediately.
-# On 429 RESOURCE_EXHAUSTED the same model is retried with backoff first.
-# Any other error (400, auth, etc.) raises immediately — no fallback.
-
-GEMINI_FALLBACK_CHAIN: list[str] = [
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-8b",
-]
-
+# ─── Gemini model routing ─────────────────────────────────────────────────────
+# get_model_for_task() returns an ordered fallback list per task type.
+# _call_gemini() iterates through it:
+#   - 503 UNAVAILABLE        → skip to next model immediately
+#   - 429 RESOURCE_EXHAUSTED → wait + retry same model, then fall through
+#   - any other error        → raise immediately (no fallback)
 
 def get_model_for_task(task: str) -> list[str]:
-    """Return the ordered fallback chain of Gemini models for any task."""
-    return GEMINI_FALLBACK_CHAIN
+    """Return the ordered fallback chain of Gemini models for a given task.
+
+    Routing rationale:
+    - tailor_resume:      Flash → Flash-Lite → Pro  (LaTeX generation is token-heavy; Pro as last resort)
+    - generate_outreach:  Flash-Lite → Flash         (templated text, simple structured output)
+    - screen_resume:      Flash-Lite → Flash         (returns a small JSON score, lightweight)
+    - everything else:    Flash → Flash-Lite         (parse, evaluate, generate_questions — moderate complexity)
+    """
+    if task == "tailor_resume":
+        return ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"]
+    if task in ("generate_outreach", "screen_resume"):
+        return ["gemini-2.5-flash-lite", "gemini-2.5-flash"]
+    # Default: parse_resume, evaluate_interview, generate_questions, gap_analysis, etc.
+    return ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
 
 
 async def _call_gemini(
