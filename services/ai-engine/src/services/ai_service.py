@@ -41,9 +41,21 @@ def _get_gemini() -> genai.Client:
     return _gemini_client
 
 
-def get_model_for_task(task: str) -> str:
-    """Select Gemini model for task. Uses gemini-2.5-flash for all tasks (free-tier safe)."""
-    return "gemini-2.5-flash"
+# ─── Gemini model fallback chain ─────────────────────────────────────────────
+# Tried in order. On 503 UNAVAILABLE the next model is tried immediately.
+# On 429 RESOURCE_EXHAUSTED the same model is retried with backoff first.
+# Any other error (400, auth, etc.) raises immediately — no fallback.
+
+GEMINI_FALLBACK_CHAIN: list[str] = [
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+]
+
+
+def get_model_for_task(task: str) -> list[str]:
+    """Return the ordered fallback chain of Gemini models for any task."""
+    return GEMINI_FALLBACK_CHAIN
 
 
 async def _call_gemini(
@@ -56,10 +68,12 @@ async def _call_gemini(
     response_mime_type: str | None = None,
     response_schema: Any | None = None,
 ) -> str:
-    """Unified helper to call Gemini with the right model for the task.
+    """Unified helper to call Gemini with automatic model fallback.
 
-    Auto-retries up to _retries times on 429 RESOURCE_EXHAUSTED,
-    honouring the retryDelay from the error response.
+    Iterates through GEMINI_FALLBACK_CHAIN in order:
+    - 503 UNAVAILABLE  → skip to next model immediately (capacity issue, retrying same model won't help)
+    - 429 RESOURCE_EXHAUSTED → wait and retry the same model up to _retries times, then fall through
+    - Any other error  → raise immediately, no fallback (bad request, auth failure, etc.)
 
     Pass response_mime_type="application/json" + response_schema=<PydanticModel>
     to enforce both valid JSON and exact output shape at the API level.
@@ -68,39 +82,87 @@ async def _call_gemini(
     import asyncio
 
     client = _get_gemini()
-    model = get_model_for_task(task)
+    models = get_model_for_task(task)
+    last_exc: Exception | None = None
 
-    for attempt in range(_retries):
-        try:
-            response = client.models.generate_content(
-                model=model,
-                contents=user_prompt,
-                config=genai_types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    max_output_tokens=max_tokens,
-                    temperature=temperature,
-                    response_mime_type=response_mime_type,
-                    response_schema=response_schema,
-                ),
-            )
-            text = response.text
-            if not text or not text.strip():
-                raise ValueError(f"Gemini returned empty response for task '{task}'")
-            return text
-        except Exception as exc:
-            err_str = str(exc)
-            is_rate_limit = "429" in err_str or "RESOURCE_EXHAUSTED" in err_str
-            if is_rate_limit and attempt < _retries - 1:
-                # Extract retryDelay from error message (e.g. "Please retry in 53s")
-                match = re.search(r"retry[^\d]*(\d+(?:\.\d+)?)\s*s", err_str, re.IGNORECASE)
-                wait = float(match.group(1)) + 2 if match else 60.0
-                logger.warning(
-                    "Gemini 429 on attempt %d/%d — waiting %.0fs then retrying",
-                    attempt + 1, _retries, wait,
+    for model_index, model in enumerate(models):
+        for attempt in range(_retries):
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=user_prompt,
+                    config=genai_types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        max_output_tokens=max_tokens,
+                        temperature=temperature,
+                        response_mime_type=response_mime_type,
+                        response_schema=response_schema,
+                    ),
                 )
-                await asyncio.sleep(wait)
-                continue
-            raise
+                text = response.text
+                if not text or not text.strip():
+                    raise ValueError(f"Gemini returned empty response for task '{task}'")
+                if model_index > 0:
+                    logger.info(
+                        "[Gemini fallback] Task '%s' succeeded on fallback model '%s'",
+                        task, model,
+                    )
+                return text
+
+            except Exception as exc:
+                err_str = str(exc)
+                last_exc = exc
+
+                is_unavailable = "503" in err_str or "UNAVAILABLE" in err_str
+                is_rate_limit = "429" in err_str or "RESOURCE_EXHAUSTED" in err_str
+
+                if is_unavailable:
+                    # Capacity issue — this model tier is down. Move to next model immediately.
+                    next_model = models[model_index + 1] if model_index + 1 < len(models) else None
+                    if next_model:
+                        logger.warning(
+                            "[Gemini fallback] '%s' returned 503 UNAVAILABLE for task '%s' "
+                            "— switching to '%s'",
+                            model, task, next_model,
+                        )
+                    else:
+                        logger.error(
+                            "[Gemini fallback] '%s' returned 503 UNAVAILABLE for task '%s' "
+                            "— all models exhausted",
+                            model, task,
+                        )
+                    break  # exit retry loop for this model, outer loop tries next model
+
+                if is_rate_limit and attempt < _retries - 1:
+                    # Rate limited — wait and retry the same model
+                    match = re.search(r"retry[^\d]*(\d+(?:\.\d+)?)\s*s", err_str, re.IGNORECASE)
+                    wait = float(match.group(1)) + 2 if match else 60.0
+                    logger.warning(
+                        "[Gemini] '%s' 429 on task '%s' attempt %d/%d — waiting %.0fs",
+                        model, task, attempt + 1, _retries, wait,
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+
+                # All other errors (400, auth, malformed, etc.) — raise immediately, no fallback
+                raise
+
+        # If we exhausted retries on this model due to 429 (not 503), try next model
+        if last_exc is not None:
+            err_str = str(last_exc)
+            is_rate_limit = "429" in err_str or "RESOURCE_EXHAUSTED" in err_str
+            next_model = models[model_index + 1] if model_index + 1 < len(models) else None
+            if is_rate_limit and next_model:
+                logger.warning(
+                    "[Gemini fallback] '%s' exhausted %d retries on 429 for task '%s' "
+                    "— switching to '%s'",
+                    model, _retries, task, next_model,
+                )
+
+    # All models in the chain failed
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError(f"Gemini fallback chain exhausted for task '{task}' with no exception captured")
 
 
 def _build_latex_from_profile(parsed_resume: dict[str, Any]) -> str:
