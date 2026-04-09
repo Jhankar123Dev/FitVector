@@ -10,7 +10,7 @@ export interface ProctoringSignal {
 }
 
 export interface ProctoringOptions {
-  /** Unique ID scoping the sessionStorage key (submission ID or interview token). */
+  /** Unique ID scoping the sessionStorage key AND the assessment submission token. */
   sessionId: string;
   /** Whether event listeners should be active. Set false until the session starts. */
   enabled: boolean;
@@ -23,7 +23,19 @@ export interface ProctoringOptions {
    * Use true for assessments (timed, can be reloaded), false for AI interviews.
    */
   persistToStorage?: boolean;
+  /**
+   * When true, batched proctoring counts are flushed to the server every
+   * BEACON_INTERVAL_MS via navigator.sendBeacon. The server accumulates them
+   * so the final submit score cannot be tampered with client-side.
+   * Default: true.
+   */
+  serverSync?: boolean;
 }
+
+// ── Server beacon constants ───────────────────────────────────────────────────
+
+/** Flush pending proctoring events to the server every 15 seconds. */
+const BEACON_INTERVAL_MS = 15_000;
 
 export interface ProctoringResult {
   tabSwitches: number;
@@ -64,6 +76,7 @@ export function useProctoringTracker({
   trackTabSwitches = true,
   trackCopyPaste = true,
   persistToStorage = false,
+  serverSync = true,
 }: ProctoringOptions): ProctoringResult {
   const [tabSwitches, setTabSwitches] = useState<number>(() => {
     if (persistToStorage && typeof window !== "undefined") {
@@ -88,6 +101,32 @@ export function useProctoringTracker({
   const countsRef = useRef({ tabSwitches, copyPasteAttempts });
   countsRef.current = { tabSwitches, copyPasteAttempts };
 
+  // ── Server beacon (pending delta buffer) ──────────────────────────────────
+  // Track unsent increments since the last beacon flush. The beacon sends only
+  // the delta so we don't overwrite server counts if a flush was already processed.
+  const pendingRef = useRef({ tabSwitches: 0, copyPasteAttempts: 0 });
+
+  /** Flush pending event counts to the server via sendBeacon (fire-and-forget). */
+  const flushBeacon = useCallback(() => {
+    if (!serverSync || !enabled) return;
+    const { tabSwitches: ts, copyPasteAttempts: cp } = pendingRef.current;
+    if (ts === 0 && cp === 0) return; // nothing to send
+
+    const url = `/api/assessment/${sessionId}/event`;
+    const payload = JSON.stringify({ tabSwitches: ts, copyPasteAttempts: cp });
+
+    // navigator.sendBeacon is ideal here: it works even when the page is being
+    // closed (e.g. tab switch → close), and it never blocks the UI thread.
+    if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: "application/json" });
+      const sent = navigator.sendBeacon(url, blob);
+      if (sent) {
+        // Reset pending delta — server has received it
+        pendingRef.current = { tabSwitches: 0, copyPasteAttempts: 0 };
+      }
+    }
+  }, [serverSync, enabled, sessionId]);
+
   const dismissWarning = useCallback(() => setProctoringWarning(null), []);
 
   const getProctoringData = useCallback(
@@ -96,6 +135,16 @@ export function useProctoringTracker({
   );
 
   const getSignals = useCallback(() => [...signalsRef.current], []);
+
+  // ── Periodic beacon flush every 15 seconds ────────────────────────────────
+  useEffect(() => {
+    if (!enabled || !serverSync) return;
+    const interval = setInterval(flushBeacon, BEACON_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+      flushBeacon(); // flush any remaining on cleanup
+    };
+  }, [enabled, serverSync, flushBeacon]);
 
   // ── Event listeners ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -114,6 +163,13 @@ export function useProctoringTracker({
           }
           return next;
         });
+
+        // Increment the pending beacon delta
+        pendingRef.current.tabSwitches += 1;
+
+        // Flush immediately on tab switch — sendBeacon is reliable on visibilitychange
+        // and this is the most critical event to capture server-side right away.
+        flushBeacon();
 
         setProctoringWarning("Tab switch detected — this has been recorded.");
       }
@@ -134,6 +190,9 @@ export function useProctoringTracker({
         return next;
       });
 
+      // Increment pending beacon delta (will be flushed on next 15s tick)
+      pendingRef.current.copyPasteAttempts += 1;
+
       setProctoringWarning(
         e.type === "paste"
           ? "Pasting is not allowed during this session."
@@ -152,7 +211,7 @@ export function useProctoringTracker({
       document.removeEventListener("cut", handleCopyPaste);
       document.removeEventListener("paste", handleCopyPaste);
     };
-  }, [enabled, sessionId, trackTabSwitches, trackCopyPaste, persistToStorage]);
+  }, [enabled, sessionId, trackTabSwitches, trackCopyPaste, persistToStorage, flushBeacon]);
 
   return {
     tabSwitches,

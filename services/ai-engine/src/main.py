@@ -1,10 +1,9 @@
-import ssl
-import urllib3
 import truststore
 
+# Inject the OS / system certificate store so Python validates TLS certs properly.
+# This replaces the previous ssl._create_unverified_context workaround which
+# disabled certificate verification entirely and exposed the service to MITM attacks.
 truststore.inject_into_ssl()
-ssl._create_default_https_context = ssl._create_unverified_context  # type: ignore[assignment]
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 import logging
 from contextlib import asynccontextmanager
@@ -12,6 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.config import settings
 from src.middleware import ServiceAuthMiddleware
 from src.routers import health, scraper, resume, outreach, scoring, email_finder, interview, assessment
 
@@ -33,12 +33,18 @@ app = FastAPI(
 )
 
 # ── Middleware ────────────────────────────────────────────────────────────────
+# Restrict CORS to the Next.js app only. Wildcard origins with allow_credentials=True
+# would let any website make credentialed cross-origin requests to this service.
+_allowed_origins = [settings.next_app_url]
+if settings.next_app_url != "http://localhost:3000":
+    _allowed_origins.append("http://localhost:3000")  # always allow local dev
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["POST", "GET", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Internal-Key"],
 )
 app.add_middleware(ServiceAuthMiddleware)
 

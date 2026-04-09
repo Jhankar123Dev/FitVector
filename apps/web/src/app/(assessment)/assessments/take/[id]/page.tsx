@@ -194,6 +194,9 @@ export default function TakeAssessmentPage() {
           code,
           language: q.codeLanguage || "python3",
           testCases: q.testCases,
+          // Tie every execution request to this active assessment submission.
+          // The server validates the token is started before calling JDoodle.
+          submissionToken: id,
         }),
       });
       const json = await res.json();

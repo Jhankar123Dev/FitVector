@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { submitAssessmentSchema } from "@/lib/validators";
 import { autoGradeMCQ } from "@/lib/assessment-helpers";
+import { runCodeAgainstTestCases } from "@/lib/jdoodle";
+import type { TestCase } from "@/lib/jdoodle";
 
 // ─── POST: Submit assessment answers (public) ────────────────────────────────
 
@@ -20,11 +22,11 @@ export async function POST(
 
     const supabase = createAdminClient();
 
-    // Fetch submission + assessment
+    // Fetch submission + assessment (include proctoring_flags for server-side counts)
     const { data: submission } = await supabase
       .from("assessment_submissions")
       .select(`
-        id, status, started_at, applicant_id,
+        id, status, started_at, applicant_id, proctoring_flags,
         assessments (assessment_type, time_limit_minutes, questions)
       `)
       .eq("id", token)
@@ -48,16 +50,29 @@ export async function POST(
     const elapsedMinutes = (now.getTime() - startedAt.getTime()) / 60000;
     const timeLimit = assessment?.time_limit_minutes || null;
 
-    // Build structured proctoring flags object
+    // ── Build proctoring flags — server-side counts only ─────────────────────
+    // tabSwitches and copyPasteAttempts come from the server-accumulated values
+    // stored by the /event endpoint (via sendBeacon during the test). We NEVER
+    // trust the client-submitted proctoringData for these counts — a candidate
+    // could forge { tabSwitches: 0 } in the submit payload to hide activity.
+    // The client proctoringData field is intentionally ignored here.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const serverProctoring = (submission as any).proctoring_flags as {
+      tabSwitches?: number;
+      copyPasteAttempts?: number;
+    } | null;
+
+    const serverTabSwitches       = serverProctoring?.tabSwitches       ?? 0;
+    const serverCopyPasteAttempts = serverProctoring?.copyPasteAttempts ?? 0;
+
     const isLate = !!(timeLimit && elapsedMinutes > timeLimit + 2);
     const proctoringFlags = {
-      tabSwitches: parsed.data.proctoringData?.tabSwitches ?? 0,
-      copyPasteAttempts: parsed.data.proctoringData?.copyPasteAttempts ?? 0,
-      submittedLate: isLate,
-      lateByMinutes: isLate ? Math.round(elapsedMinutes - timeLimit!) : 0,
-      flagged: isLate
-        || (parsed.data.proctoringData?.tabSwitches ?? 0) >= 3
-        || (parsed.data.proctoringData?.copyPasteAttempts ?? 0) >= 2,
+      tabSwitches:      serverTabSwitches,
+      copyPasteAttempts: serverCopyPasteAttempts,
+      submittedLate:    isLate,
+      lateByMinutes:    isLate ? Math.round(elapsedMinutes - timeLimit!) : 0,
+      // Flag if late, OR ≥3 tab switches, OR ≥2 copy-paste attempts (all server-computed)
+      flagged: isLate || serverTabSwitches >= 3 || serverCopyPasteAttempts >= 2,
     };
 
     // Build update
@@ -76,6 +91,8 @@ export async function POST(
       type?: string;
       correctAnswer?: string;
       points?: number;
+      testCases?: TestCase[];
+      codeLanguage?: string;
     }>;
     let gradedAnswersForResponse: Array<{ questionId: string; isCorrect: boolean; pointsEarned: number; pointsMax: number }> = [];
 
@@ -83,16 +100,63 @@ export async function POST(
     const isMixedType  = assessmentType === "mixed";
     const isCodingType = assessmentType === "coding_test";
 
+    // Capture validated answers in a stable variable so TypeScript can narrow it
+    // inside nested async functions without `parsed.data` possibly-undefined error.
+    const submittedAnswers = parsed.data.answers;
+
+    // ── Shared server-side coding grader ──────────────────────────────────────
+    // SECURITY: We extract only the submitted code string from the answer and
+    // re-run it server-side against the test cases stored in the DB.
+    // The client-submitted testResults (pass/fail booleans) are intentionally
+    // IGNORED — a candidate cannot forge a passing score by manipulating the
+    // submit payload.
+    async function gradeCodeQuestion(cq: typeof allQuestions[number]): Promise<{
+      passedCount: number;
+      totalCount: number;
+      pointsEarned: number;
+    }> {
+      const pts = cq.points || 1;
+      const rawAns = submittedAnswers.find((a) => a.questionId === cq.id);
+
+      // Extract the candidate's submitted code — ignore any testResults field
+      let submittedCode = "";
+      try {
+        const ansObj = JSON.parse(rawAns?.selectedAnswer || "{}") as { code?: string };
+        submittedCode = ansObj.code?.trim() ?? "";
+      } catch { /* malformed answer — treat as empty */ }
+
+      const testCases = cq.testCases ?? [];
+      if (!submittedCode || testCases.length === 0) {
+        return { passedCount: 0, totalCount: testCases.length, pointsEarned: 0 };
+      }
+
+      try {
+        const result = await runCodeAgainstTestCases(
+          submittedCode,
+          cq.codeLanguage ?? "python3",
+          testCases,
+        );
+        const earned = result.totalCount > 0
+          ? Math.round((result.passedCount / result.totalCount) * pts)
+          : 0;
+        return { passedCount: result.passedCount, totalCount: result.totalCount, pointsEarned: earned };
+      } catch (err) {
+        // JDoodle unavailable — log and award 0 rather than blocking submission
+        console.error("[submit] server-side code grading failed:", err);
+        return { passedCount: 0, totalCount: testCases.length, pointsEarned: 0 };
+      }
+    }
+
     if (isMCQType || isMixedType) {
       // Separate MCQ questions from coding questions
       const mcqQuestions    = isMCQType ? allQuestions : allQuestions.filter((q) => q.type === "multiple_choice" || q.type === "true_false");
       const codingQuestions = isMixedType ? allQuestions.filter((q) => q.type === "code") : [];
 
       // Grade MCQ
-      const { score: mcqScore, gradedAnswers: mcqGraded } = autoGradeMCQ(mcqQuestions, parsed.data.answers);
+      const { score: mcqScore, gradedAnswers: mcqGraded } = autoGradeMCQ(mcqQuestions, submittedAnswers);
       gradedAnswersForResponse = mcqGraded;
 
-      // Grade coding via client-submitted testResults
+      // Grade coding server-side (sequential — JDoodle free tier credits)
       let codingEarned = 0;
       let codingMax    = 0;
       const codingGraded: typeof gradedAnswersForResponse = [];
@@ -101,23 +165,13 @@ export async function POST(
         const pts = cq.points || 1;
         codingMax += pts;
 
-        // Client submits coding answers as JSON string: { code, testResults: [{passed},...] }
-        const rawAns = parsed.data.answers.find((a) => a.questionId === cq.id);
-        let passedCount = 0;
-        let totalCount  = 0;
-        try {
-          const parsed2 = JSON.parse(rawAns?.selectedAnswer || "{}") as { testResults?: { passed: boolean }[] };
-          totalCount  = parsed2.testResults?.length ?? 0;
-          passedCount = parsed2.testResults?.filter((r) => r.passed).length ?? 0;
-        } catch { /* no test results submitted */ }
-
-        const earned     = totalCount > 0 ? Math.round((passedCount / totalCount) * pts) : 0;
-        codingEarned    += earned;
+        const { passedCount, totalCount, pointsEarned } = await gradeCodeQuestion(cq);
+        codingEarned += pointsEarned;
 
         codingGraded.push({
           questionId:   cq.id,
           isCorrect:    totalCount > 0 && passedCount === totalCount,
-          pointsEarned: earned,
+          pointsEarned,
           pointsMax:    pts,
         });
       }
@@ -136,32 +190,26 @@ export async function POST(
 
       update.auto_score  = blendedScore;
       update.final_score = blendedScore;
-      update.answers = parsed.data.answers.map((a) => {
+      update.answers = submittedAnswers.map((a) => {
         const graded = gradedAnswersForResponse.find((g) => g.questionId === a.questionId);
         return { ...a, isCorrect: graded?.isCorrect || false, pointsEarned: graded?.pointsEarned || 0, pointsMax: graded?.pointsMax || 0 };
       });
     } else if (isCodingType) {
-      // Pure coding assessment — score from client testResults
+      // Pure coding assessment — re-run all code server-side
       let codingEarned = 0;
       let codingMax    = 0;
 
       for (const cq of allQuestions) {
         const pts = cq.points || 1;
         codingMax += pts;
-        const rawAns = parsed.data.answers.find((a) => a.questionId === cq.id);
-        let passedCount = 0;
-        let totalCount  = 0;
-        try {
-          const p2 = JSON.parse(rawAns?.selectedAnswer || "{}") as { testResults?: { passed: boolean }[] };
-          totalCount  = p2.testResults?.length ?? 0;
-          passedCount = p2.testResults?.filter((r) => r.passed).length ?? 0;
-        } catch { /* no results */ }
-        const earned = totalCount > 0 ? Math.round((passedCount / totalCount) * pts) : 0;
-        codingEarned += earned;
+
+        const { passedCount, totalCount, pointsEarned } = await gradeCodeQuestion(cq);
+        codingEarned += pointsEarned;
+
         gradedAnswersForResponse.push({
           questionId:   cq.id,
           isCorrect:    totalCount > 0 && passedCount === totalCount,
-          pointsEarned: earned,
+          pointsEarned,
           pointsMax:    pts,
         });
       }

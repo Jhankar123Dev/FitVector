@@ -139,7 +139,7 @@ export async function POST(req: Request) {
     if (error) {
       console.error("Admin job insert error:", error);
       return NextResponse.json(
-        { error: "Insert failed", details: error.message, insertedSoFar: inserted },
+        { error: "Insert failed", insertedSoFar: inserted },
         { status: 500 },
       );
     }

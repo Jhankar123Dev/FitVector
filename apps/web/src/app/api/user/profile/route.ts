@@ -1,5 +1,21 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
+
+const updateProfileSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  currentRole: z.string().max(200).optional(),
+  currentCompany: z.string().max(200).optional(),
+  experienceLevel: z.enum(["fresher", "1_3", "3_7", "7_15", "15_plus"]).optional(),
+  targetRoles: z.array(z.string().max(100)).max(10).optional(),
+  targetLocations: z.array(z.string().max(100)).max(20).optional(),
+  preferredWorkMode: z.enum(["onsite", "remote", "hybrid"]).optional(),
+  expectedSalaryMin: z.number().int().min(0).max(100_000_000).optional(),
+  expectedSalaryMax: z.number().int().min(0).max(100_000_000).optional(),
+  skills: z.array(z.string().max(100)).max(50).optional(),
+  // parsedResumeJson is AI-generated structured data — accept as any object but cap depth
+  parsedResumeJson: z.record(z.unknown()).optional(),
+});
 
 export async function GET() {
   try {
@@ -69,7 +85,12 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const parseResult = updateProfileSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return NextResponse.json({ error: "Invalid input", details: parseResult.error.flatten() }, { status: 400 });
+    }
+    const body = parseResult.data;
 
     const { createClient } = await import("@supabase/supabase-js");
     const supabase = createClient(

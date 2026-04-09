@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getAdminSession } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+const patchUserSchema = z.object({
+  userId: z.string().uuid("Invalid user ID"),
+  planTier: z.enum(["free", "starter", "pro", "enterprise"]).optional(),
+  status: z.enum(["active", "suspended", "deactivated"]).optional(),
+}).refine((d) => d.planTier !== undefined || d.status !== undefined, {
+  message: "At least one of planTier or status must be provided",
+});
 
 export async function GET(req: Request) {
   const result = await getAdminSession();
@@ -61,19 +70,16 @@ export async function PATCH(req: Request) {
 
   const supabase = createAdminClient();
   const body = await req.json();
-  const { userId, planTier, status } = body;
+  const parsed = patchUserSchema.safeParse(body);
 
-  if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
   }
 
+  const { userId, planTier, status } = parsed.data;
   const updates: Record<string, unknown> = {};
-  if (planTier) updates.plan_tier = planTier;
-  if (status) updates.status = status;
-
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
-  }
+  if (planTier !== undefined) updates.plan_tier = planTier;
+  if (status !== undefined) updates.status = status;
 
   const { error } = await supabase.from("users").update(updates).eq("id", userId);
 

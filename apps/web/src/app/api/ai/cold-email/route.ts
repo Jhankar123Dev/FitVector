@@ -1,8 +1,17 @@
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { pythonClient } from "@/lib/python-client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasQuota } from "@fitvector/shared";
 import type { PlanTier } from "@fitvector/shared";
+
+const coldEmailSchema = z.object({
+  jobTitle: z.string().min(1, "Job title is required").max(200),
+  companyName: z.string().min(1, "Company name is required").max(200),
+  jobDescription: z.string().max(5000).optional().default(""),
+  recruiterName: z.string().max(200).optional().nullable(),
+  tone: z.enum(["professional", "conversational", "confident"]).default("professional"),
+});
 
 export async function POST(req: Request) {
   try {
@@ -27,8 +36,12 @@ export async function POST(req: Request) {
       return Response.json({ error: "Monthly cold email limit reached.", upgrade: true }, { status: 429 });
     }
 
-    const body = await req.json();
-    const { jobTitle, companyName, jobDescription, recruiterName, tone } = body;
+    const rawBody = await req.json();
+    const bodyParsed = coldEmailSchema.safeParse(rawBody);
+    if (!bodyParsed.success) {
+      return Response.json({ error: "Invalid input", details: bodyParsed.error.flatten() }, { status: 400 });
+    }
+    const { jobTitle, companyName, jobDescription, recruiterName, tone } = bodyParsed.data;
 
     const { data: profile } = await supabase
       .from("user_profiles")

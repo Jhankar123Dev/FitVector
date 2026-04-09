@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # Proxy for web scraping
     proxy_url: str = ""
 
+    # Allowed CORS origin — set to your deployed Next.js URL in production
+    next_app_url: str = "http://localhost:3000"
+
     # Feature flags (admin-controlled)
     enable_llm_job_analysis: bool = True
     enable_gap_analysis: bool = True

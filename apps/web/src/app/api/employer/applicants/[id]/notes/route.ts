@@ -3,6 +3,33 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmployerSession } from "@/lib/employer-auth";
 import { addNoteSchema } from "@/lib/validators";
 
+// ─── Ownership guard ─────────────────────────────────────────────────────────
+// Verifies that the applicant belongs to a job posted by the employer's company.
+// Returns 404 (not 403) for both missing and unauthorized cases — never reveal
+// whether a resource exists to prevent IDOR enumeration.
+async function verifyApplicantOwnership(
+  supabase: ReturnType<typeof createAdminClient>,
+  applicantId: string,
+  companyId: string,
+): Promise<boolean> {
+  const { data: applicant } = await supabase
+    .from("applicants")
+    .select("id, job_post_id")
+    .eq("id", applicantId)
+    .single();
+
+  if (!applicant) return false;
+
+  const { data: jobPost } = await supabase
+    .from("job_posts")
+    .select("company_id")
+    .eq("id", applicant.job_post_id)
+    .eq("company_id", companyId)
+    .single();
+
+  return !!jobPost;
+}
+
 // ─── GET: List notes for applicant ───────────────────────────────────────────
 
 export async function GET(
@@ -13,8 +40,13 @@ export async function GET(
     const result = await getEmployerSession();
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
 
+    const { company } = result.data;
     const { id: applicantId } = await params;
     const supabase = createAdminClient();
+
+    // ── Ownership check: applicant must belong to this company ────────────────
+    const isOwned = await verifyApplicantOwnership(supabase, applicantId, company.id);
+    if (!isOwned) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const { data: rows, error } = await supabase
       .from("candidate_notes")
@@ -54,7 +86,7 @@ export async function POST(
     const result = await getEmployerSession();
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
 
-    const { session } = result.data;
+    const { session, company } = result.data;
     const { id: applicantId } = await params;
     const body = await req.json();
     const parsed = addNoteSchema.safeParse(body);
@@ -62,6 +94,10 @@ export async function POST(
     if (!parsed.success) return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
 
     const supabase = createAdminClient();
+
+    // ── Ownership check: applicant must belong to this company ────────────────
+    const isOwned = await verifyApplicantOwnership(supabase, applicantId, company.id);
+    if (!isOwned) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const { data: row, error } = await supabase
       .from("candidate_notes")
