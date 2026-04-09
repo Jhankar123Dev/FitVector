@@ -454,6 +454,33 @@ export function FitVectorApplyModal({
                                   ))}
                                 </div>
                               )}
+
+                              {q.type === "multiple_choice" && q.options && (
+                                <div className="flex flex-col gap-2">
+                                  {q.options.map((opt, optIdx) => (
+                                    <button
+                                      key={optIdx}
+                                      onClick={() => updateAnswer(q.id, opt)}
+                                      className={cn(
+                                        "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                                        answer?.answer === opt
+                                          ? "border-brand-400 bg-brand-50 text-brand-700"
+                                          : "border-surface-200 text-surface-600 hover:border-surface-300 hover:bg-surface-50",
+                                      )}
+                                    >
+                                      <span className={cn(
+                                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold",
+                                        answer?.answer === opt
+                                          ? "border-brand-500 bg-brand-500 text-white"
+                                          : "border-surface-300 text-surface-400",
+                                      )}>
+                                        {String.fromCharCode(65 + optIdx)}
+                                      </span>
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

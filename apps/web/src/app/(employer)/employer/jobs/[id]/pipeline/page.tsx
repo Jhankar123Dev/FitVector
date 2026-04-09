@@ -156,6 +156,10 @@ export default function PipelinePage() {
     return PIPELINE_COLUMNS; // global default from types/employer.ts
   }, [job]);
 
+  // Stages where an invite has already been dispatched — used to gate bulk actions
+  const AI_INTERVIEW_SENT_STAGES = new Set(["ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired"]);
+  const ASSESSMENT_SENT_STAGES   = new Set(["assessment_pending", "assessment_completed", "ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired"]);
+
   const NEXT_STAGE = useMemo<Record<string, PipelineStage>>(() => {
     const map: Record<string, PipelineStage> = {};
     for (let i = 0; i < jobPipelineStages.length - 1; i++) {
@@ -393,30 +397,49 @@ export default function PipelinePage() {
                 <XCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 Reject
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden md:inline-flex gap-1.5 h-8"
-                onClick={() => {
-                  for (const id of selectedIds) {
-                    inviteInterview.mutate({ applicantId: id });
-                  }
-                  clearSelection();
-                }}
-                disabled={inviteInterview.isPending}
-              >
-                <Send className="h-3.5 w-3.5" />
-                {inviteInterview.isPending ? "Sending…" : "Send AI Interview"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5"
-                onClick={() => setBulkAssessmentModal(true)}
-              >
-                <ClipboardCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                Send Assessment
-              </Button>
+              {(() => {
+                const eligible = applicants.filter((a) => selectedIds.has(a.id) && !AI_INTERVIEW_SENT_STAGES.has(a.pipelineStage));
+                const alreadyAllSent = eligible.length === 0;
+                return (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden md:inline-flex gap-1.5 h-8"
+                    onClick={() => {
+                      for (const a of eligible) inviteInterview.mutate({ applicantId: a.id });
+                      clearSelection();
+                    }}
+                    disabled={inviteInterview.isPending || alreadyAllSent}
+                    title={alreadyAllSent ? "All selected candidates already have an AI interview invite" : undefined}
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    {inviteInterview.isPending
+                      ? "Sending…"
+                      : alreadyAllSent
+                        ? "Already Sent"
+                        : `Send AI Interview${eligible.length < Array.from(selectedIds).length ? ` (${eligible.length})` : ""}`}
+                  </Button>
+                );
+              })()}
+              {(() => {
+                const eligible = applicants.filter((a) => selectedIds.has(a.id) && !ASSESSMENT_SENT_STAGES.has(a.pipelineStage));
+                const alreadyAllSent = eligible.length === 0;
+                return (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5"
+                    onClick={() => !alreadyAllSent && setBulkAssessmentModal(true)}
+                    disabled={alreadyAllSent}
+                    title={alreadyAllSent ? "All selected candidates already have an assessment assigned" : undefined}
+                  >
+                    <ClipboardCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    {alreadyAllSent
+                      ? "Already Sent"
+                      : `Send Assessment${eligible.length < Array.from(selectedIds).length ? ` (${eligible.length})` : ""}`}
+                  </Button>
+                );
+              })()}
               <Button variant="ghost" size="sm" onClick={clearSelection} className="h-7 text-xs sm:h-8 sm:text-sm">
                 Clear
               </Button>
@@ -735,7 +758,9 @@ export default function PipelinePage() {
           jobId={jobId}
           onClose={() => setBulkAssessmentModal(false)}
           onConfirm={(assessmentId) => {
-            const ids = Array.from(selectedIds);
+            const ids = applicants
+              .filter((a) => selectedIds.has(a.id) && !ASSESSMENT_SENT_STAGES.has(a.pipelineStage))
+              .map((a) => a.id);
             assignAssessment.mutate(
               { assessmentId, applicantIds: ids, jobPostId: jobId },
               {

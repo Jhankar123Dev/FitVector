@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -249,6 +250,7 @@ function JobRow({
 }
 
 export default function EmployerJobsPage() {
+  const router = useRouter();
   const { data: jobsData, isLoading, error } = useEmployerJobs();
   const changeStatus = useChangeJobStatus();
   const duplicateJob = useDuplicateJobPost();
@@ -258,6 +260,9 @@ export default function EmployerJobsPage() {
 
   function handleAction(action: string, jobId: string) {
     switch (action) {
+      case "edit":
+        router.push(`/employer/jobs/${jobId}/edit`);
+        break;
       case "pause":
         changeStatus.mutate({ id: jobId, status: "paused" });
         break;
