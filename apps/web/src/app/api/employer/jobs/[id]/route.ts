@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmployerSession } from "@/lib/employer-auth";
 import { updateJobPostSchema } from "@/lib/validators";
 import { transformJobPost } from "@/lib/job-post-helpers";
+import { generateAndLinkAssessment } from "@/lib/assessment-generation";
 
 // ─── GET: Single job post ────────────────────────────────────────────────────
 
@@ -118,6 +119,22 @@ export async function PUT(
     if (updateError || !updated) {
       console.error("Job update error:", updateError);
       return NextResponse.json({ error: "Failed to update job post" }, { status: 500 });
+    }
+
+    // Auto-generate assessment if publishing and assessmentConfig enabled and not yet linked
+    const isPublishing = d.status === "active" && existing.status !== "active";
+    const assessmentCfg = (d.assessmentConfig ?? (updated as Record<string, unknown>).assessment_config) as Record<string, unknown> | null;
+    const alreadyLinked = !!(updated as Record<string, unknown>).assessment_id;
+    if (isPublishing && assessmentCfg?.enabled && !alreadyLinked) {
+      const { company, session } = result.data;
+      await generateAndLinkAssessment(
+        supabase,
+        id,
+        company.id,
+        session.user.id,
+        (updated as Record<string, unknown>).title as string,
+        assessmentCfg as unknown as Parameters<typeof generateAndLinkAssessment>[5],
+      );
     }
 
     return NextResponse.json({

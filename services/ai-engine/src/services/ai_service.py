@@ -934,12 +934,16 @@ Screen this candidate and return the JSON evaluation."""
 # ─── Assessment question generation ──────────────────────────────────────────
 
 _GENERATE_QUESTIONS_SYSTEM_PROMPT = """You are an expert technical assessment designer.
-Generate assessment questions exactly as specified. Return a valid JSON array of question objects.
-Each object must follow the schema strictly — no extra fields, no markdown."""
+Generate assessment questions exactly as specified. Return valid JSON only — no markdown, no extra fields.
+For multiple_choice questions: provide exactly 4 options, set correctAnswer to the full text of the correct option.
+For code questions: provide a clear problem statement, set correctAnswer to a working sample solution,
+and provide 4 test cases (testCases array) with concrete input/expectedOutput pairs that can be used to validate solutions.
+Test case inputs and outputs must be exact strings that a program would read from stdin / print to stdout."""
 
 
-class _QuestionOptionSchema(BaseModel):
-    text: str = ""
+class _TestCaseSchema(BaseModel):
+    input: str = ""
+    expectedOutput: str = ""
 
 
 class _GeneratedQuestionSchema(BaseModel):
@@ -949,6 +953,7 @@ class _GeneratedQuestionSchema(BaseModel):
     correctAnswer: str = ""
     points: int = 10
     codeLanguage: str = ""
+    testCases: list[_TestCaseSchema] = []
 
 
 class _GeneratedQuestionsSchema(BaseModel):
@@ -973,22 +978,48 @@ async def generate_questions(
         "hard": "challenging, testing deep knowledge, edge cases, and problem-solving",
     }.get(difficulty, "moderately challenging")
 
+    is_code = question_type == "code"
+
     type_guidance = {
-        "multiple_choice": "multiple choice with exactly 4 options (A/B/C/D). Set correctAnswer to the full text of the correct option.",
-        "short_answer": "open-ended short answer. Leave options as empty array, set correctAnswer to a model answer.",
-        "code": f"coding problem in {code_language or 'any language'}. Leave options as empty array, set correctAnswer to a sample solution.",
-    }.get(question_type, "multiple choice")
+        "multiple_choice": "multiple choice with exactly 4 options. Set correctAnswer to the full text of the correct option. Leave testCases as empty array.",
+        "short_answer": "open-ended short answer. Leave options and testCases as empty arrays, set correctAnswer to a model answer.",
+        "code": (
+            f"coding problem in {code_language or 'Python 3'}. "
+            "Leave options as empty array. Set correctAnswer to a complete working sample solution. "
+            "Provide exactly 4 testCases with concrete input/expectedOutput string pairs "
+            "(what the program reads from stdin and prints to stdout, newline-terminated)."
+        ),
+    }.get(question_type, "multiple choice with 4 options")
 
     points_map = {"easy": 5, "medium": 10, "hard": 15}
-    default_points = points_map.get(difficulty, 10)
+    mcq_points   = points_map.get(difficulty, 10)
+    code_points  = mcq_points * 5  # coding questions worth 5× MCQ
+    default_points = code_points if is_code else mcq_points
 
-    user_prompt = f"""Generate exactly {count} {difficulty_guidance} {question_type} questions about: {topic}
+    test_case_example = (
+        ', "testCases": [{"input": "5\\n", "expectedOutput": "25\\n"}, ...]'
+        if is_code else ', "testCases": []'
+    )
 
-Question format: {type_guidance}
+    user_prompt = f"""Generate exactly {count} {difficulty_guidance} {question_type} question(s) about: {topic}
+
+Format: {type_guidance}
 Points per question: {default_points}
-{"Code language: " + code_language if code_language else ""}
+{"Code language: " + (code_language or "python3") if is_code else ""}
 
-Return JSON: {{ "questions": [ {{ "prompt": "...", "type": "{question_type}", "options": [...], "correctAnswer": "...", "points": {default_points}, "codeLanguage": "{code_language or ""}" }}, ... ] }}"""
+Return JSON:
+{{
+  "questions": [
+    {{
+      "prompt": "...",
+      "type": "{question_type}",
+      "options": [...],
+      "correctAnswer": "...",
+      "points": {default_points},
+      "codeLanguage": "{code_language or ""}" {test_case_example}
+    }}
+  ]
+}}"""
 
     try:
         raw_json = await _call_gemini(
@@ -1010,22 +1041,31 @@ Return JSON: {{ "questions": [ {{ "prompt": "...", "type": "{question_type}", "o
                 raise ValueError("repair_json returned non-dict for generate_questions")
 
         raw_questions = data.get("questions", [])
+        ts = int(__import__('time').time())
         questions = []
         for i, q in enumerate(raw_questions[:count]):
+            # Normalise test cases — must be list of {input, expectedOutput}
+            raw_tc = q.get("testCases", [])
+            test_cases = [
+                {"input": str(tc.get("input", "")), "expectedOutput": str(tc.get("expectedOutput", ""))}
+                for tc in (raw_tc if isinstance(raw_tc, list) else [])
+                if isinstance(tc, dict)
+            ]
             questions.append({
-                "id": f"gen-{i}-{int(__import__('time').time())}",
+                "id": f"gen-{i}-{ts}",
                 "type": q.get("type", question_type),
                 "prompt": q.get("prompt", ""),
                 "options": q.get("options", []),
                 "correctAnswer": q.get("correctAnswer", ""),
                 "points": max(1, int(q.get("points", default_points))),
                 "codeLanguage": q.get("codeLanguage", code_language or ""),
+                "testCases": test_cases,
             })
         return questions
 
     except Exception as exc:
         logger.error("generate_questions Gemini call failed: %s", exc)
-        # Minimal fallback — return placeholder questions so the UI doesn't crash
+        # Minimal fallback — placeholder questions so the UI doesn't crash
         return [
             {
                 "id": f"gen-fallback-{i}",
@@ -1035,6 +1075,7 @@ Return JSON: {{ "questions": [ {{ "prompt": "...", "type": "{question_type}", "o
                 "correctAnswer": "Option A" if question_type == "multiple_choice" else "",
                 "points": default_points,
                 "codeLanguage": code_language or "",
+                "testCases": [],
             }
             for i in range(count)
         ]

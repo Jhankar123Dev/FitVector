@@ -33,6 +33,7 @@ interface ScreeningQuestion {
   id: string;
   question: string;
   type: "short_answer" | "yes_no" | "multiple_choice";
+  options?: string[];
   required: boolean;
 }
 

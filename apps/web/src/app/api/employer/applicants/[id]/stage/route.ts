@@ -5,7 +5,8 @@ import { changeStageSchema } from "@/lib/validators";
 import { transformApplicant } from "@/lib/applicant-helpers";
 
 // Stages that trigger an automatic action when an employer moves a candidate there
-const AUTO_ACTIONS: Record<string, "invite_ai_interview" | "notify_human_interview"> = {
+const AUTO_ACTIONS: Record<string, "assign_assessment" | "invite_ai_interview" | "notify_human_interview"> = {
+  assessment_pending:   "assign_assessment",
   ai_interview_pending: "invite_ai_interview",
   human_interview:      "notify_human_interview",
 };
@@ -130,6 +131,51 @@ export async function PUT(
     // ── Auto-actions on specific stage transitions ──────────────────
     const autoAction = AUTO_ACTIONS[parsed.data.stage];
     let autoSent = false;
+
+    if (autoAction === "assign_assessment") {
+      // Look up the job post's linked assessment_id
+      const { data: jobPostRow } = await supabase
+        .from("job_posts")
+        .select("assessment_id, title")
+        .eq("id", applicant.job_post_id)
+        .single();
+
+      const assessmentId = jobPostRow?.assessment_id as string | null;
+
+      if (assessmentId) {
+        // Only create a submission if one doesn't already exist
+        const { data: existingSub } = await supabase
+          .from("assessment_submissions")
+          .select("id")
+          .eq("assessment_id", assessmentId)
+          .eq("applicant_id", id)
+          .maybeSingle();
+
+        if (!existingSub) {
+          const { error: subErr } = await supabase
+            .from("assessment_submissions")
+            .insert({
+              assessment_id: assessmentId,
+              applicant_id:  id,
+              job_post_id:   applicant.job_post_id,
+              status:        "invited",
+              invited_at:    new Date().toISOString(),
+            });
+
+          if (subErr) {
+            console.error("[stage/auto-assign-assessment] insert error:", subErr);
+          } else {
+            console.log(`[Auto Assessment Assign] Applicant ${id} assigned assessment ${assessmentId}`);
+            autoSent = true;
+          }
+        } else {
+          // Submission already exists — treat as already sent
+          autoSent = true;
+        }
+      } else {
+        console.log(`[Auto Assessment Assign] Job ${applicant.job_post_id} has no assessment_id — skipping`);
+      }
+    }
 
     if (autoAction === "invite_ai_interview") {
       // Only send if no active invite already exists

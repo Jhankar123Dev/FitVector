@@ -96,7 +96,7 @@ export type JobPostType = "fulltime" | "parttime" | "contract" | "internship";
 export type WorkMode = "onsite" | "remote" | "hybrid";
 export type InterviewType = "technical" | "behavioral" | "role_specific" | "general";
 export type DifficultyLevel = "easy" | "medium" | "hard";
-export type AssessmentType = "coding_test" | "mcq_quiz" | "case_study" | "assignment";
+export type AssessmentType = "coding_test" | "mcq_quiz" | "mixed" | "case_study" | "assignment";
 export type ScreeningQuestionType = "multiple_choice" | "short_answer" | "yes_no";
 
 export interface ScreeningQuestion {
@@ -121,7 +121,11 @@ export interface AssessmentConfig {
   assessmentType: AssessmentType;
   timeLimit: number; // minutes
   difficultyLevel: DifficultyLevel;
-  customQuestions: string[];
+  customQuestions: string[]; // topic strings used for AI generation
+  // Mixed / typed counts (used when assessmentType is mixed/mcq_quiz/coding_test)
+  mcqCount?: number;
+  codingCount?: number;
+  codeLanguage?: string; // e.g. "python3", "nodejs", "java"
 }
 
 export interface JobPost {
@@ -220,10 +224,20 @@ export const INTERVIEW_TYPE_LABELS: Record<InterviewType, string> = {
 };
 
 export const ASSESSMENT_TYPE_LABELS: Record<AssessmentType, string> = {
+  mixed:       "Mixed (MCQ + Coding)",
+  mcq_quiz:    "MCQ Quiz",
   coding_test: "Coding Test",
-  mcq_quiz: "MCQ Quiz",
-  case_study: "Case Study",
-  assignment: "Take-Home Assignment",
+  case_study:  "Case Study",
+  assignment:  "Take-Home Assignment",
+};
+
+export const JDOODLE_LANGUAGE_MAP: Record<string, { language: string; versionIndex: string; label: string }> = {
+  python3:    { language: "python3",    versionIndex: "3", label: "Python 3"     },
+  nodejs:     { language: "nodejs",     versionIndex: "4", label: "JavaScript"   },
+  java:       { language: "java",       versionIndex: "4", label: "Java"         },
+  cpp17:      { language: "cpp17",      versionIndex: "1", label: "C++"          },
+  go:         { language: "go",         versionIndex: "4", label: "Go"           },
+  typescript: { language: "typescript", versionIndex: "1", label: "TypeScript"   },
 };
 
 export const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {

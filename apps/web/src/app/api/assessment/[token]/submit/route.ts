@@ -69,27 +69,107 @@ export async function POST(
       proctoring_flags: proctoringFlags,
     };
 
-    // Auto-grade MCQ assessments
+    // ── Auto-grading ──────────────────────────────────────────────────────────
     const assessmentType = assessment?.assessment_type as string;
+    const allQuestions = (assessment?.questions || []) as Array<{
+      id: string;
+      type?: string;
+      correctAnswer?: string;
+      points?: number;
+    }>;
     let gradedAnswersForResponse: Array<{ questionId: string; isCorrect: boolean; pointsEarned: number; pointsMax: number }> = [];
-    if (assessmentType === "mcq_quiz") {
-      const questions = (assessment?.questions || []) as Array<{ id: string; correctAnswer?: string; points?: number }>;
-      const { score, gradedAnswers } = autoGradeMCQ(questions, parsed.data.answers);
-      update.auto_score = score;
-      update.final_score = score;
-      gradedAnswersForResponse = gradedAnswers;
-      // Merge grading info into answers
+
+    const isMCQType    = assessmentType === "mcq_quiz";
+    const isMixedType  = assessmentType === "mixed";
+    const isCodingType = assessmentType === "coding_test";
+
+    if (isMCQType || isMixedType) {
+      // Separate MCQ questions from coding questions
+      const mcqQuestions    = isMCQType ? allQuestions : allQuestions.filter((q) => q.type === "multiple_choice" || q.type === "true_false");
+      const codingQuestions = isMixedType ? allQuestions.filter((q) => q.type === "code") : [];
+
+      // Grade MCQ
+      const { score: mcqScore, gradedAnswers: mcqGraded } = autoGradeMCQ(mcqQuestions, parsed.data.answers);
+      gradedAnswersForResponse = mcqGraded;
+
+      // Grade coding via client-submitted testResults
+      let codingEarned = 0;
+      let codingMax    = 0;
+      const codingGraded: typeof gradedAnswersForResponse = [];
+
+      for (const cq of codingQuestions) {
+        const pts = cq.points || 1;
+        codingMax += pts;
+
+        // Client submits coding answers as JSON string: { code, testResults: [{passed},...] }
+        const rawAns = parsed.data.answers.find((a) => a.questionId === cq.id);
+        let passedCount = 0;
+        let totalCount  = 0;
+        try {
+          const parsed2 = JSON.parse(rawAns?.selectedAnswer || "{}") as { testResults?: { passed: boolean }[] };
+          totalCount  = parsed2.testResults?.length ?? 0;
+          passedCount = parsed2.testResults?.filter((r) => r.passed).length ?? 0;
+        } catch { /* no test results submitted */ }
+
+        const earned     = totalCount > 0 ? Math.round((passedCount / totalCount) * pts) : 0;
+        codingEarned    += earned;
+
+        codingGraded.push({
+          questionId:   cq.id,
+          isCorrect:    totalCount > 0 && passedCount === totalCount,
+          pointsEarned: earned,
+          pointsMax:    pts,
+        });
+      }
+
+      gradedAnswersForResponse = [...mcqGraded, ...codingGraded];
+
+      // Compute blended score (0-100)
+      const mcqMax = mcqQuestions.reduce((s, q) => s + (q.points || 1), 0);
+      const totalMax    = mcqMax + codingMax;
+      const mcqEarned   = mcqQuestions.reduce((s, q) => {
+        const g = mcqGraded.find((g2) => g2.questionId === q.id);
+        return s + (g?.pointsEarned ?? 0);
+      }, 0);
+      const totalEarned = mcqEarned + codingEarned;
+      const blendedScore = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : mcqScore;
+
+      update.auto_score  = blendedScore;
+      update.final_score = blendedScore;
       update.answers = parsed.data.answers.map((a) => {
-        const graded = gradedAnswers.find((g) => g.questionId === a.questionId);
-        return {
-          ...a,
-          isCorrect: graded?.isCorrect || false,
-          pointsEarned: graded?.pointsEarned || 0,
-          pointsMax: graded?.pointsMax || 0,
-        };
+        const graded = gradedAnswersForResponse.find((g) => g.questionId === a.questionId);
+        return { ...a, isCorrect: graded?.isCorrect || false, pointsEarned: graded?.pointsEarned || 0, pointsMax: graded?.pointsMax || 0 };
       });
+    } else if (isCodingType) {
+      // Pure coding assessment — score from client testResults
+      let codingEarned = 0;
+      let codingMax    = 0;
+
+      for (const cq of allQuestions) {
+        const pts = cq.points || 1;
+        codingMax += pts;
+        const rawAns = parsed.data.answers.find((a) => a.questionId === cq.id);
+        let passedCount = 0;
+        let totalCount  = 0;
+        try {
+          const p2 = JSON.parse(rawAns?.selectedAnswer || "{}") as { testResults?: { passed: boolean }[] };
+          totalCount  = p2.testResults?.length ?? 0;
+          passedCount = p2.testResults?.filter((r) => r.passed).length ?? 0;
+        } catch { /* no results */ }
+        const earned = totalCount > 0 ? Math.round((passedCount / totalCount) * pts) : 0;
+        codingEarned += earned;
+        gradedAnswersForResponse.push({
+          questionId:   cq.id,
+          isCorrect:    totalCount > 0 && passedCount === totalCount,
+          pointsEarned: earned,
+          pointsMax:    pts,
+        });
+      }
+      const score = codingMax > 0 ? Math.round((codingEarned / codingMax) * 100) : 0;
+      update.auto_score  = score;
+      update.final_score = score;
     }
-    // Coding, case study, assignment → manual grading (no auto_score)
+    // case_study / assignment → manual grading (no auto_score)
 
     const { data: updated, error } = await supabase
       .from("assessment_submissions")

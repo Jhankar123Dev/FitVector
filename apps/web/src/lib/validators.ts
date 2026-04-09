@@ -185,7 +185,7 @@ export const completeInterviewSchema = z.object({
 
 export const createAssessmentSchema = z.object({
   name: z.string().min(2, "Assessment name is required").max(200),
-  assessmentType: z.enum(["coding_test", "mcq_quiz", "case_study", "assignment"]),
+  assessmentType: z.enum(["coding_test", "mcq_quiz", "mixed", "case_study", "assignment"]),
   timeLimitMinutes: z.number().int().min(5).max(300).optional().nullable(),
   difficulty: z.enum(["easy", "medium", "hard"]).optional().nullable(),
   passingScore: z.number().int().min(0).max(100).optional().nullable(),

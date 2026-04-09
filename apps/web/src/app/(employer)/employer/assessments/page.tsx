@@ -13,6 +13,7 @@ import {
   FileQuestion,
   BookOpen,
   FileCode,
+  Layers,
   Clock,
   Users,
   TrendingUp,
@@ -35,6 +36,7 @@ import {
 const TYPE_ICONS: Record<AssessmentType, React.ElementType> = {
   coding_test: Code2,
   mcq_quiz: FileQuestion,
+  mixed: Layers,
   case_study: BookOpen,
   assignment: FileCode,
 };
@@ -42,6 +44,7 @@ const TYPE_ICONS: Record<AssessmentType, React.ElementType> = {
 const TYPE_COLORS: Record<AssessmentType, string> = {
   coding_test: "bg-brand-50 text-brand-700 border-brand-200",
   mcq_quiz: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  mixed: "bg-purple-50 text-purple-700 border-purple-200",
   case_study: "bg-amber-50 text-amber-700 border-amber-200",
   assignment: "bg-sky-50 text-sky-700 border-sky-200",
 };

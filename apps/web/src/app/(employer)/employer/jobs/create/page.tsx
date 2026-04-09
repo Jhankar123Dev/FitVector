@@ -47,6 +47,7 @@ import {
   INTERVIEW_TYPE_LABELS,
   ASSESSMENT_TYPE_LABELS,
   DIFFICULTY_LABELS,
+  JDOODLE_LANGUAGE_MAP,
   getStageName,
 } from "@/types/employer";
 
@@ -126,6 +127,9 @@ const INITIAL_FORM: JobPostFormData = {
     timeLimit: 60,
     difficultyLevel: "medium",
     customQuestions: [],
+    mcqCount: undefined,
+    codingCount: undefined,
+    codeLanguage: "python3",
   },
   pipelineStages: DEFAULT_PIPELINE_STAGES,
 };
@@ -1262,6 +1266,81 @@ export default function CreateJobPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* MCQ count — shown for mixed & mcq_quiz */}
+                {(form.assessmentConfig.assessmentType === "mixed" || form.assessmentConfig.assessmentType === "mcq_quiz") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="mcqCount">Number of MCQ Questions</Label>
+                    <Input
+                      id="mcqCount"
+                      type="number"
+                      min={5}
+                      max={50}
+                      value={form.assessmentConfig.mcqCount ?? (form.assessmentConfig.assessmentType === "mcq_quiz" ? 20 : 30)}
+                      onChange={(e) =>
+                        update({
+                          assessmentConfig: {
+                            ...form.assessmentConfig,
+                            mcqCount: Number(e.target.value),
+                          },
+                        })
+                      }
+                      className="w-32"
+                    />
+                    <p className="text-xs text-surface-500">AI will generate this many multiple-choice questions.</p>
+                  </div>
+                )}
+
+                {/* Coding count + language — shown for mixed & coding_test */}
+                {(form.assessmentConfig.assessmentType === "mixed" || form.assessmentConfig.assessmentType === "coding_test") && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="codingCount">Number of Coding Problems</Label>
+                      <Input
+                        id="codingCount"
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={form.assessmentConfig.codingCount ?? 2}
+                        onChange={(e) =>
+                          update({
+                            assessmentConfig: {
+                              ...form.assessmentConfig,
+                              codingCount: Number(e.target.value),
+                            },
+                          })
+                        }
+                        className="w-32"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Coding Language</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(JDOODLE_LANGUAGE_MAP).map(([key, { label }]) => (
+                          <button
+                            key={key}
+                            className={cn(
+                              "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                              (form.assessmentConfig.codeLanguage ?? "python3") === key
+                                ? "border-brand-500 bg-brand-50 text-brand-700"
+                                : "border-surface-200 text-surface-600 hover:border-surface-300",
+                            )}
+                            onClick={() =>
+                              update({
+                                assessmentConfig: {
+                                  ...form.assessmentConfig,
+                                  codeLanguage: key,
+                                },
+                              })
+                            }
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Time limit */}
                 <div className="space-y-2">

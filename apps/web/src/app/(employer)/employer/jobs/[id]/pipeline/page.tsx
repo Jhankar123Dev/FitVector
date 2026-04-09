@@ -163,7 +163,7 @@ export default function PipelinePage() {
   const NEXT_STAGE = useMemo<Record<string, PipelineStage>>(() => {
     const map: Record<string, PipelineStage> = {};
     for (let i = 0; i < jobPipelineStages.length - 1; i++) {
-      map[jobPipelineStages[i]] = jobPipelineStages[i + 1];
+      map[jobPipelineStages[i]] = jobPipelineStages[i + 1] as PipelineStage;
     }
     return map;
   }, [jobPipelineStages]);
@@ -171,7 +171,7 @@ export default function PipelinePage() {
   const PREV_STAGE = useMemo<Record<string, PipelineStage>>(() => {
     const map: Record<string, PipelineStage> = {};
     for (let i = 1; i < jobPipelineStages.length; i++) {
-      map[jobPipelineStages[i]] = jobPipelineStages[i - 1];
+      map[jobPipelineStages[i]] = jobPipelineStages[i - 1] as PipelineStage;
     }
     return map;
   }, [jobPipelineStages]);
@@ -860,7 +860,7 @@ export default function PipelinePage() {
                       onClick={() => {
                         if (hasActiveCandidates) return;
                         if (isActive) {
-                          setEditingStages((prev) => prev.filter((s) => !group.stages.includes(s)));
+                          setEditingStages((prev) => prev.filter((s) => !group.stages.includes(s as PipelineStage)));
                         } else {
                           setEditingStages(DEFAULT_PIPELINE_ALL.filter(
                             (s) => editingStages.includes(s) || group.stages.includes(s)

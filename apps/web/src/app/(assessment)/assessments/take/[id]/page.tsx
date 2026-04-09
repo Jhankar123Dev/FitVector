@@ -17,6 +17,7 @@ import {
   XCircle,
   AlertTriangle,
   Code2,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AssessmentQuestion } from "@/types/employer";
@@ -52,6 +53,8 @@ export default function TakeAssessmentPage() {
   const [timeLeft, setTimeLeft] = useState(0); // seconds
   const [submitResult, setSubmitResult] = useState<Record<string, unknown> | null>(null);
   const [loadError, setLoadError] = useState("");
+  const [runResults, setRunResults] = useState<Record<string, Array<{input: string; expectedOutput: string; output: string; passed: boolean}>>>({});
+  const [runningQId, setRunningQId] = useState<string | null>(null);
 
   // Fetch assessment data from API
   useEffect(() => {
@@ -177,6 +180,31 @@ export default function TakeAssessmentPage() {
       else next.add(qId);
       return next;
     });
+  }
+
+  async function handleRunCode(q: AssessmentQuestion) {
+    const code = answers[q.id];
+    if (!code?.trim() || !q.testCases?.length) return;
+    setRunningQId(q.id);
+    try {
+      const res = await fetch("/api/code/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          language: q.codeLanguage || "python3",
+          testCases: q.testCases,
+        }),
+      });
+      const json = await res.json();
+      if (json.data?.results) {
+        setRunResults((prev) => ({ ...prev, [q.id]: json.data.results }));
+      }
+    } catch {
+      // fail silently — user still keeps their code
+    } finally {
+      setRunningQId(null);
+    }
   }
 
   // ═══════════════════ INTRO SCREEN ═══════════════════════════
@@ -388,7 +416,9 @@ export default function TakeAssessmentPage() {
                   const payload = {
                     answers: (assessment?.questions || []).map((q: AssessmentQuestion) => ({
                       questionId: q.id,
-                      selectedAnswer: answers[q.id] || undefined,
+                      selectedAnswer: q.type === "code"
+                        ? JSON.stringify({ code: answers[q.id] || "", testResults: runResults[q.id] || [] })
+                        : (answers[q.id] || undefined),
                     })),
                     proctoringData: getProctoringData(),
                   };
@@ -528,6 +558,9 @@ export default function TakeAssessmentPage() {
               isFlagged={flagged.has(question.id)}
               onAnswer={(v) => setAnswer(question.id, v)}
               onToggleFlag={() => toggleFlag(question.id)}
+              runResult={runResults[question.id]}
+              isRunning={runningQId === question.id}
+              onRun={question.type === "code" && question.testCases?.length ? () => handleRunCode(question) : undefined}
             />
           </div>
         </div>
@@ -595,6 +628,9 @@ function QuestionView({
   isFlagged,
   onAnswer,
   onToggleFlag,
+  runResult,
+  isRunning,
+  onRun,
 }: {
   question: AssessmentQuestion;
   index: number;
@@ -602,6 +638,9 @@ function QuestionView({
   isFlagged: boolean;
   onAnswer: (v: string) => void;
   onToggleFlag: () => void;
+  runResult?: Array<{input: string; expectedOutput: string; output: string; passed: boolean}>;
+  isRunning?: boolean;
+  onRun?: () => void;
 }) {
   return (
     <Card>
@@ -686,15 +725,68 @@ function QuestionView({
         )}
 
         {question.type === "code" && (
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold text-surface-500">Your Code:</p>
-            <textarea
-              rows={12}
-              className="w-full rounded-lg border border-surface-200 bg-surface-900 p-4 font-mono text-xs text-emerald-400 outline-none focus:ring-2 focus:ring-brand-500/30 placeholder:text-surface-600"
-              placeholder={`// Write your ${question.codeLanguage || "code"} solution here...`}
-              value={answer}
-              onChange={(e) => onAnswer(e.target.value)}
-            />
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-semibold text-surface-500">Your Code:</p>
+              <textarea
+                rows={12}
+                className="w-full rounded-lg border border-surface-200 bg-surface-900 p-4 font-mono text-xs text-emerald-400 outline-none focus:ring-2 focus:ring-brand-500/30 placeholder:text-surface-600"
+                placeholder={`// Write your ${question.codeLanguage || "code"} solution here...`}
+                value={answer}
+                onChange={(e) => onAnswer(e.target.value)}
+              />
+            </div>
+            {onRun && (
+              <div className="flex items-center justify-between">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs"
+                  onClick={onRun}
+                  disabled={isRunning || !answer.trim()}
+                >
+                  {isRunning ? (
+                    <span className="h-3 w-3 animate-spin rounded-full border border-brand-500 border-t-transparent" />
+                  ) : (
+                    <Play className="h-3 w-3 fill-current" />
+                  )}
+                  {isRunning ? "Running…" : "▶ Run Code"}
+                </Button>
+                {runResult && (
+                  <span className="text-[11px] text-surface-500">
+                    {runResult.filter((r) => r.passed).length}/{runResult.length} tests passed
+                  </span>
+                )}
+              </div>
+            )}
+            {runResult && runResult.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold text-surface-500">Test Results:</p>
+                {runResult.map((r, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "rounded-lg border p-3 text-xs font-mono",
+                      r.passed ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50",
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {r.passed ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                      )}
+                      <span className={cn("font-semibold", r.passed ? "text-emerald-700" : "text-red-600")}>
+                        Test {i + 1} {r.passed ? "Passed" : "Failed"}
+                      </span>
+                    </div>
+                    <p className="text-surface-500">Input: <span className="text-surface-700">{r.input || "(none)"}</span></p>
+                    <p className="text-surface-500">Expected: <span className="text-surface-700">{r.expectedOutput}</span></p>
+                    {!r.passed && <p className="text-surface-500">Got: <span className="text-red-600">{r.output || "(no output)"}</span></p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

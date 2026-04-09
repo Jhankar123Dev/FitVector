@@ -18,6 +18,7 @@ export const MOCK_COMPANY: Company = {
   ],
   locations: ["Bangalore, India", "San Francisco, USA"],
   planTier: "growth",
+  isTransparentPipeline: false,
   createdAt: "2026-01-15T10:00:00Z",
 };
 
@@ -419,6 +420,8 @@ function mkCandidate(
         { name: "Open Source Contribution", description: "Contributed to popular React UI library" },
       ],
     },
+    testScore: null,
+    humanInterviews: [],
     notes: [
       {
         id: `note-${id}-1`,

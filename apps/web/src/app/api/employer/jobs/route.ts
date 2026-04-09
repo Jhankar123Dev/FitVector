@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmployerSession } from "@/lib/employer-auth";
 import { createJobPostSchema } from "@/lib/validators";
 import { transformJobPost, insertIntoJobsTable } from "@/lib/job-post-helpers";
+import { generateAndLinkAssessment } from "@/lib/assessment-generation";
 
 // ─── POST: Create a new job post ─────────────────────────────────────────────
 
@@ -71,9 +72,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to create job post" }, { status: 500 });
     }
 
-    // If publishing immediately (status === 'active'), also insert into jobs table
+    // If publishing immediately, insert into public jobs table + auto-generate assessment
     if (d.status === "active") {
       await insertIntoJobsTable(supabase, row, company);
+
+      // Auto-generate assessment questions if assessmentConfig is enabled
+      if (d.assessmentConfig?.enabled) {
+        await generateAndLinkAssessment(
+          supabase,
+          row.id as string,
+          company.id,
+          session.user.id,
+          d.title,
+          d.assessmentConfig as Parameters<typeof generateAndLinkAssessment>[5],
+        );
+      }
     }
 
     return NextResponse.json(
