@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Building2, MapPin, Users, Briefcase } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -111,7 +111,8 @@ export default function CompaniesPage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [allCompanies, setAllCompanies] = useState<Company[]>([]);
+  // keyed by page number so background refetches always overwrite stale data
+  const [pages, setPages] = useState<Map<number, Company[]>>(new Map());
 
   const { data, isLoading, isFetching } = useQuery<CompanySearchResponse>({
     queryKey: ["companies-search", query, page],
@@ -122,19 +123,34 @@ export default function CompaniesPage() {
       params.set("limit", "12");
       const res = await fetch(`/api/companies/search?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load companies");
-      const json = await res.json();
-      if (page === 1) {
-        setAllCompanies(json.data || []);
-      } else {
-        setAllCompanies((prev) => [...prev, ...(json.data || [])]);
-      }
-      return json;
+      return res.json();
     },
+    staleTime: 0,
   });
+
+  // Update page data whenever React Query delivers fresh data (including background refetches)
+  useEffect(() => {
+    if (data?.data) {
+      setPages((prev) => {
+        const next = new Map(prev);
+        next.set(page, data.data);
+        return next;
+      });
+    }
+  }, [data, page]);
+
+  // Reset accumulated pages whenever the search query changes
+  useEffect(() => {
+    setPages(new Map());
+  }, [query]);
+
+  const allCompanies = useMemo(() => {
+    const sorted = [...pages.entries()].sort(([a], [b]) => a - b);
+    return sorted.flatMap(([, companies]) => companies);
+  }, [pages]);
 
   const handleSearch = useCallback(() => {
     setPage(1);
-    setAllCompanies([]);
     setQuery(search);
   }, [search]);
 
@@ -150,7 +166,6 @@ export default function CompaniesPage() {
     setSearch("");
     setQuery("");
     setPage(1);
-    setAllCompanies([]);
   };
 
   const hasMore = data?.hasMore ?? false;
