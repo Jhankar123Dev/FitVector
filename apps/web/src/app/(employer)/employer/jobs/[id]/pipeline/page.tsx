@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   GripVertical,
 } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CandidateCard } from "@/components/employer/pipeline/candidate-card";
 import { CandidateDetail } from "@/components/employer/pipeline/candidate-detail";
@@ -129,6 +130,13 @@ export default function PipelinePage() {
   const [filterSource, setFilterSource] = useState<string>("");
   const [filterExpMin, setFilterExpMin] = useState(0);
   const [filterExpMax, setFilterExpMax] = useState(30);
+  // screening question answer filters: questionId → required answer value ("" = any)
+  const [filterScreeningAnswers, setFilterScreeningAnswers] = useState<Record<string, string>>({});
+
+  const screeningQuestions = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ((job as any)?.screeningQuestions as import("@/types/employer").ScreeningQuestion[] | undefined) || [];
+  }, [job]);
 
   // ── Filtering logic ─────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -143,9 +151,20 @@ export default function PipelinePage() {
       }
       if (filterSource && a.source !== filterSource) return false;
       if (a.experience < filterExpMin || a.experience > filterExpMax) return false;
+
+      // Screening question answer filters
+      for (const [qId, requiredAnswer] of Object.entries(filterScreeningAnswers)) {
+        if (!requiredAnswer) continue; // "" means "any" — skip
+        const responses = (a as unknown as { screeningResponses?: { questionId: string; answer: string }[] }).screeningResponses || [];
+        const response = responses.find((r) => r.questionId === qId);
+        if (!response) return false;
+        // For yes_no and multiple_choice: exact match (case-insensitive)
+        if (response.answer.toLowerCase() !== requiredAnswer.toLowerCase()) return false;
+      }
+
       return true;
     });
-  }, [applicants, filterScoreMin, filterScoreMax, filterSkill, filterSource, filterExpMin, filterExpMax]);
+  }, [applicants, filterScoreMin, filterScoreMax, filterSkill, filterSource, filterExpMin, filterExpMax, filterScreeningAnswers]);
 
   // ── Per-job pipeline config derived from job.pipelineStages ────────────────
   // Falls back to full default order if job data not yet loaded.
@@ -210,6 +229,16 @@ export default function PipelinePage() {
     const applicant = applicants.find((a) => a.id === id);
     if (!applicant) return;
     setDetailApplicant(null);
+
+    // Auto-trigger AI fit score calculation when advancing applied → ai_screened
+    if (applicant.pipelineStage === "applied") {
+      const next = NEXT_STAGE[applicant.pipelineStage];
+      if (next) {
+        changeStage.mutate({ id, stage: next });
+        screenApplicant.mutate(id);
+      }
+      return;
+    }
 
     // Intercept: open assessment picker before moving to assessment_pending
     if (applicant.pipelineStage === "ai_screened") {
@@ -280,7 +309,14 @@ export default function PipelinePage() {
     clearSelection();
   }
 
-  const hasActiveFilters = filterScoreMin > 0 || filterScoreMax < 100 || filterSkill || filterSource || filterExpMin > 0 || filterExpMax < 30;
+  const hasActiveFilters =
+    filterScoreMin > 0 ||
+    filterScoreMax < 100 ||
+    filterSkill !== "" ||
+    filterSource !== "" ||
+    filterExpMin > 0 ||
+    filterExpMax < 30 ||
+    Object.values(filterScreeningAnswers).some((v) => v !== "");
 
   return (
     <div className="flex h-full flex-col -m-3 sm:-m-4 md:-m-6">
@@ -529,6 +565,58 @@ export default function PipelinePage() {
                 />
               </div>
             </div>
+
+            {/* ── Dynamic screening question filters ── */}
+            {screeningQuestions
+              .filter((q) => q.type === "yes_no" || q.type === "multiple_choice")
+              .map((q) => (
+                <div key={q.id}>
+                  <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600 truncate" title={q.question}>
+                    {q.question.length > 40 ? q.question.slice(0, 38) + "…" : q.question}
+                  </label>
+                  <select
+                    value={filterScreeningAnswers[q.id] || ""}
+                    onChange={(e) =>
+                      setFilterScreeningAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                    }
+                    className="h-8 w-full rounded-lg border border-surface-200 bg-white px-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  >
+                    <option value="">Any</option>
+                    {q.type === "yes_no" ? (
+                      <>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </>
+                    ) : (
+                      (q.options || []).map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              ))}
+
+            {/* Reset all filters */}
+            {hasActiveFilters && (
+              <div className="col-span-full flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-surface-500 hover:text-surface-700"
+                  onClick={() => {
+                    setFilterScoreMin(0);
+                    setFilterScoreMax(100);
+                    setFilterSkill("");
+                    setFilterSource("");
+                    setFilterExpMin(0);
+                    setFilterExpMax(30);
+                    setFilterScreeningAnswers({});
+                  }}
+                >
+                  Reset all filters
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -556,9 +644,20 @@ export default function PipelinePage() {
                     <span className="text-[11px] sm:text-xs font-semibold text-surface-700">
                       {getStageName(stage)}
                     </span>
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                      {items.length}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        {items.length}
+                      </Badge>
+                      {stage === "human_interview" && (
+                        <Link
+                          href="/employer/interviews"
+                          className="text-[10px] text-sky-600 hover:text-sky-700 hover:underline font-medium"
+                          title="View all interviews"
+                        >
+                          View all
+                        </Link>
+                      )}
+                    </div>
                   </div>
 
                   {/* Cards */}

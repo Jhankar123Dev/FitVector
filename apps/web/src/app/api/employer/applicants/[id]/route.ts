@@ -46,7 +46,7 @@ export async function GET(
     // Fetch all human interview rounds for this applicant
     const { data: humanInterviewRows } = await supabase
       .from("human_interviews")
-      .select("id, round_number, interview_type, scheduled_at, status, feedback, rating, notes, calendar_event_id")
+      .select("id, round_number, interview_type, scheduled_at, status, feedback, rating, notes, calendar_event_id, meeting_link")
       .eq("applicant_id", id)
       .order("round_number", { ascending: true });
 
@@ -82,6 +82,7 @@ export async function GET(
       rating: r.rating ?? null,
       notes: r.notes ?? null,
       calendarEventId: (r as Record<string, unknown>).calendar_event_id as string | null ?? null,
+      meetingLink: (r as Record<string, unknown>).meeting_link as string | null ?? null,
       participants: participantMap[r.id] || [],
     }));
 

@@ -19,6 +19,14 @@ import {
   Send,
   Plus,
   ThumbsUp,
+  AlertTriangle,
+  Clock,
+  CheckCircle2,
+  Shield,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
@@ -31,7 +39,11 @@ import {
   VOTE_LABELS,
   VOTE_COLORS,
 } from "@/types/employer";
+import Link from "next/link";
 import { useApplicantNotes, useAddNote, useApplicantVotes, useCastVote } from "@/hooks/use-notes-votes";
+import { useApplicantAssessments, useAssignAssessmentToApplicant } from "@/hooks/use-applicants";
+import type { ApplicantAssessmentSubmission } from "@/hooks/use-applicants";
+import { useAssessments } from "@/hooks/use-assessments";
 
 // ── Human Interviews Panel ──────────────────────────────────────────
 
@@ -63,12 +75,21 @@ function HumanInterviewsPanel({ interviews }: { interviews: HumanInterview[] }) 
 
   if (interviews.length === 0) {
     return (
-      <div className="rounded-xl border-2 border-dashed border-surface-200 py-12 text-center">
-        <CalendarDays className="mx-auto h-8 w-8 text-surface-300" />
-        <p className="mt-2 text-sm text-surface-500">No human interviews scheduled</p>
-        <p className="mt-1 text-xs text-surface-400">
-          Use the Scheduling tab to set one up.
-        </p>
+      <div className="space-y-3">
+        <div className="rounded-xl border-2 border-dashed border-surface-200 py-10 text-center">
+          <CalendarDays className="mx-auto h-8 w-8 text-surface-300" />
+          <p className="mt-2 text-sm text-surface-500">No human interviews scheduled</p>
+          <p className="mt-1 text-xs text-surface-400">
+            Advance the candidate to schedule one.
+          </p>
+        </div>
+        <Link
+          href="/employer/interviews"
+          className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-sky-200 bg-sky-50 py-2.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors"
+        >
+          <CalendarDays className="h-3.5 w-3.5" />
+          View Interviews page →
+        </Link>
       </div>
     );
   }
@@ -108,8 +129,37 @@ function HumanInterviewsPanel({ interviews }: { interviews: HumanInterview[] }) 
           {iv.notes && (
             <p className="text-[11px] text-surface-500 italic">{iv.notes}</p>
           )}
+
+          {/* Join / Start CTA for scheduled interviews with a meeting link */}
+          {iv.status === "scheduled" && iv.meetingLink && (
+            <a
+              href={iv.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 flex items-center justify-center gap-1.5 rounded-lg bg-sky-500 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-600 transition-colors"
+            >
+              <Video className="h-3.5 w-3.5" />
+              Start Interview
+              <ExternalLink className="h-3 w-3 opacity-70" />
+            </a>
+          )}
+          {iv.status === "scheduled" && !iv.meetingLink && (
+            <p className="mt-1 flex items-center gap-1.5 rounded-lg bg-surface-50 px-3 py-2 text-[11px] text-surface-400">
+              <Video className="h-3.5 w-3.5 shrink-0" />
+              No meeting link — add one when rescheduling
+            </p>
+          )}
         </div>
       ))}
+
+      {/* Link to full interviews page */}
+      <Link
+        href="/employer/interviews"
+        className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-sky-200 bg-sky-50 py-2.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors"
+      >
+        <CalendarDays className="h-3.5 w-3.5" />
+        View all interviews →
+      </Link>
     </div>
   );
 }
@@ -158,8 +208,18 @@ export function CandidateDetail({
   onReject,
 }: CandidateDetailProps) {
   const [noteText, setNoteText] = useState("");
+  const [assessmentTabActive, setAssessmentTabActive] = useState(false);
+  const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
+  const [showAssignTestModal, setShowAssignTestModal] = useState(false);
   const { data: notesData } = useApplicantNotes(applicant.id);
   const { data: votesData } = useApplicantVotes(applicant.id);
+  const { data: assessmentsData, isLoading: assessmentsLoading } = useApplicantAssessments(
+    assessmentTabActive ? applicant.id : null,
+  );
+  const assessmentSubmissions: ApplicantAssessmentSubmission[] = (assessmentsData?.data || []);
+  const { data: assessmentLibraryData } = useAssessments();
+  const assessmentLibrary = (assessmentLibraryData?.data || []) as Array<{ id: string; name: string; assessment_type: string; time_limit_minutes: number | null; difficulty: string | null }>;
+  const assignTestMutation = useAssignAssessmentToApplicant();
   const addNoteMutation = useAddNote();
   const castVoteMutation = useCastVote();
   const notes = (notesData?.data || applicant.notes || []) as unknown as CandidateNote[];
@@ -310,7 +370,13 @@ export function CandidateDetail({
 
         {/* ── Tabs content ─────────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto">
-          <Tabs defaultValue="screening" className="flex h-full flex-col">
+          <Tabs
+            defaultValue="screening"
+            className="flex h-full flex-col"
+            onValueChange={(val) => {
+              if (val === "assessment") setAssessmentTabActive(true);
+            }}
+          >
             <div className="border-b border-surface-200 px-3 pt-2 sm:px-5 overflow-x-auto">
               <TabsList className="w-max sm:w-full justify-start bg-transparent p-0 h-auto">
                 {["resume", "screening", "ai_interview", "assessment", "human_interview", "notes"].map((tab) => (
@@ -543,23 +609,314 @@ export function CandidateDetail({
               </TabsContent>
 
               {/* ── Assessment Tab ────────────────────────────────── */}
-              <TabsContent value="assessment" className="mt-0">
-                {["assessment_pending", "assessment_completed", "ai_interview_pending", "ai_interviewed", "human_interview", "offer", "hired"].includes(
-                  applicant.pipelineStage,
-                ) ? (
-                  <div className="rounded-lg bg-surface-50 p-4">
-                    <p className="text-sm text-surface-700">
-                      Assessment in progress or completed. Results will appear
-                      here.
-                    </p>
+              <TabsContent value="assessment" className="mt-0 space-y-3">
+                {/* Assign Test button — always visible */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                    Test History ({assessmentSubmissions.length})
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 h-7 px-2 text-xs"
+                    onClick={() => setShowAssignTestModal(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Assign Test
+                  </Button>
+                </div>
+
+                {/* Assign Test modal */}
+                {showAssignTestModal && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-[60] bg-surface-900/40"
+                      onClick={() => setShowAssignTestModal(false)}
+                    />
+                    <div className="fixed left-1/2 top-1/2 z-[70] w-[340px] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-surface-200 px-4 py-3">
+                        <h3 className="text-sm font-semibold text-surface-800">Assign Test to {applicant.name}</h3>
+                        <button
+                          onClick={() => setShowAssignTestModal(false)}
+                          className="rounded p-1 text-surface-400 hover:bg-surface-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto p-2">
+                        {assessmentLibrary.length === 0 ? (
+                          <p className="py-6 text-center text-sm text-surface-400">No assessments in your library yet.</p>
+                        ) : (
+                          assessmentLibrary.map((a) => (
+                            <button
+                              key={a.id}
+                              disabled={assignTestMutation.isPending}
+                              onClick={() => {
+                                assignTestMutation.mutate(
+                                  { assessmentId: a.id, applicantId: applicant.id, jobPostId: applicant.jobPostId },
+                                  { onSuccess: () => setShowAssignTestModal(false) },
+                                );
+                              }}
+                              className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-surface-50 disabled:opacity-50"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-surface-800">{a.name}</p>
+                                <p className="text-[11px] text-surface-500 capitalize">
+                                  {(a.assessment_type || "").replace(/_/g, " ")}
+                                  {a.difficulty ? ` · ${a.difficulty}` : ""}
+                                  {a.time_limit_minutes ? ` · ${a.time_limit_minutes}min` : ""}
+                                </p>
+                              </div>
+                              <Send className="h-3.5 w-3.5 shrink-0 text-brand-500 ml-2" />
+                            </button>
+                          ))
+                        )}
+                      </div>
+                      {assignTestMutation.isPending && (
+                        <div className="border-t border-surface-100 px-4 py-2 text-center text-xs text-surface-500">
+                          Assigning…
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {assessmentsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+                    <span className="ml-2 text-sm text-surface-500">Loading assessments…</span>
                   </div>
-                ) : (
+                ) : assessmentSubmissions.length === 0 ? (
                   <div className="rounded-xl border-2 border-dashed border-surface-200 py-12 text-center">
                     <ClipboardCheck className="mx-auto h-8 w-8 text-surface-300" />
-                    <p className="mt-2 text-sm text-surface-500">
-                      No assessment assigned
-                    </p>
+                    <p className="mt-2 text-sm text-surface-500">No assessments assigned yet</p>
+                    <p className="mt-1 text-xs text-surface-400">Use &ldquo;Assign Test&rdquo; to send one</p>
                   </div>
+                ) : (
+                  assessmentSubmissions.map((sub, idx) => {
+                    const isExpanded = expandedSubmissionId === sub.id;
+                    const scoreColor =
+                      sub.finalScore === null
+                        ? "text-surface-400"
+                        : sub.finalScore >= 80
+                          ? "text-emerald-600"
+                          : sub.finalScore >= 60
+                            ? "text-brand-600"
+                            : sub.finalScore >= 40
+                              ? "text-amber-600"
+                              : "text-red-600";
+                    const scoreBg =
+                      sub.finalScore === null
+                        ? "bg-surface-100"
+                        : sub.finalScore >= 80
+                          ? "bg-emerald-50"
+                          : sub.finalScore >= 60
+                            ? "bg-brand-50"
+                            : sub.finalScore >= 40
+                              ? "bg-amber-50"
+                              : "bg-red-50";
+
+                    const statusLabel: Record<string, string> = {
+                      invited: "Invited",
+                      started: "In Progress",
+                      submitted: "Submitted",
+                      graded: "Graded",
+                      expired: "Expired",
+                    };
+                    const statusStyle: Record<string, string> = {
+                      invited: "bg-surface-100 text-surface-600",
+                      started: "bg-amber-50 text-amber-700",
+                      submitted: "bg-blue-50 text-blue-700",
+                      graded: "bg-emerald-50 text-emerald-700",
+                      expired: "bg-red-50 text-red-500",
+                    };
+
+                    return (
+                      <div key={sub.id} className="rounded-lg border border-surface-200 overflow-hidden">
+                        {/* ── Card header ── */}
+                        <div
+                          className="flex cursor-pointer items-center justify-between gap-3 p-3 hover:bg-surface-50"
+                          onClick={() => setExpandedSubmissionId(isExpanded ? null : sub.id)}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-medium text-surface-800 truncate">
+                                Round {idx + 1}: {sub.assessmentName}
+                              </p>
+                              <Badge
+                                className={cn("text-[10px] px-1.5 py-0 border-0", statusStyle[sub.status] || "bg-surface-100 text-surface-600")}
+                              >
+                                {statusLabel[sub.status] || sub.status}
+                              </Badge>
+                              {sub.proctoring.flagged && (
+                                <Badge className="text-[10px] px-1.5 py-0 border-0 bg-red-50 text-red-600 gap-0.5">
+                                  <AlertTriangle className="h-2.5 w-2.5" />
+                                  Flagged
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="mt-0.5 text-[11px] text-surface-500 capitalize">
+                              {sub.assessmentType.replace(/_/g, " ")}
+                              {sub.difficulty ? ` · ${sub.difficulty}` : ""}
+                              {sub.timeLimitMinutes ? ` · ${sub.timeLimitMinutes}min` : ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {sub.finalScore !== null ? (
+                              <div className={cn("rounded-lg px-2 py-1 text-center", scoreBg)}>
+                                <p className={cn("text-lg font-bold leading-tight", scoreColor)}>{sub.finalScore}</p>
+                                <p className="text-[9px] text-surface-400">/ 100</p>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-surface-400">—</span>
+                            )}
+                            {isExpanded
+                              ? <ChevronUp className="h-4 w-4 text-surface-400" />
+                              : <ChevronDown className="h-4 w-4 text-surface-400" />
+                            }
+                          </div>
+                        </div>
+
+                        {/* ── Expanded detail ── */}
+                        {isExpanded && (
+                          <div className="border-t border-surface-100 bg-surface-50 p-3 space-y-3">
+                            {/* Score & pass/fail row */}
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="rounded-lg bg-white border border-surface-200 p-2 text-center">
+                                <p className={cn("text-xl font-bold", scoreColor)}>
+                                  {sub.finalScore !== null ? sub.finalScore : "—"}
+                                </p>
+                                <p className="text-[10px] text-surface-400">Score</p>
+                              </div>
+                              <div className="rounded-lg bg-white border border-surface-200 p-2 text-center">
+                                {sub.timeTakenMinutes !== null ? (
+                                  <>
+                                    <p className="text-xl font-bold text-surface-700">{sub.timeTakenMinutes}m</p>
+                                    <p className="text-[10px] text-surface-400">Time taken</p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="text-xl font-bold text-surface-300">—</p>
+                                    <p className="text-[10px] text-surface-400">Time taken</p>
+                                  </>
+                                )}
+                              </div>
+                              <div className="rounded-lg bg-white border border-surface-200 p-2 text-center">
+                                {sub.passed !== null ? (
+                                  <>
+                                    <p className={cn("text-sm font-bold", sub.passed ? "text-emerald-600" : "text-red-500")}>
+                                      {sub.passed ? "Pass" : "Fail"}
+                                    </p>
+                                    <p className="text-[10px] text-surface-400">≥{sub.passingScore} to pass</p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="text-sm font-bold text-surface-300">—</p>
+                                    <p className="text-[10px] text-surface-400">Pass/Fail</p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Proctoring flags */}
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Shield className="h-3.5 w-3.5 text-surface-500" />
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-surface-500">Proctoring Report</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className={cn(
+                                  "flex items-center gap-2 rounded-lg border p-2",
+                                  sub.proctoring.tabSwitches >= 3
+                                    ? "border-red-200 bg-red-50"
+                                    : sub.proctoring.tabSwitches >= 1
+                                      ? "border-amber-200 bg-amber-50"
+                                      : "border-emerald-200 bg-emerald-50"
+                                )}>
+                                  {sub.proctoring.tabSwitches >= 3
+                                    ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+                                    : sub.proctoring.tabSwitches >= 1
+                                      ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                                      : <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                                  }
+                                  <div>
+                                    <p className="text-sm font-semibold text-surface-800">{sub.proctoring.tabSwitches}</p>
+                                    <p className="text-[10px] text-surface-500">Tab switches</p>
+                                  </div>
+                                </div>
+                                <div className={cn(
+                                  "flex items-center gap-2 rounded-lg border p-2",
+                                  sub.proctoring.copyPasteAttempts >= 2
+                                    ? "border-red-200 bg-red-50"
+                                    : sub.proctoring.copyPasteAttempts >= 1
+                                      ? "border-amber-200 bg-amber-50"
+                                      : "border-emerald-200 bg-emerald-50"
+                                )}>
+                                  {sub.proctoring.copyPasteAttempts >= 2
+                                    ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+                                    : sub.proctoring.copyPasteAttempts >= 1
+                                      ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                                      : <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                                  }
+                                  <div>
+                                    <p className="text-sm font-semibold text-surface-800">{sub.proctoring.copyPasteAttempts}</p>
+                                    <p className="text-[10px] text-surface-500">Copy/paste</p>
+                                  </div>
+                                </div>
+                                {sub.proctoring.submittedLate && (
+                                  <div className="col-span-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
+                                    <Clock className="h-4 w-4 text-amber-500 shrink-0" />
+                                    <p className="text-xs text-amber-700">
+                                      Submitted {sub.proctoring.lateByMinutes}m late
+                                    </p>
+                                  </div>
+                                )}
+                                {sub.plagiarismFlag && (
+                                  <div className="col-span-2 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-2">
+                                    <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+                                    <p className="text-xs text-red-700">Plagiarism flag raised</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Timeline */}
+                            <div>
+                              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-surface-500">Timeline</p>
+                              <div className="space-y-1 text-xs text-surface-600">
+                                {sub.invitedAt && (
+                                  <div className="flex justify-between">
+                                    <span className="text-surface-400">Invited</span>
+                                    <span>{new Date(sub.invitedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                  </div>
+                                )}
+                                {sub.startedAt && (
+                                  <div className="flex justify-between">
+                                    <span className="text-surface-400">Started</span>
+                                    <span>{new Date(sub.startedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                  </div>
+                                )}
+                                {sub.submittedAt && (
+                                  <div className="flex justify-between">
+                                    <span className="text-surface-400">Submitted</span>
+                                    <span>{new Date(sub.submittedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Grader notes */}
+                            {sub.graderNotes && (
+                              <div className="rounded-lg bg-white border border-surface-200 p-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-surface-500 mb-1">Grader Notes</p>
+                                <p className="text-xs text-surface-700">{sub.graderNotes}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </TabsContent>
 

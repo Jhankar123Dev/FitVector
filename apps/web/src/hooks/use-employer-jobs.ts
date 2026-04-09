@@ -67,6 +67,7 @@ export function useCreateJobPost() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employer", "jobs"] });
+      qc.invalidateQueries({ queryKey: ["companies-search"] });
     },
   });
 }
@@ -85,6 +86,7 @@ export function useUpdateJobPost() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employer", "jobs"] });
+      qc.invalidateQueries({ queryKey: ["companies-search"] });
     },
   });
 }
@@ -102,7 +104,11 @@ export function useChangeJobStatus() {
         body: JSON.stringify({ status }),
       }),
     onSuccess: () => {
+      // Invalidate employer-side job list
       qc.invalidateQueries({ queryKey: ["employer", "jobs"] });
+      // Also bust the seeker-facing companies search cache so the
+      // active-job badge updates immediately in the same session.
+      qc.invalidateQueries({ queryKey: ["companies-search"] });
     },
   });
 }

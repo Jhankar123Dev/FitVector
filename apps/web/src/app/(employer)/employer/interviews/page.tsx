@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
-import { useInterviews } from "@/hooks/use-interviews";
+import { useInterviews, useInviteInterview } from "@/hooks/use-interviews";
 import type { AIInterview, AIInterviewStatus } from "@/types/employer";
 import { AI_INTERVIEW_STATUS_LABELS, AI_RECOMMENDATION_LABELS, AI_RECOMMENDATION_COLORS } from "@/types/employer";
 
@@ -57,6 +57,7 @@ export default function InterviewsPage() {
   const { data: interviewsData, isLoading } = useInterviews();
   const interviews = (interviewsData?.data || []) as unknown as AIInterview[];
   const stats = useMemo(() => computeStats(interviews), [interviews]);
+  const resendInvite = useInviteInterview();
 
   const filterByTab = (tab: string) => {
     switch (tab) {
@@ -148,7 +149,11 @@ export default function InterviewsPage() {
                     </thead>
                     <tbody>
                       {filterByTab(tab).map((interview) => (
-                        <InterviewRow key={interview.id} interview={interview} />
+                        <InterviewRow
+                          key={interview.id}
+                          interview={interview}
+                          onResend={(applicantId) => resendInvite.mutate({ applicantId })}
+                        />
                       ))}
                     </tbody>
                   </table>
@@ -163,7 +168,7 @@ export default function InterviewsPage() {
 }
 
 // ── Interview table row ──────────────────────────────────────────────
-function InterviewRow({ interview }: { interview: AIInterview }) {
+function InterviewRow({ interview, onResend }: { interview: AIInterview; onResend: (applicantId: string) => void }) {
   const initials = interview.applicantName
     .split(" ")
     .map((n) => n[0])
@@ -254,16 +259,33 @@ function InterviewRow({ interview }: { interview: AIInterview }) {
             </Button>
           )}
           {interview.status === "expired" && (
-            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] sm:text-xs gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[11px] sm:text-xs gap-1"
+              onClick={() => onResend(interview.applicantId)}
+            >
               <RotateCcw className="h-3 w-3" />
               Resend
             </Button>
           )}
           {interview.status === "invited" && (
-            <span className="text-[11px] text-surface-400">Awaiting</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-surface-400">Awaiting candidate</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1.5 text-[10px] gap-1 text-surface-500 hover:text-surface-700"
+                onClick={() => onResend(interview.applicantId)}
+                title="Resend invite link"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Resend
+              </Button>
+            </div>
           )}
           {interview.status === "started" && (
-            <span className="text-[11px] text-amber-600 font-medium">In progress</span>
+            <span className="text-[11px] text-amber-600 font-medium animate-pulse">● In progress</span>
           )}
         </div>
       </td>

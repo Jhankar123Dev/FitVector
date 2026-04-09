@@ -85,14 +85,20 @@ export function CandidateCard({
             <p className="truncate text-sm font-medium text-surface-800">
               {applicant.name}
             </p>
-            <span
-              className={cn(
-                "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white",
-                scoreColor(applicant.screeningScore),
-              )}
-            >
-              AI Match: {applicant.screeningScore}
-            </span>
+            {applicant.screeningScore > 0 ? (
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white",
+                  scoreColor(applicant.screeningScore),
+                )}
+              >
+                AI Match: {applicant.screeningScore}
+              </span>
+            ) : (
+              <span className="shrink-0 rounded-full bg-surface-100 px-1.5 py-0.5 text-[10px] font-medium text-surface-400">
+                Not scored
+              </span>
+            )}
             {applicant.testScore !== null && applicant.testScore !== undefined && (
               <span
                 className={cn(
@@ -189,14 +195,20 @@ export function CandidateRow({
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1">
-          <span
-            className={cn(
-              "inline-flex rounded-full px-2 py-0.5 text-xs font-bold w-fit",
-              scoreBgColor(applicant.screeningScore),
-            )}
-          >
-            AI Match: {applicant.screeningScore}
-          </span>
+          {applicant.screeningScore > 0 ? (
+            <span
+              className={cn(
+                "inline-flex rounded-full px-2 py-0.5 text-xs font-bold w-fit",
+                scoreBgColor(applicant.screeningScore),
+              )}
+            >
+              AI Match: {applicant.screeningScore}
+            </span>
+          ) : (
+            <span className="inline-flex w-fit rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-400">
+              —
+            </span>
+          )}
           {applicant.testScore !== null && applicant.testScore !== undefined && (
             <span
               className={cn(

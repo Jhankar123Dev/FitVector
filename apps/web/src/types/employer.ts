@@ -383,6 +383,12 @@ export interface CandidateNote {
   createdAt: string;
 }
 
+export interface ScreeningResponse {
+  questionId: string;
+  question: string;
+  answer: string;
+}
+
 export interface Applicant {
   id: string;
   jobPostId: string;
@@ -400,6 +406,7 @@ export interface Applicant {
   screeningBucket: ScreeningBucket;
   screeningSummary: string;
   screeningBreakdown: ScreeningBreakdown;
+  screeningResponses: ScreeningResponse[]; // candidate's answers to job screening questions
   parsedResume: ParsedResume;
   resumePdfUrl: string | null; // PDF from tailored_resumes, null if not generated yet
   notes: CandidateNote[];
@@ -429,6 +436,7 @@ export interface HumanInterview {
   rating: string | null;
   notes: string | null;
   calendarEventId: string | null;
+  meetingLink: string | null;
   participants: HumanInterviewParticipant[];
 }
 

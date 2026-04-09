@@ -421,6 +421,7 @@ function mkCandidate(
       ],
     },
     testScore: null,
+    screeningResponses: [],
     humanInterviews: [],
     notes: [
       {

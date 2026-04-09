@@ -177,6 +177,79 @@ export function useScheduleInterview() {
   });
 }
 
+// ─── Assessment submission type returned by the applicant assessments endpoint ─
+
+export interface ApplicantAssessmentSubmission {
+  id: string;
+  assessmentId: string;
+  assessmentName: string;
+  assessmentType: string;
+  timeLimitMinutes: number | null;
+  difficulty: string | null;
+  passingScore: number | null;
+  totalQuestions: number;
+  answeredQuestions: number;
+  status: string;
+  invitedAt: string | null;
+  startedAt: string | null;
+  submittedAt: string | null;
+  gradedAt: string | null;
+  timeTakenMinutes: number | null;
+  autoScore: number | null;
+  manualScore: number | null;
+  finalScore: number | null;
+  passed: boolean | null;
+  proctoring: {
+    tabSwitches: number;
+    copyPasteAttempts: number;
+    submittedLate: boolean;
+    lateByMinutes: number;
+    flagged: boolean;
+  };
+  plagiarismFlag: boolean;
+  graderNotes: string | null;
+  createdAt: string;
+}
+
+/**
+ * Fetch all assessment submissions for a specific applicant (lazy — only called
+ * when the employer opens the Assessment tab in the candidate drawer).
+ */
+export function useApplicantAssessments(applicantId: string | null) {
+  return useQuery<{ data: ApplicantAssessmentSubmission[] }>({
+    queryKey: ["employer", "applicant", applicantId, "assessments"],
+    queryFn: () => fetchJson(`/api/employer/applicants/${applicantId}/assessments`),
+    enabled: !!applicantId,
+    staleTime: 30 * 1000,
+    retry: 1,
+  });
+}
+
+/**
+ * Assign a specific assessment to an applicant from the candidate detail drawer.
+ * Works at any pipeline stage (not just during advance).
+ */
+export function useAssignAssessmentToApplicant() {
+  const qc = useQueryClient();
+  return useMutation<
+    { data: { assigned: number; tokens: string[] } },
+    Error,
+    { assessmentId: string; applicantId: string; jobPostId: string }
+  >({
+    mutationFn: ({ assessmentId, applicantId, jobPostId }) =>
+      fetchJson(`/api/employer/assessments/${assessmentId}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicantIds: [applicantId], jobPostId }),
+      }),
+    onSuccess: (_data, { applicantId }) => {
+      qc.invalidateQueries({ queryKey: ["employer", "applicants"] });
+      qc.invalidateQueries({ queryKey: ["employer", "applicant"] });
+      qc.invalidateQueries({ queryKey: ["employer", "applicant", applicantId, "assessments"] });
+    },
+  });
+}
+
 /**
  * Bulk screen all unscreened applicants for a job post.
  */
