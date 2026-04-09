@@ -27,6 +27,7 @@ import {
   GripVertical,
   Lock,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEmployerJob, useUpdateJobPost } from "@/hooks/use-employer-jobs";
@@ -147,6 +148,7 @@ export default function EditJobPage() {
   const [hydrated, setHydrated] = useState(false);
   const [customStageName, setCustomStageName] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Temp inputs
   const [reqSkillInput, setReqSkillInput] = useState("");
@@ -284,6 +286,35 @@ export default function EditJobPage() {
       },
     });
     setAssessmentQInput("");
+  }
+
+  // ── AI Assist ─────────────────────────────────────────────────────
+  async function handleAiAssist() {
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/ai/job-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          department: form.department || undefined,
+          location: form.location || undefined,
+          jobType: form.jobType || undefined,
+          workMode: form.workMode || undefined,
+          experienceMin: form.experienceMin || undefined,
+          experienceMax: form.experienceMax || undefined,
+          requiredSkills: form.requiredSkills,
+          draftNotes: form.description || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate description");
+      update({ description: data.description });
+    } catch (err) {
+      console.error("AI Assist error:", err);
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   // ── Submit ────────────────────────────────────────────────────────
@@ -572,15 +603,42 @@ export default function EditJobPage() {
         <Card>
           <CardContent className="space-y-4 p-6">
             <div className="space-y-2">
-              <Label htmlFor="description">Job Description *</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe the role, responsibilities, and requirements..."
-                value={form.description}
-                onChange={(e) => update({ description: e.target.value })}
-                rows={16}
-                className="resize-none font-mono text-sm"
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="description">Job Description *</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-xs text-brand-600 hover:text-brand-700"
+                  onClick={handleAiAssist}
+                  disabled={aiLoading}
+                  type="button"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {aiLoading ? "Generating..." : "AI Assist"}
+                </Button>
+              </div>
+              {aiLoading ? (
+                <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-surface-200 bg-surface-50">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+                  <p className="mt-3 text-sm text-surface-500">
+                    AI is generating your job description...
+                  </p>
+                  <p className="mt-1 text-xs text-surface-400">
+                    Based on: {form.title || "job title"},{" "}
+                    {form.department || "department"},{" "}
+                    {form.experienceMin}–{form.experienceMax} years
+                  </p>
+                </div>
+              ) : (
+                <Textarea
+                  id="description"
+                  placeholder="Paste rough notes or bullet points, then click AI Assist to generate a professional job description..."
+                  value={form.description}
+                  onChange={(e) => update({ description: e.target.value })}
+                  rows={16}
+                  className="resize-none font-mono text-sm"
+                />
+              )}
               <p className="text-xs text-surface-400">
                 Markdown is supported. Be specific about day-to-day responsibilities.
               </p>

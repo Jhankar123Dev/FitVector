@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import asyncio
 
-from src.services.ai_service import generate_questions
+from src.services.ai_service import generate_questions, generate_job_description
 
 router = APIRouter()
 
@@ -54,3 +54,32 @@ async def generate_questions_endpoint(req: GenerateQuestionsRequest):
         code_language=req.codeLanguage,
     )
     return {"questions": questions}
+
+
+class GenerateJobDescriptionRequest(BaseModel):
+    title: str
+    department: Optional[str] = None
+    location: Optional[str] = None
+    jobType: Optional[str] = None
+    workMode: Optional[str] = None
+    experienceMin: Optional[int] = None
+    experienceMax: Optional[int] = None
+    requiredSkills: Optional[List[str]] = None
+    draftNotes: Optional[str] = None
+
+
+@router.post("/ai/generate-job-description")
+async def generate_job_description_endpoint(req: GenerateJobDescriptionRequest):
+    """Generate a professional Markdown job description using Gemini."""
+    description = await generate_job_description(
+        title=req.title,
+        department=req.department,
+        location=req.location,
+        job_type=req.jobType,
+        work_mode=req.workMode,
+        experience_min=req.experienceMin,
+        experience_max=req.experienceMax,
+        required_skills=req.requiredSkills or [],
+        draft_notes=req.draftNotes,
+    )
+    return {"description": description}

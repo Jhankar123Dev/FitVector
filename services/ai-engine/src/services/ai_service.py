@@ -1079,3 +1079,104 @@ Return JSON:
             }
             for i in range(count)
         ]
+
+
+# ─── Job Description Generation ──────────────────────────────────────────────
+
+_GENERATE_JD_SYSTEM_PROMPT = """You are a professional job description writer for a modern recruitment platform.
+Write compelling, specific, and realistic job descriptions in Markdown format.
+Use ## headings for sections. Be concise yet detailed. Avoid generic filler.
+Return only the Markdown text — no preamble, no code fences."""
+
+
+async def generate_job_description(
+    title: str,
+    department: str | None,
+    location: str | None,
+    job_type: str | None,
+    work_mode: str | None,
+    experience_min: int | None,
+    experience_max: int | None,
+    required_skills: list[str],
+    draft_notes: str | None,
+) -> str:
+    """Generate a professional job description using Gemini.
+
+    Returns a Markdown string ready to paste into the description field.
+    Falls back to a structured template if Gemini is unavailable.
+    """
+    exp_range = (
+        f"{experience_min}–{experience_max} years"
+        if experience_min is not None and experience_max is not None
+        else "experience level not specified"
+    )
+    skills_str = ", ".join(required_skills) if required_skills else "not specified"
+    work_str = work_mode.replace("_", " ").title() if work_mode else "on-site"
+    type_str = job_type.replace("_", "-").title() if job_type else "full-time"
+
+    notes_section = (
+        f"\n\nContext / draft notes from the employer:\n{draft_notes.strip()}"
+        if draft_notes and draft_notes.strip()
+        else ""
+    )
+
+    user_prompt = f"""Write a complete job description for the following role:
+
+Title: {title}
+Department: {department or "Not specified"}
+Location: {location or "Not specified"} ({work_str}, {type_str})
+Experience: {exp_range}
+Key skills: {skills_str}{notes_section}
+
+Include these sections (use ## headings):
+## About the Role
+## What You'll Do
+## What We're Looking For
+## Nice to Have
+## What We Offer
+
+Keep each section focused and specific to the role. Write in second person ("you'll", "you have").
+Do NOT include salary or compensation details."""
+
+    try:
+        description = await _call_gemini(
+            task="generate_job_description",
+            system_prompt=_GENERATE_JD_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            max_tokens=2048,
+            temperature=0.65,
+        )
+        return description.strip()
+    except Exception as exc:
+        logger.error("generate_job_description Gemini call failed: %s", exc)
+        # Fallback template
+        return f"""## About the Role
+
+We're looking for a talented {title} to join our {department or "team"} {"in " + location if location else ""}. This is a {type_str} ({work_str}) position where you'll make a meaningful impact.
+
+## What You'll Do
+
+- Lead key initiatives and deliver high-quality work end-to-end
+- Collaborate with cross-functional teams to solve complex problems
+- Contribute to technical decisions, architecture, and best practices
+- Mentor peers and help grow team capabilities
+
+## What We're Looking For
+
+- {exp_range} of relevant experience
+- Proficiency in: {skills_str}
+- Strong problem-solving skills and attention to detail
+- Excellent communication and ability to work in a fast-paced environment
+
+## Nice to Have
+
+- Experience with relevant tools and frameworks in the domain
+- Prior experience in a product-led growth company
+- Open source contributions or side projects
+
+## What We Offer
+
+- Competitive compensation and equity
+- Flexible work environment and remote-friendly culture
+- Continuous learning and growth opportunities
+- Work on challenging problems with a talented, mission-driven team"""

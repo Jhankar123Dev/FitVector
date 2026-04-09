@@ -125,6 +125,18 @@ function JobActionsMenu({
                 Resume
               </button>
             )}
+            {job.status === "draft" && (
+              <button
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-brand-600 hover:bg-brand-50"
+                onClick={() => {
+                  onAction("publish", job.id);
+                  setOpen(false);
+                }}
+              >
+                <Play className="h-3.5 w-3.5" />
+                Publish
+              </button>
+            )}
             <button
               className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-600 hover:bg-surface-50"
               onClick={() => {
@@ -271,6 +283,9 @@ export default function EmployerJobsPage() {
         break;
       case "close":
         changeStatus.mutate({ id: jobId, status: "closed" });
+        break;
+      case "publish":
+        changeStatus.mutate({ id: jobId, status: "active" });
         break;
       case "duplicate":
         duplicateJob.mutate(jobId);

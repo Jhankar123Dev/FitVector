@@ -37,6 +37,7 @@ const STATUS_CONFIG: Record<
 const TYPE_LABELS: Record<string, string> = {
   coding_test: "Coding Test",
   mcq_quiz: "MCQ Quiz",
+  mixed: "Mixed (MCQ + Coding)",
   case_study: "Case Study",
   assignment: "Assignment",
 };

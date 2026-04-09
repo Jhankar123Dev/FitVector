@@ -285,15 +285,33 @@ export default function CreateJobPage() {
     setAssessmentQInput("");
   }
 
-  // ── AI Assist (mock) ──────────────────────────────────────────────
-  function handleAiAssist() {
+  // ── AI Assist ─────────────────────────────────────────────────────
+  async function handleAiAssist() {
     setAiLoading(true);
-    setTimeout(() => {
-      update({
-        description: `## About the Role\n\nWe're looking for a talented ${form.title || "professional"} to join our ${form.department || "team"} in ${form.location || "our office"}. This is a ${JOB_TYPE_LABELS[form.jobType].toLowerCase()} position where you'll have the opportunity to make a significant impact.\n\n## What You'll Do\n\n- Drive key initiatives and deliver high-quality work\n- Collaborate with cross-functional teams\n- Mentor and guide team members\n- Contribute to technical decisions and architecture\n\n## What We're Looking For\n\n- ${form.experienceMin}–${form.experienceMax} years of relevant experience\n- Strong problem-solving skills and attention to detail\n- Excellent communication and collaboration abilities\n- Passion for building great products\n\n## Why Join Us\n\n- Work on challenging problems with a talented team\n- Competitive compensation and benefits\n- Flexible work environment\n- Growth opportunities in a fast-paced startup`,
+    try {
+      const res = await fetch("/api/ai/job-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          department: form.department || undefined,
+          location: form.location || undefined,
+          jobType: form.jobType || undefined,
+          workMode: form.workMode || undefined,
+          experienceMin: form.experienceMin || undefined,
+          experienceMax: form.experienceMax || undefined,
+          requiredSkills: form.requiredSkills,
+          draftNotes: form.description || undefined,
+        }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate description");
+      update({ description: data.description });
+    } catch (err) {
+      console.error("AI Assist error:", err);
+    } finally {
       setAiLoading(false);
-    }, 2000);
+    }
   }
 
   // ── Submit ────────────────────────────────────────────────────────
