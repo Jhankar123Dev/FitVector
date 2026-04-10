@@ -15,7 +15,7 @@ export async function GET(
     const { data: submission, error } = await supabase
       .from("assessment_submissions")
       .select(`
-        id, status, started_at, invited_at,
+        id, status, started_at, invited_at, expires_at,
         applicants (name),
         assessments (name, assessment_type, time_limit_minutes, difficulty, passing_score, questions, settings),
         job_posts (title)
@@ -32,6 +32,14 @@ export async function GET(
     }
     if (submission.status === "submitted" || submission.status === "graded") {
       return NextResponse.json({ error: "Assessment has already been submitted" }, { status: 410 });
+    }
+
+    // Check if assessment link has expired
+    if (submission.expires_at && new Date(submission.expires_at) < new Date()) {
+      return NextResponse.json(
+        { error: "This assessment link has expired. Please contact the employer." },
+        { status: 410 },
+      );
     }
 
     // ── 7-day invite expiry ───────────────────────────────────────────────────
@@ -64,6 +72,7 @@ export async function GET(
         id: submission.id,
         status: submission.status,
         startedAt: submission.started_at,
+        expiresAt: submission.expires_at ?? null,
         candidateName: r.applicants?.name || "Candidate",
         assessmentName: assessment?.name || "",
         assessmentType: assessment?.assessment_type || "",

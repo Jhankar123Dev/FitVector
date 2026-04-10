@@ -66,3 +66,66 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+// ─── POST: Create a human interview ──────────────────────────────────────────
+
+export async function POST(req: Request) {
+  try {
+    const result = await getEmployerSession();
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+    const body = await req.json() as {
+      applicantId:   string;
+      jobPostId:     string;
+      interviewerId: string;
+      scheduledAt:   string;
+      durationMins?: number;
+      format?:       string;
+      meetingLink?:  string;
+      notes?:        string;
+    };
+
+    const supabase = createAdminClient();
+
+    // Create human_interview row (uses existing table from migration 20260327)
+    const { data: interview, error } = await supabase
+      .from("human_interviews")
+      .insert({
+        applicant_id:     body.applicantId,
+        job_post_id:      body.jobPostId,
+        interviewer_id:   body.interviewerId,
+        round_number:     1,
+        interview_type:   "technical",
+        scheduled_at:     body.scheduledAt,
+        duration_minutes: body.durationMins ?? 60,
+        format:           body.format ?? "video",
+        meeting_link:     body.meetingLink ?? null,
+        notes:            body.notes ?? null,
+        status:           "scheduled",
+      })
+      .select("id")
+      .single();
+
+    if (error || !interview) {
+      console.error("interview create error:", error);
+      return NextResponse.json({ error: "Failed to create interview" }, { status: 500 });
+    }
+
+    // Add lead interviewer to participants table
+    await supabase.from("interview_participants").insert({
+      human_interview_id: interview.id,
+      user_id:            body.interviewerId,
+      role:               "lead",
+    });
+
+    // Advance applicant to interview_scheduled stage
+    await supabase
+      .from("applicants")
+      .update({ pipeline_stage: "interview_scheduled" })
+      .eq("id", body.applicantId);
+
+    return NextResponse.json({ data: { id: interview.id } }, { status: 201 });
+  } catch (err) {
+    console.error("interviews POST error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

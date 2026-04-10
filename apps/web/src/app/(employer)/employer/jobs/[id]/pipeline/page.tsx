@@ -43,6 +43,7 @@ import { useAssessments, useAssignAssessment } from "@/hooks/use-assessments";
 import type { Applicant, PipelineStage } from "@/types/employer";
 import { PIPELINE_STAGE_LABELS, PIPELINE_COLUMNS, getStageName } from "@/types/employer";
 // PIPELINE_COLUMNS used as global fallback for jobPipelineStages when job data not yet loaded
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 // ── Column colors ───────────────────────────────────────────────────
 // Record<string, string> so custom stage keys don't return undefined
@@ -89,6 +90,22 @@ export default function PipelinePage() {
   const [offerModalApplicant, setOfferModalApplicant] = useState<Applicant | null>(null);
   const [assessmentModalApplicant, setAssessmentModalApplicant] = useState<Applicant | null>(null);
   const [bulkAssessmentModal, setBulkAssessmentModal] = useState(false);
+
+  // ── Confirm modal state ──────────────────────────────────────────────
+  interface PendingConfirm {
+    title:       string;
+    description: string;
+    variant:     "destructive" | "warning" | "default";
+    onConfirm:   () => void;
+  }
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+
+  function withConfirm(config: PendingConfirm) {
+    setPendingConfirm(config);
+  }
+  function dismissConfirm() {
+    setPendingConfirm(null);
+  }
 
   // ── Pipeline config modal ────────────────────────────────────────
   const [showPipelineConfig, setShowPipelineConfig] = useState(false);
@@ -275,8 +292,17 @@ export default function PipelinePage() {
   }
 
   function handleRejectApplicant(id: string) {
-    rejectMutation.mutate({ id, reason: "Not a fit for this role" });
-    setDetailApplicant(null);
+    const applicant = applicants.find((a) => a.id === id);
+    withConfirm({
+      title:       "Reject Candidate",
+      description: `Reject ${applicant?.name ?? "this candidate"}? The candidate may be notified.`,
+      variant:     "destructive",
+      onConfirm:   () => {
+        rejectMutation.mutate({ id, reason: "Not a fit for this role" });
+        setDetailApplicant(null);
+        dismissConfirm();
+      },
+    });
   }
 
   function handleScreenApplicant(id: string) {
@@ -303,10 +329,19 @@ export default function PipelinePage() {
   }
 
   function bulkReject() {
-    for (const id of selectedIds) {
-      rejectMutation.mutate({ id, reason: "Bulk rejection" });
-    }
-    clearSelection();
+    const count = selectedIds.size;
+    withConfirm({
+      title:       `Reject ${count} Candidate${count > 1 ? "s" : ""}`,
+      description: `This will reject ${count} candidate${count > 1 ? "s" : ""}. They may be notified. This cannot be undone.`,
+      variant:     "destructive",
+      onConfirm:   () => {
+        for (const id of selectedIds) {
+          rejectMutation.mutate({ id, reason: "Bulk rejection" });
+        }
+        clearSelection();
+        dismissConfirm();
+      },
+    });
   }
 
   const hasActiveFilters =
@@ -465,7 +500,15 @@ export default function PipelinePage() {
                     variant="outline"
                     size="sm"
                     className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5"
-                    onClick={() => !alreadyAllSent && setBulkAssessmentModal(true)}
+                    onClick={() => {
+                      if (alreadyAllSent) return;
+                      withConfirm({
+                        title:       `Send Assessment to ${eligible.length} Candidate${eligible.length > 1 ? "s" : ""}`,
+                        description: `They will receive an email invite immediately. This cannot be undone.`,
+                        variant:     "warning",
+                        onConfirm:   () => { dismissConfirm(); setBulkAssessmentModal(true); },
+                      });
+                    }}
                     disabled={alreadyAllSent}
                     title={alreadyAllSent ? "All selected candidates already have an assessment assigned" : undefined}
                   >
@@ -819,6 +862,19 @@ export default function PipelinePage() {
           </div>
         )}
       </div>
+
+      {/* ── Confirm Modal ────────────────────────────────────────── */}
+      {pendingConfirm && (
+        <ConfirmModal
+          open={!!pendingConfirm}
+          title={pendingConfirm.title}
+          description={pendingConfirm.description}
+          variant={pendingConfirm.variant}
+          onConfirm={pendingConfirm.onConfirm}
+          onCancel={dismissConfirm}
+          isLoading={rejectMutation.isPending}
+        />
+      )}
 
       {/* ── Candidate detail slide-over ──────────────────────────── */}
       {detailApplicant && (

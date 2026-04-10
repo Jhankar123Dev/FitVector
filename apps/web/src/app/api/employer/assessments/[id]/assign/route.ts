@@ -34,12 +34,17 @@ export async function POST(
 
     // Create submissions for each applicant
     const now = new Date().toISOString();
+    // Default expiry: 7 days from now if not explicitly set by employer
+    const defaultExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const expiresAt = (parsed.data as Record<string, unknown>).expiresAt as string | undefined ?? defaultExpiry;
+
     const submissions = parsed.data.applicantIds.map((applicantId) => ({
       assessment_id: assessmentId,
-      applicant_id: applicantId,
-      job_post_id: parsed.data.jobPostId,
-      status: "invited",
-      invited_at: now,
+      applicant_id:  applicantId,
+      job_post_id:   parsed.data.jobPostId,
+      status:        "invited",
+      invited_at:    now,
+      expires_at:    expiresAt,
     }));
 
     const { data: created, error } = await supabase

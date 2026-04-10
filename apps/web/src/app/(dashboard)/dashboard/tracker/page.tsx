@@ -36,6 +36,10 @@ export default function TrackerPage() {
   const createMutation = useCreateApplication();
   const deleteMutation = useDeleteApplication();
 
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterCompany, setFilterCompany] = useState("all");
+  const [filterRange, setFilterRange]   = useState("all"); // "7d" | "30d" | "90d" | "all"
+
   // Split into FitVector-applied vs manually-tracked
   const appliedApps = useMemo(
     () => (applications || []).filter((a) => a.fitvectorStatus !== null),
@@ -44,6 +48,25 @@ export default function TrackerPage() {
   const personalApps = useMemo(
     () => (applications || []).filter((a) => a.fitvectorStatus === null),
     [applications],
+  );
+
+  const filteredAppliedApps = useMemo(() => {
+    return appliedApps.filter((a) => {
+      if (filterStatus !== "all" && a.fitvectorStatus !== filterStatus) return false;
+      if (filterCompany !== "all" && a.companyName !== filterCompany) return false;
+      if (filterRange !== "all") {
+        const days = filterRange === "7d" ? 7 : filterRange === "30d" ? 30 : 90;
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        if (a.appliedAt && new Date(a.appliedAt) < cutoff) return false;
+      }
+      return true;
+    });
+  }, [appliedApps, filterStatus, filterCompany, filterRange]);
+
+  const appliedCompanies = useMemo(
+    () => [...new Set(appliedApps.map((a) => a.companyName))].sort(),
+    [appliedApps],
   );
 
   const handleStatusChange = useCallback(
@@ -214,11 +237,56 @@ export default function TrackerPage() {
 
       {/* Applied tab — FitVector applications list */}
       {!isLoading && !isError && activeTab === "applied" && (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <AppliedJobsList
-            applications={appliedApps}
-            onCardClick={setSelectedApp}
-          />
+        <div className="flex flex-col min-h-0 flex-1 gap-3">
+          {/* Filter bar */}
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              className="h-8 rounded-md border border-surface-200 bg-white px-2 text-xs text-surface-700 outline-none focus:ring-1 focus:ring-brand-500/30"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">All Statuses</option>
+              <option value="applied">Applied</option>
+              <option value="under_review">Under Review</option>
+              <option value="interview_invited">Interview Invited</option>
+              <option value="interviewed">Interviewed</option>
+              <option value="offered">Offered</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select
+              className="h-8 rounded-md border border-surface-200 bg-white px-2 text-xs text-surface-700 outline-none focus:ring-1 focus:ring-brand-500/30"
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+            >
+              <option value="all">All Companies</option>
+              {appliedCompanies.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              className="h-8 rounded-md border border-surface-200 bg-white px-2 text-xs text-surface-700 outline-none focus:ring-1 focus:ring-brand-500/30"
+              value={filterRange}
+              onChange={(e) => setFilterRange(e.target.value)}
+            >
+              <option value="all">All Time</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+            </select>
+            {(filterStatus !== "all" || filterCompany !== "all" || filterRange !== "all") && (
+              <button
+                className="text-xs text-brand-600 hover:underline"
+                onClick={() => { setFilterStatus("all"); setFilterCompany("all"); setFilterRange("all"); }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <AppliedJobsList
+              applications={filteredAppliedApps}
+              onCardClick={setSelectedApp}
+              showFitVectorBadge={false}
+            />
+          </div>
         </div>
       )}
 

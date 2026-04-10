@@ -72,6 +72,7 @@ interface AssessmentForm {
   maxAttempts: number;
   tabSwitchDetection: boolean;
   copyPasteDetection: boolean;
+  expiresAt: string | null;
 }
 
 const INITIAL_FORM: AssessmentForm = {
@@ -87,6 +88,7 @@ const INITIAL_FORM: AssessmentForm = {
   maxAttempts: 1,
   tabSwitchDetection: true,
   copyPasteDetection: false,
+  expiresAt: null,
 };
 
 function newQuestion(): QuestionForm {
@@ -104,22 +106,21 @@ function newQuestion(): QuestionForm {
 
 const CODE_LANGUAGES = ["javascript", "typescript", "python", "java", "go", "rust", "c++"];
 
-// ── CSV template columns ──────────────────────────────────────────────────────
-const CSV_TEMPLATE_HEADERS = ["type", "prompt", "option_a", "option_b", "option_c", "option_d", "correct_answer", "points"];
-const CSV_TEMPLATE_EXAMPLES = [
-  ["multiple_choice", "What does HTML stand for?", "HyperText Markup Language", "HyperText Markdown Language", "HighText Machine Language", "HyperText Machine Language", "HyperText Markup Language", "10"],
-  ["multiple_choice", "Which method is used to add an element to the end of an array?", "push()", "pop()", "shift()", "unshift()", "push()", "10"],
-  ["short_answer", "Explain what a closure is in JavaScript.", "", "", "", "", "A closure is a function that retains access to its outer lexical scope.", "15"],
-  ["code", "Write a function that reverses a string.", "", "", "", "", "function reverse(s) { return s.split('').reverse().join(''); }", "20"],
-];
 
 function downloadCsvTemplate() {
-  const rows = [CSV_TEMPLATE_HEADERS, ...CSV_TEMPLATE_EXAMPLES];
-  const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+  const rows = [
+    "type,prompt,option_a,option_b,option_c,option_d,correct_answer,points",
+    '# INSTRUCTIONS: type = multiple_choice | short_answer | true_false | code. correct_answer = a/b/c/d for MCQ (a=option_a, b=option_b etc). Leave blank for short_answer/code.',
+    '"multiple_choice","What is the time complexity of binary search?","O(n)","O(log n)","O(n²)","O(1)","b","10"',
+    '"true_false","Python is a compiled language.","True","False",,,  "b","5"',
+    '"short_answer","What does REST stand for?",,,,,"","5"',
+    '"code","Write a function that returns the factorial of n.",,,,,"","20"',
+  ];
+  const csv  = rows.join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
   a.download = "assessment_questions_template.csv";
   a.click();
   URL.revokeObjectURL(url);
@@ -254,19 +255,25 @@ export default function CreateAssessmentPage() {
           setCsvError(`CSV parse error: ${results.errors[0].message}`);
           return;
         }
+        const ANSWER_IDX: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
         const questions: QuestionForm[] = results.data
-          .filter((row) => row.prompt?.trim())
+          .filter((row) => row.prompt?.trim() && !row.type?.trim().startsWith("#"))
           .map((row, i) => {
-            const type = (row.type?.trim() || "multiple_choice") as QuestionType;
+            const type    = (row.type?.trim() || "multiple_choice") as QuestionType;
             const options = [row.option_a, row.option_b, row.option_c, row.option_d]
               .map((o) => (o || "").trim())
               .filter(Boolean);
+            const rawAnswer   = row.correct_answer?.trim().toLowerCase() ?? "";
+            const answerIndex = ANSWER_IDX[rawAnswer];
+            const correctAnswer = answerIndex !== undefined
+              ? (options[answerIndex] ?? "")   // map letter → actual option text
+              : row.correct_answer?.trim() ?? ""; // fallback for short_answer/code
             return {
               id: `csv-${Date.now()}-${i}`,
               type,
               prompt: row.prompt?.trim() || "",
               options,
-              correctAnswer: row.correct_answer?.trim() || "",
+              correctAnswer,
               points: parseInt(row.points || "10", 10) || 10,
               codeLanguage: "javascript",
               testCases: [],
@@ -596,14 +603,24 @@ export default function CreateAssessmentPage() {
               <Sparkles className="h-4 w-4" /> Generate with AI
             </Button>
             <Button
+              type="button"
               variant="outline"
-              className="gap-1.5"
-              onClick={() => { downloadCsvTemplate(); setTimeout(() => csvInputRef.current?.click(), 300); }}
+              size="sm"
+              onClick={downloadCsvTemplate}
+              className="gap-1.5 text-xs"
             >
-              <Download className="h-3.5 w-3.5" /> Template
+              <Download className="h-3.5 w-3.5" />
+              Download Template
             </Button>
-            <Button variant="outline" className="gap-1.5" onClick={() => csvInputRef.current?.click()}>
-              <Upload className="h-4 w-4" /> Import CSV
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => csvInputRef.current?.click()}
+              className="gap-1.5 text-xs"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Upload CSV
             </Button>
             <Button
               variant="outline"
@@ -922,6 +939,20 @@ export default function CreateAssessmentPage() {
                   onChange={(e) => update("maxAttempts", Number(e.target.value))}
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Assessment Deadline <span className="text-surface-400 font-normal">(Optional)</span></Label>
+              <Input
+                type="datetime-local"
+                value={form.expiresAt ?? ""}
+                min={new Date().toISOString().slice(0, 16)}
+                onChange={(e) => update("expiresAt", e.target.value || null)}
+                className="max-w-sm"
+              />
+              <p className="text-[11px] text-surface-400">
+                Candidates must submit before this date. Leave blank for no deadline (7-day invite window applies).
+              </p>
             </div>
 
             <div className="space-y-3">

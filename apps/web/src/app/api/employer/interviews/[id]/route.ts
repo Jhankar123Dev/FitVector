@@ -47,3 +47,52 @@ export async function GET(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+// ─── PUT: Update a human interview ───────────────────────────────────────────
+
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const result = await getEmployerSession();
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+    const { id } = await params;
+    const body = await req.json() as Record<string, unknown>;
+
+    const supabase = createAdminClient();
+    const patch: Record<string, unknown> = {};
+    if (body.scheduledAt    !== undefined) patch.scheduled_at      = body.scheduledAt;
+    if (body.meetingLink    !== undefined) patch.meeting_link       = body.meetingLink;
+    if (body.notes          !== undefined) patch.notes              = body.notes;
+    if (body.status         !== undefined) patch.status             = body.status;
+    if (body.durationMins   !== undefined) patch.duration_minutes   = body.durationMins;
+    if (body.interviewerId  !== undefined) patch.interviewer_id     = body.interviewerId;
+
+    const { error } = await supabase.from("human_interviews").update(patch).eq("id", id);
+    if (error) return NextResponse.json({ error: "Failed to update interview" }, { status: 500 });
+    return NextResponse.json({ message: "Updated" });
+  } catch (err) {
+    console.error("interview PUT error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// ─── DELETE: Cancel a human interview ────────────────────────────────────────
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const result = await getEmployerSession();
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+    const { id } = await params;
+    const supabase = createAdminClient();
+    await supabase.from("human_interviews").update({ status: "cancelled" }).eq("id", id);
+    return NextResponse.json({ message: "Cancelled" });
+  } catch (err) {
+    console.error("interview DELETE error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

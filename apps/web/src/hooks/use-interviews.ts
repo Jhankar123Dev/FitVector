@@ -85,3 +85,41 @@ export function useInviteInterview() {
     },
   });
 }
+
+export function useCreateInterview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      applicantId:   string;
+      jobPostId:     string;
+      interviewerId: string;
+      scheduledAt:   string;
+      durationMins:  number;
+      format:        "video" | "phone" | "in_person";
+      meetingLink?:  string;
+      notes?:        string;
+    }) =>
+      fetchJson("/api/employer/interviews", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["employer", "applicants"] });
+      qc.invalidateQueries({ queryKey: ["employer", "interviews"] });
+    },
+  });
+}
+
+export function useUpdateInterview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string; [key: string]: unknown }) =>
+      fetchJson(`/api/employer/interviews/${id}`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(data),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["employer", "interviews"] }),
+  });
+}
