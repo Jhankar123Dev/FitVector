@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { MOCK_PROMOTED_LISTINGS } from "@/lib/mock/branding-data";
+import { usePromotions } from "@/hooks/use-employer";
 import {
   PROMOTION_TYPE_LABELS,
   PROMOTION_STATUS_COLORS,
@@ -32,10 +32,27 @@ function formatDate(dateStr: string): string {
   });
 }
 
+// ── Skeleton row while loading ────────────────────────────────────────────────
+
+function SkeletonRow() {
+  return (
+    <tr className="border-b border-surface-100">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <td key={i} className="px-4 py-3">
+          <div className="h-4 animate-pulse rounded bg-surface-100" />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 export default function PromotionsPage() {
-  const totalSpend = MOCK_PROMOTED_LISTINGS.reduce((s, p) => s + p.amountPaid, 0);
-  const totalImpressions = MOCK_PROMOTED_LISTINGS.reduce((s, p) => s + p.impressions, 0);
-  const totalApplications = MOCK_PROMOTED_LISTINGS.reduce((s, p) => s + p.applications, 0);
+  const { data, isLoading } = usePromotions();
+  const promotions = data?.data ?? [];
+
+  const totalSpend = promotions.reduce((s, p) => s + p.amountPaid, 0);
+  const totalImpressions = promotions.reduce((s, p) => s + p.impressions, 0);
+  const totalApplications = promotions.reduce((s, p) => s + p.applications, 0);
 
   return (
     <div className="space-y-5">
@@ -69,7 +86,11 @@ export default function PromotionsPage() {
                 <s.icon className={cn("h-5 w-5", s.color)} />
               </div>
               <div>
-                <p className="text-lg font-semibold text-surface-800">{s.value}</p>
+                {isLoading ? (
+                  <div className="h-6 w-16 animate-pulse rounded bg-surface-100" />
+                ) : (
+                  <p className="text-lg font-semibold text-surface-800">{s.value}</p>
+                )}
                 <p className="text-xs text-surface-500">{s.label}</p>
               </div>
             </CardContent>
@@ -96,58 +117,69 @@ export default function PromotionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {MOCK_PROMOTED_LISTINGS.map((promo) => {
-                  const typeConfig = PROMOTION_TYPE_LABELS[promo.promotionType];
-                  const statusConfig = PROMOTION_STATUS_COLORS[promo.status];
-                  const ctr = promo.impressions > 0 ? ((promo.clicks / promo.impressions) * 100).toFixed(1) : "0";
+                {isLoading ? (
+                  <>
+                    <SkeletonRow />
+                    <SkeletonRow />
+                    <SkeletonRow />
+                  </>
+                ) : (
+                  promotions.map((promo) => {
+                    const typeConfig = PROMOTION_TYPE_LABELS[promo.promotionType as PromotionType];
+                    const statusConfig = PROMOTION_STATUS_COLORS[promo.status as PromotionStatus];
+                    const ctr =
+                      promo.impressions > 0
+                        ? ((promo.clicks / promo.impressions) * 100).toFixed(1)
+                        : "0";
 
-                  return (
-                    <tr key={promo.id} className="border-b border-surface-100 last:border-0">
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-surface-800">{promo.jobTitle}</p>
-                        <p className="text-xs text-surface-400">
-                          {formatDate(promo.startDate)} – {formatDate(promo.endDate)}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="brand" className="text-[10px]">
-                          {typeConfig.label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-surface-600">
-                        {promo.duration} days
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge className={cn("text-[10px]", statusConfig.bg, statusConfig.color)}>
-                          {statusConfig.label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm text-surface-700">
-                        {promo.impressions.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm text-surface-700">
-                        {promo.clicks}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm text-surface-700">
-                        {ctr}%
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium text-surface-800">
-                        {promo.applications}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium text-surface-800">
-                        {formatCurrency(promo.amountPaid)}
-                      </td>
-                    </tr>
-                  );
-                })}
+                    return (
+                      <tr key={promo.id} className="border-b border-surface-100 last:border-0">
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-surface-800">{promo.jobTitle}</p>
+                          <p className="text-xs text-surface-400">
+                            {formatDate(promo.startDate)} – {formatDate(promo.endDate)}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant="brand" className="text-[10px]">
+                            {typeConfig.label}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-surface-600">
+                          {promo.duration} days
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge className={cn("text-[10px]", statusConfig.bg, statusConfig.color)}>
+                            {statusConfig.label}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-surface-700">
+                          {promo.impressions.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-surface-700">
+                          {promo.clicks}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-surface-700">
+                          {ctr}%
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-medium text-surface-800">
+                          {promo.applications}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-medium text-surface-800">
+                          {formatCurrency(promo.amountPaid)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Empty state hint */}
-      {MOCK_PROMOTED_LISTINGS.length === 0 && (
+      {/* Empty state */}
+      {!isLoading && promotions.length === 0 && (
         <div className="py-12 text-center">
           <Rocket className="mx-auto mb-2 h-8 w-8 text-surface-300" />
           <p className="text-sm text-surface-500">No promoted listings yet</p>

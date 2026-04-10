@@ -11,7 +11,7 @@ import type {
   CompanyMember,
   CompanyMemberRole,
 } from "@fitvector/shared";
-import type { CompanyBranding } from "@/types/employer";
+import type { CompanyBranding, PromotedListing } from "@/types/employer";
 import type { ActivityItem } from "@/app/api/employer/activity/route";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -212,5 +212,16 @@ export function useUpdateMember() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["employer", "members"] });
     },
+  });
+}
+
+// ─── Promotions ───────────────────────────────────────────────────────────────
+
+export function usePromotions() {
+  return useQuery<{ data: PromotedListing[] }>({
+    queryKey: ["employer", "promotions"],
+    queryFn: () => fetchJson("/api/employer/promotions"),
+    staleTime: 2 * 60 * 1000,
+    retry: 1,
   });
 }
