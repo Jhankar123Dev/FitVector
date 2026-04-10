@@ -30,10 +30,9 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { MOCK_ACTIVITY_FEED } from "@/lib/mock/employer-data";
 import { formatRelativeTime } from "@/lib/utils";
 import { useAnalytics, useFunnel } from "@/hooks/use-analytics";
-import { useEmployer } from "@/hooks/use-employer";
+import { useEmployer, useActivityFeed } from "@/hooks/use-employer";
 
 // ── Activity icon map ───────────────────────────────────────────────
 const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
@@ -80,6 +79,8 @@ export default function EmployerDashboardPage() {
   const { data: analyticsData } = useAnalytics();
   const { data: funnelResponse } = useFunnel();
   const { data: employerData } = useEmployer();
+  const { data: activityResponse } = useActivityFeed();
+  const activityFeed = activityResponse?.data ?? [];
 
   const apiMetrics = analyticsData?.data || {};
   const company = employerData?.data?.company;
@@ -241,7 +242,7 @@ export default function EmployerDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {MOCK_ACTIVITY_FEED.slice(0, 6).map((item) => {
+              {activityFeed.slice(0, 6).map((item) => {
                 const cfg = ACTIVITY_ICONS[item.type] || ACTIVITY_ICONS.new_applicant;
                 const IconComp = cfg.icon;
                 return (

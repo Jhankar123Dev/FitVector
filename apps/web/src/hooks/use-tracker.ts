@@ -42,6 +42,8 @@ export interface TrackerApplication {
   contactEmail: string | null;
   contactRole: string | null;
   tailoredResumeId: string | null;
+  /** ID of the fitvector_applications row — used to fetch full FV detail in the modal. */
+  fitvectorAppId: string | null;
   appliedAt: string | null;
   createdAt: string;
 }

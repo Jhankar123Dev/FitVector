@@ -29,7 +29,7 @@ import type { TrackerApplication } from "@/hooks/use-tracker";
 import { isFitVectorApp, FV_STATUS_CONFIG, BOOST_OPTIONS, BOOST_CREDIT_PACKS } from "@/types/marketplace";
 import type { FVApplicationStatus, BoostTier } from "@/types/marketplace";
 import { FitVectorStatusTimeline } from "./fitvector-status-timeline";
-import { MOCK_FITVECTOR_APPLICATION } from "@/lib/mock/seeker-marketplace-data";
+import { useFitVectorDetail } from "@/hooks/use-fitvector-apply";
 
 interface ApplicationDetailModalProps {
   application: TrackerApplication;
@@ -58,8 +58,12 @@ export function ApplicationDetailModal({
   const fvConfig = isFV
     ? FV_STATUS_CONFIG[application.status as FVApplicationStatus]
     : null;
-  // Use mock FitVector application data for timeline/details
-  const fvApp = isFV ? MOCK_FITVECTOR_APPLICATION : null;
+
+  // Fetch live FitVector application detail (replaces mock data)
+  const { data: fvDetailRes, isLoading: fvLoading } = useFitVectorDetail(
+    isFV ? (application.fitvectorAppId ?? null) : null
+  );
+  const fvApp = fvDetailRes?.data ?? null;
 
   const handleSave = () => {
     onUpdate(application.id, {
@@ -121,7 +125,9 @@ export function ApplicationDetailModal({
           )}
 
           {/* Status history / FitVector timeline */}
-          {isFV && fvApp ? (
+          {isFV && fvLoading ? (
+            <div className="text-xs text-surface-400 py-2">Loading application details…</div>
+          ) : isFV && fvApp ? (
             <div>
               <Label className="text-xs">Application Timeline</Label>
               <div className="mt-2">

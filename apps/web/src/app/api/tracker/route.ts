@@ -167,6 +167,7 @@ export async function GET(req: Request) {
         contactEmail: a.contact_email,
         contactRole: a.contact_role,
         tailoredResumeId: a.tailored_resume_id,
+        fitvectorAppId: fvAppId,
         appliedAt: a.applied_at,
         createdAt: a.created_at,
       };

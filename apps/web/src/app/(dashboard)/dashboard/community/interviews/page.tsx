@@ -33,13 +33,18 @@ import {
   type InterviewExperience,
 } from "@/types/community";
 import { useCommunityPosts, useVote } from "@/hooks/use-community";
-import { MOCK_COMPANIES_LIST } from "@/lib/mock/community-data";
 
 type SortOption = "recent" | "helpful" | "company";
 
 export default function InterviewExperiencesPage() {
   const { data: postsData, isLoading } = useCommunityPosts("interview_experience");
-  const MOCK_INTERVIEW_EXPERIENCES = (postsData?.data || []) as unknown as InterviewExperience[];
+  const experiences = (postsData?.data || []) as unknown as InterviewExperience[];
+
+  // Derive unique companies from live data for the header count
+  const uniqueCompanyCount = useMemo(
+    () => new Set(experiences.map((e) => e.companyName).filter(Boolean)).size,
+    [experiences]
+  );
 
   // Filters
   const [companySearch, setCompanySearch] = useState("");
@@ -54,7 +59,7 @@ export default function InterviewExperiencesPage() {
   const [votes, setVotes] = useState<Record<string, { up: number; down: number }>>({});
 
   const filteredExperiences = useMemo(() => {
-    let result = [...MOCK_INTERVIEW_EXPERIENCES];
+    let result = [...experiences];
 
     if (companySearch.trim()) {
       const q = companySearch.toLowerCase();
@@ -114,7 +119,7 @@ export default function InterviewExperiencesPage() {
           </Link>
           <h1 className="text-2xl font-semibold text-surface-800">Interview Experiences</h1>
           <p className="mt-1 text-sm text-surface-500">
-            {filteredExperiences.length} anonymous experiences across {MOCK_COMPANIES_LIST.length} companies
+            {filteredExperiences.length} anonymous experiences across {uniqueCompanyCount} companies
           </p>
         </div>
         <Button onClick={() => setShowModal(true)} className="gap-1.5">

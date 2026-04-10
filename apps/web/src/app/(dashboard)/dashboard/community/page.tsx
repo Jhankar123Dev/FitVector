@@ -4,50 +4,56 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   MessageSquare,
-  Users,
   IndianRupee,
   Briefcase,
   ArrowRight,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { MOCK_INTERVIEW_EXPERIENCES, MOCK_DISCUSSION_THREADS, MOCK_SALARY_ROLES } from "@/lib/mock/community-data";
+import { useCommunityPosts } from "@/hooks/use-community";
 
-const COMMUNITY_SECTIONS = [
-  {
-    title: "Interview Experiences",
-    description: "Anonymous, structured interview reports from real candidates across top companies",
-    href: "/dashboard/community/interviews",
-    icon: Briefcase,
-    iconBg: "bg-blue-50",
-    iconColor: "text-blue-600",
-    stat: `${MOCK_INTERVIEW_EXPERIENCES.length} experiences shared`,
-    statColor: "text-blue-600",
-  },
-  {
-    title: "Discussions",
-    description: "Engage with the community on tech, career advice, salary, and more",
-    href: "/dashboard/community/discussions",
-    icon: MessageSquare,
-    iconBg: "bg-purple-50",
-    iconColor: "text-purple-600",
-    stat: `${MOCK_DISCUSSION_THREADS.length} active threads`,
-    statColor: "text-purple-600",
-  },
-  {
-    title: "Salary Insights",
-    description: "Anonymous salary data for 15+ roles across Bangalore, Mumbai, and Remote",
-    href: "/dashboard/community/salaries",
-    icon: IndianRupee,
-    iconBg: "bg-green-50",
-    iconColor: "text-green-600",
-    stat: `${MOCK_SALARY_ROLES.length} roles covered`,
-    statColor: "text-green-600",
-  },
-];
+// Salary roles is a static filter list — not user-generated content, no API needed.
+const SALARY_ROLES_COUNT = 15;
 
 export default function CommunityPage() {
-  const totalUpvotes = MOCK_INTERVIEW_EXPERIENCES.reduce((s, e) => s + e.upvotes, 0);
+  const { data: interviewData } = useCommunityPosts("interview_experience");
+  const { data: discussionData } = useCommunityPosts("discussion");
+
+  const interviewCount = interviewData?.total ?? 0;
+  const discussionCount = discussionData?.total ?? 0;
+
+  const communitySections = [
+    {
+      title: "Interview Experiences",
+      description: "Anonymous, structured interview reports from real candidates across top companies",
+      href: "/dashboard/community/interviews",
+      icon: Briefcase,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      stat: `${interviewCount} experiences shared`,
+      statColor: "text-blue-600",
+    },
+    {
+      title: "Discussions",
+      description: "Engage with the community on tech, career advice, salary, and more",
+      href: "/dashboard/community/discussions",
+      icon: MessageSquare,
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-600",
+      stat: `${discussionCount} active threads`,
+      statColor: "text-purple-600",
+    },
+    {
+      title: "Salary Insights",
+      description: "Anonymous salary data for 15+ roles across Bangalore, Mumbai, and Remote",
+      href: "/dashboard/community/salaries",
+      icon: IndianRupee,
+      iconBg: "bg-green-50",
+      iconColor: "text-green-600",
+      stat: `${SALARY_ROLES_COUNT}+ roles covered`,
+      statColor: "text-green-600",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -65,10 +71,10 @@ export default function CommunityPage() {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Experiences", value: String(MOCK_INTERVIEW_EXPERIENCES.length), icon: Briefcase },
-          { label: "Discussions", value: String(MOCK_DISCUSSION_THREADS.length), icon: MessageSquare },
-          { label: "Roles Covered", value: String(MOCK_SALARY_ROLES.length), icon: IndianRupee },
-          { label: "Community Upvotes", value: totalUpvotes.toLocaleString(), icon: TrendingUp },
+          { label: "Experiences", value: interviewCount.toString(), icon: Briefcase },
+          { label: "Discussions", value: discussionCount.toString(), icon: MessageSquare },
+          { label: "Roles Covered", value: `${SALARY_ROLES_COUNT}+`, icon: IndianRupee },
+          { label: "Community Posts", value: (interviewCount + discussionCount).toLocaleString(), icon: TrendingUp },
         ].map((s) => (
           <Card key={s.label}>
             <CardContent className="flex items-center gap-3 p-3 sm:p-4">
@@ -86,7 +92,7 @@ export default function CommunityPage() {
 
       {/* Section Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        {COMMUNITY_SECTIONS.map((section) => (
+        {communitySections.map((section) => (
           <Link key={section.href} href={section.href}>
             <Card className="h-full cursor-pointer transition-all hover:border-brand-300 hover:shadow-card-hover">
               <CardContent className="flex flex-col p-5">

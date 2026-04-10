@@ -11,6 +11,8 @@ import type {
   CompanyMember,
   CompanyMemberRole,
 } from "@fitvector/shared";
+import type { CompanyBranding } from "@/types/employer";
+import type { ActivityItem } from "@/app/api/employer/activity/route";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -157,6 +159,46 @@ interface UpdateMemberInput {
 /**
  * Update a team member's role or status.
  */
+// ─── Branding ─────────────────────────────────────────────────────────────────
+
+export function useBranding() {
+  return useQuery<{ data: CompanyBranding }>({
+    queryKey: ["employer", "branding"],
+    queryFn: () => fetchJson("/api/employer/branding"),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+}
+
+export function useUpdateBranding() {
+  const qc = useQueryClient();
+
+  return useMutation<{ data: CompanyBranding }, Error, CompanyBranding>({
+    mutationFn: (data) =>
+      fetchJson("/api/employer/branding", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["employer", "branding"] });
+      // Also refresh company so banner_url / story changes reflect elsewhere
+      qc.invalidateQueries({ queryKey: ["employer", "company"] });
+    },
+  });
+}
+
+// ─── Activity Feed ────────────────────────────────────────────────────────────
+
+export function useActivityFeed() {
+  return useQuery<{ data: ActivityItem[] }>({
+    queryKey: ["employer", "activity"],
+    queryFn: () => fetchJson("/api/employer/activity"),
+    staleTime: 60 * 1000,
+    refetchInterval: 2 * 60 * 1000, // refresh every 2 min
+  });
+}
+
 export function useUpdateMember() {
   const qc = useQueryClient();
 

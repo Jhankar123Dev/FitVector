@@ -60,3 +60,30 @@ export function useFitVectorStatus(id: string | null) {
     refetchInterval: 30 * 1000, // Poll every 30s for real-time updates
   });
 }
+
+export interface FVApplicationDetail {
+  id: string;
+  status: string;
+  statusTimeline: Array<{ status: string; label: string; timestamp: string }>;
+  statusUpdatedAt: string | null;
+  isBoosted: boolean;
+  boostTier: string | null;
+  resumeName: string | null;
+  matchScore: number | null;
+  screeningAnswers: Array<{ questionId: string; question: string; answer: string }>;
+  coverNote: string | null;
+  appliedAt: string;
+}
+
+/**
+ * Full detail for a FitVector application (timeline + submission data).
+ * Used by ApplicationDetailModal to replace mock data.
+ */
+export function useFitVectorDetail(id: string | null) {
+  return useQuery<{ data: FVApplicationDetail }>({
+    queryKey: ["fitvector", "detail", id],
+    queryFn: () => fetchJson(`/api/applications/fitvector/${id}`),
+    enabled: !!id,
+    staleTime: 60 * 1000,
+  });
+}

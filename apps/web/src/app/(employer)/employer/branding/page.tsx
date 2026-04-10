@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +27,8 @@ import {
   Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_COMPANY_BRANDING } from "@/lib/mock/branding-data";
-import { MOCK_COMPANY, MOCK_JOB_POSTS } from "@/lib/mock/employer-data";
+import { useEmployer, useBranding, useUpdateBranding } from "@/hooks/use-employer";
+import { useEmployerJobs } from "@/hooks/use-employer-jobs";
 import type { CompanyBranding, CultureValue, DayInTheLife } from "@/types/employer";
 
 const ICON_MAP: Record<string, typeof Lightbulb> = {
@@ -38,12 +38,38 @@ const ICON_MAP: Record<string, typeof Lightbulb> = {
   "trending-up": TrendingUp,
 };
 
+const DEFAULT_BRANDING: CompanyBranding = {
+  bannerUrl: null,
+  story: "",
+  teamPhotos: [],
+  benefits: [],
+  cultureValues: [],
+  dayInTheLife: [],
+  profileViews: 0,
+  followers: 0,
+  applicationRate: 0,
+};
+
 export default function BrandingPage() {
-  const [branding, setBranding] = useState<CompanyBranding>(MOCK_COMPANY_BRANDING);
+  const { data: employerData } = useEmployer();
+  const { data: jobsData } = useEmployerJobs("active");
+  const { data: brandingRes } = useBranding();
+  const { mutate: saveBranding, isPending: saving } = useUpdateBranding();
+
+  const company = employerData?.data?.company;
+  const activeJobs = jobsData?.data ?? [];
+
+  const [branding, setBranding] = useState<CompanyBranding>(DEFAULT_BRANDING);
   const [bannerName, setBannerName] = useState<string | null>(null);
   const [newBenefit, setNewBenefit] = useState("");
-  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync local form state from server once data loads
+  useEffect(() => {
+    if (brandingRes?.data) {
+      setBranding(brandingRes.data);
+    }
+  }, [brandingRes?.data]);
 
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,9 +108,19 @@ export default function BrandingPage() {
   };
 
   const handleSave = () => {
-    setSaving(true);
-    setTimeout(() => setSaving(false), 1000);
+    saveBranding(branding);
   };
+
+  // Derive location string from first location (CompanyLocation is { city, state?, country })
+  const firstLocation = company?.locations?.[0] as
+    | { city?: string; state?: string; country?: string }
+    | undefined;
+  const locationStr = firstLocation?.city ?? firstLocation?.country ?? "";
+
+  // Jobs that don't yet have a "day in the life" entry
+  const availableForDitl = activeJobs.filter(
+    (jp) => !branding.dayInTheLife.some((d) => d.jobPostId === jp.id),
+  );
 
   return (
     <div className="space-y-5">
@@ -293,9 +329,7 @@ export default function BrandingPage() {
                   />
                 </div>
               ))}
-              {MOCK_JOB_POSTS.filter(
-                (jp) => jp.status === "active" && !branding.dayInTheLife.some((d) => d.jobPostId === jp.id),
-              ).length > 0 && (
+              {availableForDitl.length > 0 && (
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs">
                   <Plus className="h-3 w-3" />
                   Add for another role
@@ -313,20 +347,28 @@ export default function BrandingPage() {
               <div className="flex h-32 items-end bg-gradient-to-r from-brand-500 to-brand-700 p-4 sm:h-44">
                 <div className="flex items-center gap-3">
                   <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white text-lg font-bold text-brand-600 shadow-lg">
-                    {MOCK_COMPANY.name.charAt(0)}
+                    {company?.name?.charAt(0) ?? "C"}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">{MOCK_COMPANY.name}</h2>
+                    <h2 className="text-lg font-bold text-white">
+                      {company?.name ?? "Your Company"}
+                    </h2>
                     <div className="flex items-center gap-2 text-xs text-white/80">
-                      <span className="flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {MOCK_COMPANY.companySize} employees
-                      </span>
-                      <span>·</span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {MOCK_COMPANY.locations[0]}
-                      </span>
+                      {company?.companySize && (
+                        <span className="flex items-center gap-1">
+                          <Building2 className="h-3 w-3" />
+                          {company.companySize} employees
+                        </span>
+                      )}
+                      {locationStr && (
+                        <>
+                          <span>·</span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {locationStr}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -334,56 +376,64 @@ export default function BrandingPage() {
 
               <div className="space-y-6 p-4 sm:p-6">
                 {/* Story */}
-                <div>
-                  <h3 className="mb-2 text-sm font-semibold text-surface-800">About Us</h3>
-                  <p className="text-sm text-surface-600 whitespace-pre-wrap">{branding.story}</p>
-                </div>
+                {branding.story && (
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-surface-800">About Us</h3>
+                    <p className="text-sm text-surface-600 whitespace-pre-wrap">{branding.story}</p>
+                  </div>
+                )}
 
                 {/* Culture Values */}
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold text-surface-800">Our Values</h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {branding.cultureValues.map((value, i) => {
-                      const Icon = ICON_MAP[value.icon] || Lightbulb;
-                      return (
-                        <div key={i} className="rounded-lg bg-surface-50 p-3">
-                          <div className="flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
-                              <Icon className="h-4 w-4 text-brand-600" />
+                {branding.cultureValues.length > 0 && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold text-surface-800">Our Values</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {branding.cultureValues.map((value, i) => {
+                        const Icon = ICON_MAP[value.icon] || Lightbulb;
+                        return (
+                          <div key={i} className="rounded-lg bg-surface-50 p-3">
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
+                                <Icon className="h-4 w-4 text-brand-600" />
+                              </div>
+                              <h4 className="text-sm font-medium text-surface-800">{value.title}</h4>
                             </div>
-                            <h4 className="text-sm font-medium text-surface-800">{value.title}</h4>
+                            <p className="mt-1.5 text-xs text-surface-500">{value.description}</p>
                           </div>
-                          <p className="mt-1.5 text-xs text-surface-500">{value.description}</p>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Benefits */}
-                <div>
-                  <h3 className="mb-2 text-sm font-semibold text-surface-800">Benefits & Perks</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {branding.benefits.map((b, i) => (
-                      <Badge key={i} variant="brand" className="text-xs">{b}</Badge>
-                    ))}
+                {branding.benefits.length > 0 && (
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-surface-800">Benefits & Perks</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {branding.benefits.map((b, i) => (
+                        <Badge key={i} variant="brand" className="text-xs">{b}</Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Team */}
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold text-surface-800">Meet the Team</h3>
-                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-                    {branding.teamPhotos.map((photo) => (
-                      <div key={photo.id} className="text-center">
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
-                          {photo.initials}
+                {branding.teamPhotos.length > 0 && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold text-surface-800">Meet the Team</h3>
+                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+                      {branding.teamPhotos.map((photo) => (
+                        <div key={photo.id} className="text-center">
+                          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                            {photo.initials}
+                          </div>
+                          <p className="mt-1 text-[10px] text-surface-500 line-clamp-1">{photo.caption}</p>
                         </div>
-                        <p className="mt-1 text-[10px] text-surface-500 line-clamp-1">{photo.caption}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Day in the Life */}
                 {branding.dayInTheLife.length > 0 && (

@@ -23,6 +23,9 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-user";
+// TODO (Phase 2E): Replace with useMutation/useQuery once a `profile_verifications`
+// table and /api/user/verification route are built. Verification covers identity,
+// education, employment, and skills — it requires a dedicated backend before wiring.
 import { MOCK_VERIFICATION_ITEMS } from "@/lib/mock/seeker-marketplace-data";
 import {
   VERIFICATION_STATUS_CONFIG,

@@ -31,18 +31,20 @@ import {
   type DiscussionThread,
   type DiscussionReply,
 } from "@/types/community";
-import { useCommunityPosts } from "@/hooks/use-community";
-import { MOCK_DISCUSSION_REPLIES } from "@/lib/mock/community-data";
+import { useCommunityPosts, useCommunityPost } from "@/hooks/use-community";
 
 type SortOption = "hot" | "new" | "top";
 
 export default function DiscussionsPage() {
   const { data: postsData } = useCommunityPosts("discussion");
-  const MOCK_DISCUSSION_THREADS = (postsData?.data || []) as unknown as DiscussionThread[];
+  const threads = (postsData?.data || []) as unknown as DiscussionThread[];
 
   const [category, setCategory] = useState<DiscussionCategory | "all">("all");
   const [sort, setSort] = useState<SortOption>("hot");
   const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null);
+
+  // Fetch live replies when a thread is expanded
+  const { data: expandedPostData } = useCommunityPost(expandedThreadId);
   const [showNewModal, setShowNewModal] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -50,7 +52,7 @@ export default function DiscussionsPage() {
   const [replyUpvotes, setReplyUpvotes] = useState<Record<string, number>>({});
 
   const filteredThreads = useMemo(() => {
-    let result = [...MOCK_DISCUSSION_THREADS];
+    let result = [...threads];
 
     if (category !== "all") {
       result = result.filter((t) => t.category === category);
@@ -75,8 +77,9 @@ export default function DiscussionsPage() {
     return result;
   }, [category, sort]);
 
-  const getRepliesForThread = (threadId: string) =>
-    MOCK_DISCUSSION_REPLIES.filter((r) => r.threadId === threadId);
+  // Replies come from the live API when a thread is expanded
+  const getRepliesForThread = (_threadId: string): DiscussionReply[] =>
+    ((expandedPostData?.data as Record<string, unknown>)?.comments as DiscussionReply[]) ?? [];
 
   const getUpvotes = (id: string, base: number, store: Record<string, number>) =>
     base + (store[id] || 0);

@@ -3,13 +3,14 @@ import { pythonClient } from "@/lib/python-client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PLAN_LIMITS, hasQuota } from "@fitvector/shared";
 import type { PlanTier } from "@fitvector/shared";
+import { z } from "zod";
 
-interface TailorRequest {
-  jobDescription: string;
-  jobTitle?: string;
-  companyName?: string;
-  templateId?: string;
-}
+const tailorSchema = z.object({
+  jobDescription: z.string().min(10, "Job description too short").max(10000, "Job description too long"),
+  jobTitle:    z.string().max(150).optional(),
+  companyName: z.string().max(100).optional(),
+  templateId:  z.string().max(50).optional(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -47,14 +48,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const body: TailorRequest = await req.json();
-
-    if (!body.jobDescription?.trim()) {
+    const raw = await req.json();
+    const parsed = tailorSchema.safeParse(raw);
+    if (!parsed.success) {
       return Response.json(
-        { error: "Job description is required" },
+        { error: parsed.error.errors[0]?.message ?? "Invalid input" },
         { status: 400 },
       );
     }
+    const body = parsed.data;
 
     // Get user's parsed resume
     const { data: profile } = await supabase
