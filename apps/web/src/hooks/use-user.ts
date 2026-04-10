@@ -10,7 +10,7 @@ export interface UserInfo {
   image: string | null;
   planTier: PlanTier;
   onboardingCompleted: boolean;
-  role: "seeker" | "employer";
+  role: "seeker" | "employer" | "superadmin";
   companyId: string | null;
 }
 

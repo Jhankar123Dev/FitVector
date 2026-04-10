@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { submitAssessmentSchema } from "@/lib/validators";
-import { autoGradeMCQ } from "@/lib/assessment-helpers";
+import { autoGradeMCQ, gradeShortAnswer } from "@/lib/assessment-helpers";
 import { runCodeAgainstTestCases } from "@/lib/jdoodle";
 import type { TestCase } from "@/lib/jdoodle";
 
@@ -100,6 +100,9 @@ export async function POST(
     const isMixedType  = assessmentType === "mixed";
     const isCodingType = assessmentType === "coding_test";
 
+    // Track whether any short_answer question needs manual review
+    let needsManualReview = false;
+
     // Capture validated answers in a stable variable so TypeScript can narrow it
     // inside nested async functions without `parsed.data` possibly-undefined error.
     const submittedAnswers = parsed.data.answers;
@@ -148,15 +151,35 @@ export async function POST(
     }
 
     if (isMCQType || isMixedType) {
-      // Separate MCQ questions from coding questions
-      const mcqQuestions    = isMCQType ? allQuestions : allQuestions.filter((q) => q.type === "multiple_choice" || q.type === "true_false");
+      // ── Bucket questions by type ────────────────────────────────────────────
+      const mcqQuestions   = allQuestions.filter((q) => q.type === "multiple_choice" || q.type === "true_false");
+      const shortQuestions = allQuestions.filter((q) => q.type === "short_answer");
+      // For pure MCQ assessments, coding questions are not expected — but handle gracefully
       const codingQuestions = isMixedType ? allQuestions.filter((q) => q.type === "code") : [];
 
-      // Grade MCQ
+      // ── Grade MCQ (exact match, server-side) ────────────────────────────────
       const { score: mcqScore, gradedAnswers: mcqGraded } = autoGradeMCQ(mcqQuestions, submittedAnswers);
-      gradedAnswersForResponse = mcqGraded;
 
-      // Grade coding server-side (sequential — JDoodle free tier credits)
+      // ── Grade short_answer (fuzzy matching) ─────────────────────────────────
+      const shortGraded: typeof gradedAnswersForResponse = shortQuestions.map((sq) => {
+        const pts    = sq.points || 1;
+        const rawAns = submittedAnswers.find((a) => a.questionId === sq.id);
+        const { earned, status } = gradeShortAnswer(
+          rawAns?.selectedAnswer ?? "",
+          sq.correctAnswer ?? "",
+          pts,
+        );
+        if (status === "needs_review") needsManualReview = true;
+        return {
+          questionId:      sq.id,
+          isCorrect:       status === "correct",
+          pointsEarned:    earned,
+          pointsMax:       pts,
+          gradingStatus:   status,   // stored for employer results UI (needs_review badge)
+        };
+      });
+
+      // ── Grade code server-side (sequential — JDoodle free tier credits) ─────
       let codingEarned = 0;
       let codingMax    = 0;
       const codingGraded: typeof gradedAnswersForResponse = [];
@@ -176,23 +199,37 @@ export async function POST(
         });
       }
 
-      gradedAnswersForResponse = [...mcqGraded, ...codingGraded];
+      gradedAnswersForResponse = [...mcqGraded, ...shortGraded, ...codingGraded];
 
-      // Compute blended score (0-100)
-      const mcqMax = mcqQuestions.reduce((s, q) => s + (q.points || 1), 0);
-      const totalMax    = mcqMax + codingMax;
-      const mcqEarned   = mcqQuestions.reduce((s, q) => {
+      // ── Compute blended score (0-100) ────────────────────────────────────────
+      const mcqMax    = mcqQuestions.reduce((s, q) => s + (q.points || 1), 0);
+      const shortMax  = shortQuestions.reduce((s, q) => s + (q.points || 1), 0);
+      const totalMax  = mcqMax + shortMax + codingMax;
+
+      const mcqEarned = mcqQuestions.reduce((s, q) => {
         const g = mcqGraded.find((g2) => g2.questionId === q.id);
         return s + (g?.pointsEarned ?? 0);
       }, 0);
-      const totalEarned = mcqEarned + codingEarned;
-      const blendedScore = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : mcqScore;
+      const shortEarned = shortGraded.reduce((s, g) => s + g.pointsEarned, 0);
+      const totalEarned = mcqEarned + shortEarned + codingEarned;
+
+      // If any short_answer needs review, auto_score is provisional (excludes those points)
+      const blendedScore = totalMax > 0
+        ? Math.round((totalEarned / totalMax) * 100)
+        : mcqScore;
 
       update.auto_score  = blendedScore;
-      update.final_score = blendedScore;
+      // Only set final_score if no manual review needed; otherwise employer sets it after review
+      if (!needsManualReview) update.final_score = blendedScore;
       update.answers = submittedAnswers.map((a) => {
         const graded = gradedAnswersForResponse.find((g) => g.questionId === a.questionId);
-        return { ...a, isCorrect: graded?.isCorrect || false, pointsEarned: graded?.pointsEarned || 0, pointsMax: graded?.pointsMax || 0 };
+        return {
+          ...a,
+          isCorrect:     graded?.isCorrect     || false,
+          pointsEarned:  graded?.pointsEarned  || 0,
+          pointsMax:     graded?.pointsMax      || 0,
+          gradingStatus: (graded as Record<string, unknown> | undefined)?.gradingStatus ?? "correct",
+        };
       });
     } else if (isCodingType) {
       // Pure coding assessment — re-run all code server-side
@@ -251,12 +288,13 @@ export async function POST(
 
     return NextResponse.json({
       data: {
-        id: updated.id,
-        status: updated.status,
-        autoScore: updated.auto_score,
-        finalScore: updated.final_score,
-        timeTaken: Math.round(elapsedMinutes),
-        wasLate: proctoringFlags.submittedLate,
+        id:                updated.id,
+        status:            updated.status,
+        autoScore:         updated.auto_score,
+        finalScore:        updated.final_score,
+        timeTaken:         Math.round(elapsedMinutes),
+        wasLate:           proctoringFlags.submittedLate,
+        needsManualReview,   // true if any short_answer was flagged for employer review
         // Per-question grading so the results screen can show correct/incorrect
         gradedAnswers: gradedAnswersForResponse,
       },
