@@ -3,7 +3,8 @@
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
-import { useCreateAssessment } from "@/hooks/use-assessments";
+import { useCreateAssessment, useQuestionBank } from "@/hooks/use-assessments";
+import type { QuestionBankItem } from "@/hooks/use-assessments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +55,8 @@ interface QuestionForm {
   correctAnswer: string;
   points: number;
   codeLanguage: string;
+  testCases: { input: string; expectedOutput: string }[];
+  starterCodeMap?: Record<string, string>; // { python3: "...", nodejs: "...", java: "...", cpp17: "..." }
 }
 
 interface AssessmentForm {
@@ -95,6 +98,7 @@ function newQuestion(): QuestionForm {
     correctAnswer: "",
     points: 10,
     codeLanguage: "javascript",
+    testCases: [],
   };
 }
 
@@ -139,6 +143,15 @@ export default function CreateAssessmentPage() {
   const [csvPreview, setCsvPreview] = useState<QuestionForm[]>([]);
   const [showCsvPreview, setShowCsvPreview] = useState(false);
   const [csvError, setCsvError] = useState("");
+
+  // ── Question bank state ───────────────────────────────────────
+  const [showBankModal,  setShowBankModal]  = useState(false);
+  const [bankSelected,   setBankSelected]   = useState<Set<string>>(new Set());
+  const [bankFilters,    setBankFilters]    = useState({ difficulty: "", category: "" });
+
+  const { data: bankData, isLoading: bankLoading } = useQuestionBank(bankFilters, showBankModal);
+  const bankItems = bankData?.data ?? [];
+  const bankCategories = [...new Set(bankItems.map((i: QuestionBankItem) => i.category))].sort();
 
   const update = useCallback(
     <K extends keyof AssessmentForm>(key: K, value: AssessmentForm[K]) =>
@@ -212,6 +225,7 @@ export default function CreateAssessmentPage() {
         correctAnswer: (q.correctAnswer as string) || "",
         points: typeof q.points === "number" ? q.points : 10,
         codeLanguage: (q.codeLanguage as string) || aiForm.codeLanguage,
+        testCases: [],
       }));
       setAiPreview(questions);
     } catch {
@@ -255,6 +269,7 @@ export default function CreateAssessmentPage() {
               correctAnswer: row.correct_answer?.trim() || "",
               points: parseInt(row.points || "10", 10) || 10,
               codeLanguage: "javascript",
+              testCases: [],
             };
           });
         if (questions.length === 0) {
@@ -273,6 +288,35 @@ export default function CreateAssessmentPage() {
     setCsvPreview([]);
     setShowCsvPreview(false);
     if (csvInputRef.current) csvInputRef.current.value = "";
+  }
+
+  // ── Question bank helpers ─────────────────────────────────────
+  function toggleBankItem(id: string) {
+    setBankSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function confirmBankImport() {
+    const toAdd: QuestionForm[] = bankItems
+      .filter((item: QuestionBankItem) => bankSelected.has(item.id))
+      .map((item: QuestionBankItem) => ({
+        id:             `bank-${item.id}`,
+        type:           "code" as const,
+        prompt:         item.prompt,
+        options:        [],
+        correctAnswer:  "",
+        points:         20,
+        codeLanguage:   "nodejs",
+        testCases:      item.testCases,
+        starterCodeMap: item.starterCode, // full multi-language map preserved
+      }));
+    update("questions", [...form.questions, ...toAdd]);
+    setBankSelected(new Set());
+    setBankFilters({ difficulty: "", category: "" });
+    setShowBankModal(false);
   }
 
   return (
@@ -561,6 +605,13 @@ export default function CreateAssessmentPage() {
             <Button variant="outline" className="gap-1.5" onClick={() => csvInputRef.current?.click()}>
               <Upload className="h-4 w-4" /> Import CSV
             </Button>
+            <Button
+              variant="outline"
+              className="gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+              onClick={() => { setBankSelected(new Set()); setBankFilters({ difficulty: "", category: "" }); setShowBankModal(true); }}
+            >
+              <BookOpen className="h-4 w-4" /> Browse Bank
+            </Button>
             <input
               ref={csvInputRef}
               type="file"
@@ -690,6 +741,157 @@ export default function CreateAssessmentPage() {
                   <Plus className="h-3.5 w-3.5" /> Import {csvPreview.length} Questions
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ═══════════════════ QUESTION BANK MODAL ═════════════ */}
+      {showBankModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="flex w-full max-w-2xl flex-col" style={{ maxHeight: "90vh" }}>
+            <CardContent className="flex flex-col gap-4 p-5 sm:p-6 overflow-hidden h-full">
+
+              {/* Header */}
+              <div className="flex items-center justify-between shrink-0">
+                <div>
+                  <h3 className="text-sm font-semibold text-surface-800">Question Bank</h3>
+                  <p className="text-xs text-surface-500 mt-0.5">Select coding problems to import — test cases included</p>
+                </div>
+                <button
+                  onClick={() => setShowBankModal(false)}
+                  className="text-surface-400 hover:text-surface-700 text-lg font-bold leading-none"
+                >×</button>
+              </div>
+
+              {/* Filters */}
+              <div className="space-y-2 shrink-0">
+                {/* Difficulty chips */}
+                <div className="flex flex-wrap gap-1.5">
+                  {["", "easy", "medium", "hard"].map((d) => (
+                    <button
+                      key={d || "all-diff"}
+                      onClick={() => setBankFilters((f) => ({ ...f, difficulty: d }))}
+                      className={cn(
+                        "rounded-full px-3 py-0.5 text-xs font-medium border transition-colors",
+                        bankFilters.difficulty === d
+                          ? d === "easy"   ? "bg-emerald-100 border-emerald-400 text-emerald-700"
+                          : d === "medium" ? "bg-amber-100 border-amber-400 text-amber-700"
+                          : d === "hard"   ? "bg-red-100 border-red-400 text-red-700"
+                          : "bg-surface-800 border-surface-800 text-white"
+                          : "border-surface-200 text-surface-600 hover:border-surface-300",
+                      )}
+                    >
+                      {d === "" ? "All Difficulty" : d.charAt(0).toUpperCase() + d.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                {/* Category chips */}
+                <div className="flex flex-wrap gap-1.5">
+                  {["", ...bankCategories].map((c) => (
+                    <button
+                      key={c || "all-cat"}
+                      onClick={() => setBankFilters((f) => ({ ...f, category: c }))}
+                      className={cn(
+                        "rounded-full px-3 py-0.5 text-xs font-medium border transition-colors",
+                        bankFilters.category === c
+                          ? "bg-brand-600 border-brand-600 text-white"
+                          : "border-surface-200 text-surface-600 hover:border-surface-300",
+                      )}
+                    >
+                      {c === "" ? "All Categories" : c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Question list */}
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
+                {bankLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-16 rounded-lg border border-surface-200 bg-surface-100 animate-pulse" />
+                  ))
+                ) : bankItems.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <BookOpen className="h-8 w-8 text-surface-300" />
+                    <p className="mt-2 text-sm text-surface-500">No questions match the selected filters.</p>
+                  </div>
+                ) : (
+                  bankItems.map((item: QuestionBankItem) => {
+                    const selected = bankSelected.has(item.id);
+                    const langCount = Object.keys(item.starterCode).length;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => toggleBankItem(item.id)}
+                        className={cn(
+                          "w-full text-left rounded-lg border p-3 transition-colors",
+                          selected
+                            ? "border-emerald-400 bg-emerald-50"
+                            : "border-surface-200 hover:border-surface-300 hover:bg-surface-50",
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* Checkbox */}
+                          <div className={cn(
+                            "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+                            selected ? "border-emerald-500 bg-emerald-500" : "border-surface-300",
+                          )}>
+                            {selected && <Check className="h-3 w-3 text-white" />}
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs font-semibold text-surface-800">{item.title}</span>
+                              <Badge
+                                className={cn(
+                                  "text-[10px] px-1.5 py-0",
+                                  item.difficulty === "easy"   ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                  : item.difficulty === "medium" ? "bg-amber-100 text-amber-700 border-amber-200"
+                                  : "bg-red-100 text-red-700 border-red-200",
+                                )}
+                                variant="outline"
+                              >
+                                {item.difficulty}
+                              </Badge>
+                              <Badge className="text-[10px] px-1.5 py-0 bg-surface-100 text-surface-600 border-surface-200" variant="outline">
+                                {item.category}
+                              </Badge>
+                            </div>
+                            <p className="mt-1 text-[11px] text-surface-500 line-clamp-1">{item.prompt}</p>
+                            <div className="mt-1 flex gap-2 text-[10px] text-surface-400">
+                              <span>{item.testCases.length} test cases</span>
+                              <span>·</span>
+                              <span>{langCount} languages</span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between gap-3 shrink-0 pt-1 border-t border-surface-100">
+                <span className="text-xs text-surface-500">
+                  {bankSelected.size > 0 ? `${bankSelected.size} selected` : "Click questions to select"}
+                </span>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="text-xs" onClick={() => setShowBankModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={confirmBankImport}
+                    disabled={bankSelected.size === 0}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Import {bankSelected.size > 0 ? `${bankSelected.size} ` : ""}Questions
+                  </Button>
+                </div>
+              </div>
+
             </CardContent>
           </Card>
         </div>

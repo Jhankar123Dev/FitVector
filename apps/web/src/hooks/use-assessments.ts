@@ -1,6 +1,9 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { QuestionBankItem } from "@/app/api/employer/question-bank/route";
+
+export type { QuestionBankItem };
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
@@ -85,6 +88,22 @@ export function useAssignAssessment() {
       qc.invalidateQueries({ queryKey: ["employer", "assessment-results"] });
       qc.invalidateQueries({ queryKey: ["employer", "applicants"] });
     },
+  });
+}
+
+export function useQuestionBank(
+  filters?: { difficulty?: string; category?: string },
+  enabled = false,
+) {
+  const params = new URLSearchParams();
+  if (filters?.difficulty) params.set("difficulty", filters.difficulty);
+  if (filters?.category)   params.set("category",   filters.category);
+  const qs = params.toString() ? `?${params}` : "";
+  return useQuery<{ data: QuestionBankItem[] }>({
+    queryKey: ["question-bank", filters?.difficulty ?? "", filters?.category ?? ""],
+    queryFn:  () => fetchJson(`/api/employer/question-bank${qs}`),
+    staleTime: 10 * 60 * 1000,
+    enabled,
   });
 }
 
