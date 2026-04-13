@@ -5,7 +5,11 @@ import { changeStageSchema } from "@/lib/validators";
 import { transformApplicant } from "@/lib/applicant-helpers";
 
 // Stages that trigger an automatic action when an employer moves a candidate there
-const AUTO_ACTIONS: Record<string, "assign_assessment" | "invite_ai_interview" | "notify_human_interview"> = {
+const AUTO_ACTIONS: Record<string, "assign_assessment" | "invite_ai_interview" | "notify_human_interview" | "start_ai_screening"> = {
+  // Dragging to ai_screened starts the async screening pipeline.
+  // The stage is written as ai_screening_in_progress; a Supabase DB webhook
+  // then calls the Python AI engine which writes ai_screened when done.
+  ai_screened:          "start_ai_screening",
   assessment_pending:   "assign_assessment",
   ai_interview_pending: "invite_ai_interview",
   human_interview:      "notify_human_interview",
@@ -131,6 +135,19 @@ export async function PUT(
     // ── Auto-actions on specific stage transitions ──────────────────
     const autoAction = AUTO_ACTIONS[parsed.data.stage];
     let autoSent = false;
+
+    if (autoAction === "start_ai_screening") {
+      // Overwrite the stage to ai_screening_in_progress so the Supabase DB webhook
+      // fires and triggers the Python AI engine asynchronously.
+      // The Python engine writes ai_screened when analysis completes;
+      // the employer Kanban picks up the change via Supabase Realtime.
+      await supabase
+        .from("applicants")
+        .update({ pipeline_stage: "ai_screening_in_progress" })
+        .eq("id", id);
+
+      autoSent = true;
+    }
 
     if (autoAction === "assign_assessment") {
       // Look up the job post's linked assessment_id

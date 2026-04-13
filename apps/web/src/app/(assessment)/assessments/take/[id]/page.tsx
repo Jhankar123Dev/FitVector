@@ -166,6 +166,24 @@ export default function TakeAssessmentPage() {
   const [submitResult, setSubmitResult]     = useState<Record<string, unknown> | null>(null);
   const [loadError, setLoadError]           = useState("");
 
+  // Per-question selected language — allows candidate to switch language for code questions
+  // Keyed by question id; defaults to the question's stored codeLanguage on first render
+  const [selectedLangs, setSelectedLangs] = useState<Record<string, string>>({});
+
+  function getSelectedLang(q: { id: string; codeLanguage?: string | null }): string {
+    return selectedLangs[q.id] ?? q.codeLanguage ?? "nodejs";
+  }
+
+  function setSelectedLang(qId: string, lang: string) {
+    setSelectedLangs((prev) => ({ ...prev, [qId]: lang }));
+    // Clear the saved answer so the new language's boilerplate loads
+    setAnswers((prev) => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+  }
+
   // Run results: keyed by question id — no expectedOutput stored client-side
   const [runResults, setRunResults]     = useState<Record<string, RunResult[]>>({});
   const [runningQId, setRunningQId]     = useState<string | null>(null);
@@ -298,14 +316,16 @@ export default function TakeAssessmentPage() {
 
   // Pre-populate starter code the first time a code question is rendered.
   // Priority: saved answer → starterCodeMap[canonical] → DEFAULT_STARTER[canonical] → ""
+  // Uses selectedLang (candidate may have switched language) rather than stored codeLanguage.
   function getAnswerWithStarter(q: AssessmentQuestion): string {
     const existing = answers[q.id];
     if (existing !== undefined) return existing;
     if (q.type !== "code") return "";
 
-    const lang    = canonicalLang(q.codeLanguage ?? "nodejs");
+    const rawLang = getSelectedLang(q);
+    const lang    = canonicalLang(rawLang);
     const starter = q.starterCodeMap
-      ? (q.starterCodeMap[lang] ?? q.starterCodeMap[q.codeLanguage ?? ""] ?? null)
+      ? (q.starterCodeMap[lang] ?? q.starterCodeMap[rawLang] ?? q.starterCodeMap[q.codeLanguage ?? ""] ?? null)
       : null;
     return starter ?? DEFAULT_STARTER[lang] ?? DEFAULT_STARTER.nodejs;
   }
@@ -334,9 +354,9 @@ export default function TakeAssessmentPage() {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
           code,
-          language:        q.codeLanguage || "nodejs",
-          questionId:      q.id,           // server fetches test cases from DB
-          submissionToken: id,             // validates active session
+          language:        getSelectedLang(q),  // respects candidate's language pick
+          questionId:      q.id,                // server fetches test cases from DB
+          submissionToken: id,                  // validates active session
         }),
       });
       const json = await res.json();
@@ -691,6 +711,8 @@ export default function TakeAssessmentPage() {
               runErrorMsg={runError[question.id]}
               isRunning={runningQId === question.id}
               onRun={question.type === "code" ? () => handleRunCode(question) : undefined}
+              selectedLang={question.type === "code" ? getSelectedLang(question) : undefined}
+              onLangChange={question.type === "code" ? (lang) => setSelectedLang(question.id, lang) : undefined}
             />
           </div>
         </div>
@@ -752,6 +774,8 @@ function QuestionView({
   runErrorMsg,
   isRunning,
   onRun,
+  selectedLang,
+  onLangChange,
 }: {
   question:     AssessmentQuestion;
   index:        number;
@@ -763,6 +787,8 @@ function QuestionView({
   runErrorMsg?: string;
   isRunning?:   boolean;
   onRun?:       () => void;
+  selectedLang?: string;
+  onLangChange?: (lang: string) => void;
 }) {
   const passedCount = runResult?.filter((r) => r.passed).length ?? 0;
   const totalCount  = runResult?.length ?? 0;
@@ -831,13 +857,32 @@ function QuestionView({
         {/* ── Code question — Monaco IDE ───────────────────────────────────── */}
         {question.type === "code" && (
           <div className="space-y-3">
-            <p className="text-[11px] font-semibold text-surface-500">Your Code:</p>
+            {/* Language picker — lets candidate switch to a preferred language */}
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold text-surface-500">Your Code:</p>
+              {onLangChange && (
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-3.5 w-3.5 text-surface-400" />
+                  <select
+                    value={selectedLang ?? question.codeLanguage ?? "nodejs"}
+                    onChange={(e) => onLangChange(e.target.value)}
+                    className="h-7 rounded-md border border-zinc-600 bg-zinc-900 px-2 text-[11px] text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  >
+                    {Object.entries(LANG_LABEL).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
 
             {/* Monaco Editor — SSR disabled via dynamic import at module top */}
             <div className="rounded-lg overflow-hidden border border-zinc-700">
               <MonacoEditor
                 height="400px"
-                language={MONACO_LANG[question.codeLanguage ?? "nodejs"] ?? "javascript"}
+                language={MONACO_LANG[selectedLang ?? question.codeLanguage ?? "nodejs"] ?? "javascript"}
                 value={answer}
                 onChange={(val) => onAnswer(val ?? "")}
                 theme="vs-dark"

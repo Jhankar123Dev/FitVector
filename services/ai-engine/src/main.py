@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import settings
 from src.middleware import ServiceAuthMiddleware
-from src.routers import health, scraper, resume, outreach, scoring, email_finder, interview, assessment
+from src.routers import health, scraper, resume, outreach, scoring, email_finder, interview, assessment, screening
 
 logger = logging.getLogger("fitvector.ai-engine")
 
@@ -57,3 +57,4 @@ app.include_router(scoring.router)
 app.include_router(email_finder.router)
 app.include_router(interview.router)
 app.include_router(assessment.router)
+app.include_router(screening.router)
