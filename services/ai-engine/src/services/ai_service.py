@@ -792,6 +792,146 @@ Evaluate this candidate."""
         )
 
 
+# ─── Conversational Interview — Next Question ────────────────────────────────
+
+_NEXT_QUESTION_SYSTEM_PROMPT = """You are a professional AI interviewer conducting a job interview on behalf of a company.
+Your role is to have a natural, adaptive, one-on-one conversation with the candidate — one question at a time.
+
+Rules:
+- Ask EXACTLY ONE question. Never combine multiple questions.
+- Adapt based on the candidate's previous answer:
+    - Vague or too brief  → follow up to get specifics or an example
+    - Strong and complete → move on to the next planned topic
+    - Shows a knowledge gap → probe gently to understand the depth
+- Keep questions concise and natural (1–2 sentences). Be professional but warm — not robotic.
+- Work through the focus areas from the interview plan before finishing.
+- End the interview when all key topics have been covered OR turn_number >= max_turns.
+
+You must return ONLY valid JSON:
+{
+  "next_question": "<the next question to ask, or null if done>",
+  "is_complete": <true if interview should end, false to continue>
+}
+
+When is_complete is true, set next_question to null.
+Do NOT include any closing remarks in next_question — those are handled separately by the system."""
+
+
+class NextQuestionResponse(BaseModel):
+    """Public response model — imported by routers/interview.py."""
+    next_question: str | None
+    is_complete: bool
+
+
+class _NextQuestionSchema(BaseModel):
+    next_question: str | None
+    is_complete: bool
+
+
+async def generate_next_interview_question(
+    job_title: str,
+    job_description: str,
+    required_skills: list[str],
+    interview_type: str,
+    interview_plan: dict,
+    history: list[dict[str, str]],
+    turn_number: int,
+    max_turns: int = 7,
+) -> NextQuestionResponse:
+    """Generate the next adaptive interview question using Gemini.
+
+    On the first call (turn_number=0, empty history) returns the opening question.
+    On subsequent calls, reads the last answer and decides whether to probe deeper,
+    pivot to a new topic, or end the interview.
+    Falls back to a static next question if Gemini is unavailable.
+    """
+
+    # Build context from interview plan
+    focus_areas = interview_plan.get("focusAreas", [])
+    custom_questions = interview_plan.get("customQuestions", [])
+    difficulty = interview_plan.get("difficultyLevel", "mid")
+
+    plan_context_parts = []
+    if focus_areas:
+        plan_context_parts.append(f"Focus areas: {', '.join(focus_areas)}")
+    if custom_questions:
+        plan_context_parts.append(f"Must-ask questions (work these in naturally): {'; '.join(custom_questions)}")
+    if difficulty:
+        plan_context_parts.append(f"Difficulty level: {difficulty}")
+    plan_context = "\n".join(plan_context_parts) if plan_context_parts else "No specific plan — conduct a general interview."
+
+    # Build conversation history block
+    if history:
+        transcript_lines = []
+        for entry in history:
+            transcript_lines.append(f"Interviewer: {entry['question']}")
+            transcript_lines.append(f"Candidate: {entry['answer']}")
+        transcript_text = "\n".join(transcript_lines)
+    else:
+        transcript_text = "No conversation yet — ask the opening question."
+
+    force_end = turn_number >= max_turns
+
+    user_prompt = f"""Job Title: {job_title}
+{f"Job Description: {job_description[:500]}" if job_description else ""}
+Required Skills: {", ".join(required_skills[:8]) if required_skills else "not specified"}
+Interview Type: {interview_type}
+Turn: {turn_number} of {max_turns}
+
+Interview Plan:
+{plan_context}
+
+Conversation so far:
+{transcript_text}
+
+{"All turns used — set is_complete to true and next_question to null." if force_end else "Continue the interview with the next most appropriate question."}"""
+
+    try:
+        raw_json = await _call_gemini(
+            task="evaluate_interview",  # same model routing as evaluation
+            system_prompt=_NEXT_QUESTION_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            max_tokens=256,
+            temperature=0.4,
+            response_mime_type="application/json",
+            response_schema=_NextQuestionSchema,
+        )
+
+        clean = _clean_gemini_json_response(raw_json)
+
+        try:
+            data = json.loads(clean, strict=False)
+        except json.JSONDecodeError:
+            data = repair_json(clean, return_objects=True)
+            if not isinstance(data, dict):
+                raise ValueError("repair_json returned non-dict for next question")
+
+        is_complete = bool(data.get("is_complete", False)) or force_end
+        next_question = data.get("next_question") if not is_complete else None
+
+        return NextQuestionResponse(
+            next_question=next_question,
+            is_complete=is_complete,
+        )
+
+    except Exception as exc:
+        logger.error("generate_next_interview_question failed: %s", exc)
+        # Fallback: produce a sensible static question based on turn number
+        if force_end:
+            return NextQuestionResponse(next_question=None, is_complete=True)
+        fallback_questions = [
+            f"Tell me about your experience with {required_skills[0] if required_skills else 'the key technologies for this role'}.",
+            "Can you walk me through a challenging project you worked on recently?",
+            "How do you approach problem-solving when you're stuck on a difficult issue?",
+            "Describe a time you had to learn something new quickly under pressure.",
+            "What does good code quality mean to you, and how do you ensure it?",
+            "How do you handle disagreements with teammates about technical decisions?",
+            "Is there anything about your background or skills you'd like to highlight?",
+        ]
+        question = fallback_questions[min(turn_number, len(fallback_questions) - 1)]
+        return NextQuestionResponse(next_question=question, is_complete=False)
+
+
 # ─── Resume Screening ────────────────────────────────────────────────────────
 
 _SCREEN_RESUME_SYSTEM_PROMPT = """You are an expert technical recruiter screening a candidate's resume against a job description.

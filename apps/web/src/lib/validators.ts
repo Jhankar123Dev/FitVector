@@ -183,6 +183,16 @@ export const completeInterviewSchema = z.object({
   })).optional().default([]),
 });
 
+export const interviewMessageSchema = z.object({
+  // The candidate's spoken answer to the current question (empty string on first call)
+  answer: z.string(),
+  // Full conversation history so far (excludes the current answer)
+  history: z.array(z.object({
+    question: z.string(),
+    answer: z.string(),
+  })).default([]),
+});
+
 // ─── Employer: Assessments ────────────────────────────────────────────────────
 
 export const createAssessmentSchema = z.object({
