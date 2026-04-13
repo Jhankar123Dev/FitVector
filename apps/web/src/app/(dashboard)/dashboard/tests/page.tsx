@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ClipboardList, Clock, ExternalLink, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,148 +66,115 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div
-          key={i}
-          className="h-16 animate-pulse rounded-lg bg-surface-100"
-        />
+        <div key={i} className="h-16 animate-pulse rounded-lg bg-surface-100" />
       ))}
     </div>
   );
 }
 
-function EmptyState() {
+function EmptyState({ tab }: { tab: "pending" | "completed" }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-16">
         <ClipboardList className="mb-4 h-12 w-12 text-surface-300" />
-        <h3 className="text-lg font-medium text-surface-700">No tests yet</h3>
+        <h3 className="text-lg font-medium text-surface-700">
+          {tab === "pending" ? "No pending tests" : "No completed tests"}
+        </h3>
         <p className="mt-1 text-sm text-surface-500">
-          When employers invite you to take assessments, they will appear here.
+          {tab === "pending"
+            ? "When employers invite you to take assessments, they will appear here."
+            : "Your submitted or graded tests will appear here."}
         </p>
       </CardContent>
     </Card>
   );
 }
 
-export default function CandidateTestsPage() {
-  const { data: tests, isLoading, isError } = useCandidateTests();
-
+function TestsTable({ tests }: { tests: CandidateTest[] }) {
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 pb-4">
-        <h1 className="text-2xl font-semibold text-surface-800">My Tests</h1>
-        {tests && tests.length > 0 && (
-          <Badge variant="secondary" className="text-sm">
-            {tests.length}
-          </Badge>
-        )}
-      </div>
+    <Card>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-surface-200 text-left text-xs font-medium uppercase tracking-wider text-surface-500">
+                <th className="px-4 py-3">Test Name</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Job</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Score</th>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-100">
+              {tests.map((test) => {
+                const statusCfg = STATUS_CONFIG[test.status] ?? STATUS_CONFIG.submitted;
+                const effectiveScore =
+                  test.status === "graded" ? test.finalScore : test.autoScore;
+                const displayScore = formatScore(effectiveScore);
+                const passed = isPassed(effectiveScore, test.passingScore);
 
-      {isLoading && <LoadingSkeleton />}
-
-      {isError && (
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-red-600">
-            Failed to load tests. Please try again later.
-          </CardContent>
-        </Card>
-      )}
-
-      {!isLoading && !isError && (!tests || tests.length === 0) && (
-        <EmptyState />
-      )}
-
-      {!isLoading && !isError && tests && tests.length > 0 && (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-surface-200 text-left text-xs font-medium uppercase tracking-wider text-surface-500">
-                    <th className="px-4 py-3">Test Name</th>
-                    <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Job</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Score</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-100">
-                  {tests.map((test) => {
-                    const statusCfg =
-                      STATUS_CONFIG[test.status] ?? STATUS_CONFIG.submitted;
-                    const effectiveScore =
-                      test.status === "graded" ? test.finalScore : test.autoScore;
-                    const displayScore = formatScore(effectiveScore);
-                    const passed = isPassed(effectiveScore, test.passingScore);
-
-                    return (
-                      <tr key={test.id} className="hover:bg-surface-50">
-                        <td className="px-4 py-3 font-medium text-surface-800">
-                          <div className="flex items-center gap-2">
-                            <ClipboardList className="h-4 w-4 shrink-0 text-surface-400" />
-                            {test.assessmentName}
-                          </div>
-                          {test.timeLimit && (
-                            <div className="mt-0.5 flex items-center gap-1 text-xs text-surface-400">
-                              <Clock className="h-3 w-3" />
-                              {test.timeLimit} min
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge variant="outline" className="text-xs">
-                            {TYPE_LABELS[test.assessmentType] ??
-                              test.assessmentType}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-surface-600">
-                          {test.jobTitle}
-                        </td>
-                        <td className="px-4 py-3">
+                return (
+                  <tr key={test.id} className="hover:bg-surface-50">
+                    <td className="px-4 py-3 font-medium text-surface-800">
+                      <div className="flex items-center gap-2">
+                        <ClipboardList className="h-4 w-4 shrink-0 text-surface-400" />
+                        {test.assessmentName}
+                      </div>
+                      {test.timeLimit && (
+                        <div className="mt-0.5 flex items-center gap-1 text-xs text-surface-400">
+                          <Clock className="h-3 w-3" />
+                          {test.timeLimit} min
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="outline" className="text-xs">
+                        {TYPE_LABELS[test.assessmentType] ?? test.assessmentType}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-surface-600">{test.jobTitle}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant="outline" className={statusCfg.className}>
+                        {statusCfg.label}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-surface-700">{displayScore}</span>
+                        {passed === true && (
                           <Badge
                             variant="outline"
-                            className={statusCfg.className}
+                            className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200"
                           >
-                            {statusCfg.label}
+                            Passed
                           </Badge>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-surface-700">
-                              {displayScore}
-                            </span>
-                            {passed === true && (
-                              <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
-                                Passed
-                              </Badge>
-                            )}
-                            {passed === false && (
-                              <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">
-                                Failed
-                              </Badge>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-surface-500">
-                          {formatDate(
-                            test.submittedAt ?? test.startedAt ?? test.createdAt,
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <TestAction test={test} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+                        )}
+                        {passed === false && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-red-50 text-red-700 border-red-200"
+                          >
+                            Failed
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-surface-500">
+                      {formatDate(test.submittedAt ?? test.startedAt ?? test.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <TestAction test={test} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -234,4 +202,82 @@ function TestAction({ test }: { test: CandidateTest }) {
   }
 
   return null;
+}
+
+type Tab = "pending" | "completed";
+
+const PENDING_STATUSES: CandidateTest["status"][] = ["invited", "started"];
+const COMPLETED_STATUSES: CandidateTest["status"][] = ["submitted", "graded", "expired"];
+
+export default function CandidateTestsPage() {
+  const { data: tests, isLoading, isError } = useCandidateTests();
+  const [activeTab, setActiveTab] = useState<Tab>("pending");
+
+  const pending = (tests ?? []).filter((t) => PENDING_STATUSES.includes(t.status));
+  const completed = (tests ?? []).filter((t) => COMPLETED_STATUSES.includes(t.status));
+  const activeList = activeTab === "pending" ? pending : completed;
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="flex items-center gap-3 pb-4">
+        <h1 className="text-2xl font-semibold text-surface-800">My Tests</h1>
+        {tests && tests.length > 0 && (
+          <Badge variant="secondary" className="text-sm">
+            {tests.length}
+          </Badge>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-4 flex gap-1 border-b border-surface-200">
+        {(["pending", "completed"] as Tab[]).map((tab) => {
+          const count = tab === "pending" ? pending.length : completed.length;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium capitalize transition-colors ${
+                activeTab === tab
+                  ? "border-brand-500 text-brand-600"
+                  : "border-transparent text-surface-500 hover:text-surface-700"
+              }`}
+            >
+              {tab}
+              {count > 0 && (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                    activeTab === tab
+                      ? "bg-brand-100 text-brand-700"
+                      : "bg-surface-100 text-surface-500"
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      {isLoading && <LoadingSkeleton />}
+
+      {isError && (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-red-600">
+            Failed to load tests. Please try again later.
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && !isError && activeList.length === 0 && (
+        <EmptyState tab={activeTab} />
+      )}
+
+      {!isLoading && !isError && activeList.length > 0 && (
+        <TestsTable tests={activeList} />
+      )}
+    </div>
+  );
 }

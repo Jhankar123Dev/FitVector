@@ -108,7 +108,9 @@ export function ApplicationCard({ application, index, onClick, onStatusChange }:
                 </span>
               )}
               {isFV && (
-                <p className="mt-0.5 text-[9px] text-muted-foreground/60">Managed by employer</p>
+                <p className="mt-0.5 text-[9px] text-muted-foreground/60">
+                  via {application.companyName}
+                </p>
               )}
               {application.interviewLink && (
                 <a

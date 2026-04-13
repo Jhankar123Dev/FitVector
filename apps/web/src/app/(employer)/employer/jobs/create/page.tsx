@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateJobPost } from "@/hooks/use-employer-jobs";
-import { useQuestionBank } from "@/hooks/use-assessments";
+import { useQuestionBank, useAssessments } from "@/hooks/use-assessments";
 import type { QuestionBankItem } from "@/hooks/use-assessments";
 import type {
   JobPostFormData,
@@ -194,6 +194,15 @@ export default function CreateJobPage() {
   const [interviewQInput, setInterviewQInput] = useState("");
   const [assessmentQInput, setAssessmentQInput] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+
+  // ── Linked assessment state ───────────────────────────────────────
+  const [linkedAssessmentId, setLinkedAssessmentId] = useState<string | null>(null);
+  const { data: assessmentsData } = useAssessments();
+  const existingAssessments = (assessmentsData?.data ?? []) as Array<{
+    id: string;
+    name: string;
+    assessmentType: string;
+  }>;
 
   // ── Question bank state ───────────────────────────────────────────
   const [showBankModal, setShowBankModal] = useState(false);
@@ -373,6 +382,7 @@ export default function CreateJobPage() {
         openingsCount: form.openingsCount,
         interviewPlan: form.interviewConfig?.enabled ? form.interviewConfig : null,
         assessmentConfig: form.assessmentConfig?.enabled ? form.assessmentConfig : null,
+        assessmentId: linkedAssessmentId ?? null,
         pipelineStages: form.pipelineStages,
         status: publishNow ? "active" : "draft",
       } as Record<string, unknown> & { title: string; description: string });
@@ -1543,6 +1553,39 @@ export default function CreateJobPage() {
                 </p>
               </div>
             )}
+
+            {/* ── Link existing assessment ─────────────────────────── */}
+            <div className="border-t border-surface-200 pt-5">
+              <Label className="mb-1 block text-sm font-medium text-surface-700">
+                Or link an existing assessment
+              </Label>
+              <p className="mb-3 text-xs text-surface-500">
+                When a candidate reaches the <span className="font-medium">Assessment Pending</span> stage,
+                they will automatically receive this assessment.
+              </p>
+              {existingAssessments.length === 0 ? (
+                <p className="text-xs text-surface-400 italic">
+                  No assessments found. Create one from the{" "}
+                  <a href="/employer/assessments" className="text-brand-600 underline underline-offset-2">
+                    Assessments page
+                  </a>{" "}
+                  first.
+                </p>
+              ) : (
+                <select
+                  value={linkedAssessmentId ?? ""}
+                  onChange={(e) => setLinkedAssessmentId(e.target.value || null)}
+                  className="h-9 w-full rounded-lg border border-surface-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                >
+                  <option value="">— None (AI will auto-generate) —</option>
+                  {existingAssessments.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name} ({a.assessmentType?.replace(/_/g, " ")})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}

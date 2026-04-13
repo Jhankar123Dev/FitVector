@@ -141,6 +141,9 @@ export const createJobPostSchema = z.object({
   dimensionWeights: z.record(z.number()).optional().nullable(),
   pipelineStages: z.array(z.string()).min(2).optional(),
   status: z.enum(["draft", "active"]).default("draft"),
+  // Link a pre-built assessment to this job. When set, moving a candidate to
+  // assessment_pending auto-assigns this assessment instead of auto-generating one.
+  assessmentId: z.string().uuid().nullable().optional(),
 });
 
 export const updateJobPostSchema = createJobPostSchema.partial().extend({
