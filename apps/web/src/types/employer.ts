@@ -573,6 +573,7 @@ export interface AssessmentQuestion {
   points: number;
   codeLanguage?: string; // for code questions
   testCases?: { input: string; expectedOutput: string }[];
+  starterCodeMap?: Record<string, string>; // language key → starter code (from question bank)
 }
 
 export interface AssessmentInstance {

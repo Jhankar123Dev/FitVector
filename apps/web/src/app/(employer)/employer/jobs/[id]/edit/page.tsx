@@ -28,9 +28,13 @@ import {
   Lock,
   ChevronRight,
   Sparkles,
+  Library,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEmployerJob, useUpdateJobPost } from "@/hooks/use-employer-jobs";
+import { useAssessments, useQuestionBank } from "@/hooks/use-assessments";
+import type { QuestionBankItem } from "@/hooks/use-assessments";
 import type {
   JobPostFormData,
   WorkMode,
@@ -155,6 +159,19 @@ export default function EditJobPage() {
   const [niceSkillInput, setNiceSkillInput] = useState("");
   const [interviewQInput, setInterviewQInput] = useState("");
   const [assessmentQInput, setAssessmentQInput] = useState("");
+  const [linkedAssessmentId, setLinkedAssessmentId] = useState<string | null>(null);
+
+  // ── Fetch company assessments for the link dropdown ───────────────
+  const { data: assessmentsData } = useAssessments();
+  const companyAssessments = assessmentsData?.data ?? [];
+
+  // ── Question bank state ───────────────────────────────────────────
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [bankSelected,  setBankSelected]  = useState<Set<string>>(new Set());
+  const [bankFilters,   setBankFilters]   = useState({ difficulty: "", category: "" });
+  const { data: bankData, isLoading: bankLoading } = useQuestionBank(bankFilters, showBankModal);
+  const bankItems = bankData?.data ?? [];
+  const bankCategories = [...new Set(bankItems.map((i: QuestionBankItem) => i.category))].sort();
 
   // Screening question builder
   const [sqQuestion, setSqQuestion] = useState("");
@@ -212,6 +229,7 @@ export default function EditJobPage() {
         : BLANK_FORM.assessmentConfig,
       pipelineStages: (job.pipelineStages as string[]) || DEFAULT_PIPELINE_STAGES,
     });
+    setLinkedAssessmentId((job.assessmentId as string) || null);
     setHydrated(true);
   }, [jobData, hydrated]);
 
@@ -288,6 +306,30 @@ export default function EditJobPage() {
     setAssessmentQInput("");
   }
 
+  // ── Question bank helpers ─────────────────────────────────────────
+  function toggleBankItem(id: string) {
+    setBankSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function confirmBankImport() {
+    const titles = bankItems
+      .filter((item: QuestionBankItem) => bankSelected.has(item.id))
+      .map((item: QuestionBankItem) => item.title);
+    update({
+      assessmentConfig: {
+        ...form.assessmentConfig,
+        customQuestions: [...form.assessmentConfig.customQuestions, ...titles],
+      },
+    });
+    setBankSelected(new Set());
+    setBankFilters({ difficulty: "", category: "" });
+    setShowBankModal(false);
+  }
+
   // ── AI Assist ─────────────────────────────────────────────────────
   async function handleAiAssist() {
     setAiLoading(true);
@@ -341,6 +383,7 @@ export default function EditJobPage() {
         openingsCount: form.openingsCount,
         interviewPlan: form.interviewConfig?.enabled ? form.interviewConfig : null,
         assessmentConfig: form.assessmentConfig?.enabled ? form.assessmentConfig : null,
+        assessmentId: linkedAssessmentId,
         pipelineStages: form.pipelineStages,
         status: publishNow ? "active" : "draft",
       });
@@ -386,6 +429,7 @@ export default function EditJobPage() {
   }
 
   return (
+    <>
     <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6 py-2 sm:py-4">
       {/* Header */}
       <div className="flex items-center gap-3 sm:gap-4">
@@ -1007,6 +1051,51 @@ export default function EditJobPage() {
               </label>
             </div>
 
+            {/* ── Link an existing assessment ─────────────────────── */}
+            <div className="rounded-lg border border-surface-200 bg-surface-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-surface-800">Link Existing Assessment</p>
+                  <p className="mt-0.5 text-xs text-surface-500">
+                    Attach a pre-built assessment from your library. Candidates will be auto-assigned when they reach the assessment stage.
+                  </p>
+                </div>
+                {linkedAssessmentId && (
+                  <button
+                    type="button"
+                    onClick={() => setLinkedAssessmentId(null)}
+                    className="shrink-0 text-xs text-red-500 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <select
+                value={linkedAssessmentId ?? ""}
+                onChange={(e) => setLinkedAssessmentId(e.target.value || null)}
+                className="mt-3 h-9 w-full rounded-lg border border-surface-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              >
+                <option value="">— No assessment linked —</option>
+                {companyAssessments.map((a) => (
+                  <option key={a.id as string} value={a.id as string}>
+                    {a.name as string} ({(a.assessmentType ?? a.type ?? "unknown") as string})
+                  </option>
+                ))}
+              </select>
+              {linkedAssessmentId && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700">
+                  <Check className="h-3 w-3" />
+                  Assessment linked — candidates will be auto-assigned on stage advance.
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-surface-200" />
+              <span className="text-xs text-surface-400 font-medium">OR generate with AI</span>
+              <div className="h-px flex-1 bg-surface-200" />
+            </div>
+
             {form.assessmentConfig.enabled && (
               <div className="space-y-5">
                 <div className="space-y-2">
@@ -1117,7 +1206,19 @@ export default function EditJobPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Custom Questions or Topics</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Custom Questions or Topics</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      onClick={() => setShowBankModal(true)}
+                      className="h-7 gap-1.5 text-xs text-brand-600 border-brand-200 hover:bg-brand-50"
+                    >
+                      <Library className="h-3 w-3" />
+                      Import from Question Bank
+                    </Button>
+                  </div>
                   <div className="flex gap-2">
                     <Input
                       placeholder="Add a question or topic..."
@@ -1497,5 +1598,150 @@ export default function EditJobPage() {
         </div>
       </div>
     </div>
+
+    {/* ═══════════════════ QUESTION BANK MODAL ═════════════════════ */}
+    {showBankModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <Card className="flex w-full max-w-2xl flex-col" style={{ maxHeight: "90vh" }}>
+          <CardContent className="flex flex-col gap-4 p-5 sm:p-6 overflow-hidden h-full">
+
+            {/* Header */}
+            <div className="flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-sm font-semibold text-surface-800">Question Bank</h3>
+                <p className="text-xs text-surface-500 mt-0.5">Select problems to import as assessment topics</p>
+              </div>
+              <button
+                onClick={() => setShowBankModal(false)}
+                className="text-surface-400 hover:text-surface-700 text-lg font-bold leading-none"
+              >×</button>
+            </div>
+
+            {/* Filters */}
+            <div className="space-y-2 shrink-0">
+              <div className="flex flex-wrap gap-1.5">
+                {["", "easy", "medium", "hard"].map((d) => (
+                  <button
+                    key={d || "all-diff"}
+                    onClick={() => setBankFilters((f) => ({ ...f, difficulty: d }))}
+                    className={cn(
+                      "rounded-full px-3 py-0.5 text-xs font-medium border transition-colors",
+                      bankFilters.difficulty === d
+                        ? d === "easy"   ? "bg-emerald-100 border-emerald-400 text-emerald-700"
+                        : d === "medium" ? "bg-amber-100 border-amber-400 text-amber-700"
+                        : d === "hard"   ? "bg-red-100 border-red-400 text-red-700"
+                        : "bg-surface-800 border-surface-800 text-white"
+                        : "border-surface-200 text-surface-600 hover:border-surface-300",
+                    )}
+                  >
+                    {d === "" ? "All Difficulty" : d.charAt(0).toUpperCase() + d.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {["", ...bankCategories].map((c) => (
+                  <button
+                    key={c || "all-cat"}
+                    onClick={() => setBankFilters((f) => ({ ...f, category: c }))}
+                    className={cn(
+                      "rounded-full px-3 py-0.5 text-xs font-medium border transition-colors",
+                      bankFilters.category === c
+                        ? "bg-brand-600 border-brand-600 text-white"
+                        : "border-surface-200 text-surface-600 hover:border-surface-300",
+                    )}
+                  >
+                    {c === "" ? "All Categories" : c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Question list */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
+              {bankLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-16 rounded-lg border border-surface-200 bg-surface-100 animate-pulse" />
+                ))
+              ) : bankItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <BookOpen className="h-8 w-8 text-surface-300" />
+                  <p className="mt-2 text-sm text-surface-500">No questions match the selected filters.</p>
+                </div>
+              ) : (
+                bankItems.map((item: QuestionBankItem) => {
+                  const selected = bankSelected.has(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => toggleBankItem(item.id)}
+                      className={cn(
+                        "w-full text-left rounded-lg border p-3 transition-colors",
+                        selected
+                          ? "border-emerald-400 bg-emerald-50"
+                          : "border-surface-200 hover:border-surface-300 hover:bg-surface-50",
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={cn(
+                          "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+                          selected ? "border-emerald-500 bg-emerald-500" : "border-surface-300",
+                        )}>
+                          {selected && <Check className="h-3 w-3 text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs font-semibold text-surface-800">{item.title}</span>
+                            <Badge
+                              className={cn(
+                                "text-[10px] px-1.5 py-0",
+                                item.difficulty === "easy"   ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                : item.difficulty === "medium" ? "bg-amber-100 text-amber-700 border-amber-200"
+                                : "bg-red-100 text-red-700 border-red-200",
+                              )}
+                              variant="outline"
+                            >
+                              {item.difficulty}
+                            </Badge>
+                            <Badge className="text-[10px] px-1.5 py-0 bg-surface-100 text-surface-600 border-surface-200" variant="outline">
+                              {item.category}
+                            </Badge>
+                          </div>
+                          <p className="mt-1 text-[11px] text-surface-500 line-clamp-1">{item.prompt}</p>
+                          <p className="mt-0.5 text-[10px] text-surface-400">
+                            {item.testCases.length} test cases · {Object.keys(item.starterCode).length} languages
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between gap-3 shrink-0 pt-1 border-t border-surface-100">
+              <span className="text-xs text-surface-500">
+                {bankSelected.size > 0 ? `${bankSelected.size} selected` : "Click questions to select"}
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" className="text-xs" onClick={() => setShowBankModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={confirmBankImport}
+                  disabled={bankSelected.size === 0}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Import {bankSelected.size > 0 ? `${bankSelected.size} ` : ""}Questions
+                </Button>
+              </div>
+            </div>
+
+          </CardContent>
+        </Card>
+      </div>
+    )}
+    </>
   );
 }

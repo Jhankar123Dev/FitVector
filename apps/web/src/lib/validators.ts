@@ -143,7 +143,9 @@ export const createJobPostSchema = z.object({
   status: z.enum(["draft", "active"]).default("draft"),
 });
 
-export const updateJobPostSchema = createJobPostSchema.partial();
+export const updateJobPostSchema = createJobPostSchema.partial().extend({
+  assessmentId: z.string().uuid().nullable().optional(),
+});
 
 export const changeJobStatusSchema = z.object({
   status: z.enum(["active", "paused", "closed", "filled"]),

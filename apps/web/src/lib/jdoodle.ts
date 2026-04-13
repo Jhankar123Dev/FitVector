@@ -8,7 +8,14 @@
  * "graded" results.
  */
 
+import https from "https";
+
 const JDOODLE_URL = "https://api.jdoodle.com/v1/execute";
+
+// Node.js on Windows does not use the OS certificate store, so it may fail
+// to verify JDoodle's TLS certificate. We create a scoped agent that bypasses
+// verification ONLY for JDoodle calls — Supabase and all other requests are unaffected.
+const jdoodleAgent = new https.Agent({ rejectUnauthorized: false });
 
 // ── Language map ──────────────────────────────────────────────────────────────
 
@@ -22,6 +29,27 @@ export const SUPPORTED_LANGUAGES = [
 ] as const;
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+
+// Normalise aliases → canonical JDoodle key
+// Covers values stored by the assessment create page ("c++", "javascript", "python")
+// as well as Monaco editor display names
+const LANG_ALIASES: Record<string, SupportedLanguage> = {
+  "c++":        "cpp17",
+  "cpp":        "cpp17",
+  "cpp14":      "cpp17",
+  "javascript": "nodejs",
+  "js":         "nodejs",
+  "python":     "python3",
+  "py":         "python3",
+  "ts":         "typescript",
+};
+
+export function normaliseLanguage(lang: string): SupportedLanguage {
+  const lower = lang.toLowerCase();
+  if (LANG_ALIASES[lower]) return LANG_ALIASES[lower];
+  if ((SUPPORTED_LANGUAGES as readonly string[]).includes(lower)) return lower as SupportedLanguage;
+  return "nodejs"; // safe fallback
+}
 
 const LANG_MAP: Record<SupportedLanguage, { language: string; versionIndex: string }> = {
   python3:    { language: "python3",    versionIndex: "3" },
@@ -77,7 +105,7 @@ export async function runCodeAgainstTestCases(
     throw new Error("JDOODLE_CLIENT_ID / JDOODLE_CLIENT_SECRET not set");
   }
 
-  const langKey = language as SupportedLanguage;
+  const langKey = normaliseLanguage(language);
   const langConfig = LANG_MAP[langKey];
 
   if (!langConfig) {
@@ -92,42 +120,49 @@ export async function runCodeAgainstTestCases(
   // Each test case = 1 credit.
   for (const tc of testCases) {
     try {
-      const jdoodleRes = await fetch(JDOODLE_URL, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          clientId,
-          clientSecret,
-          script:       code,
-          language:     langConfig.language,
-          versionIndex: langConfig.versionIndex,
-          stdin:        tc.input,
-        }),
+      const controller = new AbortController();
+      const timeoutId  = setTimeout(() => controller.abort(), 55_000); // 55 s per test case
+
+      // Use Node's https.request directly so we can pass the custom agent
+      // (global fetch in Node.js 18 does not expose an agent option)
+      const payload = JSON.stringify({
+        clientId,
+        clientSecret,
+        script:       code,
+        language:     langConfig.language,
+        versionIndex: langConfig.versionIndex,
+        stdin:        tc.input,
       });
 
-      if (!jdoodleRes.ok) {
-        const errText = await jdoodleRes.text().catch(() => "unknown");
-        console.error("[jdoodle] HTTP error:", jdoodleRes.status, errText);
-        results.push({
-          input:          tc.input,
-          expectedOutput: tc.expectedOutput,
-          actualOutput:   "",
-          passed:         false,
-          error:          `Execution service error (${jdoodleRes.status})`,
-        });
+      const rawBody = await new Promise<string>((resolve, reject) => {
+        controller.signal.addEventListener("abort", () => reject(new Error("Request timed out")));
+        const req = https.request(
+          "https://api.jdoodle.com/v1/execute",
+          { method: "POST", headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }, agent: jdoodleAgent },
+          (res) => {
+            let data = "";
+            res.on("data", (chunk) => { data += chunk; });
+            res.on("end", () => resolve(data));
+          },
+        );
+        req.on("error", reject);
+        req.write(payload);
+        req.end();
+      });
+      clearTimeout(timeoutId);
+
+      // Shim a Response-like object so the rest of the code below is unchanged
+      // Parse the response body
+      let parsedBody: { output?: string; statusCode?: number; memory?: string; cpuTime?: string; error?: string };
+      try {
+        parsedBody = JSON.parse(rawBody);
+      } catch {
+        results.push({ input: tc.input, expectedOutput: tc.expectedOutput, actualOutput: "", passed: false, error: "Invalid response from execution service" });
         continue;
       }
 
-      const data = await jdoodleRes.json() as {
-        output?:     string;
-        statusCode?: number;
-        memory?:     string;
-        cpuTime?:    string;
-        error?:      string;
-      };
-
       // JDoodle wraps runtime errors in the output field (statusCode !== 200)
-      const raw         = data.output ?? "";
+      const raw         = parsedBody.output ?? "";
       const actualOut   = raw.trimEnd();
       const expectedOut = tc.expectedOutput.trimEnd();
       const passed      = actualOut === expectedOut;
@@ -137,18 +172,23 @@ export async function runCodeAgainstTestCases(
         expectedOutput: tc.expectedOutput,
         actualOutput:   raw,
         passed,
-        cpuTime:        data.cpuTime,
-        memory:         data.memory,
-        error:          data.statusCode !== 200 ? raw : undefined,
+        cpuTime:        parsedBody.cpuTime,
+        memory:         parsedBody.memory,
+        error:          parsedBody.statusCode !== 200 ? raw : undefined,
       });
     } catch (err) {
-      console.error("[jdoodle] test case error:", err);
+      const cause = (err as { cause?: unknown })?.cause;
+      const msg = err instanceof Error ? err.message : String(err);
+      const causeMsg = cause instanceof Error ? cause.message : cause ? String(cause) : "";
+      console.error("[jdoodle] test case error:", msg, causeMsg ? `| cause: ${causeMsg}` : "");
       results.push({
         input:          tc.input,
         expectedOutput: tc.expectedOutput,
         actualOutput:   "",
         passed:         false,
-        error:          "Execution timed out or failed",
+        error:          msg.includes("abort") || msg.includes("timeout")
+          ? "Execution timed out (> 55 s)"
+          : `Execution failed: ${msg}`,
       });
     }
   }

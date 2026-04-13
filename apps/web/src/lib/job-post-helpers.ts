@@ -26,6 +26,7 @@ export function transformJobPost(row: Record<string, unknown>) {
     openingsCount: row.openings_count || 1,
     applicationDeadline: row.application_deadline || null,
     interviewPlan: row.interview_plan || null,
+    assessmentId: (row.assessment_id as string) || null,
     assessmentConfig: row.assessment_config || null,
     status: row.status,
     autoAdvanceThreshold: row.auto_advance_threshold ?? null,

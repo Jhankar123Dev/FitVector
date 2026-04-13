@@ -5,6 +5,8 @@ import { autoGradeMCQ, gradeShortAnswer } from "@/lib/assessment-helpers";
 import { runCodeAgainstTestCases } from "@/lib/jdoodle";
 import type { TestCase } from "@/lib/jdoodle";
 
+export const maxDuration = 60;
+
 // ─── POST: Submit assessment answers (public) ────────────────────────────────
 
 export async function POST(

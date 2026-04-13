@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { runCodeAgainstTestCases, SUPPORTED_LANGUAGES } from "@/lib/jdoodle";
+import { runCodeAgainstTestCases, SUPPORTED_LANGUAGES, normaliseLanguage } from "@/lib/jdoodle";
+
+// Allow up to 60 s — JDoodle needs time to compile + run Java/C++
+export const maxDuration = 60;
 
 // Re-export for any consumers that imported the type from here
 export type { TestCaseResult as CodeExecuteResult } from "@/lib/jdoodle";
@@ -112,8 +115,9 @@ export async function POST(req: Request) {
       previewCases.push(fallback);
     }
 
-    // ── Step 5: Validate language ────────────────────────────────────────────
-    if (!SUPPORTED_LANGUAGES.includes(language as typeof SUPPORTED_LANGUAGES[number])) {
+    // ── Step 5: Normalise + validate language ────────────────────────────────
+    const normalisedLanguage = normaliseLanguage(language);
+    if (!SUPPORTED_LANGUAGES.includes(normalisedLanguage)) {
       return NextResponse.json(
         { error: `Unsupported language: ${language}. Supported: ${SUPPORTED_LANGUAGES.join(", ")}` },
         { status: 400 },
@@ -121,7 +125,7 @@ export async function POST(req: Request) {
     }
 
     // ── Step 6: Execute via shared JDoodle utility ───────────────────────────
-    const { results } = await runCodeAgainstTestCases(code, language, previewCases);
+    const { results } = await runCodeAgainstTestCases(code, normalisedLanguage, previewCases);
 
     // ── Step 7: Strip expectedOutput before returning to client ─────────────
     // SECURITY: the candidate must never see the expected output — only their

@@ -42,13 +42,60 @@ const MonacoEditor = dynamic(
 );
 
 // ── Language identifier map: our keys → Monaco grammar names ──────────────
+// Maps stored codeLanguage keys (incl. aliases) → Monaco language IDs
 const MONACO_LANG: Record<string, string> = {
   python3:    "python",
+  python:     "python",
   nodejs:     "javascript",
+  javascript: "javascript",
   java:       "java",
   cpp17:      "cpp",
+  "c++":      "cpp",
+  cpp:        "cpp",
   go:         "go",
   typescript: "typescript",
+  ts:         "typescript",
+};
+
+// Human-readable labels for the language badge
+const LANG_LABEL: Record<string, string> = {
+  python3:    "Python",
+  python:     "Python",
+  nodejs:     "JavaScript",
+  javascript: "JavaScript",
+  java:       "Java",
+  cpp17:      "C++",
+  "c++":      "C++",
+  cpp:        "C++",
+  go:         "Go",
+  typescript: "TypeScript",
+};
+
+// Client-side language alias normaliser (mirrors jdoodle.ts but without Node imports)
+const LANG_CANONICAL: Record<string, string> = {
+  "c++":        "cpp17",
+  "cpp":        "cpp17",
+  "cpp14":      "cpp17",
+  "javascript": "nodejs",
+  "js":         "nodejs",
+  "python":     "python3",
+  "py":         "python3",
+  "ts":         "typescript",
+};
+function canonicalLang(lang: string): string {
+  return LANG_CANONICAL[lang.toLowerCase()] ?? lang.toLowerCase();
+}
+
+// Minimal starter code shown when the question has no starterCodeMap
+const DEFAULT_STARTER: Record<string, string> = {
+  nodejs: `// Write your solution here\nfunction solution() {\n\n}\n`,
+  javascript: `// Write your solution here\nfunction solution() {\n\n}\n`,
+  python3: `# Write your solution here\ndef solution():\n    pass\n`,
+  python: `# Write your solution here\ndef solution():\n    pass\n`,
+  java: `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n`,
+  cpp17: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n`,
+  go: `package main\n\nimport "fmt"\n\nfunc main() {\n    // Write your solution here\n}\n`,
+  typescript: `// Write your solution here\nfunction solution(): void {\n\n}\n`,
 };
 
 // ── Shared Monaco options (defined outside component — stable reference) ──
@@ -238,6 +285,20 @@ export default function TakeAssessmentPage() {
     setAnswers((prev) => ({ ...prev, [qId]: value }));
   }
 
+  // Pre-populate starter code the first time a code question is rendered.
+  // Priority: saved answer → starterCodeMap[canonical] → DEFAULT_STARTER[canonical] → ""
+  function getAnswerWithStarter(q: AssessmentQuestion): string {
+    const existing = answers[q.id];
+    if (existing !== undefined) return existing;
+    if (q.type !== "code") return "";
+
+    const lang    = canonicalLang(q.codeLanguage ?? "nodejs");
+    const starter = q.starterCodeMap
+      ? (q.starterCodeMap[lang] ?? q.starterCodeMap[q.codeLanguage ?? ""] ?? null)
+      : null;
+    return starter ?? DEFAULT_STARTER[lang] ?? DEFAULT_STARTER.nodejs;
+  }
+
   function toggleFlag(qId: string) {
     setFlagged((prev) => {
       const next = new Set(prev);
@@ -250,7 +311,7 @@ export default function TakeAssessmentPage() {
   // SECURITY: testCases are NEVER sent from the client. The server looks them up
   // using the questionId + submissionToken chain, preventing score forgery.
   async function handleRunCode(q: AssessmentQuestion) {
-    const code = answers[q.id];
+    const code = getAnswerWithStarter(q);
     if (!code?.trim()) return;
 
     setRunningQId(q.id);
@@ -450,7 +511,11 @@ export default function TakeAssessmentPage() {
 
   // ═══════════════════ CONFIRM MODAL ══════════════════════════════════════════
   if (view === "confirm") {
-    const answered     = Object.keys(answers).filter((k) => answers[k]).length;
+    // A question is "answered" if: the user typed something, OR it's a code question
+    // (code questions always have starter code visible in the editor — they count as answered)
+    const answered = questions.filter((q) =>
+      q.type === "code" ? !!getAnswerWithStarter(q).trim() : !!answers[q.id]
+    ).length;
     const flaggedCount = flagged.size;
 
     return (
@@ -484,7 +549,7 @@ export default function TakeAssessmentPage() {
                       answers: (assessment?.questions || []).map((q: AssessmentQuestion) => ({
                         questionId:     q.id,
                         selectedAnswer: q.type === "code"
-                          ? JSON.stringify({ code: answers[q.id] || "", testResults: runResults[q.id] || [] })
+                          ? JSON.stringify({ code: getAnswerWithStarter(q), testResults: runResults[q.id] || [] })
                           : (answers[q.id] || undefined),
                       })),
                       proctoringData: getProctoringData(),
@@ -567,7 +632,7 @@ export default function TakeAssessmentPage() {
           <p className="text-[11px] font-semibold text-surface-500 mb-1">Questions</p>
           <div className="grid grid-cols-4 gap-1.5">
             {questions.map((q, i) => {
-              const isAnswered = !!answers[q.id];
+              const isAnswered = q.type === "code" ? !!getAnswerWithStarter(q).trim() : !!answers[q.id];
               const isFlagged  = flagged.has(q.id);
               const isCurrent  = i === currentQ;
               return (
@@ -607,7 +672,7 @@ export default function TakeAssessmentPage() {
             <QuestionView
               question={question}
               index={currentQ}
-              answer={answers[question.id] || ""}
+              answer={getAnswerWithStarter(question)}
               isFlagged={flagged.has(question.id)}
               onAnswer={(v) => setAnswer(question.id, v)}
               onToggleFlag={() => toggleFlag(question.id)}
@@ -640,7 +705,7 @@ export default function TakeAssessmentPage() {
                 onClick={() => setCurrentQ(i)}
                 className={cn(
                   "h-2.5 w-2.5 shrink-0 rounded-full transition-colors",
-                  i === currentQ ? "bg-brand-500" : answers[q.id] ? "bg-emerald-400" : "bg-surface-300",
+                  i === currentQ ? "bg-brand-500" : (q.type === "code" ? !!getAnswerWithStarter(q).trim() : !!answers[q.id]) ? "bg-emerald-400" : "bg-surface-300",
                 )}
               />
             ))}
@@ -707,7 +772,7 @@ function QuestionView({
             {question.codeLanguage && (
               <Badge className="border text-[10px] bg-sky-50 text-sky-700 border-sky-200 gap-0.5">
                 <Code2 className="h-2.5 w-2.5" />
-                {question.codeLanguage}
+                {LANG_LABEL[question.codeLanguage] ?? question.codeLanguage}
               </Badge>
             )}
           </div>
