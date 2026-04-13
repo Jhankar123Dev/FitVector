@@ -52,9 +52,13 @@ const MONACO_LANG: Record<string, string> = {
   cpp17:      "cpp",
   "c++":      "cpp",
   cpp:        "cpp",
+  cpp14:      "cpp",
   go:         "go",
   typescript: "typescript",
   ts:         "typescript",
+  // "rust" removed from employer create page (JDoodle unsupported) but kept here
+  // as a safety net for any pre-existing assessments that stored it.
+  rust:       "rust",
 };
 
 // Human-readable labels for the language badge
@@ -67,11 +71,14 @@ const LANG_LABEL: Record<string, string> = {
   cpp17:      "C++",
   "c++":      "C++",
   cpp:        "C++",
+  cpp14:      "C++",
   go:         "Go",
   typescript: "TypeScript",
+  rust:       "Rust",
 };
 
-// Client-side language alias normaliser (mirrors jdoodle.ts but without Node imports)
+// Client-side language alias normaliser (mirrors jdoodle.ts but without Node imports).
+// Maps human-readable / alias keys → JDoodle canonical keys.
 const LANG_CANONICAL: Record<string, string> = {
   "c++":        "cpp17",
   "cpp":        "cpp17",
@@ -86,16 +93,20 @@ function canonicalLang(lang: string): string {
   return LANG_CANONICAL[lang.toLowerCase()] ?? lang.toLowerCase();
 }
 
-// Minimal starter code shown when the question has no starterCodeMap
+// Minimal starter code shown when the question has no starterCodeMap.
+// Keys must cover every value that canonicalLang() can produce.
 const DEFAULT_STARTER: Record<string, string> = {
-  nodejs: `// Write your solution here\nfunction solution() {\n\n}\n`,
+  nodejs:     `// Write your solution here\nfunction solution() {\n\n}\n`,
   javascript: `// Write your solution here\nfunction solution() {\n\n}\n`,
-  python3: `# Write your solution here\ndef solution():\n    pass\n`,
-  python: `# Write your solution here\ndef solution():\n    pass\n`,
-  java: `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n`,
-  cpp17: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n`,
-  go: `package main\n\nimport "fmt"\n\nfunc main() {\n    // Write your solution here\n}\n`,
+  python3:    `# Write your solution here\ndef solution():\n    pass\n`,
+  python:     `# Write your solution here\ndef solution():\n    pass\n`,
+  java:       `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n`,
+  cpp17:      `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n`,
+  go:         `package main\n\nimport "fmt"\n\nfunc main() {\n    // Write your solution here\n}\n`,
   typescript: `// Write your solution here\nfunction solution(): void {\n\n}\n`,
+  // Safety net for pre-existing assessments that stored "rust" before it was
+  // removed from the employer language picker (JDoodle does not support Rust).
+  rust:       `fn main() {\n    // Write your solution here\n}\n`,
 };
 
 // ── Shared Monaco options (defined outside component — stable reference) ──

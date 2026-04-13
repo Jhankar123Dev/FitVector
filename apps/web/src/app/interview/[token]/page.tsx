@@ -154,13 +154,10 @@ export default function CandidateInterviewPage() {
     load();
   }, [token]);
 
-  // Auto-resume if already started (page refresh during interview)
-  useEffect(() => {
-    if (phase === "starting") {
-      fetchNextQuestion("", []);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase === "starting"]);
+  // Note: auto-resume on page refresh is handled inside handleStart.
+  // A separate useEffect for phase==="starting" was intentionally removed to
+  // prevent a double-call race condition where the message route received a
+  // request before the start route had updated the DB status to "started".
 
   // ── SpeechRecognition loop ─────────────────────────────────────────────────
 

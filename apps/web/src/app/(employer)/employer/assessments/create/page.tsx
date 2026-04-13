@@ -104,7 +104,10 @@ function newQuestion(): QuestionForm {
   };
 }
 
-const CODE_LANGUAGES = ["javascript", "typescript", "python", "java", "go", "rust", "c++"];
+// Only languages supported by the JDoodle execution engine.
+// "rust" was intentionally removed — JDoodle free tier does not support it;
+// selecting it would silently execute as JavaScript on the candidate's end.
+const CODE_LANGUAGES = ["javascript", "typescript", "python", "java", "go", "c++"];
 
 
 function downloadCsvTemplate() {

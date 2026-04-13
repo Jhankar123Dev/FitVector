@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CalendarDays, Link2, Loader2, Users, Video, Phone, MapPin, StickyNote } from "lucide-react";
@@ -172,8 +173,14 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading team members…
                 </div>
               ) : members.length === 0 ? (
-                <div className="flex h-9 items-center rounded-lg border border-amber-200 bg-amber-50 px-3 text-xs text-amber-700">
-                  No active team members found. Invite team members first.
+                <div className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  No team members found.{" "}
+                  <Link
+                    href="/employer/team"
+                    className="font-medium underline underline-offset-2 hover:text-amber-900"
+                  >
+                    Click here to add your team
+                  </Link>
                 </div>
               ) : (
                 <select

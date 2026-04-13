@@ -19,14 +19,15 @@ export async function GET(
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    // Get active job posts for this company
+    // Get active job posts for this company.
+    // No hard limit here — the search route counts ALL active posts, so the
+    // detail page must list them all to avoid a card-badge vs. listing mismatch.
     const { data: jobs } = await supabase
       .from("job_posts")
       .select("id, title, location, work_mode, job_type, salary_min, salary_max, salary_currency, required_skills, nice_to_have_skills, description, application_deadline, openings_count, created_at")
       .eq("company_id", id)
       .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(20);
+      .order("created_at", { ascending: false });
 
     const formatted = {
       id: company.id,
