@@ -611,7 +611,7 @@ export default function TakeAssessmentPage() {
   const timeWarning = timeLeft <= 300;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col overflow-hidden">
       {/* Proctoring warning banner */}
       {proctoringWarning && (
         <div className="sticky top-0 z-40 flex items-center justify-between gap-3 bg-amber-50 border-b border-amber-200 px-4 py-2">
@@ -657,7 +657,7 @@ export default function TakeAssessmentPage() {
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col lg:flex-row">
+      <div className="flex flex-1 min-h-0 flex-col lg:flex-row">
         {/* Question nav sidebar (desktop) */}
         <div className="hidden lg:flex flex-col gap-2 border-r border-surface-200 bg-white p-4 w-[200px]">
           <p className="text-[11px] font-semibold text-surface-500 mb-1">Questions</p>
@@ -697,9 +697,12 @@ export default function TakeAssessmentPage() {
           </div>
         </div>
 
-        {/* Question area */}
-        <div className="flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-3xl">
+        {/* Question area — LeetCode-style split pane for code, single column for others */}
+        <div className={cn(
+          "flex-1 min-h-0",
+          question?.type === "code" ? "overflow-hidden" : "overflow-y-auto p-4 sm:p-6 lg:p-8",
+        )}>
+          <div className={question?.type === "code" ? "h-full" : "mx-auto max-w-3xl"}>
             <QuestionView
               question={question}
               index={currentQ}
@@ -792,6 +795,149 @@ function QuestionView({
 }) {
   const passedCount = runResult?.filter((r) => r.passed).length ?? 0;
   const totalCount  = runResult?.length ?? 0;
+
+  // ── LeetCode-style split pane for code questions ────────────────────────────
+  if (question.type === "code") {
+    return (
+      <div className="flex h-full divide-x divide-surface-200 border-t border-surface-100 bg-white">
+        {/* LEFT — Question description (scrollable) */}
+        <div className="flex w-[42%] min-w-0 shrink-0 flex-col overflow-y-auto p-4 sm:p-6">
+          {/* Header row */}
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+                {index + 1}
+              </span>
+              <Badge className="border text-[10px] bg-sky-50 text-sky-700 border-sky-200 gap-0.5">
+                <Code2 className="h-2.5 w-2.5" />
+                {LANG_LABEL[selectedLang ?? question.codeLanguage ?? "nodejs"] ?? question.codeLanguage}
+              </Badge>
+              <span className="text-[10px] text-surface-400">{question.points} pts</span>
+            </div>
+            <Button
+              variant="ghost" size="sm"
+              className={cn("h-7 gap-1 text-[11px] shrink-0", isFlagged ? "text-amber-600" : "text-surface-400")}
+              onClick={onToggleFlag}
+            >
+              <Flag className={cn("h-3 w-3", isFlagged && "fill-amber-400")} />
+              {isFlagged ? "Flagged" : "Flag"}
+            </Button>
+          </div>
+
+          {/* Prompt */}
+          <div className="text-xs sm:text-sm text-surface-800 whitespace-pre-wrap leading-relaxed flex-1">
+            {question.prompt}
+          </div>
+        </div>
+
+        {/* RIGHT — Editor + run output */}
+        <div className="flex flex-1 min-w-0 flex-col overflow-hidden bg-[#1e1e1e]">
+          {/* Toolbar: language picker */}
+          <div className="flex items-center gap-3 border-b border-zinc-700 bg-zinc-900 px-3 py-2">
+            {onLangChange && (
+              <>
+                <Code2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                <select
+                  value={selectedLang ?? question.codeLanguage ?? "nodejs"}
+                  onChange={(e) => onLangChange(e.target.value)}
+                  className="h-7 rounded-md border border-zinc-600 bg-zinc-800 px-2 text-[11px] text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                >
+                  {Object.entries(LANG_LABEL).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
+                  ))}
+                </select>
+              </>
+            )}
+            {onRun && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-auto gap-1.5 h-7 text-[11px] border border-zinc-600 bg-zinc-800 text-zinc-200 hover:bg-zinc-700 hover:text-white"
+                onClick={onRun}
+                disabled={isRunning || !answer.trim()}
+              >
+                {isRunning ? (
+                  <span className="h-3 w-3 animate-spin rounded-full border border-emerald-500 border-t-transparent" />
+                ) : (
+                  <Play className="h-3 w-3 fill-current text-emerald-400" />
+                )}
+                {isRunning ? "Running…" : "▶ Run"}
+              </Button>
+            )}
+            {runResult && (
+              <span className={cn(
+                "text-[11px] font-semibold shrink-0",
+                passedCount === totalCount ? "text-emerald-400" : "text-amber-400",
+              )}>
+                {passedCount}/{totalCount} passed
+              </span>
+            )}
+          </div>
+
+          {/* Monaco Editor — fills remaining height */}
+          <div className="flex-1 min-h-0">
+            <MonacoEditor
+              height="100%"
+              language={MONACO_LANG[selectedLang ?? question.codeLanguage ?? "nodejs"] ?? "javascript"}
+              value={answer}
+              onChange={(val) => onAnswer(val ?? "")}
+              theme="vs-dark"
+              options={MONACO_OPTIONS}
+            />
+          </div>
+
+          {/* Output panel — fixed height, scrollable */}
+          {(runErrorMsg || (runResult && runResult.length > 0)) && (
+            <div className="h-[180px] shrink-0 overflow-y-auto border-t border-zinc-700 bg-zinc-950">
+              <div className="flex items-center gap-2 border-b border-zinc-700 bg-zinc-900 px-3 py-1.5 sticky top-0">
+                <Terminal className="h-3.5 w-3.5 text-zinc-400" />
+                <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wide">Output</span>
+                {runResult && (
+                  <span className={cn(
+                    "ml-auto text-[11px] font-bold",
+                    passedCount === totalCount ? "text-emerald-400" : "text-red-400",
+                  )}>
+                    {passedCount}/{totalCount} passed
+                  </span>
+                )}
+              </div>
+              {runErrorMsg && (
+                <div className="flex items-center gap-2 px-3 py-2 text-xs text-red-400">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  {runErrorMsg}
+                </div>
+              )}
+              {runResult && runResult.map((r, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "px-3 py-2 text-xs font-mono border-b border-zinc-800/60",
+                    r.passed ? "bg-emerald-950/30" : "bg-red-950/30",
+                  )}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    {r.passed
+                      ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      : <XCircle      className="h-3.5 w-3.5 text-red-400 shrink-0" />}
+                    <span className={cn("font-semibold text-[11px]", r.passed ? "text-emerald-300" : "text-red-300")}>
+                      Test {i + 1} — {r.passed ? "Passed" : "Failed"}
+                    </span>
+                  </div>
+                  <p className="text-zinc-500 text-[11px]">
+                    Input: <span className="text-zinc-300">{r.input || "(empty)"}</span>
+                  </p>
+                  <p className="text-zinc-500 text-[11px]">
+                    Your output: <span className={r.passed ? "text-emerald-300" : "text-red-300"}>{r.actualOutput || "(no output)"}</span>
+                  </p>
+                  {r.error && <p className="text-red-400 mt-0.5 whitespace-pre-wrap text-[11px]">{r.error}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card>

@@ -117,6 +117,9 @@ export default function CandidateInterviewPage() {
   const isDoneRef = useRef(false);
   const accumulatedRef = useRef("");
   const liveTranscriptRef = useRef("");
+  // Silence detection: auto-advance after SILENCE_MS of no new speech (once ≥20 chars captured)
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const SILENCE_MS = 8000;
 
   // Sync liveTranscript state into ref so onend closure can read latest value
   useEffect(() => {
@@ -173,6 +176,8 @@ export default function CandidateInterviewPage() {
     accumulatedRef.current = "";
     liveTranscriptRef.current = "";
     setLiveTranscript("");
+    // Clear any leftover silence timer from the previous answer
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
     const recognition = new SpeechRecognitionAPI();
     recognition.continuous = false;   // more reliable than true across browsers
@@ -181,19 +186,38 @@ export default function CandidateInterviewPage() {
     recognitionRef.current = recognition;
 
     recognition.onresult = (e: SpeechRecognitionEvent) => {
-      // Rebuild text from all results in this recognition session
-      let sessionText = "";
+      // Rebuild full transcript: prior sessions (accumulatedRef) + current session
+      let sessionFinal = "";
+      let sessionInterim = "";
       for (let i = 0; i < e.results.length; i++) {
-        sessionText += e.results[i][0].transcript;
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) sessionFinal += t + " ";
+        else sessionInterim += t;
       }
-      const full = (accumulatedRef.current + " " + sessionText).trim();
+      const full = (accumulatedRef.current + " " + sessionFinal + sessionInterim).trim();
       liveTranscriptRef.current = full;
       setLiveTranscript(full);
+
+      // Restart the silence timer whenever new speech arrives
+      // Auto-advance only after ≥20 chars to avoid firing on throat-clears
+      if (full.length >= 20) {
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = setTimeout(() => {
+          if (!isDoneRef.current) {
+            // Candidate has been silent for SILENCE_MS after speaking — treat as done
+            isDoneRef.current = true;
+            try { recognitionRef.current?.abort(); } catch { /* ignored */ }
+            // Invoke the done-speaking handler from the outer closure
+            handleDoneSpeakingRef.current?.();
+          }
+        }, SILENCE_MS);
+      }
     };
 
     recognition.onend = () => {
       if (isDoneRef.current) return;
-      // Capture whatever was said in this session before restarting
+      // Persist only finalized text so we don't re-count interim results next session
+      // accumulatedRef already holds the latest liveTranscript from onresult
       accumulatedRef.current = liveTranscriptRef.current;
       // Silent restart — candidate paused to think, keep listening
       try {
@@ -216,8 +240,15 @@ export default function CandidateInterviewPage() {
     setPhase("listening");
   }, []);
 
+  // Stable ref so the silence timer closure can always reach the latest handleDoneSpeaking
+  const handleDoneSpeakingRef = useRef<(() => void) | null>(null);
+
   const stopListeningLoop = useCallback(() => {
     isDoneRef.current = true;
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
     try {
       recognitionRef.current?.abort();
     } catch {
@@ -266,6 +297,11 @@ export default function CandidateInterviewPage() {
   );
 
   const handleDoneSpeaking = useCallback(() => {
+    // Clear silence auto-advance timer so it doesn't double-fire
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
     stopListeningLoop();
     const answer = liveTranscriptRef.current.trim();
 
@@ -280,6 +316,11 @@ export default function CandidateInterviewPage() {
     setLiveTranscript("");
     fetchNextQuestion(answer, newHistory);
   }, [stopListeningLoop, startListeningLoop, history, currentQuestion, fetchNextQuestion]);
+
+  // Keep the ref synced to the latest handleDoneSpeaking (needed by silence auto-advance timer)
+  useEffect(() => {
+    handleDoneSpeakingRef.current = handleDoneSpeaking;
+  }, [handleDoneSpeaking]);
 
   const submitComplete = useCallback(
     async (finalHistory: Turn[]) => {
