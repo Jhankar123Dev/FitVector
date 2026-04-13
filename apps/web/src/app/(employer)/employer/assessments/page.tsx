@@ -248,9 +248,11 @@ function TemplateCard({ template }: { template: AssessmentTemplate }) {
               </Link>
             </Button>
           )}
-          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] sm:text-xs gap-1">
-            <Pencil className="h-3 w-3" />
-            Edit
+          <Button variant="outline" size="sm" asChild className="h-7 px-2 text-[11px] sm:text-xs gap-1">
+            <Link href={`/employer/assessments/${template.id}/edit`}>
+              <Pencil className="h-3 w-3" />
+              Edit
+            </Link>
           </Button>
           <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] sm:text-xs gap-1">
             <Copy className="h-3 w-3" />

@@ -627,6 +627,7 @@ export interface AssessmentAnswer {
 export interface CandidateAssessmentResult {
   id: string;
   assessmentId: string;
+  applicantId: string;
   assessmentTitle: string;
   candidateName: string;
   candidateEmail: string;

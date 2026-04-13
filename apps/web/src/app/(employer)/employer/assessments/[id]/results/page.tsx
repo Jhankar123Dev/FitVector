@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +13,10 @@ import {
   TrendingUp,
   Target,
   AlertTriangle,
-  ExternalLink,
   Clock,
+  RotateCcw,
+  CalendarDays,
+  Save,
 } from "lucide-react";
 import {
   BarChart,
@@ -37,6 +39,7 @@ import {
   type AssessmentType,
   type DifficultyLevel,
 } from "@/types/employer";
+import { toast } from "sonner";
 
 // ── Score distribution buckets ───────────────────────────────────────
 function buildDistribution(results: CandidateAssessmentResult[]) {
@@ -56,15 +59,116 @@ function buildDistribution(results: CandidateAssessmentResult[]) {
   return buckets;
 }
 
+// ── Deadline editor (inline) ─────────────────────────────────────────
+function DeadlineEditor({ assessmentId, initialDeadline }: { assessmentId: string; initialDeadline: string | null }) {
+  const [editing, setEditing] = useState(false);
+  const [deadline, setDeadline] = useState(
+    initialDeadline ? initialDeadline.slice(0, 10) : ""
+  );
+  const [saving, setSaving] = useState(false);
+
+  async function saveDeadline() {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/employer/assessments/${assessmentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expiresAt: deadline ? new Date(deadline).toISOString() : null }),
+      });
+      if (!res.ok) {
+        const j = await res.json();
+        toast.error(j.error || "Failed to update deadline.");
+        return;
+      }
+      toast.success("Deadline updated.");
+      setEditing(false);
+    } catch {
+      toast.error("Network error.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="flex items-center gap-1.5 text-[11px] text-surface-500 hover:text-brand-600 transition-colors"
+      >
+        <CalendarDays className="h-3.5 w-3.5" />
+        {deadline
+          ? `Expires ${new Date(deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
+          : "Set expiry deadline"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <CalendarDays className="h-3.5 w-3.5 text-surface-400 shrink-0" />
+      <input
+        type="date"
+        value={deadline}
+        onChange={(e) => setDeadline(e.target.value)}
+        className="rounded border border-surface-200 px-2 py-0.5 text-[11px] text-surface-700 focus:outline-none focus:ring-1 focus:ring-brand-400"
+      />
+      <Button size="sm" className="h-6 px-2 text-[11px] gap-1" onClick={saveDeadline} disabled={saving}>
+        <Save className="h-3 w-3" />
+        {saving ? "Saving…" : "Save"}
+      </Button>
+      <button
+        onClick={() => setEditing(false)}
+        className="text-[11px] text-surface-400 hover:text-surface-600"
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
+
 export default function AssessmentResultsPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
 
   const { data: assessmentData } = useAssessment(id);
-  const { data: resultsData, isLoading } = useAssessmentResults(id);
+  const { data: resultsData, isLoading, refetch } = useAssessmentResults(id);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const assessment = assessmentData?.data as any;
   const allResults = (resultsData?.data || []) as unknown as CandidateAssessmentResult[];
+
+  // Track which applicant IDs are currently being re-invited
+  const [reinviting, setReinviting] = useState<Set<string>>(new Set());
+
+  const handleReinvite = useCallback(
+    async (applicantId: string, candidateName: string) => {
+      setReinviting((prev) => new Set(prev).add(applicantId));
+      try {
+        const res = await fetch(`/api/employer/assessments/${id}/reinvite`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicantId }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          toast.error(json.error || "Failed to re-invite.");
+          return;
+        }
+        toast.success(
+          `${candidateName} re-invited — Attempt ${json.data.attemptNumber}`
+        );
+        refetch();
+      } catch {
+        toast.error("Network error. Please try again.");
+      } finally {
+        setReinviting((prev) => {
+          const next = new Set(prev);
+          next.delete(applicantId);
+          return next;
+        });
+      }
+    },
+    [id, refetch]
+  );
 
   if (!assessment) {
     return (
@@ -112,7 +216,7 @@ export default function AssessmentResultsPage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-lg sm:text-xl font-semibold text-surface-800">
             {assessment.title}
           </h1>
@@ -126,6 +230,13 @@ export default function AssessmentResultsPage() {
             <span className="text-[11px] text-surface-500 flex items-center gap-1">
               <Clock className="h-3 w-3" /> {assessment.duration} min
             </span>
+          </div>
+          {/* Deadline editor */}
+          <div className="mt-2">
+            <DeadlineEditor
+              assessmentId={id}
+              initialDeadline={assessment.expiresAt ?? null}
+            />
           </div>
         </div>
       </div>
@@ -206,7 +317,7 @@ export default function AssessmentResultsPage() {
             ) : (
               <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[700px]">
+                  <table className="w-full min-w-[780px]">
                     <thead>
                       <tr className="border-b border-surface-200 bg-surface-50">
                         <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Candidate</th>
@@ -215,11 +326,19 @@ export default function AssessmentResultsPage() {
                         <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Time Spent</th>
                         <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Completed</th>
                         <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Proctoring</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filterByTab(tab).map((result) => (
-                        <ResultRow key={result.id} result={result} passingScore={assessment.passingScore} />
+                        <ResultRow
+                          key={result.id}
+                          result={result}
+                          passingScore={assessment.passingScore}
+                          assessmentId={id}
+                          isReinviting={reinviting.has(result.applicantId)}
+                          onReinvite={handleReinvite}
+                        />
                       ))}
                     </tbody>
                   </table>
@@ -237,9 +356,15 @@ export default function AssessmentResultsPage() {
 function ResultRow({
   result,
   passingScore,
+  assessmentId,
+  isReinviting,
+  onReinvite,
 }: {
   result: CandidateAssessmentResult;
   passingScore: number;
+  assessmentId: string;
+  isReinviting: boolean;
+  onReinvite: (applicantId: string, candidateName: string) => void;
 }) {
   const initials = result.candidateName
     .split(" ")
@@ -247,6 +372,9 @@ function ResultRow({
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  // Re-invite makes sense for completed / expired / not_started rows
+  const canReinvite = result.status !== "in_progress";
 
   return (
     <tr className="border-b border-surface-100 transition-colors hover:bg-surface-50">
@@ -318,6 +446,22 @@ function ResultRow({
           <Badge className="border text-[10px] sm:text-[11px] bg-emerald-50 text-emerald-700 border-emerald-200">
             Clean
           </Badge>
+        )}
+      </td>
+      <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+        {canReinvite ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isReinviting}
+            onClick={() => onReinvite(result.applicantId, result.candidateName)}
+            className="h-7 gap-1 px-2 text-[11px] sm:text-xs border-brand-200 text-brand-700 hover:bg-brand-50"
+          >
+            <RotateCcw className={cn("h-3 w-3", isReinviting && "animate-spin")} />
+            {isReinviting ? "Sending…" : "Re-invite"}
+          </Button>
+        ) : (
+          <span className="text-[11px] text-surface-400">In progress</span>
         )}
       </td>
     </tr>
