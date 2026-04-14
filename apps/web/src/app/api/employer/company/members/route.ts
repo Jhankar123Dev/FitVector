@@ -28,7 +28,7 @@ export async function GET() {
       .select(
         `
         id, company_id, user_id, role, invited_by, invite_email, status, invited_at, created_at, updated_at,
-        users (
+        users!company_members_user_id_fkey (
           full_name, email, avatar_url
         )
       `

@@ -54,10 +54,9 @@ export async function POST(
 
     try {
       evaluation = await pythonClient.post("/ai/evaluate-interview", {
-        answers: parsed.data.answers,
-        jobDescription: jobPost?.description || "",
-        requiredSkills: jobPost?.required_skills || [],
-        interviewType: interview.interview_type,
+        job_title: jobPost?.title || "",
+        job_description: jobPost?.description || "",
+        transcript: parsed.data.answers,   // { question, answer }[] matches TranscriptEntry
       });
     } catch {
       // Fallback when Python service is unavailable
