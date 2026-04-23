@@ -87,15 +87,26 @@ export default function SalaryInsightsPage() {
     };
   }, [salaryData, selectedRole, location]);
 
-  // Percentile calculation
+  // Percentile calculation — piecewise linear using known anchors
   const percentile = useMemo(() => {
     if (!aggregation || !userSalary) return null;
     const val = Number(userSalary);
     if (isNaN(val) || val <= 0) return null;
-    const { min, max } = aggregation;
+    const { min, p25, median, p75, max } = aggregation;
     if (val <= min) return 5;
     if (val >= max) return 95;
-    return Math.round(((val - min) / (max - min)) * 100);
+    const segments: [number, number, number, number][] = [
+      [min, p25,    5,  25],
+      [p25, median, 25, 50],
+      [median, p75, 50, 75],
+      [p75, max,    75, 95],
+    ];
+    for (const [lo, hi, pLo, pHi] of segments) {
+      if (val >= lo && val < hi) {
+        return Math.round(pLo + ((val - lo) / (hi - lo)) * (pHi - pLo));
+      }
+    }
+    return 95;
   }, [aggregation, userSalary]);
 
   const handleSelectRole = (role: string) => {

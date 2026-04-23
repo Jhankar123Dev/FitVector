@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Check, ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateCompany, useInviteMember } from "@/hooks/use-employer";
+import { useUser } from "@/hooks/use-user";
 import type { OnboardingData, TeamMemberRole } from "@/types/employer";
 import { Step1CompanyBasics } from "./_components/step-1-company-basics";
 import { Step2CompanyProfile } from "./_components/step-2-company-profile";
@@ -39,6 +40,7 @@ export default function EmployerOnboardingPage() {
   const [data, setData] = useState<OnboardingData>(INITIAL_DATA);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const { refreshSession } = useUser();
   const createCompany = useCreateCompany();
   const inviteMember = useInviteMember();
 
@@ -147,6 +149,7 @@ export default function EmployerOnboardingPage() {
         }
       }
 
+      await refreshSession();
       router.push("/employer");
     } catch (err) {
       console.error("Company creation failed:", err);

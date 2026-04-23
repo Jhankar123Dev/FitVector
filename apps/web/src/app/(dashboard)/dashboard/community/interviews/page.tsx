@@ -33,7 +33,7 @@ import {
   type InterviewOutcome,
   type InterviewExperience,
 } from "@/types/community";
-import { useCommunityPosts, useVote } from "@/hooks/use-community";
+import { useCommunityPosts, useVote, useCreatePost } from "@/hooks/use-community";
 
 type SortOption = "recent" | "helpful" | "company";
 
@@ -442,8 +442,8 @@ function ShareExperienceModal({ onClose }: { onClose: () => void }) {
   const [tips, setTips] = useState("");
   const [rating, setRating] = useState(3);
   const [isAnonymous, setIsAnonymous] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { mutate: createPost, isPending: submitting } = useCreatePost();
 
   const addRound = () => {
     setRounds((prev) => [...prev, { type: "Technical", questions: "" }]);
@@ -459,11 +459,31 @@ function ShareExperienceModal({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = () => {
     if (!company.trim() || !role.trim()) return;
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-    }, 1000);
+    createPost(
+      {
+        postType: "interview_experience",
+        title: company.trim(),
+        body: tips.trim() || `Interview experience at ${company.trim()}`,
+        isAnonymous,
+        interviewData: {
+          companyName: company.trim(),
+          role: role.trim(),
+          difficulty: diff,
+          outcome: outcomeVal,
+          overallRating: rating,
+          tips: tips.trim(),
+          rounds: rounds.map((r, i) => ({
+            roundNumber: i + 1,
+            type: r.type,
+            questions: r.questions
+              .split("\n")
+              .map((q) => q.trim())
+              .filter(Boolean),
+          })),
+        },
+      },
+      { onSuccess: () => setSubmitted(true) },
+    );
   };
 
   return (
