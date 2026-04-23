@@ -84,6 +84,21 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 });
     }
 
+    // Batch-fetch user votes for all returned posts
+    const postIds = (rows || []).map((r) => r.id);
+    let voteMap: Record<string, string> = {};
+    if (postIds.length > 0) {
+      const { data: userVoteRows } = await supabase
+        .from("community_votes")
+        .select("target_id, vote_type")
+        .eq("user_id", session.user.id)
+        .eq("target_type", "post")
+        .in("target_id", postIds);
+      voteMap = Object.fromEntries(
+        (userVoteRows || []).map((v) => [v.target_id, v.vote_type])
+      );
+    }
+
     const posts = (rows || []).map((row) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const r = row as any;
@@ -103,6 +118,7 @@ export async function GET(req: Request) {
         downvotes: row.downvotes || 0,
         commentsCount: row.comments_count || 0,
         interviewData: row.interview_data || null,
+        userVote: (voteMap[row.id] ?? null) as "up" | "down" | null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };

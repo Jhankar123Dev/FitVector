@@ -54,6 +54,7 @@ export default function InterviewExperiencesPage() {
       downvotes: (post.downvotes as number) ?? 0,
       isAnonymous: post.isAnonymous as boolean,
       authorName: (post.authorName as string) ?? null,
+      userVote: (post.userVote as "up" | "down" | null) ?? null,
       createdAt: post.createdAt as string,
     } as InterviewExperience;
   });
@@ -73,8 +74,29 @@ export default function InterviewExperiencesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Local state for votes
-  const [votes, setVotes] = useState<Record<string, { up: number; down: number }>>({});
+  const [localVotes, setLocalVotes] = useState<Record<string, "up" | "down" | null>>({});
+  const { mutate: castVote } = useVote();
+
+  const getUserVote = (exp: InterviewExperience) =>
+    exp.id in localVotes ? localVotes[exp.id] : (exp.userVote ?? null);
+
+  const handleVote = (exp: InterviewExperience, type: "up" | "down") => {
+    const current = getUserVote(exp);
+    const next = current === type ? null : type;
+    setLocalVotes((prev) => ({ ...prev, [exp.id]: next }));
+    castVote(
+      { targetType: "post", targetId: exp.id, voteType: type },
+      {
+        onSuccess: (res) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setLocalVotes((prev) => ({ ...prev, [exp.id]: (res as any).data?.voteType ?? null }));
+        },
+        onError: () => {
+          setLocalVotes((prev) => ({ ...prev, [exp.id]: current }));
+        },
+      }
+    );
+  };
 
   const filteredExperiences = useMemo(() => {
     let result = [...experiences];
@@ -119,8 +141,8 @@ export default function InterviewExperiencesPage() {
   };
 
   const getVotes = (exp: InterviewExperience) => ({
-    up: exp.upvotes + (votes[exp.id]?.up || 0),
-    down: exp.downvotes + (votes[exp.id]?.down || 0),
+    up: exp.upvotes,
+    down: exp.downvotes,
   });
 
   return (
@@ -238,6 +260,7 @@ export default function InterviewExperiencesPage() {
         {filteredExperiences.map((exp) => {
           const isExpanded = expandedId === exp.id;
           const v = getVotes(exp);
+          const userVote = getUserVote(exp);
           const diffConfig = DIFFICULTY_CONFIG[exp.difficulty];
           const outcomeConfig = OUTCOME_CONFIG[exp.outcome];
 
@@ -292,8 +315,8 @@ export default function InterviewExperiencesPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 text-xs text-surface-500">
-                      <ThumbsUp className="h-3 w-3" />
+                    <div className={cn("flex items-center gap-1 text-xs", userVote === "up" ? "text-brand-600" : "text-surface-500")}>
+                      <ThumbsUp className={cn("h-3 w-3", userVote === "up" && "fill-brand-500")} />
                       {v.up}
                     </div>
                     {isExpanded ? (
@@ -339,7 +362,7 @@ export default function InterviewExperiencesPage() {
                               </span>
                             </div>
                             <ul className="mt-2 space-y-1 pl-7">
-                              {round.questions.map((q, i) => (
+                              {(round.questions ?? []).map((q, i) => (
                                 <li key={i} className="text-xs text-surface-600 before:content-['•'] before:mr-1.5 before:text-surface-400">
                                   {q}
                                 </li>
@@ -366,19 +389,19 @@ export default function InterviewExperiencesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 gap-1 px-2 text-xs"
-                        onClick={(e) => { e.stopPropagation(); handleVote(exp.id, "up"); }}
+                        className={cn("h-7 gap-1 px-2 text-xs", userVote === "up" && "border-brand-500 bg-brand-50 text-brand-600")}
+                        onClick={(e) => { e.stopPropagation(); handleVote(exp, "up"); }}
                       >
-                        <ThumbsUp className="h-3 w-3" />
+                        <ThumbsUp className={cn("h-3 w-3", userVote === "up" && "fill-brand-500")} />
                         {v.up}
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 gap-1 px-2 text-xs"
-                        onClick={(e) => { e.stopPropagation(); handleVote(exp.id, "down"); }}
+                        className={cn("h-7 gap-1 px-2 text-xs", userVote === "down" && "border-red-400 bg-red-50 text-red-600")}
+                        onClick={(e) => { e.stopPropagation(); handleVote(exp, "down"); }}
                       >
-                        <ThumbsDown className="h-3 w-3" />
+                        <ThumbsDown className={cn("h-3 w-3", userVote === "down" && "fill-red-500")} />
                         {v.down}
                       </Button>
                     </div>

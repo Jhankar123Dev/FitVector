@@ -31,7 +31,7 @@ import {
   type DiscussionThread,
   type DiscussionReply,
 } from "@/types/community";
-import { useCommunityPosts, useCommunityPost, useAddComment, useCreatePost } from "@/hooks/use-community";
+import { useCommunityPosts, useCommunityPost, useAddComment, useCreatePost, useVote } from "@/hooks/use-community";
 
 type SortOption = "hot" | "new" | "top";
 
@@ -48,8 +48,29 @@ export default function DiscussionsPage() {
   const [showNewModal, setShowNewModal] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
-  const [threadUpvotes, setThreadUpvotes] = useState<Record<string, number>>({});
-  const [replyUpvotes, setReplyUpvotes] = useState<Record<string, number>>({});
+  const [localVotes, setLocalVotes] = useState<Record<string, "up" | "down" | null>>({});
+  const { mutate: castVote } = useVote();
+
+  const getThreadVote = (thread: DiscussionThread) =>
+    thread.id in localVotes ? localVotes[thread.id] : (thread.userVote ?? null);
+
+  const handleThreadVote = (thread: DiscussionThread, type: "up" | "down") => {
+    const current = getThreadVote(thread);
+    const next = current === type ? null : type;
+    setLocalVotes((prev) => ({ ...prev, [thread.id]: next }));
+    castVote(
+      { targetType: "post", targetId: thread.id, voteType: type },
+      {
+        onSuccess: (res) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setLocalVotes((prev) => ({ ...prev, [thread.id]: (res as any).data?.voteType ?? null }));
+        },
+        onError: () => {
+          setLocalVotes((prev) => ({ ...prev, [thread.id]: current }));
+        },
+      }
+    );
+  };
   const [threadReplyText, setThreadReplyText] = useState("");
   const [threadReplyAnon, setThreadReplyAnon] = useState(false);
   const [replyAnon, setReplyAnon] = useState(false);
@@ -84,9 +105,6 @@ export default function DiscussionsPage() {
   // Replies come from the live API when a thread is expanded
   const getRepliesForThread = (_threadId: string): DiscussionReply[] =>
     ((expandedPostData?.data as Record<string, unknown>)?.comments as DiscussionReply[]) ?? [];
-
-  const getUpvotes = (id: string, base: number, store: Record<string, number>) =>
-    base + (store[id] || 0);
 
   return (
     <div className="space-y-5">
@@ -148,6 +166,7 @@ export default function DiscussionsPage() {
           const catConfig = CATEGORY_CONFIG[thread.category];
           const replies = getRepliesForThread(thread.id);
           const topReplies = replies.filter((r) => !r.parentReplyId);
+          const threadVote = getThreadVote(thread);
 
           return (
             <Card key={thread.id} className="overflow-hidden">
@@ -165,13 +184,13 @@ export default function DiscussionsPage() {
                       className="h-6 w-6 p-0"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setThreadUpvotes((prev) => ({ ...prev, [thread.id]: (prev[thread.id] || 0) + 1 }));
+                        handleThreadVote(thread, "up");
                       }}
                     >
-                      <ThumbsUp className="h-3 w-3 text-surface-400" />
+                      <ThumbsUp className={cn("h-3 w-3", threadVote === "up" ? "fill-brand-500 text-brand-600" : "text-surface-400")} />
                     </Button>
-                    <span className="text-xs font-medium text-surface-600">
-                      {getUpvotes(thread.id, thread.upvotes, threadUpvotes)}
+                    <span className={cn("text-xs font-medium", threadVote === "up" ? "text-brand-600" : "text-surface-600")}>
+                      {thread.upvotes}
                     </span>
                   </div>
 
@@ -232,28 +251,58 @@ export default function DiscussionsPage() {
                         </h4>
                         {topReplies.map((reply) => {
                           const nested = replies.filter((r) => r.parentReplyId === reply.id);
+                          const replyVote = reply.id in localVotes ? localVotes[reply.id] : (reply.userVote ?? null);
                           return (
                             <div key={reply.id} className="space-y-2">
                               {/* Top-level reply */}
                               <ReplyCard
                                 reply={reply}
-                                upvotes={getUpvotes(reply.id, reply.upvotes, replyUpvotes)}
-                                onUpvote={() => setReplyUpvotes((prev) => ({ ...prev, [reply.id]: (prev[reply.id] || 0) + 1 }))}
+                                upvotes={reply.upvotes}
+                                userVote={replyVote}
+                                onUpvote={() => {
+                                  const current = replyVote;
+                                  const next = current === "up" ? null : "up";
+                                  setLocalVotes((prev) => ({ ...prev, [reply.id]: next }));
+                                  castVote(
+                                    { targetType: "comment", targetId: reply.id, voteType: "up" },
+                                    {
+                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                      onSuccess: (res) => setLocalVotes((prev) => ({ ...prev, [reply.id]: (res as any).data?.voteType ?? null })),
+                                      onError: () => setLocalVotes((prev) => ({ ...prev, [reply.id]: current })),
+                                    }
+                                  );
+                                }}
                                 onReply={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
                               />
 
                               {/* Nested replies */}
-                              {nested.map((nr) => (
-                                <div key={nr.id} className="ml-6">
-                                  <ReplyCard
-                                    reply={nr}
-                                    upvotes={getUpvotes(nr.id, nr.upvotes, replyUpvotes)}
-                                    onUpvote={() => setReplyUpvotes((prev) => ({ ...prev, [nr.id]: (prev[nr.id] || 0) + 1 }))}
-                                    onReply={() => {}}
-                                    isNested
-                                  />
-                                </div>
-                              ))}
+                              {nested.map((nr) => {
+                                const nrVote = nr.id in localVotes ? localVotes[nr.id] : (nr.userVote ?? null);
+                                return (
+                                  <div key={nr.id} className="ml-6">
+                                    <ReplyCard
+                                      reply={nr}
+                                      upvotes={nr.upvotes}
+                                      userVote={nrVote}
+                                      onUpvote={() => {
+                                        const current = nrVote;
+                                        const next = current === "up" ? null : "up";
+                                        setLocalVotes((prev) => ({ ...prev, [nr.id]: next }));
+                                        castVote(
+                                          { targetType: "comment", targetId: nr.id, voteType: "up" },
+                                          {
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            onSuccess: (res) => setLocalVotes((prev) => ({ ...prev, [nr.id]: (res as any).data?.voteType ?? null })),
+                                            onError: () => setLocalVotes((prev) => ({ ...prev, [nr.id]: current })),
+                                          }
+                                        );
+                                      }}
+                                      onReply={() => {}}
+                                      isNested
+                                    />
+                                  </div>
+                                );
+                              })}
 
                               {/* Reply input */}
                               {replyingTo === reply.id && (
@@ -360,12 +409,14 @@ export default function DiscussionsPage() {
 function ReplyCard({
   reply,
   upvotes,
+  userVote,
   onUpvote,
   onReply,
   isNested = false,
 }: {
   reply: DiscussionReply;
   upvotes: number;
+  userVote: "up" | "down" | null;
   onUpvote: () => void;
   onReply: () => void;
   isNested?: boolean;
@@ -376,8 +427,8 @@ function ReplyCard({
       <div className="mt-2 flex items-center gap-3 text-xs text-surface-400">
         <span>{reply.isAnonymous ? "Anonymous" : reply.authorName}</span>
         <span>{formatRelativeTime(reply.createdAt)}</span>
-        <button onClick={onUpvote} className="flex items-center gap-0.5 hover:text-brand-600">
-          <ThumbsUp className="h-2.5 w-2.5" />
+        <button onClick={onUpvote} className={cn("flex items-center gap-0.5", userVote === "up" ? "text-brand-600" : "hover:text-brand-600")}>
+          <ThumbsUp className={cn("h-2.5 w-2.5", userVote === "up" && "fill-brand-500")} />
           {upvotes}
         </button>
         {!isNested && (
@@ -402,7 +453,7 @@ function NewDiscussionModal({ onClose }: { onClose: () => void }) {
   const { mutate: createPost, isPending: submitting } = useCreatePost();
 
   const handleSubmit = () => {
-    if (!title.trim() || !body.trim()) return;
+    if (!title.trim() || body.length < 10) return;
     createPost(
       { title, body, postType: "discussion", category: cat, isAnonymous },
       { onSuccess: () => setSubmitted(true) }
@@ -458,6 +509,9 @@ function NewDiscussionModal({ onClose }: { onClose: () => void }) {
                 className="mt-1 text-sm"
                 placeholder="Share your thoughts, ask a question, or start a debate..."
               />
+              {body.length > 0 && body.length < 10 && (
+                <p className="mt-1 text-xs text-red-500">Min 10 characters ({body.length}/10)</p>
+              )}
             </div>
 
             <label className="flex items-center gap-2 text-sm">
@@ -465,7 +519,7 @@ function NewDiscussionModal({ onClose }: { onClose: () => void }) {
               Post anonymously
             </label>
 
-            <Button onClick={handleSubmit} disabled={submitting || !title.trim() || !body.trim()} className="w-full gap-1.5">
+            <Button onClick={handleSubmit} disabled={submitting || !title.trim() || body.length < 10} className="w-full gap-1.5">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {submitting ? "Posting..." : "Post Discussion"}
             </Button>

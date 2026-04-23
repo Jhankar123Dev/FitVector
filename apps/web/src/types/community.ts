@@ -42,6 +42,7 @@ export interface InterviewExperience {
   downvotes: number;
   isAnonymous: boolean;
   authorName: string | null;
+  userVote?: "up" | "down" | null;
   createdAt: string;
 }
 
@@ -87,6 +88,7 @@ export interface DiscussionReply {
   isAnonymous: boolean;
   body: string;
   upvotes: number;
+  userVote?: "up" | "down" | null;
   createdAt: string;
 }
 
@@ -100,6 +102,7 @@ export interface DiscussionThread {
   upvotes: number;
   repliesCount: number;
   lastActivityAt: string;
+  userVote?: "up" | "down" | null;
   createdAt: string;
 }
 
