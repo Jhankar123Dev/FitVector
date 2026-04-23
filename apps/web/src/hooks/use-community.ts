@@ -74,6 +74,14 @@ export function useVote() {
 
 // ─── Salary ───────────────────────────────────────────────────────────────────
 
+export function useSalaryRoles() {
+  return useQuery<{ data: string[] }>({
+    queryKey: ["salary", "roles"],
+    queryFn: () => fetchJson("/api/salary/roles"),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useSalaryInsights(role: string, location?: string, expMin?: number, expMax?: number) {
   const params = new URLSearchParams();
   if (role) params.set("role", role);

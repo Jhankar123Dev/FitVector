@@ -33,11 +33,8 @@ import {
   type ExperienceFilter,
   type SalaryAggregation,
 } from "@/types/community";
-import { useSalaryInsights, useSubmitSalaryReport } from "@/hooks/use-community";
-import {
-  MOCK_SALARY_ROLES,
-  MOCK_SALARY_LOCATIONS,
-} from "@/lib/mock/community-data";
+import { useSalaryInsights, useSubmitSalaryReport, useSalaryRoles } from "@/hooks/use-community";
+import { MOCK_SALARY_LOCATIONS } from "@/lib/mock/community-data";
 
 function formatSalary(n: number): string {
   if (n >= 10000000) return `₹${(n / 10000000).toFixed(1)}Cr`;
@@ -55,18 +52,21 @@ export default function SalaryInsightsPage() {
   const [userSalary, setUserSalary] = useState("");
   const [showContributeModal, setShowContributeModal] = useState(false);
 
+  const { data: rolesData } = useSalaryRoles();
+  const salaryRoles = rolesData?.data || [];
+
   // Role suggestions
   const suggestions = useMemo(() => {
     if (!roleQuery.trim()) return [];
     const q = roleQuery.toLowerCase();
-    return MOCK_SALARY_ROLES.filter((r) => r.toLowerCase().includes(q)).slice(0, 6);
-  }, [roleQuery]);
+    return salaryRoles.filter((r) => r.toLowerCase().includes(q)).slice(0, 6);
+  }, [roleQuery, salaryRoles]);
 
   // Fetch aggregation from API
   const expRange = EXPERIENCE_FILTERS[expFilter];
   const { data: salaryData } = useSalaryInsights(
     selectedRole,
-    location,
+    location === "All" ? "" : location,
     expRange.min,
     expRange.max,
   );
@@ -106,7 +106,7 @@ export default function SalaryInsightsPage() {
 
   const handleSearch = () => {
     if (roleQuery.trim()) {
-      const match = MOCK_SALARY_ROLES.find(
+      const match = salaryRoles.find(
         (r) => r.toLowerCase() === roleQuery.trim().toLowerCase(),
       );
       if (match) {
@@ -129,7 +129,7 @@ export default function SalaryInsightsPage() {
           </Link>
           <h1 className="text-2xl font-semibold text-surface-800">Salary Insights</h1>
           <p className="mt-1 text-sm text-surface-500">
-            Anonymous salary data for {MOCK_SALARY_ROLES.length} roles · Contributed by the community
+            Anonymous salary data for {salaryRoles.length} roles · Contributed by the community
           </p>
         </div>
         <Button onClick={() => setShowContributeModal(true)} className="gap-1.5">
@@ -210,7 +210,7 @@ export default function SalaryInsightsPage() {
           <IndianRupee className="mx-auto mb-2 h-8 w-8 text-surface-300" />
           <p className="text-sm text-surface-500">Search for a role to see salary insights</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {MOCK_SALARY_ROLES.slice(0, 8).map((r) => (
+            {salaryRoles.slice(0, 8).map((r) => (
               <button
                 key={r}
                 onClick={() => handleSelectRole(r)}

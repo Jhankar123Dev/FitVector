@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 
       if (!rpcError && aggregation) {
         const result = Array.isArray(aggregation) ? aggregation[0] : aggregation;
-        if (result && result.sample_size >= 10) {
+        if (result && result.sample_size >= 3) {
           return NextResponse.json({
             data: {
               role,
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
               insufficientData: false,
             },
           });
-        } else if (result && result.sample_size > 0 && result.sample_size < 10) {
+        } else if (result && result.sample_size > 0 && result.sample_size < 3) {
           return NextResponse.json({
             data: {
               role,
@@ -87,14 +87,14 @@ export async function GET(req: Request) {
       });
     }
 
-    if (reports.length < 10) {
+    if (reports.length < 3) {
       return NextResponse.json({
         data: {
           role,
           location: location || "All Locations",
           sampleSize: reports.length,
           insufficientData: true,
-          message: `Only ${reports.length} reports available. Need at least 10 for reliable insights.`,
+          message: `Only ${reports.length} reports available. Need at least 3 for reliable insights.`,
         },
       });
     }

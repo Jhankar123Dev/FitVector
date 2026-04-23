@@ -128,17 +128,9 @@ export default function InterviewExperiencesPage() {
     }
 
     return result;
-  }, [companySearch, roleSearch, difficulty, outcome, sort]);
+  }, [experiences, companySearch, roleSearch, difficulty, outcome, sort]);
 
-  const handleVote = (id: string, type: "up" | "down") => {
-    setVotes((prev) => ({
-      ...prev,
-      [id]: {
-        up: (prev[id]?.up || 0) + (type === "up" ? 1 : 0),
-        down: (prev[id]?.down || 0) + (type === "down" ? 1 : 0),
-      },
-    }));
-  };
+
 
   const getVotes = (exp: InterviewExperience) => ({
     up: exp.upvotes,

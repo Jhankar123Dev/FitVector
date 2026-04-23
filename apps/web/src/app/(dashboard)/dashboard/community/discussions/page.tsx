@@ -100,7 +100,7 @@ export default function DiscussionsPage() {
     }
 
     return result;
-  }, [category, sort]);
+  }, [threads, category, sort]);
 
   // Replies come from the live API when a thread is expanded
   const getRepliesForThread = (_threadId: string): DiscussionReply[] =>
