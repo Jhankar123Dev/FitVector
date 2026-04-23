@@ -31,7 +31,7 @@ import {
   type DiscussionThread,
   type DiscussionReply,
 } from "@/types/community";
-import { useCommunityPosts, useCommunityPost } from "@/hooks/use-community";
+import { useCommunityPosts, useCommunityPost, useAddComment, useCreatePost } from "@/hooks/use-community";
 
 type SortOption = "hot" | "new" | "top";
 
@@ -50,6 +50,10 @@ export default function DiscussionsPage() {
   const [replyText, setReplyText] = useState("");
   const [threadUpvotes, setThreadUpvotes] = useState<Record<string, number>>({});
   const [replyUpvotes, setReplyUpvotes] = useState<Record<string, number>>({});
+  const [threadReplyText, setThreadReplyText] = useState("");
+  const [threadReplyAnon, setThreadReplyAnon] = useState(false);
+  const [replyAnon, setReplyAnon] = useState(false);
+  const { mutate: addComment, isPending: addingComment } = useAddComment();
 
   const filteredThreads = useMemo(() => {
     let result = [...threads];
@@ -261,11 +265,30 @@ export default function DiscussionsPage() {
                                     rows={2}
                                     className="text-xs flex-1"
                                   />
-                                  <div className="flex flex-col gap-1">
-                                    <Button size="sm" className="h-7 text-xs" onClick={() => { setReplyingTo(null); setReplyText(""); }}>
-                                      Post
+                                  <div className="flex flex-col gap-1 items-end">
+                                    <label className="flex items-center gap-1 text-xs text-surface-500 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={replyAnon}
+                                        onChange={(e) => setReplyAnon(e.target.checked)}
+                                        className="rounded"
+                                      />
+                                      Anon
+                                    </label>
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs"
+                                      disabled={addingComment || !replyText.trim()}
+                                      onClick={() =>
+                                        addComment(
+                                          { postId: expandedThreadId!, body: replyText, isAnonymous: replyAnon },
+                                          { onSuccess: () => { setReplyingTo(null); setReplyText(""); setReplyAnon(false); } }
+                                        )
+                                      }
+                                    >
+                                      {addingComment ? <Loader2 className="h-3 w-3 animate-spin" /> : "Post"}
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setReplyingTo(null)}>
+                                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setReplyingTo(null); setReplyAnon(false); }}>
                                       Cancel
                                     </Button>
                                   </div>
@@ -280,11 +303,36 @@ export default function DiscussionsPage() {
                     {/* Reply to thread */}
                     <div className="flex gap-2 border-t border-surface-200 pt-3">
                       <Textarea
+                        value={threadReplyText}
+                        onChange={(e) => setThreadReplyText(e.target.value)}
                         placeholder="Reply to this thread..."
                         rows={2}
                         className="text-sm flex-1"
                       />
-                      <Button size="sm" className="self-end">Reply</Button>
+                      <div className="flex flex-col gap-1 items-end">
+                        <label className="flex items-center gap-1 text-xs text-surface-500 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={threadReplyAnon}
+                            onChange={(e) => setThreadReplyAnon(e.target.checked)}
+                            className="rounded"
+                          />
+                          Anon
+                        </label>
+                        <Button
+                          size="sm"
+                          className="self-end"
+                          disabled={addingComment || !threadReplyText.trim()}
+                          onClick={() =>
+                            addComment(
+                              { postId: thread.id, body: threadReplyText, isAnonymous: threadReplyAnon },
+                              { onSuccess: () => { setThreadReplyText(""); setThreadReplyAnon(false); } }
+                            )
+                          }
+                        >
+                          {addingComment ? <Loader2 className="h-3 w-3 animate-spin" /> : "Reply"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -350,16 +398,15 @@ function NewDiscussionModal({ onClose }: { onClose: () => void }) {
   const [cat, setCat] = useState<DiscussionCategory>("tech");
   const [body, setBody] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { mutate: createPost, isPending: submitting } = useCreatePost();
 
   const handleSubmit = () => {
     if (!title.trim() || !body.trim()) return;
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-    }, 1000);
+    createPost(
+      { title, body, postType: "discussion", category: cat, isAnonymous },
+      { onSuccess: () => setSubmitted(true) }
+    );
   };
 
   return (

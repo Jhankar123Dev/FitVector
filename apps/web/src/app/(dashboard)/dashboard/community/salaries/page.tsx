@@ -452,16 +452,23 @@ function ContributeSalaryModal({ onClose }: { onClose: () => void }) {
   const [experience, setExperience] = useState("");
   const [baseSalary, setBaseSalary] = useState("");
   const [totalComp, setTotalComp] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { mutate: submitReport, isPending: submitting } = useSubmitSalaryReport();
 
   const handleSubmit = () => {
     if (!role.trim() || !baseSalary) return;
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-    }, 1000);
+    submitReport(
+      {
+        roleTitle: role,
+        companyName: company,
+        location: loc,
+        experienceYears: parseInt(experience) || 0,
+        baseSalary: parseInt(baseSalary),
+        totalCompensation: parseInt(totalComp) || parseInt(baseSalary),
+        currency: "INR",
+      },
+      { onSuccess: () => setSubmitted(true) }
+    );
   };
 
   return (

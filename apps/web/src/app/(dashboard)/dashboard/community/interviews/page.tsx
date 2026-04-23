@@ -38,7 +38,25 @@ type SortOption = "recent" | "helpful" | "company";
 
 export default function InterviewExperiencesPage() {
   const { data: postsData, isLoading } = useCommunityPosts("interview_experience");
-  const experiences = (postsData?.data || []) as unknown as InterviewExperience[];
+  const experiences = (postsData?.data || []).map((post) => {
+    const d = (post.interviewData as Record<string, unknown>) || {};
+    return {
+      id: post.id,
+      companyName: d.companyName ?? post.title,
+      role: d.role ?? "",
+      difficulty: (d.difficulty as InterviewDifficulty) ?? "medium",
+      outcome: (d.outcome as InterviewOutcome) ?? "in_progress",
+      rounds: (d.rounds as InterviewExperience["rounds"]) ?? [],
+      processDescription: (d.processDescription as string) ?? "",
+      tips: (d.tips as string) ?? "",
+      overallRating: (d.overallRating as number) ?? 0,
+      upvotes: (post.upvotes as number) ?? 0,
+      downvotes: (post.downvotes as number) ?? 0,
+      isAnonymous: post.isAnonymous as boolean,
+      authorName: (post.authorName as string) ?? null,
+      createdAt: post.createdAt as string,
+    } as InterviewExperience;
+  });
 
   // Derive unique companies from live data for the header count
   const uniqueCompanyCount = useMemo(
