@@ -31,12 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { AnalyticsDateRange } from "@/types/employer";
 import { SOURCE_LABELS } from "@/types/employer";
-import { useAnalytics, useFunnel, useSources } from "@/hooks/use-analytics";
-import {
-  MOCK_TIME_TO_HIRE_TREND,
-  MOCK_JOB_PERFORMANCE,
-  MOCK_INTERVIEWER_PERFORMANCE,
-} from "@/lib/mock/analytics-data";
+import { useAnalytics, useFunnel, useSources, useJobPerformance, useTrend, useInterviewerPerformance } from "@/hooks/use-analytics";
 
 // ── Funnel colors (gradient from brand to emerald) ──────────────────
 const FUNNEL_COLORS = ["#6c5ce7", "#7c6cf7", "#8b7ff7", "#4ade80", "#22c55e", "#16a34a", "#059669"];
@@ -54,6 +49,13 @@ export default function AnalyticsPage() {
   const { data: analyticsData, isLoading: metricsLoading } = useAnalytics(dateRange === "custom" ? "90d" : dateRange);
   const { data: funnelData } = useFunnel();
   const { data: sourcesData } = useSources();
+  const { data: trendData } = useTrend();
+  const { data: jobPerfData } = useJobPerformance();
+  const { data: interviewerData } = useInterviewerPerformance();
+
+  const trendPoints = trendData?.data || [];
+  const jobPerformance = jobPerfData?.data || [];
+  const interviewerPerformance = interviewerData?.data || [];
 
   // Map API response to expected shape
   const apiMetrics = analyticsData?.data || {};
@@ -248,25 +250,31 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[220px] sm:h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={MOCK_TIME_TO_HIRE_TREND}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                  <XAxis dataKey="week" tick={{ fontSize: 10, fill: "#78716c" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "#a8a29e" }} domain={[0, 25]} />
-                  <Tooltip
-                    contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e7e5e4" }}
-                    formatter={(value: number) => [`${value} days`, "Time to Hire"]}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="days"
-                    stroke="#6c5ce7"
-                    strokeWidth={2.5}
-                    dot={{ fill: "#6c5ce7", r: 3 }}
-                    activeDot={{ r: 5 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {trendPoints.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-xs text-surface-400">
+                  No hire data yet — trend will appear as candidates are hired
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendPoints}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                    <XAxis dataKey="week" tick={{ fontSize: 10, fill: "#78716c" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "#a8a29e" }} domain={[0, "auto"]} />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e7e5e4" }}
+                      formatter={(value: number) => [`${value} days`, "Time to Hire"]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="days"
+                      stroke="#6c5ce7"
+                      strokeWidth={2.5}
+                      dot={{ fill: "#6c5ce7", r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -292,7 +300,9 @@ export default function AnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {MOCK_JOB_PERFORMANCE.map((job) => (
+                  {jobPerformance.length === 0 ? (
+                    <tr><td colSpan={5} className="px-3 py-6 text-center text-xs text-surface-400">No job data yet</td></tr>
+                  ) : jobPerformance.map((job) => (
                     <tr key={job.jobId} className="border-b border-surface-100 hover:bg-surface-50">
                       <td className="px-3 py-2">
                         <span className="text-xs font-medium text-surface-800 line-clamp-1">{job.title}</span>
@@ -340,7 +350,9 @@ export default function AnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {MOCK_INTERVIEWER_PERFORMANCE.map((ip) => (
+                  {interviewerPerformance.length === 0 ? (
+                    <tr><td colSpan={4} className="px-3 py-6 text-center text-xs text-surface-400">No completed interviews yet</td></tr>
+                  ) : interviewerPerformance.map((ip) => (
                     <tr key={ip.memberId} className="border-b border-surface-100 hover:bg-surface-50">
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
@@ -352,22 +364,26 @@ export default function AnalyticsPage() {
                       </td>
                       <td className="px-3 py-2 text-xs text-surface-600">{ip.interviewsDone}</td>
                       <td className="px-3 py-2">
-                        <span className={cn(
-                          "text-xs font-semibold",
-                          ip.avgFeedbackTime <= 2 ? "text-emerald-600" : ip.avgFeedbackTime <= 4 ? "text-amber-600" : "text-red-500",
-                        )}>
-                          {ip.avgFeedbackTime}h
-                        </span>
+                        {ip.avgFeedbackTime != null ? (
+                          <span className={cn(
+                            "text-xs font-semibold",
+                            ip.avgFeedbackTime <= 2 ? "text-emerald-600" : ip.avgFeedbackTime <= 4 ? "text-amber-600" : "text-red-500",
+                          )}>
+                            {ip.avgFeedbackTime}h
+                          </span>
+                        ) : <span className="text-xs text-surface-400">—</span>}
                       </td>
                       <td className="px-3 py-2">
-                        <span className={cn(
-                          "inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold",
-                          ip.calibrationScore >= 85 ? "bg-emerald-50 text-emerald-700" :
-                          ip.calibrationScore >= 70 ? "bg-brand-50 text-brand-700" :
-                          "bg-amber-50 text-amber-700",
-                        )}>
-                          {ip.calibrationScore}
-                        </span>
+                        {ip.avgScore != null ? (
+                          <span className={cn(
+                            "inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold",
+                            ip.avgScore >= 8 ? "bg-emerald-50 text-emerald-700" :
+                            ip.avgScore >= 6 ? "bg-brand-50 text-brand-700" :
+                            "bg-amber-50 text-amber-700",
+                          )}>
+                            {ip.avgScore}/10
+                          </span>
+                        ) : <span className="text-xs text-surface-400">—</span>}
                       </td>
                     </tr>
                   ))}

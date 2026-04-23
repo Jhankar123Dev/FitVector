@@ -33,3 +33,27 @@ export function useSources() {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useJobPerformance() {
+  return useQuery<{ data: Array<{ jobId: string; title: string; applicants: number; screenRate: number; interviewRate: number; hired: number }> }>({
+    queryKey: ["employer", "analytics", "jobs"],
+    queryFn: () => fetchJson("/api/employer/analytics/jobs"),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useTrend() {
+  return useQuery<{ data: Array<{ week: string; days: number }> }>({
+    queryKey: ["employer", "analytics", "trend"],
+    queryFn: () => fetchJson("/api/employer/analytics/trend"),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useInterviewerPerformance() {
+  return useQuery<{ data: Array<{ memberId: string; name: string; interviewsDone: number; avgFeedbackTime: number | null; avgScore: number | null }> }>({
+    queryKey: ["employer", "analytics", "interviewers"],
+    queryFn: () => fetchJson("/api/employer/analytics/interviewers"),
+    staleTime: 5 * 60 * 1000,
+  });
+}

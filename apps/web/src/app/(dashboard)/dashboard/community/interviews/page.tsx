@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,8 @@ import { useCommunityPosts, useVote } from "@/hooks/use-community";
 type SortOption = "recent" | "helpful" | "company";
 
 export default function InterviewExperiencesPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: postsData, isLoading } = useCommunityPosts("interview_experience");
   const experiences = (postsData?.data || []).map((post) => {
     const d = (post.interviewData as Record<string, unknown>) || {};
@@ -71,8 +74,16 @@ export default function InterviewExperiencesPage() {
   const [difficulty, setDifficulty] = useState<InterviewDifficulty | "all">("all");
   const [outcome, setOutcome] = useState<InterviewOutcome | "all">("all");
   const [sort, setSort] = useState<SortOption>("recent");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(() => searchParams.get("id"));
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (expandedId) params.set("id", expandedId);
+    else params.delete("id");
+    const qs = params.toString();
+    router.replace(`${window.location.pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [expandedId]);
 
   const [localVotes, setLocalVotes] = useState<Record<string, "up" | "down" | null>>({});
   const { mutate: castVote } = useVote();
