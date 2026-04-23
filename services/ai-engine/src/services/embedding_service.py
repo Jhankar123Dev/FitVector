@@ -310,13 +310,9 @@ Provide your analysis as JSON:
             system_prompt=GAP_ANALYSIS_SYSTEM_PROMPT,
             user_prompt=user_prompt,
             max_tokens=2000,
+            response_mime_type="application/json",
         )
-        # Strip markdown fences if the model wraps the JSON
-        clean = raw_text.strip()
-        if clean.startswith("```"):
-            import re as _re
-            clean = _re.sub(r"^```(?:json)?\s*", "", clean)
-            clean = _re.sub(r"\s*```$", "", clean).strip()
+        clean = _clean_gemini_json_response(raw_text)
         if not clean:
             raise ValueError("Gemini returned empty response for gap analysis")
         parsed = json.loads(clean)

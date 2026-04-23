@@ -9,10 +9,22 @@
 -- =============================================================================
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- SECTION 0 · CONFIGURATION — edit these two lines before running
+-- SECTION 0 · CONFIGURATION
 -- ─────────────────────────────────────────────────────────────────────────────
-\set employer_email 'employer1@gmail.com'
-\set seeker_email   'seeker1@gmail.com'
+-- Emails are inlined below — no \set needed for SQL Editor.
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- GUARD — fails immediately if either email is not found in public.users
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.users WHERE email = 'employer_1@seed.fitvector.dev') THEN
+    RAISE EXCEPTION 'SEED ERROR: employer email "employer1@gmail.com" not found in public.users. Run: SELECT id, email FROM public.users; to find the correct email.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.users WHERE email = 'jhadejhankar@gmail.com') THEN
+    RAISE EXCEPTION 'SEED ERROR: seeker email "seeker1@gmail.com" not found in public.users. Run: SELECT id, email FROM public.users; to find the correct email.';
+  END IF;
+END $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- SECTION 1 · TEARDOWN — delete in reverse FK order
@@ -140,7 +152,7 @@ VALUES
     ARRAY['innovation','collaboration','diversity','growth','agile'],
     '[{"city":"Bengaluru","state":"Karnataka"},{"city":"Mumbai","state":"Maharashtra"},{"city":"Hyderabad","state":"Telangana"},{"city":"Chennai","state":"Tamil Nadu"}]'::jsonb,
     '{"primary_color":"#1a3c6e","secondary_color":"#00b4f0","tagline":"Accelerating digital transformation","cover_image_url":"https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200"}'::jsonb,
-    (SELECT id FROM public.users WHERE email = :'employer_email'),
+    (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
     'growth',
     NOW() + INTERVAL '1 year',
     true
@@ -157,7 +169,7 @@ VALUES
     ARRAY['technology','consulting','innovation','global','leadership'],
     '[{"city":"Bengaluru","state":"Karnataka"},{"city":"Pune","state":"Maharashtra"},{"city":"Hyderabad","state":"Telangana"}]'::jsonb,
     '{"primary_color":"#a100ff","secondary_color":"#000000","tagline":"Let there be change"}'::jsonb,
-    (SELECT id FROM public.users WHERE email = :'employer_email'),
+    (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
     'starter',
     NULL,
     false
@@ -174,7 +186,7 @@ VALUES
     ARRAY['digital','cloud','sustainability','diversity','excellence'],
     '[{"city":"Mumbai","state":"Maharashtra"},{"city":"Pune","state":"Maharashtra"},{"city":"Bengaluru","state":"Karnataka"}]'::jsonb,
     '{"primary_color":"#0070ad","secondary_color":"#12abdb","tagline":"Get the future you want"}'::jsonb,
-    (SELECT id FROM public.users WHERE email = :'employer_email'),
+    (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
     'starter',
     NULL,
     false
@@ -187,10 +199,10 @@ VALUES
 INSERT INTO public.company_members (company_id, user_id, role, invited_by, invite_email, status)
 VALUES (
   'aaaaaaaa-0001-0001-0001-000000000001',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'admin',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
-  :'employer_email',
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
+  'employer_1@seed.fitvector.dev',
   'active'
 );
 
@@ -210,7 +222,7 @@ VALUES
   'Write a `debounce(fn, delay)` function that returns a debounced version of `fn`. The debounced function delays invoking `fn` until after `delay` milliseconds have elapsed since the last invocation.',
   '{"nodejs": "function debounce(fn, delay) {\n  // your code here\n}\n\nmodule.exports = debounce;", "javascript": "function debounce(fn, delay) {\n  // your code here\n}"}'::jsonb,
   '{"nodejs": "function debounce(fn, delay) {\n  let timer;\n  return function(...args) {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), delay);\n  };\n}\nmodule.exports = debounce;"}'::jsonb,
-  '[{"input":"debounce called 3 times in 100ms window with 200ms delay","expected":"fn called exactly once","hidden":false},{"input":"debounce called once then delay passes","expected":"fn called once","hidden":false}]'::jsonb,
+  '[{"input":"debounce called 3 times in 100ms window with 200ms delay","expectedOutput":"fn called exactly once","visible":true},{"input":"debounce called once then delay passes","expectedOutput":"fn called once","visible":true}]'::jsonb,
   ARRAY['javascript','closures','timers','frontend']
 ),
 (
@@ -221,7 +233,7 @@ VALUES
   'Write a function `flatten(arr)` that takes a deeply nested array and returns a single flat array containing all values.',
   '{"nodejs": "function flatten(arr) {\n  // your code here\n}\nmodule.exports = flatten;", "javascript": "function flatten(arr) {\n  // your code here\n}"}'::jsonb,
   '{"nodejs": "function flatten(arr) {\n  return arr.reduce((acc, val) => Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []);\n}\nmodule.exports = flatten;"}'::jsonb,
-  '[{"input":"[1,[2,[3,[4]]],5]","expected":"[1,2,3,4,5]","hidden":false},{"input":"[[1,2],[3,[4,5]]]","expected":"[1,2,3,4,5]","hidden":false},{"input":"[]","expected":"[]","hidden":true}]'::jsonb,
+  '[{"input":"[1,[2,[3,[4]]],5]","expectedOutput":"[1,2,3,4,5]","visible":true},{"input":"[[1,2],[3,[4,5]]]","expectedOutput":"[1,2,3,4,5]","visible":true},{"input":"[]","expectedOutput":"[]","visible":false}]'::jsonb,
   ARRAY['javascript','arrays','recursion']
 ),
 (
@@ -232,7 +244,7 @@ VALUES
   'Implement your own `myPromiseAll(promises)` function that behaves exactly like `Promise.all`: resolves with an array of results when all promises resolve, or rejects as soon as any promise rejects.',
   '{"nodejs": "function myPromiseAll(promises) {\n  // your code here\n}\nmodule.exports = myPromiseAll;"}'::jsonb,
   '{"nodejs": "function myPromiseAll(promises) {\n  return new Promise((resolve, reject) => {\n    const results = [];\n    let remaining = promises.length;\n    if (remaining === 0) return resolve(results);\n    promises.forEach((p, i) => {\n      Promise.resolve(p).then(val => {\n        results[i] = val;\n        if (--remaining === 0) resolve(results);\n      }).catch(reject);\n    });\n  });\n}\nmodule.exports = myPromiseAll;"}'::jsonb,
-  '[{"input":"[Promise.resolve(1), Promise.resolve(2)]","expected":"[1,2]","hidden":false},{"input":"[Promise.reject(''err'')]","expected":"rejects with ''err''","hidden":false}]'::jsonb,
+  '[{"input":"[Promise.resolve(1), Promise.resolve(2)]","expectedOutput":"[1,2]","visible":true},{"input":"[Promise.reject(''err'')]","expectedOutput":"rejects with ''err''","visible":true}]'::jsonb,
   ARRAY['javascript','promises','async','frontend']
 ),
 
@@ -245,7 +257,7 @@ VALUES
   'Given a table `orders(id, user_id, amount, created_at)`, write a SQL query using a Common Table Expression (CTE) to find the top 3 users by total spend, along with their order count and average order value.',
   '{"sql": "-- Write your SQL query here\nWITH user_stats AS (\n  -- your CTE\n)\nSELECT ...\nFROM user_stats\nORDER BY ...\nLIMIT 3;"}'::jsonb,
   '{"sql": "WITH user_stats AS (\n  SELECT user_id,\n         SUM(amount) AS total_spend,\n         COUNT(*) AS order_count,\n         AVG(amount) AS avg_order_value\n  FROM orders\n  GROUP BY user_id\n)\nSELECT user_id, total_spend, order_count, ROUND(avg_order_value, 2) AS avg_order_value\nFROM user_stats\nORDER BY total_spend DESC\nLIMIT 3;"}'::jsonb,
-  '[{"input":"orders table with 10 users","expected":"3 rows ordered by total_spend DESC","hidden":false}]'::jsonb,
+  '[{"input":"orders table with 10 users","expectedOutput":"3 rows ordered by total_spend DESC","visible":true}]'::jsonb,
   ARRAY['sql','cte','aggregation','backend']
 ),
 (
@@ -256,7 +268,7 @@ VALUES
   'Given `transactions(id, user_id, amount, created_at)`, write a query that returns each transaction along with a running total of `amount` for each user, ordered by `created_at`.',
   '{"sql": "-- Use window functions\nSELECT\n  id,\n  user_id,\n  amount,\n  created_at,\n  -- running total here\nFROM transactions\nORDER BY user_id, created_at;"}'::jsonb,
   '{"sql": "SELECT\n  id,\n  user_id,\n  amount,\n  created_at,\n  SUM(amount) OVER (PARTITION BY user_id ORDER BY created_at ROWS UNBOUNDED PRECEDING) AS running_total\nFROM transactions\nORDER BY user_id, created_at;"}'::jsonb,
-  '[{"input":"transactions for 3 users","expected":"running total resets per user","hidden":false}]'::jsonb,
+  '[{"input":"transactions for 3 users","expectedOutput":"running total resets per user","visible":true}]'::jsonb,
   ARRAY['sql','window-functions','analytics']
 ),
 
@@ -269,7 +281,7 @@ VALUES
   'Implement a `@retry(max_attempts, delay_seconds)` decorator that retries the decorated function up to `max_attempts` times on any exception, waiting `delay_seconds` between each attempt. Raise the last exception if all attempts fail.',
   '{"python3": "import time\nimport functools\n\ndef retry(max_attempts, delay_seconds=1):\n    def decorator(fn):\n        @functools.wraps(fn)\n        def wrapper(*args, **kwargs):\n            # your code here\n            pass\n        return wrapper\n    return decorator"}'::jsonb,
   '{"python3": "import time\nimport functools\n\ndef retry(max_attempts, delay_seconds=1):\n    def decorator(fn):\n        @functools.wraps(fn)\n        def wrapper(*args, **kwargs):\n            last_exc = None\n            for attempt in range(max_attempts):\n                try:\n                    return fn(*args, **kwargs)\n                except Exception as e:\n                    last_exc = e\n                    if attempt < max_attempts - 1:\n                        time.sleep(delay_seconds)\n            raise last_exc\n        return wrapper\n    return decorator"}'::jsonb,
-  '[{"input":"function that fails 2 times then succeeds, max_attempts=3","expected":"returns successfully on 3rd attempt","hidden":false},{"input":"function that always fails, max_attempts=2","expected":"raises exception after 2 attempts","hidden":false}]'::jsonb,
+  '[{"input":"function that fails 2 times then succeeds, max_attempts=3","expectedOutput":"returns successfully on 3rd attempt","visible":true},{"input":"function that always fails, max_attempts=2","expectedOutput":"raises exception after 2 attempts","visible":true}]'::jsonb,
   ARRAY['python','decorators','error-handling','backend']
 ),
 (
@@ -280,7 +292,7 @@ VALUES
   'Write a function `chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]` that splits a long string into overlapping chunks of at most `chunk_size` characters, with `overlap` characters shared between consecutive chunks. This is a common pattern in RAG pipelines.',
   '{"python3": "def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:\n    # your code here\n    pass"}'::jsonb,
   '{"python3": "def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:\n    if chunk_size <= overlap:\n        raise ValueError(\"chunk_size must be greater than overlap\")\n    chunks = []\n    start = 0\n    while start < len(text):\n        end = min(start + chunk_size, len(text))\n        chunks.append(text[start:end])\n        if end == len(text):\n            break\n        start += chunk_size - overlap\n    return chunks"}'::jsonb,
-  '[{"input":"text=''abcdefghij'', chunk_size=4, overlap=1","expected":"[''abcd'',''defg'',''ghij'']","hidden":false},{"input":"empty string","expected":"[]","hidden":true}]'::jsonb,
+  '[{"input":"text=''abcdefghij'', chunk_size=4, overlap=1","expectedOutput":"[''abcd'',''defg'',''ghij'']","visible":true},{"input":"empty string","expectedOutput":"[]","visible":false}]'::jsonb,
   ARRAY['python','nlp','rag','ai-engineer']
 ),
 (
@@ -291,7 +303,7 @@ VALUES
   'Define a Pydantic v2 model `JobApplication` with fields: `name` (str, min_length=2), `email` (EmailStr), `experience_years` (int, ≥ 0), and `skills` (list[str], at least 1 item). Add a validator that normalises all skill strings to lowercase.',
   '{"python3": "from pydantic import BaseModel, field_validator, EmailStr\nfrom typing import List\n\nclass JobApplication(BaseModel):\n    name: str\n    email: EmailStr\n    experience_years: int\n    skills: List[str]\n\n    # add validators here"}'::jsonb,
   '{"python3": "from pydantic import BaseModel, field_validator, EmailStr, Field\nfrom typing import List\n\nclass JobApplication(BaseModel):\n    name: str = Field(min_length=2)\n    email: EmailStr\n    experience_years: int = Field(ge=0)\n    skills: List[str] = Field(min_length=1)\n\n    @field_validator(''skills'')\n    @classmethod\n    def normalise_skills(cls, v):\n        return [s.lower().strip() for s in v]"}'::jsonb,
-  '[{"input":"valid application","expected":"model instantiates correctly","hidden":false},{"input":"experience_years=-1","expected":"ValidationError raised","hidden":false},{"input":"skills=[]","expected":"ValidationError raised","hidden":true}]'::jsonb,
+  '[{"input":"valid application","expectedOutput":"model instantiates correctly","visible":true},{"input":"experience_years=-1","expectedOutput":"ValidationError raised","visible":true},{"input":"skills=[]","expectedOutput":"ValidationError raised","visible":false}]'::jsonb,
   ARRAY['python','pydantic','validation','fastapi']
 ),
 
@@ -304,7 +316,7 @@ VALUES
   'Given an array of integers `nums` and an integer `target`, return the indices of the two numbers that add up to `target`. You may assume exactly one solution exists and you may not use the same element twice.',
   '{"python3": "def two_sum(nums, target):\n    # your code here\n    pass", "nodejs": "function twoSum(nums, target) {\n  // your code here\n}\nmodule.exports = twoSum;", "java": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // your code here\n    }\n}"}'::jsonb,
   '{"python3": "def two_sum(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        diff = target - n\n        if diff in seen:\n            return [seen[diff], i]\n        seen[n] = i"}'::jsonb,
-  '[{"input":"nums=[2,7,11,15], target=9","expected":"[0,1]","hidden":false},{"input":"nums=[3,2,4], target=6","expected":"[1,2]","hidden":false},{"input":"nums=[3,3], target=6","expected":"[0,1]","hidden":true}]'::jsonb,
+  '[{"input":"nums=[2,7,11,15], target=9","expectedOutput":"[0,1]","visible":true},{"input":"nums=[3,2,4], target=6","expectedOutput":"[1,2]","visible":true},{"input":"nums=[3,3], target=6","expectedOutput":"[0,1]","visible":false}]'::jsonb,
   ARRAY['algorithms','hash-map','arrays','leetcode']
 ),
 (
@@ -315,7 +327,7 @@ VALUES
   'Given an array `nums` and integer `k`, return an array of the maximum value in each sliding window of size `k`.',
   '{"python3": "from collections import deque\n\ndef max_sliding_window(nums, k):\n    # your code here\n    pass", "nodejs": "function maxSlidingWindow(nums, k) {\n  // your code here\n}\nmodule.exports = maxSlidingWindow;"}'::jsonb,
   '{"python3": "from collections import deque\n\ndef max_sliding_window(nums, k):\n    dq, result = deque(), []\n    for i, n in enumerate(nums):\n        while dq and nums[dq[-1]] <= n:\n            dq.pop()\n        dq.append(i)\n        if dq[0] == i - k:\n            dq.popleft()\n        if i >= k - 1:\n            result.append(nums[dq[0]])\n    return result"}'::jsonb,
-  '[{"input":"nums=[1,3,-1,-3,5,3,6,7], k=3","expected":"[3,3,5,5,6,7]","hidden":false},{"input":"nums=[1], k=1","expected":"[1]","hidden":true}]'::jsonb,
+  '[{"input":"nums=[1,3,-1,-3,5,3,6,7], k=3","expectedOutput":"[3,3,5,5,6,7]","visible":true},{"input":"nums=[1], k=1","expectedOutput":"[1]","visible":false}]'::jsonb,
   ARRAY['algorithms','sliding-window','deque','hard']
 ),
 (
@@ -326,7 +338,7 @@ VALUES
   'Implement an LRU (Least Recently Used) cache with `get(key)` and `put(key, value)` operations, both O(1). The cache has a fixed capacity; when full, evict the least recently used entry.',
   '{"python3": "class LRUCache:\n    def __init__(self, capacity: int):\n        # your code here\n        pass\n\n    def get(self, key: int) -> int:\n        pass\n\n    def put(self, key: int, value: int) -> None:\n        pass", "nodejs": "class LRUCache {\n  constructor(capacity) {}\n  get(key) {}\n  put(key, value) {}\n}\nmodule.exports = LRUCache;"}'::jsonb,
   '{"python3": "from collections import OrderedDict\n\nclass LRUCache:\n    def __init__(self, capacity):\n        self.cap = capacity\n        self.cache = OrderedDict()\n    def get(self, key):\n        if key not in self.cache: return -1\n        self.cache.move_to_end(key)\n        return self.cache[key]\n    def put(self, key, value):\n        if key in self.cache: self.cache.move_to_end(key)\n        self.cache[key] = value\n        if len(self.cache) > self.cap:\n            self.cache.popitem(last=False)"}'::jsonb,
-  '[{"input":"capacity=2, put(1,1), put(2,2), get(1)=1, put(3,3), get(2)=-1","expected":"get(2) returns -1 (evicted)","hidden":false}]'::jsonb,
+  '[{"input":"capacity=2, put(1,1), put(2,2), get(1)=1, put(3,3), get(2)=-1","expectedOutput":"get(2) returns -1 (evicted)","visible":true}]'::jsonb,
   ARRAY['data-structures','lru','linked-list','hash-map']
 ),
 (
@@ -337,7 +349,7 @@ VALUES
   'Implement a React hook `useInfiniteScroll(fetchFn, options)` that detects when the user scrolls near the bottom of a container (using IntersectionObserver) and calls `fetchFn` to load the next page. Handle loading and error states.',
   '{"javascript": "import { useState, useEffect, useRef } from ''react'';\n\nexport function useInfiniteScroll(fetchFn, options = {}) {\n  // your code here\n}"}'::jsonb,
   '{"javascript": "import { useState, useEffect, useRef, useCallback } from ''react'';\n\nexport function useInfiniteScroll(fetchFn, { threshold = 0.1 } = {}) {\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState(null);\n  const sentinelRef = useRef(null);\n\n  const load = useCallback(async () => {\n    if (loading) return;\n    setLoading(true);\n    try { await fetchFn(); } catch(e) { setError(e); } finally { setLoading(false); }\n  }, [fetchFn, loading]);\n\n  useEffect(() => {\n    const observer = new IntersectionObserver(([entry]) => {\n      if (entry.isIntersecting) load();\n    }, { threshold });\n    if (sentinelRef.current) observer.observe(sentinelRef.current);\n    return () => observer.disconnect();\n  }, [load, threshold]);\n\n  return { sentinelRef, loading, error };\n}"}'::jsonb,
-  '[{"input":"scroll to bottom of container","expected":"fetchFn is called","hidden":false},{"input":"fetchFn rejects","expected":"error state is set","hidden":false}]'::jsonb,
+  '[{"input":"scroll to bottom of container","expectedOutput":"fetchFn is called","visible":true},{"input":"fetchFn rejects","expectedOutput":"error state is set","visible":true}]'::jsonb,
   ARRAY['react','hooks','intersection-observer','frontend']
 );
 
@@ -352,7 +364,7 @@ VALUES
 (
   'cccccccc-0001-0001-0001-000000000001',
   'aaaaaaaa-0001-0001-0001-000000000001',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Senior Full Stack Engineer — Screening Test',
   'mixed',
   60,
@@ -360,53 +372,53 @@ VALUES
   65,
   '[
     {
-      "id": "q1", "type": "mcq", "order": 1, "points": 10,
-      "question": "Which Next.js data-fetching method runs at request time and enables per-request server-side rendering?",
+      "id": "q1", "type": "multiple_choice", "order": 1, "points": 10,
+      "prompt": "Which Next.js data-fetching method runs at request time and enables per-request server-side rendering?",
       "options": ["getStaticProps","getServerSideProps","getInitialProps","getStaticPaths"],
-      "correct_answer": "getServerSideProps",
+      "correctAnswer": "getServerSideProps",
       "explanation": "getServerSideProps runs on every request, enabling dynamic SSR. getStaticProps runs at build time."
     },
     {
-      "id": "q2", "type": "mcq", "order": 2, "points": 10,
-      "question": "In a REST API, which HTTP method is idempotent but NOT safe (it modifies server state)?",
+      "id": "q2", "type": "multiple_choice", "order": 2, "points": 10,
+      "prompt": "In a REST API, which HTTP method is idempotent but NOT safe (it modifies server state)?",
       "options": ["GET","PUT","POST","DELETE"],
-      "correct_answer": "PUT",
+      "correctAnswer": "PUT",
       "explanation": "PUT is idempotent (same result on repeated calls) but modifies state. GET is both safe and idempotent. POST is neither."
     },
     {
-      "id": "q3", "type": "mcq", "order": 3, "points": 10,
-      "question": "What does the PostgreSQL EXPLAIN ANALYZE output ''Seq Scan'' indicate?",
+      "id": "q3", "type": "multiple_choice", "order": 3, "points": 10,
+      "prompt": "What does the PostgreSQL EXPLAIN ANALYZE output ''Seq Scan'' indicate?",
       "options": ["A cache hit","A full table scan — no index used","An index range scan","A parallel query plan"],
-      "correct_answer": "A full table scan — no index used",
+      "correctAnswer": "A full table scan — no index used",
       "explanation": "Seq Scan means Postgres is reading every row. Add an index to convert this to an Index Scan for large tables."
     },
     {
-      "id": "q4", "type": "mcq", "order": 4, "points": 10,
-      "question": "In JavaScript, what will `console.log(typeof null)` output?",
+      "id": "q4", "type": "multiple_choice", "order": 4, "points": 10,
+      "prompt": "In JavaScript, what will `console.log(typeof null)` output?",
       "options": ["''null''","''undefined''","''object''","''boolean''"],
-      "correct_answer": "''object''",
+      "correctAnswer": "''object''",
       "explanation": "A historical bug in JS — typeof null === ''object''. Use === null for null checks."
     },
     {
-      "id": "q5", "type": "mcq", "order": 5, "points": 10,
-      "question": "Which React hook should you use to run a side effect ONLY when a specific prop changes?",
+      "id": "q5", "type": "multiple_choice", "order": 5, "points": 10,
+      "prompt": "Which React hook should you use to run a side effect ONLY when a specific prop changes?",
       "options": ["useState","useCallback","useEffect with a dependency array","useMemo"],
-      "correct_answer": "useEffect with a dependency array",
+      "correctAnswer": "useEffect with a dependency array",
       "explanation": "useEffect(() => { ... }, [specificProp]) runs the effect only when specificProp changes."
     },
     {
-      "id": "q6", "type": "coding", "order": 6, "points": 25, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000001",
+      "id": "q6", "type": "code", "order": 6, "points": 25, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000001",
       "title": "Implement Debounce",
       "prompt": "Write a debounce(fn, delay) function that returns a debounced version of fn. The debounced function delays invoking fn until after delay milliseconds have elapsed since the last invocation.",
-      "starter_code": {"nodejs": "function debounce(fn, delay) {\n  // your code here\n}\nmodule.exports = debounce;"},
-      "test_cases": [{"input": "called 3x in 100ms with 200ms delay", "expected": "fn called once", "hidden": false}]
+      "starterCodeMap": {"nodejs": "function debounce(fn, delay) {\n  // your code here\n}\nmodule.exports = debounce;"},
+      "testCases": [{"input": "called 3x in 100ms with 200ms delay", "expectedOutput": "fn called once", "visible": true}]
     },
     {
-      "id": "q7", "type": "coding", "order": 7, "points": 25, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000004",
+      "id": "q7", "type": "code", "order": 7, "points": 25, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000004",
       "title": "SQL Query with CTE",
       "prompt": "Given a table orders(id, user_id, amount, created_at), write a SQL query using a CTE to find the top 3 users by total spend, along with order count and average order value.",
-      "starter_code": {"sql": "-- Write your query\nWITH user_stats AS (\n  \n)\nSELECT ...\nFROM user_stats\nORDER BY ...\nLIMIT 3;"},
-      "test_cases": [{"input": "orders table with 10 users", "expected": "3 rows by total_spend DESC", "hidden": false}]
+      "starterCodeMap": {"sql": "-- Write your query\nWITH user_stats AS (\n  \n)\nSELECT ...\nFROM user_stats\nORDER BY ...\nLIMIT 3;"},
+      "testCases": [{"input": "orders table with 10 users", "expectedOutput": "3 rows by total_spend DESC", "visible": true}]
     }
   ]'::jsonb,
   '{"shuffle_questions": false, "show_score_immediately": false, "allow_tab_switch": false, "proctoring_enabled": true, "max_tab_switches": 3}'::jsonb,
@@ -416,7 +428,7 @@ VALUES
 (
   'cccccccc-0001-0001-0001-000000000002',
   'aaaaaaaa-0001-0001-0001-000000000001',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'AI Engineer (Python/FastAPI) — Technical Screen',
   'coding_test',
   75,
@@ -424,33 +436,33 @@ VALUES
   70,
   '[
     {
-      "id": "q1", "type": "coding", "order": 1, "points": 33, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000006",
+      "id": "q1", "type": "code", "order": 1, "points": 33, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000006",
       "title": "Retry Decorator",
       "prompt": "Implement a @retry(max_attempts, delay_seconds) decorator that retries the decorated function up to max_attempts times on any exception, waiting delay_seconds between attempts. Raise the last exception if all attempts fail.",
-      "starter_code": {"python3": "import time\nimport functools\n\ndef retry(max_attempts, delay_seconds=1):\n    def decorator(fn):\n        @functools.wraps(fn)\n        def wrapper(*args, **kwargs):\n            # your code here\n            pass\n        return wrapper\n    return decorator"},
-      "test_cases": [
-        {"input": "function fails 2x then succeeds, max_attempts=3", "expected": "returns on 3rd attempt", "hidden": false},
-        {"input": "always fails, max_attempts=2", "expected": "raises after 2 attempts", "hidden": false}
+      "starterCodeMap": {"python3": "import time\nimport functools\n\ndef retry(max_attempts, delay_seconds=1):\n    def decorator(fn):\n        @functools.wraps(fn)\n        def wrapper(*args, **kwargs):\n            # your code here\n            pass\n        return wrapper\n    return decorator"},
+      "testCases": [
+        {"input": "function fails 2x then succeeds, max_attempts=3", "expectedOutput": "returns on 3rd attempt", "visible": true},
+        {"input": "always fails, max_attempts=2", "expectedOutput": "raises after 2 attempts", "visible": true}
       ]
     },
     {
-      "id": "q2", "type": "coding", "order": 2, "points": 33, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000007",
+      "id": "q2", "type": "code", "order": 2, "points": 33, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000007",
       "title": "Document Chunker",
       "prompt": "Write chunk_text(text, chunk_size, overlap) that splits a string into overlapping chunks. Common in RAG pipelines for LLM context windows.",
-      "starter_code": {"python3": "def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:\n    pass"},
-      "test_cases": [
-        {"input": "text=''abcdefghij'', chunk_size=4, overlap=1", "expected": "[''abcd'',''defg'',''ghij'']", "hidden": false},
-        {"input": "empty string", "expected": "[]", "hidden": true}
+      "starterCodeMap": {"python3": "def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:\n    pass"},
+      "testCases": [
+        {"input": "text=''abcdefghij'', chunk_size=4, overlap=1", "expectedOutput": "[''abcd'',''defg'',''ghij'']", "visible": true},
+        {"input": "empty string", "expectedOutput": "[]", "visible": false}
       ]
     },
     {
-      "id": "q3", "type": "coding", "order": 3, "points": 34, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000008",
+      "id": "q3", "type": "code", "order": 3, "points": 34, "question_bank_id": "bbbbbbbb-0001-0001-0001-000000000008",
       "title": "Pydantic Model with Validators",
       "prompt": "Define a Pydantic v2 model JobApplication with fields: name (min_length=2), email (EmailStr), experience_years (int ≥ 0), skills (list[str], ≥ 1 item). Add a validator to normalise skills to lowercase.",
-      "starter_code": {"python3": "from pydantic import BaseModel, field_validator, EmailStr\nfrom typing import List\n\nclass JobApplication(BaseModel):\n    name: str\n    email: EmailStr\n    experience_years: int\n    skills: List[str]\n    # add validators"},
-      "test_cases": [
-        {"input": "valid application", "expected": "model instantiates", "hidden": false},
-        {"input": "experience_years=-1", "expected": "ValidationError", "hidden": false}
+      "starterCodeMap": {"python3": "from pydantic import BaseModel, field_validator, EmailStr\nfrom typing import List\n\nclass JobApplication(BaseModel):\n    name: str\n    email: EmailStr\n    experience_years: int\n    skills: List[str]\n    # add validators"},
+      "testCases": [
+        {"input": "valid application", "expectedOutput": "model instantiates", "visible": true},
+        {"input": "experience_years=-1", "expectedOutput": "ValidationError", "visible": true}
       ]
     }
   ]'::jsonb,
@@ -481,7 +493,7 @@ VALUES
 (
   'dddddddd-0001-0001-0001-000000000001',
   'aaaaaaaa-0001-0001-0001-000000000001',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Senior Full Stack Engineer (Next.js/Node.js)',
   'Engineering',
   'Bengaluru, Karnataka',
@@ -504,9 +516,9 @@ Tech Stack: Next.js 14, React 18, TypeScript, Node.js, Express, PostgreSQL, Redi
   ARRAY['Next.js','React','TypeScript','Node.js','PostgreSQL','REST APIs','Git'],
   ARRAY['Redis','Docker','AWS','WebSockets','GraphQL','Supabase'],
   '[
-    {"id":"sq1","question":"Briefly describe your experience with Next.js App Router and server components. What trade-offs have you navigated?","type":"text","required":true},
-    {"id":"sq2","question":"Have you optimised a slow PostgreSQL query? Walk us through your approach.","type":"text","required":true},
-    {"id":"sq3","question":"What is your expected CTC (in LPA)?","type":"text","required":true}
+    {"id":"sq1","question":"Briefly describe your experience with Next.js App Router and server components. What trade-offs have you navigated?","type":"short_answer","required":true},
+    {"id":"sq2","question":"Have you optimised a slow PostgreSQL query? Walk us through your approach.","type":"short_answer","required":true},
+    {"id":"sq3","question":"What is your expected CTC (in LPA)?","type":"short_answer","required":true}
   ]'::jsonb,
   3,
   NOW() + INTERVAL '45 days',
@@ -528,7 +540,7 @@ Tech Stack: Next.js 14, React 18, TypeScript, Node.js, Express, PostgreSQL, Redi
 (
   'dddddddd-0001-0001-0001-000000000002',
   'aaaaaaaa-0001-0001-0001-000000000001',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'AI Engineer (Python/FastAPI)',
   'AI Platform',
   'Hyderabad, Telangana',
@@ -551,9 +563,9 @@ Tech Stack: Python 3.12, FastAPI, LangChain, PyTorch, Gemini API, PostgreSQL (pg
   ARRAY['Python','FastAPI','LangChain','PostgreSQL','REST APIs','Docker','Pydantic'],
   ARRAY['PyTorch','Gemini API','OpenAI API','pgvector','GCP','Kubernetes','Celery'],
   '[
-    {"id":"sq1","question":"Describe an LLM-powered feature you built end-to-end. What was the hardest engineering challenge?","type":"text","required":true},
-    {"id":"sq2","question":"How do you handle LLM hallucinations or unreliable outputs in a production system?","type":"text","required":true},
-    {"id":"sq3","question":"What is your expected CTC (in LPA)?","type":"text","required":true}
+    {"id":"sq1","question":"Describe an LLM-powered feature you built end-to-end. What was the hardest engineering challenge?","type":"short_answer","required":true},
+    {"id":"sq2","question":"How do you handle LLM hallucinations or unreliable outputs in a production system?","type":"short_answer","required":true},
+    {"id":"sq3","question":"What is your expected CTC (in LPA)?","type":"short_answer","required":true}
   ]'::jsonb,
   2,
   NOW() + INTERVAL '30 days',
@@ -575,7 +587,7 @@ Tech Stack: Python 3.12, FastAPI, LangChain, PyTorch, Gemini API, PostgreSQL (pg
 (
   'dddddddd-0001-0001-0001-000000000003',
   'aaaaaaaa-0001-0001-0001-000000000001',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Frontend Developer (React)',
   'Product Engineering',
   'Bengaluru, Karnataka',
@@ -598,9 +610,9 @@ Tech Stack: React 18, TypeScript, Tailwind CSS, React Query, Zustand, Vite, Jest
   ARRAY['React','TypeScript','Tailwind CSS','REST APIs','Git','HTML','CSS'],
   ARRAY['Next.js','Figma','React Query','Zustand','Storybook','Playwright'],
   '[
-    {"id":"sq1","question":"Share a complex UI component you are most proud of. What made it challenging?","type":"text","required":true},
-    {"id":"sq2","question":"How do you approach accessibility (a11y) in your React components?","type":"text","required":false},
-    {"id":"sq3","question":"What is your expected CTC (in LPA)?","type":"text","required":true}
+    {"id":"sq1","question":"Share a complex UI component you are most proud of. What made it challenging?","type":"short_answer","required":true},
+    {"id":"sq2","question":"How do you approach accessibility (a11y) in your React components?","type":"short_answer","required":false},
+    {"id":"sq3","question":"What is your expected CTC (in LPA)?","type":"short_answer","required":true}
   ]'::jsonb,
   2,
   NOW() + INTERVAL '60 days',
@@ -639,7 +651,7 @@ VALUES
   'aaaaaaaa-0001-0001-0001-000000000001',
   'Engineering Technical Panel',
   'technical',
-  ARRAY[(SELECT id FROM public.users WHERE email = :'employer_email')]::uuid[],
+  ARRAY[(SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev')]::uuid[],
   1, 60,
   'Standard technical interview panel for engineering roles. Covers DSA, system design, and tech stack deep-dives.',
   true
@@ -649,7 +661,7 @@ VALUES
   'aaaaaaaa-0001-0001-0001-000000000001',
   'Culture Fit & HR Round',
   'culture_fit',
-  ARRAY[(SELECT id FROM public.users WHERE email = :'employer_email')]::uuid[],
+  ARRAY[(SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev')]::uuid[],
   2, 30,
   'Behavioural and culture-fit interview. STAR method questions on ownership, collaboration, and growth mindset.',
   true
@@ -686,7 +698,7 @@ VALUES
 
 -- ── applied (4) ─────────────────────────────────────────────────────────────
 (
-  'app00001-0001-0001-0001-000000000001',
+  'a0000001-0001-0001-0001-000000000001',
   'dddddddd-0001-0001-0001-000000000001',
   'Rahul Mehta', 'rahul.mehta@gmail.com', '+91-9876543201',
   'Software Engineer', 'Infosys', 3, 'fitvector_organic', 'applied', 'potential_fit',
@@ -697,7 +709,7 @@ VALUES
   '[{"question_id":"sq1","answer":"I have 1 year of React experience but just started learning Next.js through personal projects."},{"question_id":"sq2","answer":"I added an index on a MySQL table that sped up a query from 3s to 200ms."},{"question_id":"sq3","answer":"12 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000002',
+  'a0000001-0001-0001-0001-000000000002',
   'dddddddd-0001-0001-0001-000000000001',
   'Sonal Kapoor', 'sonal.kapoor@outlook.com', '+91-9876543202',
   'Junior Developer', 'Wipro', 2, 'external_link', 'applied', 'weak_fit',
@@ -708,7 +720,7 @@ VALUES
   '[{"question_id":"sq1","answer":"I mostly work on the frontend with HTML and CSS. I am learning React."},{"question_id":"sq2","answer":"I have not worked with PostgreSQL yet."},{"question_id":"sq3","answer":"9 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000003',
+  'a0000001-0001-0001-0001-000000000003',
   'dddddddd-0001-0001-0001-000000000001',
   'Aditya Sharma', 'aditya.sharma@yahoo.com', '+91-9876543203',
   'Full Stack Developer', 'TCS', 5, 'referral', 'applied', 'good_fit',
@@ -719,7 +731,7 @@ VALUES
   '[{"question_id":"sq1","answer":"I have been working with Next.js for 3 years. I migrated our main product from CRA to Next.js App Router last year and led the server components adoption."},{"question_id":"sq2","answer":"Yes — I found a missing composite index on (user_id, created_at) in our orders table. Added the index and query time dropped from 800ms to 12ms."},{"question_id":"sq3","answer":"28 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000004',
+  'a0000001-0001-0001-0001-000000000004',
   'dddddddd-0001-0001-0001-000000000001',
   'Priya Nair', 'priya.nair@gmail.com', '+91-9876543204',
   'Software Engineer II', 'HCL Technologies', 4, 'fitvector_organic', 'applied', 'potential_fit',
@@ -732,7 +744,7 @@ VALUES
 
 -- ── ai_screened (3) ─────────────────────────────────────────────────────────
 (
-  'app00001-0001-0001-0001-000000000005',
+  'a0000001-0001-0001-0001-000000000005',
   'dddddddd-0001-0001-0001-000000000001',
   'Vikram Patel', 'vikram.patel@gmail.com', '+91-9876543205',
   'Senior Software Engineer', 'Mindtree', 6, 'fitvector_organic', 'ai_screened', 'strong_fit',
@@ -743,7 +755,7 @@ VALUES
   '[{"question_id":"sq1","answer":"3 years of Next.js in production. We moved to App Router in Q1 2023. Key trade-off was deciding which components to keep as client components for interactivity."},{"question_id":"sq2","answer":"Found N+1 query issue in our ORM. Rewrote with explicit JOINs and added a materialized view. Cut the page load from 4s to 300ms."},{"question_id":"sq3","answer":"35 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000006',
+  'a0000001-0001-0001-0001-000000000006',
   'dddddddd-0001-0001-0001-000000000001',
   'Neha Joshi', 'neha.joshi@gmail.com', '+91-9876543206',
   'Full Stack Engineer', 'Persistent Systems', 5, 'fitvector_organic', 'ai_screened', 'good_fit',
@@ -754,7 +766,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Started using Next.js App Router in production 18 months ago. Main trade-off I navigated was streaming with Suspense vs. traditional loading states."},{"question_id":"sq2","answer":"Used EXPLAIN ANALYZE and found a sequential scan on a 2M row table. Added a partial index and query went from 2s to 50ms."},{"question_id":"sq3","answer":"26 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000007',
+  'a0000001-0001-0001-0001-000000000007',
   'dddddddd-0001-0001-0001-000000000001',
   'Rohit Desai', 'rohit.desai@outlook.com', '+91-9876543207',
   'Software Developer', 'Hexaware', 4, 'external_link', 'ai_screened', 'potential_fit',
@@ -767,7 +779,7 @@ VALUES
 
 -- ── assessment_pending (2) ───────────────────────────────────────────────────
 (
-  'app00001-0001-0001-0001-000000000008',
+  'a0000001-0001-0001-0001-000000000008',
   'dddddddd-0001-0001-0001-000000000001',
   'Ananya Singh', 'ananya.singh@gmail.com', '+91-9876543208',
   'Software Engineer III', 'Zensar Technologies', 6, 'fitvector_organic', 'assessment_pending', 'strong_fit',
@@ -778,7 +790,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Led App Router migration for our main product. Key trade-off: client vs server components for data-heavy pages. We keep client components only for interactive widgets."},{"question_id":"sq2","answer":"Identified slow JSONB query, rewrote with GIN index. Performance went from 3.2s to 80ms on 50M rows."},{"question_id":"sq3","answer":"32 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000009',
+  'a0000001-0001-0001-0001-000000000009',
   'dddddddd-0001-0001-0001-000000000001',
   'Karthik Iyer', 'karthik.iyer@gmail.com', '+91-9876543209',
   'Technical Lead', 'Mphasis', 7, 'referral', 'assessment_pending', 'strong_fit',
@@ -791,7 +803,7 @@ VALUES
 
 -- ── assessment_completed (2) ─────────────────────────────────────────────────
 (
-  'app00001-0001-0001-0001-000000000010',
+  'a0000001-0001-0001-0001-000000000010',
   'dddddddd-0001-0001-0001-000000000001',
   'Divya Menon', 'divya.menon@gmail.com', '+91-9876543210',
   'Full Stack Engineer', 'L&T Technology Services', 5, 'fitvector_organic', 'assessment_completed', 'strong_fit',
@@ -802,7 +814,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built a Next.js 14 app from scratch. Used server actions for form handling — much cleaner than API routes for simple mutations."},{"question_id":"sq2","answer":"Used EXPLAIN ANALYZE. Found hash join on large tables. Added index and rewrote with explicit JOIN ORDER hint."},{"question_id":"sq3","answer":"27 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000011',
+  'a0000001-0001-0001-0001-000000000011',
   'dddddddd-0001-0001-0001-000000000001',
   'Suresh Kumar', 'suresh.kumar@gmail.com', '+91-9876543211',
   'Senior Developer', 'Sasken Technologies', 5, 'external_link', 'assessment_completed', 'good_fit',
@@ -815,7 +827,7 @@ VALUES
 
 -- ── ai_interview_pending (2) ──────────────────────────────────────────────────
 (
-  'app00001-0001-0001-0001-000000000012',
+  'a0000001-0001-0001-0001-000000000012',
   'dddddddd-0001-0001-0001-000000000001',
   'Meera Krishnan', 'meera.krishnan@gmail.com', '+91-9876543212',
   'Senior Full Stack Engineer', 'Tata Elxsi', 6, 'fitvector_organic', 'ai_interview_pending', 'strong_fit',
@@ -826,7 +838,7 @@ VALUES
   '[{"question_id":"sq1","answer":"6 years including 3 in production with Next.js. I implemented ISR for marketing pages and PPR for hybrid pages in our latest product."},{"question_id":"sq2","answer":"Partitioned a 200M row table by month, added covering indexes. Query from 12s to 600ms."},{"question_id":"sq3","answer":"38 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000013',
+  'a0000001-0001-0001-0001-000000000013',
   'dddddddd-0001-0001-0001-000000000001',
   'Arjun Bose', 'arjun.bose@outlook.com', '+91-9876543213',
   'Full Stack Developer', 'Cyient', 5, 'fitvector_organic', 'ai_interview_pending', 'good_fit',
@@ -839,7 +851,7 @@ VALUES
 
 -- ── ai_interviewed (2) ────────────────────────────────────────────────────────
 (
-  'app00001-0001-0001-0001-000000000014',
+  'a0000001-0001-0001-0001-000000000014',
   'dddddddd-0001-0001-0001-000000000001',
   'Pooja Verma', 'pooja.verma@gmail.com', '+91-9876543214',
   'Senior Software Engineer', 'GlobalLogic', 6, 'fitvector_organic', 'ai_interviewed', 'strong_fit',
@@ -850,7 +862,7 @@ VALUES
   '[{"question_id":"sq1","answer":"3+ years App Router in production. Led migration for 300K DAU product. Key insight: co-locate data fetching with server components to eliminate waterfall."},{"question_id":"sq2","answer":"Rewrote slow query from ORM-generated SQL to hand-written CTE with window functions. 5x improvement."},{"question_id":"sq3","answer":"40 LPA"}]'::jsonb
 ),
 (
-  'app00001-0001-0001-0001-000000000015',
+  'a0000001-0001-0001-0001-000000000015',
   'dddddddd-0001-0001-0001-000000000001',
   'Nikhil Rao', 'nikhil.rao@gmail.com', '+91-9876543215',
   'Full Stack Lead', 'Birlasoft', 7, 'fitvector_organic', 'ai_interviewed', 'strong_fit',
@@ -863,7 +875,7 @@ VALUES
 
 -- ── human_interview (1) ───────────────────────────────────────────────────────
 (
-  'app00001-0001-0001-0001-000000000016',
+  'a0000001-0001-0001-0001-000000000016',
   'dddddddd-0001-0001-0001-000000000001',
   'Ishaan Malhotra', 'ishaan.malhotra@gmail.com', '+91-9876543216',
   'Senior Full Stack Engineer', 'Nagarro', 7, 'fitvector_organic', 'human_interview', 'strong_fit',
@@ -876,7 +888,7 @@ VALUES
 
 -- ── offer (1) ──────────────────────────────────────────────────────────────────
 (
-  'app00001-0001-0001-0001-000000000017',
+  'a0000001-0001-0001-0001-000000000017',
   'dddddddd-0001-0001-0001-000000000001',
   'Kavya Reddy', 'kavya.reddy@gmail.com', '+91-9876543217',
   'Principal Engineer', 'Mphasis', 8, 'referral', 'offer', 'strong_fit',
@@ -893,7 +905,7 @@ VALUES
 
 -- ── applied (4) ─────────────────────────────────────────────────────────────
 (
-  'app00002-0001-0001-0001-000000000001',
+  'a0000002-0001-0001-0001-000000000001',
   'dddddddd-0001-0001-0001-000000000002',
   'Arnav Gupta', 'arnav.gupta@gmail.com', '+91-9876543301',
   'Python Developer', 'Infosys BPM', 3, 'fitvector_organic', 'applied', 'potential_fit',
@@ -904,7 +916,7 @@ VALUES
   '[{"question_id":"sq1","answer":"I built internal REST APIs with Flask and worked on data pipelines. I am learning about LLMs through courses."},{"question_id":"sq2","answer":"I use try/except blocks and logging. I have not worked with production LLM systems yet."},{"question_id":"sq3","answer":"13 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000002',
+  'a0000002-0001-0001-0001-000000000002',
   'dddddddd-0001-0001-0001-000000000002',
   'Tanvi Shah', 'tanvi.shah@outlook.com', '+91-9876543302',
   'Data Scientist', 'Fractal Analytics', 4, 'external_link', 'applied', 'potential_fit',
@@ -915,7 +927,7 @@ VALUES
   '[{"question_id":"sq1","answer":"I built ML models and fine-tuned transformers. I have not built LLM-powered APIs in production."},{"question_id":"sq2","answer":"I retrain models when outputs drift and use confidence thresholds to flag uncertain predictions."},{"question_id":"sq3","answer":"22 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000003',
+  'a0000002-0001-0001-0001-000000000003',
   'dddddddd-0001-0001-0001-000000000002',
   'Siddharth Nambiar', 'siddharth.nambiar@gmail.com', '+91-9876543303',
   'Backend Engineer (Python)', 'Freshworks', 5, 'referral', 'applied', 'good_fit',
@@ -926,7 +938,7 @@ VALUES
   '[{"question_id":"sq1","answer":"I built FastAPI services for 4 years. Recently added a document summarisation feature using OpenAI API and LangChain. Still learning the LLM ecosystem."},{"question_id":"sq2","answer":"I use structured output mode and JSON schema validation on LLM outputs. Retry with temperature 0 for deterministic tasks."},{"question_id":"sq3","answer":"28 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000004',
+  'a0000002-0001-0001-0001-000000000004',
   'dddddddd-0001-0001-0001-000000000002',
   'Shruti Agarwal', 'shruti.agarwal@gmail.com', '+91-9876543304',
   'ML Engineer', 'Samsung R&D', 3, 'fitvector_organic', 'applied', 'weak_fit',
@@ -939,7 +951,7 @@ VALUES
 
 -- ── ai_screened (3) ─────────────────────────────────────────────────────────
 (
-  'app00002-0001-0001-0001-000000000005',
+  'a0000002-0001-0001-0001-000000000005',
   'dddddddd-0001-0001-0001-000000000002',
   'Vivek Menon', 'vivek.menon@gmail.com', '+91-9876543305',
   'AI/ML Engineer', 'Zoho', 5, 'fitvector_organic', 'ai_screened', 'strong_fit',
@@ -950,7 +962,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built a RAG system at Zoho serving 100K daily queries. Used LangChain for orchestration, pgvector for embeddings, Gemini API for generation. Hardest part was chunk strategy for long documents."},{"question_id":"sq2","answer":"I use output parsers with retry logic, fallback prompts, and confidence scoring. For critical paths, I validate structured output against a Pydantic model."},{"question_id":"sq3","answer":"34 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000006',
+  'a0000002-0001-0001-0001-000000000006',
   'dddddddd-0001-0001-0001-000000000002',
   'Ritika Sharma', 'ritika.sharma@gmail.com', '+91-9876543306',
   'Senior Python Developer', 'PhonePe', 6, 'fitvector_organic', 'ai_screened', 'good_fit',
@@ -961,7 +973,7 @@ VALUES
   '[{"question_id":"sq1","answer":"1 year LLM experience. Built fraud explanation feature using OpenAI API at PhonePe. Engineered retry and fallback because LLM latency was unpredictable."},{"question_id":"sq2","answer":"Rate limit LLM calls, cache common responses in Redis, use async queues for non-urgent LLM work. For reliability: always have a rule-based fallback."},{"question_id":"sq3","answer":"38 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000007',
+  'a0000002-0001-0001-0001-000000000007',
   'dddddddd-0001-0001-0001-000000000002',
   'Harsh Aggarwal', 'harsh.aggarwal@outlook.com', '+91-9876543307',
   'Backend Python Engineer', 'Ola', 4, 'external_link', 'ai_screened', 'potential_fit',
@@ -974,7 +986,7 @@ VALUES
 
 -- ── assessment_pending (2) ───────────────────────────────────────────────────
 (
-  'app00002-0001-0001-0001-000000000008',
+  'a0000002-0001-0001-0001-000000000008',
   'dddddddd-0001-0001-0001-000000000002',
   'Devansh Trivedi', 'devansh.trivedi@gmail.com', '+91-9876543308',
   'AI Platform Engineer', 'Razorpay', 5, 'fitvector_organic', 'assessment_pending', 'strong_fit',
@@ -985,7 +997,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built a dispute analysis LLM pipeline at Razorpay processing 5K documents daily. Hardest engineering challenge was making it reliable — LLM timeout handling and graceful degradation."},{"question_id":"sq2","answer":"Structured output mode + Pydantic schema validation. If output fails validation, retry with corrective prompt up to 3 times, then flag for human review."},{"question_id":"sq3","answer":"36 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000009',
+  'a0000002-0001-0001-0001-000000000009',
   'dddddddd-0001-0001-0001-000000000002',
   'Nidhi Sharma', 'nidhi.sharma@gmail.com', '+91-9876543309',
   'Senior AI Engineer', 'Swiggy', 6, 'referral', 'assessment_pending', 'strong_fit',
@@ -998,7 +1010,7 @@ VALUES
 
 -- ── assessment_completed (2) ─────────────────────────────────────────────────
 (
-  'app00002-0001-0001-0001-000000000010',
+  'a0000002-0001-0001-0001-000000000010',
   'dddddddd-0001-0001-0001-000000000002',
   'Aakash Malhotra', 'aakash.malhotra@gmail.com', '+91-9876543310',
   'AI Engineer', 'Paytm', 5, 'fitvector_organic', 'assessment_completed', 'strong_fit',
@@ -1009,7 +1021,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built customer support triage system at Paytm. Hardest challenge: making the LangChain agent reliable for edge cases — added extensive guardrails and fallback rules."},{"question_id":"sq2","answer":"Retry decorator with exponential backoff, Redis cache for repeated queries, async queue for non-blocking LLM calls."},{"question_id":"sq3","answer":"33 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000011',
+  'a0000002-0001-0001-0001-000000000011',
   'dddddddd-0001-0001-0001-000000000002',
   'Poonam Bajaj', 'poonam.bajaj@gmail.com', '+91-9876543311',
   'Python AI Developer', 'Unacademy', 4, 'external_link', 'assessment_completed', 'good_fit',
@@ -1022,7 +1034,7 @@ VALUES
 
 -- ── ai_interview_pending (2) ─────────────────────────────────────────────────
 (
-  'app00002-0001-0001-0001-000000000012',
+  'a0000002-0001-0001-0001-000000000012',
   'dddddddd-0001-0001-0001-000000000002',
   'Rohan Pillai', 'rohan.pillai@gmail.com', '+91-9876543312',
   'Senior AI Engineer', 'Flipkart', 6, 'fitvector_organic', 'ai_interview_pending', 'strong_fit',
@@ -1033,7 +1045,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Product description generation at Flipkart scale. Hardest challenge: batch processing 1M+ product updates efficiently — used async FastAPI + Celery + Redis queue."},{"question_id":"sq2","answer":"For product descriptions: keyword guardrails, banned words filter, Pydantic validation, human spot-check sampling."},{"question_id":"sq3","answer":"42 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000013',
+  'a0000002-0001-0001-0001-000000000013',
   'dddddddd-0001-0001-0001-000000000002',
   'Sneha Krishnaswamy', 'sneha.krishnaswamy@gmail.com', '+91-9876543313',
   'AI Platform Engineer', 'Ather Energy', 5, 'fitvector_organic', 'ai_interview_pending', 'good_fit',
@@ -1046,7 +1058,7 @@ VALUES
 
 -- ── ai_interviewed (2) ────────────────────────────────────────────────────────
 (
-  'app00002-0001-0001-0001-000000000014',
+  'a0000002-0001-0001-0001-000000000014',
   'dddddddd-0001-0001-0001-000000000002',
   'Akshay Kulkarni', 'akshay.kulkarni@gmail.com', '+91-9876543314',
   'Senior AI Engineer', 'CRED', 6, 'fitvector_organic', 'ai_interviewed', 'strong_fit',
@@ -1057,7 +1069,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built financial insights system at CRED. Most complex: reliable LLM outputs for financial data — cannot hallucinate. Solution: RAG with verified data sources + output validation + audit logging."},{"question_id":"sq2","answer":"Three layers: guardrails (LLM guardrails library), structured output validation (Pydantic), and automated eval suite that runs after every model update."},{"question_id":"sq3","answer":"48 LPA"}]'::jsonb
 ),
 (
-  'app00002-0001-0001-0001-000000000015',
+  'a0000002-0001-0001-0001-000000000015',
   'dddddddd-0001-0001-0001-000000000002',
   'Gaurav Jain', 'gaurav.jain@gmail.com', '+91-9876543315',
   'AI/LLM Engineer', 'Meesho', 5, 'fitvector_organic', 'ai_interviewed', 'strong_fit',
@@ -1070,7 +1082,7 @@ VALUES
 
 -- ── human_interview (1) ───────────────────────────────────────────────────────
 (
-  'app00002-0001-0001-0001-000000000016',
+  'a0000002-0001-0001-0001-000000000016',
   'dddddddd-0001-0001-0001-000000000002',
   'Prateek Bansal', 'prateek.bansal@gmail.com', '+91-9876543316',
   'Staff AI Engineer', 'Zomato', 8, 'referral', 'human_interview', 'strong_fit',
@@ -1083,7 +1095,7 @@ VALUES
 
 -- ── offer (1) ──────────────────────────────────────────────────────────────────
 (
-  'app00002-0001-0001-0001-000000000017',
+  'a0000002-0001-0001-0001-000000000017',
   'dddddddd-0001-0001-0001-000000000002',
   'Madhuri Iyer', 'madhuri.iyer@gmail.com', '+91-9876543317',
   'Principal AI Engineer', 'Google India', 9, 'referral', 'offer', 'strong_fit',
@@ -1100,7 +1112,7 @@ VALUES
 
 -- ── applied (4) ─────────────────────────────────────────────────────────────
 (
-  'app00003-0001-0001-0001-000000000001',
+  'a0000003-0001-0001-0001-000000000001',
   'dddddddd-0001-0001-0001-000000000003',
   'Ankit Saxena', 'ankit.saxena@gmail.com', '+91-9876543401',
   'Junior Frontend Developer', 'Wipro', 2, 'external_link', 'applied', 'weak_fit',
@@ -1111,7 +1123,7 @@ VALUES
   '[{"question_id":"sq1","answer":"I mostly build HTML pages and I am just starting to learn React."},{"question_id":"sq2","answer":"I have not worked with accessibility APIs yet."},{"question_id":"sq3","answer":"7 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000002',
+  'a0000003-0001-0001-0001-000000000002',
   'dddddddd-0001-0001-0001-000000000003',
   'Ankita Gupta', 'ankita.gupta@gmail.com', '+91-9876543402',
   'React Developer', 'Mphasis', 3, 'fitvector_organic', 'applied', 'potential_fit',
@@ -1122,7 +1134,7 @@ VALUES
   '[{"question_id":"sq1","answer":"I built a complex multi-step form wizard in React with Redux. Proud of the nested state management."},{"question_id":"sq2","answer":"I use aria-label attributes but haven''t done deep a11y testing."},{"question_id":"sq3","answer":"15 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000003',
+  'a0000003-0001-0001-0001-000000000003',
   'dddddddd-0001-0001-0001-000000000003',
   'Varun Mehta', 'varun.mehta@gmail.com', '+91-9876543403',
   'Frontend Engineer', 'Razorpay', 4, 'referral', 'applied', 'good_fit',
@@ -1133,7 +1145,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built a real-time transaction dashboard with complex filtering and live updates using React Query + WebSockets. Challenging because of streaming data reconciliation."},{"question_id":"sq2","answer":"I use ARIA roles, keyboard navigation testing, and run Lighthouse accessibility audits before every release."},{"question_id":"sq3","answer":"21 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000004',
+  'a0000003-0001-0001-0001-000000000004',
   'dddddddd-0001-0001-0001-000000000003',
   'Riya Jain', 'riya.jain@gmail.com', '+91-9876543404',
   'UI Developer', 'Zendesk India', 3, 'fitvector_organic', 'applied', 'potential_fit',
@@ -1146,7 +1158,7 @@ VALUES
 
 -- ── ai_screened (3) ─────────────────────────────────────────────────────────
 (
-  'app00003-0001-0001-0001-000000000005',
+  'a0000003-0001-0001-0001-000000000005',
   'dddddddd-0001-0001-0001-000000000003',
   'Mihir Bhatt', 'mihir.bhatt@gmail.com', '+91-9876543405',
   'Senior Frontend Engineer', 'Juspay', 5, 'fitvector_organic', 'ai_screened', 'strong_fit',
@@ -1157,7 +1169,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built Juspay''s checkout SDK in React — used by thousands of merchants. Most complex part: customisable theming system that merchants configure without writing code."},{"question_id":"sq2","answer":"Accessibility is core to our payment flows. I use ARIA live regions for dynamic updates, keyboard trap for modals, focus management on route change, and axe-core in CI."},{"question_id":"sq3","answer":"31 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000006',
+  'a0000003-0001-0001-0001-000000000006',
   'dddddddd-0001-0001-0001-000000000003',
   'Pallavi Srivastava', 'pallavi.srivastava@gmail.com', '+91-9876543406',
   'React Developer', 'Fampay', 4, 'fitvector_organic', 'ai_screened', 'good_fit',
@@ -1168,7 +1180,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built a transaction history component with infinite scroll, filter chips, and real-time balance updates. Complex state management with React Query and Zustand."},{"question_id":"sq2","answer":"I use aria-label, role attributes, and test with keyboard navigation. I aim to meet WCAG 2.1 AA."},{"question_id":"sq3","answer":"19 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000007',
+  'a0000003-0001-0001-0001-000000000007',
   'dddddddd-0001-0001-0001-000000000003',
   'Kunal Agarwal', 'kunal.agarwal@outlook.com', '+91-9876543407',
   'Frontend Developer', 'Nykaa', 3, 'external_link', 'ai_screened', 'potential_fit',
@@ -1181,7 +1193,7 @@ VALUES
 
 -- ── assessment_pending (2) ── (no assessment for Job 3, so these stay as pending AI interview)
 (
-  'app00003-0001-0001-0001-000000000008',
+  'a0000003-0001-0001-0001-000000000008',
   'dddddddd-0001-0001-0001-000000000003',
   'Trishna Das', 'trishna.das@gmail.com', '+91-9876543408',
   'Frontend Engineer', 'Dream11', 5, 'fitvector_organic', 'assessment_pending', 'strong_fit',
@@ -1192,7 +1204,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built live cricket scorecard at Dream11 used by 10M+ concurrent users during IPL. Complex: reconciling WebSocket updates with React render batching for smooth UI."},{"question_id":"sq2","answer":"Accessibility is critical for sports apps with large user bases. I implement skip links, focus management, reduced motion support, and ARIA live regions for score updates."},{"question_id":"sq3","answer":"33 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000009',
+  'a0000003-0001-0001-0001-000000000009',
   'dddddddd-0001-0001-0001-000000000003',
   'Amar Yadav', 'amar.yadav@gmail.com', '+91-9876543409',
   'Senior React Developer', 'MakeMyTrip', 5, 'referral', 'assessment_pending', 'strong_fit',
@@ -1205,7 +1217,7 @@ VALUES
 
 -- ── assessment_completed (2) ─────────────────────────────────────────────────
 (
-  'app00003-0001-0001-0001-000000000010',
+  'a0000003-0001-0001-0001-000000000010',
   'dddddddd-0001-0001-0001-000000000003',
   'Priya Shetty', 'priya.shetty@gmail.com', '+91-9876543410',
   'Frontend Developer', 'Udaan', 4, 'fitvector_organic', 'assessment_completed', 'good_fit',
@@ -1216,7 +1228,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built product catalogue page with complex bulk order management UI. Multi-select, quantity inputs, and real-time total calculation."},{"question_id":"sq2","answer":"I use semantic HTML and basic ARIA. Tailwind makes it easy to maintain consistent focus styles."},{"question_id":"sq3","answer":"20 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000011',
+  'a0000003-0001-0001-0001-000000000011',
   'dddddddd-0001-0001-0001-000000000003',
   'Sameer Verma', 'sameer.verma@gmail.com', '+91-9876543411',
   'React Developer', 'Healthkart', 3, 'external_link', 'assessment_completed', 'potential_fit',
@@ -1229,7 +1241,7 @@ VALUES
 
 -- ── ai_interview_pending (2) ─────────────────────────────────────────────────
 (
-  'app00003-0001-0001-0001-000000000012',
+  'a0000003-0001-0001-0001-000000000012',
   'dddddddd-0001-0001-0001-000000000003',
   'Neha Kapoor', 'neha.kapoor@gmail.com', '+91-9876543412',
   'Senior Frontend Engineer', 'Urban Company', 5, 'fitvector_organic', 'ai_interview_pending', 'strong_fit',
@@ -1240,7 +1252,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built Urban Company''s booking flow — multi-step, real-time slot availability. Most complex: handling race conditions when slots update while user is on the page."},{"question_id":"sq2","answer":"WCAG 2.1 AA compliance for all booking flows. I use focus traps for modals, announce slot availability changes with ARIA live, and test with NVDA."},{"question_id":"sq3","answer":"30 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000013',
+  'a0000003-0001-0001-0001-000000000013',
   'dddddddd-0001-0001-0001-000000000003',
   'Rajat Bhatia', 'rajat.bhatia@gmail.com', '+91-9876543413',
   'Frontend Developer', 'Lenskart', 4, 'fitvector_organic', 'ai_interview_pending', 'good_fit',
@@ -1253,7 +1265,7 @@ VALUES
 
 -- ── ai_interviewed (2) ────────────────────────────────────────────────────────
 (
-  'app00003-0001-0001-0001-000000000014',
+  'a0000003-0001-0001-0001-000000000014',
   'dddddddd-0001-0001-0001-000000000003',
   'Simran Kaur', 'simran.kaur@gmail.com', '+91-9876543414',
   'Senior Frontend Engineer', 'Groww', 5, 'fitvector_organic', 'ai_interviewed', 'strong_fit',
@@ -1264,7 +1276,7 @@ VALUES
   '[{"question_id":"sq1","answer":"Built Groww''s portfolio dashboard — real-time price updates for 200+ holdings. Complex: batching WebSocket updates to avoid excessive React renders while keeping UI snappy."},{"question_id":"sq2","answer":"A11y is a priority at Groww. I write accessible table components for financial data, manage focus on route change, and run automated a11y CI checks with axe-core."},{"question_id":"sq3","answer":"34 LPA"}]'::jsonb
 ),
 (
-  'app00003-0001-0001-0001-000000000015',
+  'a0000003-0001-0001-0001-000000000015',
   'dddddddd-0001-0001-0001-000000000003',
   'Tarun Bose', 'tarun.bose@gmail.com', '+91-9876543415',
   'Frontend Engineer', 'Zepto', 4, 'fitvector_organic', 'ai_interviewed', 'good_fit',
@@ -1277,7 +1289,7 @@ VALUES
 
 -- ── human_interview (1) ───────────────────────────────────────────────────────
 (
-  'app00003-0001-0001-0001-000000000016',
+  'a0000003-0001-0001-0001-000000000016',
   'dddddddd-0001-0001-0001-000000000003',
   'Harshita Sharma', 'harshita.sharma@gmail.com', '+91-9876543416',
   'Senior Frontend Engineer', 'CRED', 6, 'fitvector_organic', 'human_interview', 'strong_fit',
@@ -1290,7 +1302,7 @@ VALUES
 
 -- ── offer (1) ──────────────────────────────────────────────────────────────────
 (
-  'app00003-0001-0001-0001-000000000017',
+  'a0000003-0001-0001-0001-000000000017',
   'dddddddd-0001-0001-0001-000000000003',
   'Aditi Patel', 'aditi.patel@gmail.com', '+91-9876543417',
   'Staff Frontend Engineer', 'Swiggy', 7, 'referral', 'offer', 'strong_fit',
@@ -1327,7 +1339,7 @@ VALUES
 (
   gen_random_uuid(),
   'cccccccc-0001-0001-0001-000000000001',
-  'app00001-0001-0001-0001-000000000008',
+  'a0000001-0001-0001-0001-000000000008',
   'dddddddd-0001-0001-0001-000000000001',
   'invited',
   NOW() - INTERVAL '2 days',
@@ -1341,7 +1353,7 @@ VALUES
 (
   gen_random_uuid(),
   'cccccccc-0001-0001-0001-000000000001',
-  'app00001-0001-0001-0001-000000000009',
+  'a0000001-0001-0001-0001-000000000009',
   'dddddddd-0001-0001-0001-000000000001',
   'invited',
   NOW() - INTERVAL '1 day',
@@ -1355,7 +1367,7 @@ VALUES
 (
   gen_random_uuid(),
   'cccccccc-0001-0001-0001-000000000001',
-  'app00001-0001-0001-0001-000000000010',
+  'a0000001-0001-0001-0001-000000000010',
   'dddddddd-0001-0001-0001-000000000001',
   'graded',
   NOW() - INTERVAL '7 days',
@@ -1373,7 +1385,7 @@ VALUES
     {"question_id":"q7","answer":"WITH user_stats AS (\n  SELECT user_id, SUM(amount) AS total_spend, COUNT(*) AS order_count, AVG(amount) AS avg_order_value FROM orders GROUP BY user_id\n)\nSELECT user_id, total_spend, order_count, ROUND(avg_order_value,2) FROM user_stats ORDER BY total_spend DESC LIMIT 3;","is_correct":true,"points_awarded":20,"test_results":{"passed":1,"failed":0}}
   ]'::jsonb,
   90, NULL, 78,
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Strong performance. MCQ perfect. Debounce implementation clean. SQL CTE well-written. Advance to AI interview.',
   '[{"type":"tab_switch","count":1,"timestamp":"2026-04-07T10:45:00Z"}]'::jsonb, 1
 ),
@@ -1381,7 +1393,7 @@ VALUES
 (
   gen_random_uuid(),
   'cccccccc-0001-0001-0001-000000000001',
-  'app00001-0001-0001-0001-000000000011',
+  'a0000001-0001-0001-0001-000000000011',
   'dddddddd-0001-0001-0001-000000000001',
   'graded',
   NOW() - INTERVAL '6 days',
@@ -1399,7 +1411,7 @@ VALUES
     {"question_id":"q7","answer":"SELECT user_id, SUM(amount) as total FROM orders GROUP BY user_id ORDER BY total DESC LIMIT 3;","is_correct":false,"points_awarded":11,"test_results":{"passed":0,"failed":1}}
   ]'::jsonb,
   69, NULL, 69,
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Marginal pass (65 threshold). MCQ mostly correct. Debounce functional but test case 2 failed. SQL missing CTE and missing order count/avg — partial credit. Consider advancing with caveat.',
   '[{"type":"tab_switch","count":2,"timestamp":"2026-04-08T11:20:00Z"},{"type":"tab_switch","count":2,"timestamp":"2026-04-08T11:52:00Z"}]'::jsonb, 1
 ),
@@ -1410,7 +1422,7 @@ VALUES
 (
   gen_random_uuid(),
   'cccccccc-0001-0001-0001-000000000002',
-  'app00002-0001-0001-0001-000000000008',
+  'a0000002-0001-0001-0001-000000000008',
   'dddddddd-0001-0001-0001-000000000002',
   'invited',
   NOW() - INTERVAL '3 days',
@@ -1424,7 +1436,7 @@ VALUES
 (
   gen_random_uuid(),
   'cccccccc-0001-0001-0001-000000000002',
-  'app00002-0001-0001-0001-000000000009',
+  'a0000002-0001-0001-0001-000000000009',
   'dddddddd-0001-0001-0001-000000000002',
   'invited',
   NOW() - INTERVAL '2 days',
@@ -1438,7 +1450,7 @@ VALUES
 (
   gen_random_uuid(),
   'cccccccc-0001-0001-0001-000000000002',
-  'app00002-0001-0001-0001-000000000010',
+  'a0000002-0001-0001-0001-000000000010',
   'dddddddd-0001-0001-0001-000000000002',
   'graded',
   NOW() - INTERVAL '8 days',
@@ -1452,7 +1464,7 @@ VALUES
     {"question_id":"q3","answer":"from pydantic import BaseModel, field_validator, EmailStr, Field\nfrom typing import List\n\nclass JobApplication(BaseModel):\n    name: str = Field(min_length=2)\n    email: EmailStr\n    experience_years: int = Field(ge=0)\n    skills: List[str] = Field(min_length=1)\n\n    @field_validator(''skills'')\n    @classmethod\n    def normalise(cls, v):\n        return [s.lower() for s in v]","is_correct":true,"points_awarded":19,"test_results":{"passed":2,"failed":1}}
   ]'::jsonb,
   80, NULL, 80,
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Strong performance. Retry decorator perfect. Chunk text minor issue on edge case overlap. Pydantic model mostly correct — missed Field(min_length=1) on skills. Above passing threshold (70). Advance.',
   '[{"type":"tab_switch","count":1,"timestamp":"2026-04-06T14:33:00Z"}]'::jsonb, 1
 ),
@@ -1460,7 +1472,7 @@ VALUES
 (
   gen_random_uuid(),
   'cccccccc-0001-0001-0001-000000000002',
-  'app00002-0001-0001-0001-000000000011',
+  'a0000002-0001-0001-0001-000000000011',
   'dddddddd-0001-0001-0001-000000000002',
   'graded',
   NOW() - INTERVAL '7 days',
@@ -1474,7 +1486,7 @@ VALUES
     {"question_id":"q3","answer":"from pydantic import BaseModel, EmailStr\nfrom typing import List\n\nclass JobApplication(BaseModel):\n    name: str\n    email: EmailStr\n    experience_years: int\n    skills: List[str]","is_correct":false,"points_awarded":22,"test_results":{"passed":1,"failed":2}}
   ]'::jsonb,
   72, NULL, 72,
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Pass (70 threshold). Retry decorator good but slightly different exception pattern. Chunk text misses empty string edge case. Pydantic model missing Field validators. Marginal — consider advancing.',
   '[]'::jsonb, 1
 );
@@ -1504,7 +1516,7 @@ VALUES
 -- Pooja Verma (ai_interviewed, score 84)
 (
   gen_random_uuid(),
-  'app00001-0001-0001-0001-000000000014',
+  'a0000001-0001-0001-0001-000000000014',
   'dddddddd-0001-0001-0001-000000000001',
   'technical',
   45, 43, 'completed',
@@ -1536,7 +1548,7 @@ VALUES
 -- Nikhil Rao (ai_interviewed, score 79)
 (
   gen_random_uuid(),
-  'app00001-0001-0001-0001-000000000015',
+  'a0000001-0001-0001-0001-000000000015',
   'dddddddd-0001-0001-0001-000000000001',
   'technical',
   45, 41, 'completed',
@@ -1568,7 +1580,7 @@ VALUES
 -- ── invited (2, Job 1) ────────────────────────────────────────────────────────
 (
   gen_random_uuid(),
-  'app00001-0001-0001-0001-000000000012',
+  'a0000001-0001-0001-0001-000000000012',
   'dddddddd-0001-0001-0001-000000000001',
   'technical', 45, NULL, 'invited',
   NOW() - INTERVAL '1 day',
@@ -1579,7 +1591,7 @@ VALUES
 ),
 (
   gen_random_uuid(),
-  'app00001-0001-0001-0001-000000000013',
+  'a0000001-0001-0001-0001-000000000013',
   'dddddddd-0001-0001-0001-000000000001',
   'technical', 45, NULL, 'invited',
   NOW(),
@@ -1596,7 +1608,7 @@ VALUES
 -- Akshay Kulkarni (ai_interviewed, score 86)
 (
   gen_random_uuid(),
-  'app00002-0001-0001-0001-000000000014',
+  'a0000002-0001-0001-0001-000000000014',
   'dddddddd-0001-0001-0001-000000000002',
   'technical',
   45, 44, 'completed',
@@ -1628,7 +1640,7 @@ VALUES
 -- Gaurav Jain (ai_interviewed, score 81)
 (
   gen_random_uuid(),
-  'app00002-0001-0001-0001-000000000015',
+  'a0000002-0001-0001-0001-000000000015',
   'dddddddd-0001-0001-0001-000000000002',
   'technical',
   45, 42, 'completed',
@@ -1660,7 +1672,7 @@ VALUES
 -- ── invited (2, Job 2) ────────────────────────────────────────────────────────
 (
   gen_random_uuid(),
-  'app00002-0001-0001-0001-000000000012',
+  'a0000002-0001-0001-0001-000000000012',
   'dddddddd-0001-0001-0001-000000000002',
   'technical', 45, NULL, 'invited',
   NOW() - INTERVAL '1 day',
@@ -1671,7 +1683,7 @@ VALUES
 ),
 (
   gen_random_uuid(),
-  'app00002-0001-0001-0001-000000000013',
+  'a0000002-0001-0001-0001-000000000013',
   'dddddddd-0001-0001-0001-000000000002',
   'technical', 45, NULL, 'invited',
   NOW(),
@@ -1688,7 +1700,7 @@ VALUES
 -- Simran Kaur (ai_interviewed, score 83)
 (
   gen_random_uuid(),
-  'app00003-0001-0001-0001-000000000014',
+  'a0000003-0001-0001-0001-000000000014',
   'dddddddd-0001-0001-0001-000000000003',
   'technical',
   40, 39, 'completed',
@@ -1720,7 +1732,7 @@ VALUES
 -- Tarun Bose (ai_interviewed, score 77)
 (
   gen_random_uuid(),
-  'app00003-0001-0001-0001-000000000015',
+  'a0000003-0001-0001-0001-000000000015',
   'dddddddd-0001-0001-0001-000000000003',
   'technical',
   40, 38, 'completed',
@@ -1752,7 +1764,7 @@ VALUES
 -- ── invited (2, Job 3) ────────────────────────────────────────────────────────
 (
   gen_random_uuid(),
-  'app00003-0001-0001-0001-000000000012',
+  'a0000003-0001-0001-0001-000000000012',
   'dddddddd-0001-0001-0001-000000000003',
   'technical', 40, NULL, 'invited',
   NOW() - INTERVAL '1 day',
@@ -1763,7 +1775,7 @@ VALUES
 ),
 (
   gen_random_uuid(),
-  'app00003-0001-0001-0001-000000000013',
+  'a0000003-0001-0001-0001-000000000013',
   'dddddddd-0001-0001-0001-000000000003',
   'technical', 40, NULL, 'invited',
   NOW(),
@@ -1789,9 +1801,9 @@ VALUES
 -- Job 1: Ishaan Malhotra — Technical Deep-Dive
 (
   'ffffffff-0001-0001-0001-000000000001',
-  'app00001-0001-0001-0001-000000000016',
+  'a0000001-0001-0001-0001-000000000016',
   'dddddddd-0001-0001-0001-000000000001',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   4, 'technical',
   NOW() + INTERVAL '3 days',
   60,
@@ -1802,9 +1814,9 @@ VALUES
 -- Job 2: Prateek Bansal — System Design: AI Infra
 (
   'ffffffff-0001-0001-0001-000000000002',
-  'app00002-0001-0001-0001-000000000016',
+  'a0000002-0001-0001-0001-000000000016',
   'dddddddd-0001-0001-0001-000000000002',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   4, 'technical',
   NOW() + INTERVAL '5 days',
   60,
@@ -1815,9 +1827,9 @@ VALUES
 -- Job 3: Harshita Sharma — Frontend Technical Round
 (
   'ffffffff-0001-0001-0001-000000000003',
-  'app00003-0001-0001-0001-000000000016',
+  'a0000003-0001-0001-0001-000000000016',
   'dddddddd-0001-0001-0001-000000000003',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   3, 'technical',
   NOW() + INTERVAL '7 days',
   60,
@@ -1834,19 +1846,19 @@ INSERT INTO public.interview_participants (human_interview_id, user_id, role, re
 VALUES
 (
   'ffffffff-0001-0001-0001-000000000001',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'lead',
   'accepted'
 ),
 (
   'ffffffff-0001-0001-0001-000000000002',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'lead',
   'accepted'
 ),
 (
   'ffffffff-0001-0001-0001-000000000003',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'lead',
   'accepted'
 );
@@ -1859,18 +1871,18 @@ VALUES
 INSERT INTO public.candidate_notes (applicant_id, author_id, body)
 VALUES
 (
-  'app00001-0001-0001-0001-000000000016',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  'a0000001-0001-0001-0001-000000000016',
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Ishaan is an IIT Delhi grad with 7 years at Nagarro. AI interview score 88 — strongest App Router depth in the funnel. Confirmed 1M+ user production experience. CTC ask is 48 LPA — within budget. Key question for technical round: probe his Kubernetes knowledge and whether he can lead a migration to EKS.'
 ),
 (
-  'app00002-0001-0001-0001-000000000016',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  'a0000002-0001-0001-0001-000000000016',
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Prateek leads the LLM platform at Zomato — 4 engineers, 100K RPS. AI interview score 90 — best AI engineering responses we have seen. His LLM Ops observability approach is exactly what we need. CTC ask is 60 LPA — stretches the band but might be worth it for this profile. Verify: does he want to remain IC or move to management here?'
 ),
 (
-  'app00003-0001-0001-0001-000000000016',
-  (SELECT id FROM public.users WHERE email = :'employer_email'),
+  'a0000003-0001-0001-0001-000000000016',
+  (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'),
   'Harshita leads CRED''s design system (200+ components). AI interview score 87. Her a11y programme experience is unique in this funnel. CTC ask 44 LPA. Live coding task: polymorphic Button component with TypeScript. Also ask about her approach to migrating legacy class-based components she might encounter in our codebase.'
 );
 
@@ -1882,16 +1894,16 @@ VALUES
 INSERT INTO public.candidate_votes (applicant_id, voter_id, vote)
 VALUES
 -- Job 1
-('app00001-0001-0001-0001-000000000014', (SELECT id FROM public.users WHERE email = :'employer_email'), 'strong_hire'),   -- Pooja Verma
-('app00001-0001-0001-0001-000000000015', (SELECT id FROM public.users WHERE email = :'employer_email'), 'hire'),          -- Nikhil Rao
-('app00001-0001-0001-0001-000000000016', (SELECT id FROM public.users WHERE email = :'employer_email'), 'strong_hire'),   -- Ishaan Malhotra
+('a0000001-0001-0001-0001-000000000014', (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'), 'strong_hire'),   -- Pooja Verma
+('a0000001-0001-0001-0001-000000000015', (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'), 'hire'),          -- Nikhil Rao
+('a0000001-0001-0001-0001-000000000016', (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'), 'strong_hire'),   -- Ishaan Malhotra
 -- Job 2
-('app00002-0001-0001-0001-000000000014', (SELECT id FROM public.users WHERE email = :'employer_email'), 'strong_hire'),   -- Akshay Kulkarni
-('app00002-0001-0001-0001-000000000015', (SELECT id FROM public.users WHERE email = :'employer_email'), 'hire'),          -- Gaurav Jain
+('a0000002-0001-0001-0001-000000000014', (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'), 'strong_hire'),   -- Akshay Kulkarni
+('a0000002-0001-0001-0001-000000000015', (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'), 'hire'),          -- Gaurav Jain
 -- Job 3
-('app00003-0001-0001-0001-000000000014', (SELECT id FROM public.users WHERE email = :'employer_email'), 'strong_hire'),   -- Simran Kaur
-('app00003-0001-0001-0001-000000000015', (SELECT id FROM public.users WHERE email = :'employer_email'), 'hire'),          -- Tarun Bose
-('app00003-0001-0001-0001-000000000016', (SELECT id FROM public.users WHERE email = :'employer_email'), 'strong_hire');   -- Harshita Sharma
+('a0000003-0001-0001-0001-000000000014', (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'), 'strong_hire'),   -- Simran Kaur
+('a0000003-0001-0001-0001-000000000015', (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'), 'hire'),          -- Tarun Bose
+('a0000003-0001-0001-0001-000000000016', (SELECT id FROM public.users WHERE email = 'employer_1@seed.fitvector.dev'), 'strong_hire');   -- Harshita Sharma
 
 -- Batch 6 complete ✓
 -- =============================================================================
@@ -2089,7 +2101,7 @@ INSERT INTO public.applications (
 VALUES
 (
   gen_random_uuid(),
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'eeee0001-0001-0001-0001-000000000001',
   'Full Stack Developer (React/Node.js)',
   'Accenture India',
@@ -2105,7 +2117,7 @@ VALUES
 ),
 (
   gen_random_uuid(),
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'eeee0001-0001-0001-0001-000000000006',
   'Python AI Developer (LLM/GenAI)',
   'Capgemini India',
@@ -2121,7 +2133,7 @@ VALUES
 ),
 (
   gen_random_uuid(),
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'eeee0001-0001-0001-0001-000000000005',
   'React Developer (Mid-Senior)',
   'Capgemini India',
@@ -2137,7 +2149,7 @@ VALUES
 ),
 (
   gen_random_uuid(),
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'eeee0001-0001-0001-0001-000000000004',
   'Product Manager — FinTech',
   'Accenture India',
@@ -2153,7 +2165,7 @@ VALUES
 ),
 (
   gen_random_uuid(),
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'eeee0001-0001-0001-0001-000000000007',
   'Senior DevOps Engineer (Kubernetes/Terraform)',
   'Capgemini India',
@@ -2182,7 +2194,7 @@ INSERT INTO public.applicants (
   screening_score, screening_breakdown, screening_summary, resume_parsed_json
 )
 SELECT
-  'seeker00-0001-0001-0001-000000000001',
+  'a0000004-0001-0001-0001-000000000001',
   'dddddddd-0001-0001-0001-000000000001',
   u.id,
   COALESCE(u.full_name, split_part(u.email, '@', 1)),
@@ -2199,7 +2211,7 @@ SELECT
   'Your seeker account. Use this to test the WebSocket end-to-end: log in as employer and drag this card across the Kanban to see real-time status updates on the seeker dashboard.',
   '{"name":"Seeker Account","email":"your-seeker@email.com","experience_years":4,"skills":["Next.js","React","TypeScript","Node.js","PostgreSQL"]}'::jsonb
 FROM public.users u
-WHERE u.email = :'seeker_email';
+WHERE u.email = 'jhadejhankar@gmail.com';
 
 -- FitVector application row (seeker-side tracker)
 INSERT INTO public.fitvector_applications (
@@ -2210,7 +2222,7 @@ INSERT INTO public.fitvector_applications (
 SELECT
   u.id,
   'dddddddd-0001-0001-0001-000000000001',
-  'seeker00-0001-0001-0001-000000000001',
+  'a0000004-0001-0001-0001-000000000001',
   74,
   'applied',
   '[{"status":"applied","timestamp":"2026-04-14T08:00:00Z","note":"Applied via FitVector"}]'::jsonb,
@@ -2218,7 +2230,7 @@ SELECT
   'my_resume_fullstack.pdf',
   false
 FROM public.users u
-WHERE u.email = :'seeker_email';
+WHERE u.email = 'jhadejhankar@gmail.com';
 
 -- =============================================================================
 -- SECTION 18 · COMMUNITY POSTS + COMMENTS
@@ -2230,7 +2242,7 @@ INSERT INTO public.community_posts (
 )
 VALUES
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'interview_experience',
   'Cognizant Senior Full Stack Interview Experience (Next.js/Node.js) — April 2026',
   'Just completed all 4 rounds at Cognizant for the Senior Full Stack Engineer role. Sharing my experience for the community.
@@ -2251,7 +2263,7 @@ Overall: rigorous process but fair. Prepare your EXPLAIN ANALYZE stories and a s
   '{"company":"Cognizant","role":"Senior Full Stack Engineer","location":"Bengaluru","result":"Pending","rounds":[{"round":1,"type":"AI Screen","duration":"15min","difficulty":"medium"},{"round":2,"type":"Technical Assessment","duration":"60min","difficulty":"hard"},{"round":3,"type":"AI Video Interview","duration":"45min","difficulty":"hard"},{"round":4,"type":"Technical","duration":"60min","difficulty":"hard"}]}'::jsonb
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'discussion',
   'Next.js App Router vs Pages Router in 2026 — which are you using in production?',
   'Curious where the community is at with Next.js App Router adoption. I started migrating our product from Pages Router to App Router 6 months ago and here are my honest takes:
@@ -2274,7 +2286,7 @@ Overall I am bullish on App Router. What is your experience?',
   NULL
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'interview_experience',
   'Razorpay SDE-2 Frontend Interview — Rejected but learned a lot',
   'Applied for SDE-2 Frontend at Razorpay. 3 rounds, did not get through. Sharing for transparency.
@@ -2293,7 +2305,7 @@ Net: frontend machine coding practice is non-negotiable for product companies. I
   '{"company":"Razorpay","role":"SDE-2 Frontend","location":"Bengaluru","result":"Rejected","rounds":[{"round":1,"type":"DSA","duration":"90min"},{"round":2,"type":"Machine Coding","duration":"90min"},{"round":3,"type":"System Design","duration":"60min"}]}'::jsonb
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'interview_experience',
   'Google India L4 SWE — Final Round Experience (2026)',
   'Completed Google India L4 onsite. 5 rounds in one day, sharing the structure.
@@ -2314,7 +2326,7 @@ The coding bar is real — Google expects clean, bug-free code under pressure. M
   '{"company":"Google India","role":"SWE L4","location":"Hyderabad","result":"Pending","rounds":[{"round":1,"type":"DSA","duration":"45min"},{"round":2,"type":"DSA","duration":"45min"},{"round":3,"type":"System Design","duration":"60min"},{"round":4,"type":"Behavioural","duration":"45min"},{"round":5,"type":"Googleyness","duration":"45min"}]}'::jsonb
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'discussion',
   'How are you all preparing for AI Engineer roles in 2026? Resources that worked for me',
   'After 6 months of job searching specifically for AI Engineer roles (Python/FastAPI/LLM focus), here are the resources that actually moved the needle for me:
@@ -2344,7 +2356,7 @@ What worked for you? Drop your resources below.',
   NULL
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'interview_experience',
   'Flipkart SDE-2 Backend (Python) — Offer Accepted!',
   'Got an offer from Flipkart for SDE-2 Backend. Here is the full process for people targeting similar roles.
@@ -2375,52 +2387,52 @@ INSERT INTO public.salary_reports (
 )
 VALUES
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Senior Full Stack Engineer', 'Cognizant Technology Solutions', '1000+',
   'Bengaluru, Karnataka', 6, 2800000, 3200000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Full Stack Engineer', 'Accenture India', '1000+',
   'Bengaluru, Karnataka', 4, 1900000, 2200000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'AI Engineer (Python/FastAPI)', 'Razorpay', '1000+',
   'Bengaluru, Karnataka', 5, 3200000, 3800000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Senior AI/ML Engineer', 'Flipkart', '1000+',
   'Bengaluru, Karnataka', 6, 3800000, 4500000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Frontend Developer (React)', 'Capgemini India', '1000+',
   'Pune, Maharashtra', 3, 1500000, 1700000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Senior Frontend Engineer', 'CRED', '201-1000',
   'Bengaluru, Karnataka', 6, 4000000, 4800000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Staff Frontend Engineer', 'Swiggy', '1000+',
   'Bengaluru, Karnataka', 8, 5500000, 6500000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Python Developer (FastAPI)', 'Freshworks', '1000+',
   'Chennai, Tamil Nadu', 4, 1700000, 2000000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Technical Lead (Full Stack)', 'Mphasis', '1000+',
   'Bengaluru, Karnataka', 8, 4200000, 5000000, 'INR', false
 ),
 (
-  (SELECT id FROM public.users WHERE email = :'seeker_email'),
+  (SELECT id FROM public.users WHERE email = 'jhadejhankar@gmail.com'),
   'Software Engineer II (Node.js)', 'HCL Technologies', '1000+',
   'Noida, Uttar Pradesh', 4, 1600000, 1850000, 'INR', false
 );
@@ -2432,7 +2444,7 @@ VALUES
 INSERT INTO public.user_reputation (user_id, karma_points, helpful_reviews_count, interview_experiences_count)
 SELECT id, 142, 3, 3
 FROM public.users
-WHERE email = :'seeker_email'
+WHERE email = 'jhadejhankar@gmail.com'
 ON CONFLICT (user_id) DO UPDATE
 SET karma_points = 142,
     helpful_reviews_count = 3,
