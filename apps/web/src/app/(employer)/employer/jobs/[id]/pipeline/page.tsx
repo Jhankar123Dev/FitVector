@@ -257,25 +257,26 @@ export default function PipelinePage() {
       return;
     }
 
-    // Intercept: open assessment picker before moving to assessment_pending
-    if (applicant.pipelineStage === "ai_screened") {
+    const next = NEXT_STAGE[applicant.pipelineStage];
+
+    // Intercept: open assessment picker when the next step is assessment_pending
+    if (next === "assessment_pending") {
       setAssessmentModalApplicant(applicant);
       return;
     }
 
-    // Intercept: open schedule modal before moving to human_interview
-    if (applicant.pipelineStage === "ai_interviewed") {
+    // Intercept: open schedule modal when the next step is human_interview
+    if (next === "human_interview") {
       setScheduleModalApplicant(applicant);
       return;
     }
 
-    // Intercept: open offer review before making offer
-    if (applicant.pipelineStage === "human_interview") {
+    // Intercept: open offer review when the next step is offer
+    if (next === "offer") {
       setOfferModalApplicant(applicant);
       return;
     }
 
-    const next = NEXT_STAGE[applicant.pipelineStage];
     if (next) {
       changeStage.mutate({ id, stage: next });
     }

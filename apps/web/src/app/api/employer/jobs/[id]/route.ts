@@ -122,11 +122,11 @@ export async function PUT(
       return NextResponse.json({ error: "Failed to update job post" }, { status: 500 });
     }
 
-    // Auto-generate assessment if publishing and assessmentConfig enabled and not yet linked
-    const isPublishing = d.status === "active" && existing.status !== "active";
-    const assessmentCfg = (d.assessmentConfig ?? (updated as Record<string, unknown>).assessment_config) as Record<string, unknown> | null;
+    // Create and link assessment when assessmentConfig is part of this update,
+    // enabled, and not already linked — works for both draft saves and publishes.
+    const assessmentCfg = d.assessmentConfig as Record<string, unknown> | null | undefined;
     const alreadyLinked = !!(updated as Record<string, unknown>).assessment_id;
-    if (isPublishing && assessmentCfg?.enabled && !alreadyLinked) {
+    if (assessmentCfg?.enabled && !alreadyLinked) {
       const { company, session } = result.data;
       await generateAndLinkAssessment(
         supabase,

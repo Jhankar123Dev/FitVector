@@ -74,21 +74,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to create job post" }, { status: 500 });
     }
 
-    // If publishing immediately, insert into public jobs table + auto-generate assessment
+    // Insert into public jobs table when publishing immediately
     if (d.status === "active") {
       await insertIntoJobsTable(supabase, row, company);
+    }
 
-      // Auto-generate assessment questions if assessmentConfig is enabled
-      if (d.assessmentConfig?.enabled) {
-        await generateAndLinkAssessment(
-          supabase,
-          row.id as string,
-          company.id,
-          session.user.id,
-          d.title,
-          d.assessmentConfig as Parameters<typeof generateAndLinkAssessment>[5],
-        );
-      }
+    // Create and link assessment whenever config is enabled and no existing assessment was linked.
+    // Runs for both draft and active so assessment_id is available as soon as the job is saved.
+    if (d.assessmentConfig?.enabled && !d.assessmentId) {
+      await generateAndLinkAssessment(
+        supabase,
+        row.id as string,
+        company.id,
+        session.user.id,
+        d.title,
+        d.assessmentConfig as Parameters<typeof generateAndLinkAssessment>[5],
+      );
     }
 
     return NextResponse.json(

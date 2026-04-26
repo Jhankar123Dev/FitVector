@@ -63,13 +63,13 @@ export function Step6Assessment({
   }
 
   function confirmBankImport() {
-    const titles = bankItems
-      .filter((item: QuestionBankItem) => bankSelected.has(item.id))
-      .map((item: QuestionBankItem) => item.title);
+    const selected = bankItems.filter((item: QuestionBankItem) => bankSelected.has(item.id));
+    const titles = selected.map((item: QuestionBankItem) => item.title);
     update({
       assessmentConfig: {
         ...form.assessmentConfig,
         customQuestions: [...form.assessmentConfig.customQuestions, ...titles],
+        bankQuestions: [...(form.assessmentConfig.bankQuestions ?? []), ...selected],
       },
     });
     setBankSelected(new Set());

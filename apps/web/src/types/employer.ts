@@ -116,6 +116,16 @@ export interface AIInterviewConfig {
   customQuestions: string[];
 }
 
+export interface BankQuestion {
+  id: string;
+  title: string;
+  difficulty: string;
+  prompt: string;
+  starterCode: Record<string, string>;
+  testCases: { input: string; expectedOutput: string }[];
+  tags: string[];
+}
+
 export interface AssessmentConfig {
   enabled: boolean;
   assessmentType: AssessmentType;
@@ -126,6 +136,9 @@ export interface AssessmentConfig {
   mcqCount?: number;
   codingCount?: number;
   codeLanguage?: string; // e.g. "python3", "nodejs", "java"
+  // Full question objects selected from the question bank — used to create the
+  // assessment directly instead of AI-generating from topic strings
+  bankQuestions?: BankQuestion[];
 }
 
 export interface JobPost {

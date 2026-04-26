@@ -12,7 +12,16 @@ import type { JobPost } from "@/types/employer";
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
   const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Request failed");
+  if (!res.ok) {
+    const fieldErrors = json.details?.fieldErrors as Record<string, string[]> | undefined;
+    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      const msg = Object.entries(fieldErrors)
+        .map(([field, errs]) => `${field}: ${errs[0]}`)
+        .join(" · ");
+      throw new Error(msg);
+    }
+    throw new Error(json.error || "Request failed");
+  }
   return json;
 }
 
