@@ -22,6 +22,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CHART_COLORS } from "@/lib/chart-colors";
 import { useUser } from "@/hooks/use-user";
 import { useFitVectorApply, useFitVectorApplications } from "@/hooks/use-fitvector-apply";
 import type { JobSearchResult } from "@/types/job";
@@ -47,8 +48,8 @@ interface ResumeOption {
 // ─── Confetti ──────────────────────────────────────────────────────────────
 
 const CONFETTI_COLORS = [
-  "#0369a1", "#22c55e", "#3b82f6", "#f59e0b", "#ef4444",
-  "#0284c7", "#ec4899", "#0ea5e9", "#f97316", "#06b6d4",
+  CHART_COLORS.primary, CHART_COLORS.secondary, "#3b82f6", CHART_COLORS.amber, CHART_COLORS.red,
+  "#0284c7", "#ec4899", CHART_COLORS.sky, CHART_COLORS.orange, "#06b6d4",
 ];
 
 function ConfettiPiece({ index }: { index: number }) {

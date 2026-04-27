@@ -50,7 +50,7 @@ import { useAssessments } from "@/hooks/use-assessments";
 const INTERVIEW_STATUS_STYLES: Record<string, string> = {
   scheduled:   "bg-blue-50 text-blue-700",
   completed:   "bg-emerald-50 text-emerald-700",
-  cancelled:   "bg-surface-100 text-surface-500",
+  cancelled:   "bg-muted text-muted-foreground",
   rescheduled: "bg-amber-50 text-amber-700",
   no_show:     "bg-red-50 text-red-600",
 };
@@ -76,10 +76,10 @@ function HumanInterviewsPanel({ interviews }: { interviews: HumanInterview[] }) 
   if (interviews.length === 0) {
     return (
       <div className="space-y-3">
-        <div className="rounded-xl border-2 border-dashed border-surface-200 py-10 text-center">
-          <CalendarDays className="mx-auto h-8 w-8 text-surface-300" />
-          <p className="mt-2 text-sm text-surface-500">No human interviews scheduled</p>
-          <p className="mt-1 text-xs text-surface-400">
+        <div className="rounded-xl border-2 border-dashed border-border py-10 text-center">
+          <CalendarDays className="mx-auto h-8 w-8 text-muted-foreground/40" />
+          <p className="mt-2 text-sm text-muted-foreground">No human interviews scheduled</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
             Advance the candidate to schedule one.
           </p>
         </div>
@@ -97,20 +97,20 @@ function HumanInterviewsPanel({ interviews }: { interviews: HumanInterview[] }) 
   return (
     <div className="space-y-3">
       {interviews.map((iv) => (
-        <div key={iv.id} className="rounded-lg border border-surface-200 p-4 space-y-2">
+        <div key={iv.id} className="rounded-lg border border-border p-4 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold text-surface-700">
+            <p className="text-xs font-semibold text-foreground/80">
               Round {iv.roundNumber}
               {iv.interviewType && (
-                <span className="ml-1.5 font-normal text-surface-500">— {iv.interviewType}</span>
+                <span className="ml-1.5 font-normal text-muted-foreground">— {iv.interviewType}</span>
               )}
             </p>
-            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", INTERVIEW_STATUS_STYLES[iv.status] ?? "bg-surface-100 text-surface-500")}>
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", INTERVIEW_STATUS_STYLES[iv.status] ?? "bg-muted text-muted-foreground")}>
               {iv.status.replace("_", " ")}
             </span>
           </div>
 
-          <p className="flex items-center gap-1.5 text-xs text-surface-500">
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <CalendarDays className="h-3 w-3 shrink-0" />
             {formatDt(iv.scheduledAt)}
           </p>
@@ -118,16 +118,16 @@ function HumanInterviewsPanel({ interviews }: { interviews: HumanInterview[] }) 
           {iv.participants.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               {iv.participants.map((p) => (
-                <span key={p.userId} className="inline-flex items-center gap-1 rounded-full bg-surface-100 px-2 py-0.5 text-[10px] text-surface-600">
+                <span key={p.userId} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
                   {p.name}
-                  <span className="text-surface-400">· {PARTICIPANT_ROLE_LABELS[p.role] ?? p.role}</span>
+                  <span className="text-muted-foreground/70">· {PARTICIPANT_ROLE_LABELS[p.role] ?? p.role}</span>
                 </span>
               ))}
             </div>
           )}
 
           {iv.notes && (
-            <p className="text-[11px] text-surface-500 italic">{iv.notes}</p>
+            <p className="text-[11px] text-muted-foreground italic">{iv.notes}</p>
           )}
 
           {/* Join / Start CTA for scheduled interviews with a meeting link */}
@@ -144,7 +144,7 @@ function HumanInterviewsPanel({ interviews }: { interviews: HumanInterview[] }) 
             </a>
           )}
           {iv.status === "scheduled" && !iv.meetingLink && (
-            <p className="mt-1 flex items-center gap-1.5 rounded-lg bg-surface-50 px-3 py-2 text-[11px] text-surface-400">
+            <p className="mt-1 flex items-center gap-1.5 rounded-lg bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
               <Video className="h-3.5 w-3.5 shrink-0" />
               No meeting link — add one when rescheduling
             </p>
@@ -178,10 +178,10 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-surface-600">{label}</span>
-        <span className="font-semibold text-surface-800">{value}%</span>
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-semibold text-foreground">{value}%</span>
       </div>
-      <div className="h-2 rounded-full bg-surface-100">
+      <div className="h-2 rounded-full bg-muted">
         <div
           className={cn("h-2 rounded-full transition-all duration-500", barColor)}
           style={{ width: `${value}%` }}
@@ -316,26 +316,26 @@ export function CandidateDetail({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-surface-900/40 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-white shadow-xl sm:w-[480px] md:w-[520px]">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-background shadow-xl sm:w-[480px] md:w-[520px]">
         {/* ── Header ───────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between border-b border-surface-200 p-3 sm:p-5">
+        <div className="flex items-start justify-between border-b border-border p-3 sm:p-5">
           <div className="flex items-start gap-3 sm:gap-4 min-w-0">
-            <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-surface-100 text-base sm:text-lg font-bold text-surface-600">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-muted text-base sm:text-lg font-bold text-muted-foreground">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-base sm:text-lg font-semibold text-surface-800">
+              <h2 className="truncate text-base sm:text-lg font-semibold text-foreground">
                 {applicant.name}
               </h2>
-              <p className="truncate text-xs sm:text-sm text-surface-500">
+              <p className="truncate text-xs sm:text-sm text-muted-foreground">
                 {applicant.currentRole} @ {applicant.currentCompany}
               </p>
-              <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-surface-500">
+              <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Mail className="h-3 w-3 shrink-0" />
                   <span className="truncate max-w-[140px] sm:max-w-none">{applicant.email}</span>
@@ -361,7 +361,7 @@ export function CandidateDetail({
             )}
             <button
               onClick={onClose}
-              className="rounded-md p-1 text-surface-400 hover:bg-surface-100 hover:text-surface-600"
+              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
@@ -377,7 +377,7 @@ export function CandidateDetail({
               if (val === "assessment") setAssessmentTabActive(true);
             }}
           >
-            <div className="border-b border-surface-200 px-3 pt-2 sm:px-5 overflow-x-auto">
+            <div className="border-b border-border px-3 pt-2 sm:px-5 overflow-x-auto">
               <TabsList className="w-max sm:w-full justify-start bg-transparent p-0 h-auto">
                 {["resume", "screening", "ai_interview", "assessment", "human_interview", "notes"].map((tab) => (
                   <TabsTrigger
@@ -404,7 +404,7 @@ export function CandidateDetail({
             <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-5 sm:py-4">
               {/* ── Resume Tab ────────────────────────────────────── */}
               <TabsContent value="resume" className="mt-0 space-y-4">
-                <p className="text-sm text-surface-600">
+                <p className="text-sm text-muted-foreground">
                   {applicant.parsedResume.summary}
                 </p>
 
@@ -424,29 +424,29 @@ export function CandidateDetail({
 
                 {/* Experience */}
                 <div>
-                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Experience
                   </h4>
                   <div className="space-y-3">
                     {(applicant.parsedResume.experience ?? []).map((exp, i) => (
                       <div
                         key={i}
-                        className="rounded-lg border border-surface-200 p-3"
+                        className="rounded-lg border border-border p-3"
                       >
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-surface-800">
+                          <p className="text-sm font-medium text-foreground">
                             {exp.title}
                           </p>
-                          <span className="text-xs text-surface-400">
+                          <span className="text-xs text-muted-foreground">
                             {exp.duration}
                           </span>
                         </div>
-                        <p className="text-xs text-surface-500">{exp.company}</p>
+                        <p className="text-xs text-muted-foreground">{exp.company}</p>
                         <ul className="mt-2 space-y-1">
                           {(exp.highlights ?? []).map((h, j) => (
                             <li
                               key={j}
-                              className="text-xs text-surface-600 before:mr-1.5 before:content-['•']"
+                              className="text-xs text-muted-foreground before:mr-1.5 before:content-['•']"
                             >
                               {h}
                             </li>
@@ -459,15 +459,15 @@ export function CandidateDetail({
 
                 {/* Education */}
                 <div>
-                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Education
                   </h4>
                   {(applicant.parsedResume.education ?? []).map((edu, i) => (
-                    <div key={i} className="rounded-lg border border-surface-200 p-3">
-                      <p className="text-sm font-medium text-surface-800">
+                    <div key={i} className="rounded-lg border border-border p-3">
+                      <p className="text-sm font-medium text-foreground">
                         {edu.degree}
                       </p>
-                      <p className="text-xs text-surface-500">
+                      <p className="text-xs text-muted-foreground">
                         {edu.institution} — {edu.year}
                       </p>
                     </div>
@@ -476,7 +476,7 @@ export function CandidateDetail({
 
                 {/* Skills */}
                 <div>
-                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Skills
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
@@ -491,15 +491,15 @@ export function CandidateDetail({
                 {/* Projects */}
                 {(applicant.parsedResume.projects ?? []).length > 0 && (
                   <div>
-                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Projects
                     </h4>
                     {(applicant.parsedResume.projects ?? []).map((p, i) => (
-                      <div key={i} className="rounded-lg border border-surface-200 p-3">
-                        <p className="text-sm font-medium text-surface-800">
+                      <div key={i} className="rounded-lg border border-border p-3">
+                        <p className="text-sm font-medium text-foreground">
                           {p.name}
                         </p>
-                        <p className="text-xs text-surface-500">{p.description}</p>
+                        <p className="text-xs text-muted-foreground">{p.description}</p>
                       </div>
                     ))}
                   </div>
@@ -520,24 +520,24 @@ export function CandidateDetail({
                       >
                         {BUCKET_LABELS[applicant.screeningBucket]}
                       </Badge>
-                      <span className="text-sm text-surface-500">
-                        Score: <strong className="text-surface-800">{applicant.screeningScore}/100</strong>
+                      <span className="text-sm text-muted-foreground">
+                        Score: <strong className="text-foreground">{applicant.screeningScore}/100</strong>
                       </span>
                     </div>
 
                     {/* AI Summary */}
-                    <div className="rounded-lg bg-surface-50 p-4">
-                      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-surface-500">
+                    <div className="rounded-lg bg-muted/30 p-4">
+                      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         AI Screening Summary
                       </h4>
-                      <p className="text-sm leading-relaxed text-surface-700">
+                      <p className="text-sm leading-relaxed text-foreground/80">
                         {applicant.screeningSummary}
                       </p>
                     </div>
 
                     {/* Score breakdown bars */}
                     <div>
-                      <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-surface-500">
+                      <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Score Breakdown
                       </h4>
                       <div className="space-y-3">
@@ -551,12 +551,12 @@ export function CandidateDetail({
                     </div>
                   </>
                 ) : (
-                  <div className="rounded-xl border-2 border-dashed border-surface-200 py-12 text-center">
-                    <ClipboardCheck className="mx-auto h-8 w-8 text-surface-300" />
-                    <p className="mt-2 text-sm text-surface-500">
+                  <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
+                    <ClipboardCheck className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                    <p className="mt-2 text-sm text-muted-foreground">
                       Not yet screened
                     </p>
-                    <p className="mt-1 text-xs text-surface-400">
+                    <p className="mt-1 text-xs text-muted-foreground/70">
                       AI screening will run automatically
                     </p>
                   </div>
@@ -569,17 +569,17 @@ export function CandidateDetail({
                   applicant.pipelineStage,
                 ) ? (
                   <div className="space-y-4">
-                    <div className="rounded-lg bg-surface-50 p-4">
-                      <p className="text-sm text-surface-700">
+                    <div className="rounded-lg bg-muted/30 p-4">
+                      <p className="text-sm text-foreground/80">
                         AI Interview completed. Detailed transcript and evaluation
                         report available.
                       </p>
                     </div>
-                    <div className="rounded-lg border border-surface-200 p-4">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                    <div className="rounded-lg border border-border p-4">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Key Findings
                       </h4>
-                      <ul className="mt-2 space-y-1.5 text-sm text-surface-600">
+                      <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
                         <li className="before:mr-1.5 before:text-emerald-500 before:content-['✓']">
                           Strong technical depth demonstrated
                         </li>
@@ -596,12 +596,12 @@ export function CandidateDetail({
                     </Button>
                   </div>
                 ) : (
-                  <div className="rounded-xl border-2 border-dashed border-surface-200 py-12 text-center">
-                    <Send className="mx-auto h-8 w-8 text-surface-300" />
-                    <p className="mt-2 text-sm text-surface-500">
+                  <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
+                    <Send className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                    <p className="mt-2 text-sm text-muted-foreground">
                       AI Interview not started
                     </p>
-                    <p className="mt-1 text-xs text-surface-400">
+                    <p className="mt-1 text-xs text-muted-foreground/70">
                       Advance the candidate to send an interview invite
                     </p>
                   </div>
@@ -612,7 +612,7 @@ export function CandidateDetail({
               <TabsContent value="assessment" className="mt-0 space-y-3">
                 {/* Assign Test button — always visible */}
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Test History ({assessmentSubmissions.length})
                   </p>
                   <Button
@@ -630,22 +630,22 @@ export function CandidateDetail({
                 {showAssignTestModal && (
                   <>
                     <div
-                      className="fixed inset-0 z-[60] bg-surface-900/40"
+                      className="fixed inset-0 z-[60] bg-black/40"
                       onClick={() => setShowAssignTestModal(false)}
                     />
-                    <div className="fixed left-1/2 top-1/2 z-[70] w-[340px] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white shadow-2xl">
-                      <div className="flex items-center justify-between border-b border-surface-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-surface-800">Assign Test to {applicant.name}</h3>
+                    <div className="fixed left-1/2 top-1/2 z-[70] w-[340px] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-popover shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                        <h3 className="text-sm font-semibold text-foreground">Assign Test to {applicant.name}</h3>
                         <button
                           onClick={() => setShowAssignTestModal(false)}
-                          className="rounded p-1 text-surface-400 hover:bg-surface-100"
+                          className="rounded p-1 text-muted-foreground hover:bg-muted"
                         >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
                       <div className="max-h-64 overflow-y-auto p-2">
                         {assessmentLibrary.length === 0 ? (
-                          <p className="py-6 text-center text-sm text-surface-400">No assessments in your library yet.</p>
+                          <p className="py-6 text-center text-sm text-muted-foreground/70">No assessments in your library yet.</p>
                         ) : (
                           assessmentLibrary.map((a) => (
                             <button
@@ -657,11 +657,11 @@ export function CandidateDetail({
                                   { onSuccess: () => setShowAssignTestModal(false) },
                                 );
                               }}
-                              className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-surface-50 disabled:opacity-50"
+                              className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-muted/50 disabled:opacity-50"
                             >
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-medium text-surface-800">{a.name}</p>
-                                <p className="text-[11px] text-surface-500 capitalize">
+                                <p className="truncate text-sm font-medium text-foreground">{a.name}</p>
+                                <p className="text-[11px] text-muted-foreground capitalize">
                                   {(a.assessment_type || "").replace(/_/g, " ")}
                                   {a.difficulty ? ` · ${a.difficulty}` : ""}
                                   {a.time_limit_minutes ? ` · ${a.time_limit_minutes}min` : ""}
@@ -673,7 +673,7 @@ export function CandidateDetail({
                         )}
                       </div>
                       {assignTestMutation.isPending && (
-                        <div className="border-t border-surface-100 px-4 py-2 text-center text-xs text-surface-500">
+                        <div className="border-t border-border px-4 py-2 text-center text-xs text-muted-foreground">
                           Assigning…
                         </div>
                       )}
@@ -684,20 +684,20 @@ export function CandidateDetail({
                 {assessmentsLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-                    <span className="ml-2 text-sm text-surface-500">Loading assessments…</span>
+                    <span className="ml-2 text-sm text-muted-foreground">Loading assessments…</span>
                   </div>
                 ) : assessmentSubmissions.length === 0 ? (
-                  <div className="rounded-xl border-2 border-dashed border-surface-200 py-12 text-center">
-                    <ClipboardCheck className="mx-auto h-8 w-8 text-surface-300" />
-                    <p className="mt-2 text-sm text-surface-500">No assessments assigned yet</p>
-                    <p className="mt-1 text-xs text-surface-400">Use &ldquo;Assign Test&rdquo; to send one</p>
+                  <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
+                    <ClipboardCheck className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                    <p className="mt-2 text-sm text-muted-foreground">No assessments assigned yet</p>
+                    <p className="mt-1 text-xs text-muted-foreground/70">Use &ldquo;Assign Test&rdquo; to send one</p>
                   </div>
                 ) : (
                   assessmentSubmissions.map((sub, idx) => {
                     const isExpanded = expandedSubmissionId === sub.id;
                     const scoreColor =
                       sub.finalScore === null
-                        ? "text-surface-400"
+                        ? "text-muted-foreground/70"
                         : sub.finalScore >= 80
                           ? "text-emerald-600"
                           : sub.finalScore >= 60
@@ -707,7 +707,7 @@ export function CandidateDetail({
                               : "text-red-600";
                     const scoreBg =
                       sub.finalScore === null
-                        ? "bg-surface-100"
+                        ? "bg-muted"
                         : sub.finalScore >= 80
                           ? "bg-emerald-50"
                           : sub.finalScore >= 60
@@ -724,7 +724,7 @@ export function CandidateDetail({
                       expired: "Expired",
                     };
                     const statusStyle: Record<string, string> = {
-                      invited: "bg-surface-100 text-surface-600",
+                      invited: "bg-muted text-muted-foreground",
                       started: "bg-amber-50 text-amber-700",
                       submitted: "bg-blue-50 text-blue-700",
                       graded: "bg-emerald-50 text-emerald-700",
@@ -732,19 +732,19 @@ export function CandidateDetail({
                     };
 
                     return (
-                      <div key={sub.id} className="rounded-lg border border-surface-200 overflow-hidden">
+                      <div key={sub.id} className="rounded-lg border border-border overflow-hidden">
                         {/* ── Card header ── */}
                         <div
-                          className="flex cursor-pointer items-center justify-between gap-3 p-3 hover:bg-surface-50"
+                          className="flex cursor-pointer items-center justify-between gap-3 p-3 hover:bg-muted/50"
                           onClick={() => setExpandedSubmissionId(isExpanded ? null : sub.id)}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-medium text-surface-800 truncate">
+                              <p className="text-sm font-medium text-foreground truncate">
                                 Round {idx + 1}: {sub.assessmentName}
                               </p>
                               <Badge
-                                className={cn("text-[10px] px-1.5 py-0 border-0", statusStyle[sub.status] || "bg-surface-100 text-surface-600")}
+                                className={cn("text-[10px] px-1.5 py-0 border-0", statusStyle[sub.status] || "bg-muted text-muted-foreground")}
                               >
                                 {statusLabel[sub.status] || sub.status}
                               </Badge>
@@ -755,7 +755,7 @@ export function CandidateDetail({
                                 </Badge>
                               )}
                             </div>
-                            <p className="mt-0.5 text-[11px] text-surface-500 capitalize">
+                            <p className="mt-0.5 text-[11px] text-muted-foreground capitalize">
                               {sub.assessmentType.replace(/_/g, " ")}
                               {sub.difficulty ? ` · ${sub.difficulty}` : ""}
                               {sub.timeLimitMinutes ? ` · ${sub.timeLimitMinutes}min` : ""}
@@ -765,54 +765,54 @@ export function CandidateDetail({
                             {sub.finalScore !== null ? (
                               <div className={cn("rounded-lg px-2 py-1 text-center", scoreBg)}>
                                 <p className={cn("text-lg font-bold leading-tight", scoreColor)}>{sub.finalScore}</p>
-                                <p className="text-[9px] text-surface-400">/ 100</p>
+                                <p className="text-[9px] text-muted-foreground/70">/ 100</p>
                               </div>
                             ) : (
-                              <span className="text-xs text-surface-400">—</span>
+                              <span className="text-xs text-muted-foreground/70">—</span>
                             )}
                             {isExpanded
-                              ? <ChevronUp className="h-4 w-4 text-surface-400" />
-                              : <ChevronDown className="h-4 w-4 text-surface-400" />
+                              ? <ChevronUp className="h-4 w-4 text-muted-foreground/70" />
+                              : <ChevronDown className="h-4 w-4 text-muted-foreground/70" />
                             }
                           </div>
                         </div>
 
                         {/* ── Expanded detail ── */}
                         {isExpanded && (
-                          <div className="border-t border-surface-100 bg-surface-50 p-3 space-y-3">
+                          <div className="border-t border-border bg-muted/30 p-3 space-y-3">
                             {/* Score & pass/fail row */}
                             <div className="grid grid-cols-3 gap-2">
-                              <div className="rounded-lg bg-white border border-surface-200 p-2 text-center">
+                              <div className="rounded-lg bg-card border border-border p-2 text-center">
                                 <p className={cn("text-xl font-bold", scoreColor)}>
                                   {sub.finalScore !== null ? sub.finalScore : "—"}
                                 </p>
-                                <p className="text-[10px] text-surface-400">Score</p>
+                                <p className="text-[10px] text-muted-foreground/70">Score</p>
                               </div>
-                              <div className="rounded-lg bg-white border border-surface-200 p-2 text-center">
+                              <div className="rounded-lg bg-card border border-border p-2 text-center">
                                 {sub.timeTakenMinutes !== null ? (
                                   <>
-                                    <p className="text-xl font-bold text-surface-700">{sub.timeTakenMinutes}m</p>
-                                    <p className="text-[10px] text-surface-400">Time taken</p>
+                                    <p className="text-xl font-bold text-foreground/80">{sub.timeTakenMinutes}m</p>
+                                    <p className="text-[10px] text-muted-foreground/70">Time taken</p>
                                   </>
                                 ) : (
                                   <>
-                                    <p className="text-xl font-bold text-surface-300">—</p>
-                                    <p className="text-[10px] text-surface-400">Time taken</p>
+                                    <p className="text-xl font-bold text-muted-foreground/40">—</p>
+                                    <p className="text-[10px] text-muted-foreground/70">Time taken</p>
                                   </>
                                 )}
                               </div>
-                              <div className="rounded-lg bg-white border border-surface-200 p-2 text-center">
+                              <div className="rounded-lg bg-card border border-border p-2 text-center">
                                 {sub.passed !== null ? (
                                   <>
                                     <p className={cn("text-sm font-bold", sub.passed ? "text-emerald-600" : "text-red-500")}>
                                       {sub.passed ? "Pass" : "Fail"}
                                     </p>
-                                    <p className="text-[10px] text-surface-400">≥{sub.passingScore} to pass</p>
+                                    <p className="text-[10px] text-muted-foreground/70">≥{sub.passingScore} to pass</p>
                                   </>
                                 ) : (
                                   <>
-                                    <p className="text-sm font-bold text-surface-300">—</p>
-                                    <p className="text-[10px] text-surface-400">Pass/Fail</p>
+                                    <p className="text-sm font-bold text-muted-foreground/40">—</p>
+                                    <p className="text-[10px] text-muted-foreground/70">Pass/Fail</p>
                                   </>
                                 )}
                               </div>
@@ -821,8 +821,8 @@ export function CandidateDetail({
                             {/* Proctoring flags */}
                             <div>
                               <div className="flex items-center gap-1.5 mb-2">
-                                <Shield className="h-3.5 w-3.5 text-surface-500" />
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-surface-500">Proctoring Report</p>
+                                <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Proctoring Report</p>
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 <div className={cn(
@@ -840,8 +840,8 @@ export function CandidateDetail({
                                       : <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                                   }
                                   <div>
-                                    <p className="text-sm font-semibold text-surface-800">{sub.proctoring.tabSwitches}</p>
-                                    <p className="text-[10px] text-surface-500">Tab switches</p>
+                                    <p className="text-sm font-semibold text-foreground">{sub.proctoring.tabSwitches}</p>
+                                    <p className="text-[10px] text-muted-foreground">Tab switches</p>
                                   </div>
                                 </div>
                                 <div className={cn(
@@ -859,8 +859,8 @@ export function CandidateDetail({
                                       : <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                                   }
                                   <div>
-                                    <p className="text-sm font-semibold text-surface-800">{sub.proctoring.copyPasteAttempts}</p>
-                                    <p className="text-[10px] text-surface-500">Copy/paste</p>
+                                    <p className="text-sm font-semibold text-foreground">{sub.proctoring.copyPasteAttempts}</p>
+                                    <p className="text-[10px] text-muted-foreground">Copy/paste</p>
                                   </div>
                                 </div>
                                 {sub.proctoring.submittedLate && (
@@ -882,23 +882,23 @@ export function CandidateDetail({
 
                             {/* Timeline */}
                             <div>
-                              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-surface-500">Timeline</p>
-                              <div className="space-y-1 text-xs text-surface-600">
+                              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Timeline</p>
+                              <div className="space-y-1 text-xs text-muted-foreground">
                                 {sub.invitedAt && (
                                   <div className="flex justify-between">
-                                    <span className="text-surface-400">Invited</span>
+                                    <span className="text-muted-foreground/70">Invited</span>
                                     <span>{new Date(sub.invitedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
                                   </div>
                                 )}
                                 {sub.startedAt && (
                                   <div className="flex justify-between">
-                                    <span className="text-surface-400">Started</span>
+                                    <span className="text-muted-foreground/70">Started</span>
                                     <span>{new Date(sub.startedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
                                   </div>
                                 )}
                                 {sub.submittedAt && (
                                   <div className="flex justify-between">
-                                    <span className="text-surface-400">Submitted</span>
+                                    <span className="text-muted-foreground/70">Submitted</span>
                                     <span>{new Date(sub.submittedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
                                   </div>
                                 )}
@@ -907,9 +907,9 @@ export function CandidateDetail({
 
                             {/* Grader notes */}
                             {sub.graderNotes && (
-                              <div className="rounded-lg bg-white border border-surface-200 p-2">
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-surface-500 mb-1">Grader Notes</p>
-                                <p className="text-xs text-surface-700">{sub.graderNotes}</p>
+                              <div className="rounded-lg bg-card border border-border p-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Grader Notes</p>
+                                <p className="text-xs text-foreground/80">{sub.graderNotes}</p>
                               </div>
                             )}
                           </div>
@@ -930,13 +930,13 @@ export function CandidateDetail({
                 {/* ── Team Feedback / Voting ─────────────────────── */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <ThumbsUp className="h-3.5 w-3.5 text-surface-500" />
-                    <p className="text-xs font-semibold text-surface-700">Team Feedback</p>
+                    <ThumbsUp className="h-3.5 w-3.5 text-muted-foreground" />
+                    <p className="text-xs font-semibold text-foreground/80">Team Feedback</p>
                   </div>
 
                   {/* Cast your vote */}
                   <div className="space-y-1.5">
-                    <p className="text-[11px] text-surface-500">Your vote:</p>
+                    <p className="text-[11px] text-muted-foreground">Your vote:</p>
                     <div className="flex flex-wrap gap-1.5">
                       {(["strong_hire", "hire", "no_hire", "strong_no_hire"] as VoteValue[]).map((v) => (
                         <button
@@ -946,7 +946,7 @@ export function CandidateDetail({
                             "rounded-full border px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold transition-colors",
                             myVote?.vote === v
                               ? VOTE_COLORS[v]
-                              : "border-surface-200 text-surface-500 hover:border-surface-300",
+                              : "border-border text-muted-foreground hover:border-border/80",
                           )}
                         >
                           {VOTE_LABELS[v]}
@@ -960,7 +960,7 @@ export function CandidateDetail({
                     <div className="space-y-1.5">
                       {votes.map((v) => (
                         <div key={v.id} className="flex items-center gap-2">
-                          <span className="text-xs text-surface-700">{v.voterName}</span>
+                          <span className="text-xs text-foreground/80">{v.voterName}</span>
                           <Badge variant="secondary" className="text-[9px]">
                             {TEAM_ROLE_LABELS[v.voterRole]}
                           </Badge>
@@ -973,7 +973,7 @@ export function CandidateDetail({
                   )}
 
                   {votes.length === 0 && (
-                    <p className="text-[11px] text-surface-400">No votes yet. Be the first to share your feedback.</p>
+                    <p className="text-[11px] text-muted-foreground/70">No votes yet. Be the first to share your feedback.</p>
                   )}
 
                   {/* Decision summary */}
@@ -998,7 +998,7 @@ export function CandidateDetail({
                   )}
                 </div>
 
-                <div className="border-t border-surface-100" />
+                <div className="border-t border-border" />
 
                 {/* ── Add note with @mentions ────────────────────── */}
                 <div className="space-y-2">
@@ -1013,20 +1013,20 @@ export function CandidateDetail({
                     />
                     {/* @mention dropdown */}
                     {mentionOpen && filteredTeam.length > 0 && (
-                      <div className="absolute left-0 bottom-full mb-1 z-10 w-60 rounded-lg border border-surface-200 bg-white shadow-lg">
+                      <div className="absolute left-0 bottom-full mb-1 z-10 w-60 rounded-lg border border-border bg-popover shadow-lg">
                         {filteredTeam.map((m) => (
                           <button
                             key={m.id}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-surface-50 transition-colors"
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-muted/50 transition-colors"
                             onMouseDown={(e) => {
                               e.preventDefault(); // prevent blur
                               insertMention(m.name!);
                             }}
                           >
-                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[8px] font-bold text-surface-600">
+                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[8px] font-bold text-muted-foreground">
                               {m.name!.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
                             </div>
-                            <span className="font-medium text-surface-800">{m.name}</span>
+                            <span className="font-medium text-foreground">{m.name}</span>
                             <Badge variant="secondary" className="text-[8px] ml-auto">
                               {TEAM_ROLE_LABELS[m.role]}
                             </Badge>
@@ -1050,28 +1050,28 @@ export function CandidateDetail({
                   {notes.map((note) => (
                     <div
                       key={note.id}
-                      className="rounded-lg border border-surface-200 p-3"
+                      className="rounded-lg border border-border p-3"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-surface-800">
+                          <span className="text-sm font-medium text-foreground">
                             {note.authorName}
                           </span>
                           <Badge variant="secondary" className="text-[10px]">
                             {TEAM_ROLE_LABELS[note.authorRole]}
                           </Badge>
                         </div>
-                        <span className="text-[11px] text-surface-400">
+                        <span className="text-[11px] text-muted-foreground/70">
                           {formatRelativeTime(note.createdAt)}
                         </span>
                       </div>
-                      <p className="mt-1.5 text-sm text-surface-600">
+                      <p className="mt-1.5 text-sm text-muted-foreground">
                         <RenderNoteContent content={note.content} />
                       </p>
                     </div>
                   ))}
                   {notes.length === 0 && (
-                    <p className="py-6 text-center text-sm text-surface-400">
+                    <p className="py-6 text-center text-sm text-muted-foreground/70">
                       No notes yet
                     </p>
                   )}
@@ -1082,7 +1082,7 @@ export function CandidateDetail({
         </div>
 
         {/* ── Footer actions ───────────────────────────────────────── */}
-        <div className="flex items-center gap-2 border-t border-surface-200 p-3 sm:p-4">
+        <div className="flex items-center gap-2 border-t border-border bg-background p-3 sm:p-4">
           {applicant.pipelineStage !== "hired" &&
             applicant.pipelineStage !== "rejected" && (
               <>
@@ -1091,7 +1091,7 @@ export function CandidateDetail({
                     variant="ghost"
                     size="sm"
                     onClick={() => onGoBack(applicant.id)}
-                    className="gap-1.5 text-surface-500 hover:text-surface-700"
+                    className="gap-1.5 text-muted-foreground hover:text-foreground/80"
                     title="Move to previous stage"
                   >
                     <ArrowLeft className="h-4 w-4" />
