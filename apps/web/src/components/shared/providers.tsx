@@ -2,9 +2,22 @@
 
 import { SessionProvider } from "next-auth/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider, useTheme } from "next-themes";
 import { Toaster } from "sonner";
 import { useState } from "react";
+
+/** Inner component so useTheme() has access to ThemeProvider context */
+function ThemedToaster() {
+  const { resolvedTheme } = useTheme();
+  return (
+    <Toaster
+      position="bottom-right"
+      richColors
+      closeButton
+      theme={resolvedTheme === "dark" ? "dark" : "light"}
+    />
+  );
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -34,12 +47,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <SessionProvider refetchOnWindowFocus={false} refetchInterval={30 * 60}>
         <QueryClientProvider client={queryClient}>
           {children}
-          <Toaster
-            position="bottom-right"
-            richColors
-            closeButton
-            theme="system"
-          />
+          <ThemedToaster />
         </QueryClientProvider>
       </SessionProvider>
     </ThemeProvider>

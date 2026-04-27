@@ -2,18 +2,21 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const emptyStateVariants = cva("flex flex-col items-center justify-center text-center", {
-  variants: {
-    size: {
-      sm: "gap-2 py-8",
-      md: "gap-3 py-12",
-      lg: "gap-4 py-20",
+const emptyStateVariants = cva(
+  "flex flex-col items-center justify-center text-center rounded-xl border-2 border-dashed border-border",
+  {
+    variants: {
+      size: {
+        sm: "gap-2 py-8",
+        md: "gap-3 py-12",
+        lg: "gap-4 py-20",
+      },
+    },
+    defaultVariants: {
+      size: "md",
     },
   },
-  defaultVariants: {
-    size: "md",
-  },
-});
+);
 
 const iconWrapperVariants = cva(
   "flex items-center justify-center rounded-full bg-muted",

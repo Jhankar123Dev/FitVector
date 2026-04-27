@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { BarChart3, TrendingUp, Target, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton, SkeletonStatCard } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/use-user";
 
@@ -117,7 +117,7 @@ export default function AnalyticsPage() {
 
       {!isLoading && data && data.totalApplications === 0 && (
         <EmptyState
-          icon={BarChart3}
+          icon={<BarChart3 />}
           title="No data yet"
           description="Start tracking applications in the Tracker tab to see analytics here."
         />

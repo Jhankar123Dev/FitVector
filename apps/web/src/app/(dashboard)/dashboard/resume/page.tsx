@@ -5,7 +5,7 @@ import { FileText, Plus, Upload, CheckCircle2, Loader2, AlertCircle, Eye } from 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VersionList } from "@/components/resume/version-list";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { useResumeVersions } from "@/hooks/use-resume";
 import { useUser } from "@/hooks/use-user";
@@ -160,7 +160,7 @@ export default function ResumePage() {
 
       {isError && (
         <EmptyState
-          icon={FileText}
+          icon={<FileText />}
           title="Failed to load resumes"
           description="Something went wrong. Please try again."
         />
@@ -168,7 +168,7 @@ export default function ResumePage() {
 
       {!isLoading && !isError && versions && versions.length === 0 && (
         <EmptyState
-          icon={FileText}
+          icon={<FileText />}
           title="No tailored resumes yet"
           description="Search for jobs and click 'Tailor Resume' on any job card to generate your first ATS-optimized resume."
           action={

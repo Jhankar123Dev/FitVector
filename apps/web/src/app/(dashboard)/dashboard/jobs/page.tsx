@@ -11,7 +11,7 @@ import { JobDetailPanel } from "@/components/jobs/job-detail";
 import { JobFiltersPanel } from "@/components/jobs/job-filters";
 import type { JobFilters } from "@/components/jobs/job-filters";
 import type { OutreachButtonType } from "@/components/jobs/action-bar";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { UpgradePrompt } from "@/components/shared/upgrade-prompt";
 import { TailorDialog } from "@/components/resume/tailor-dialog";
@@ -394,7 +394,7 @@ export default function JobsPage() {
       {/* Error state */}
       {isError && !isLimitReached && (
         <EmptyState
-          icon={SearchX}
+          icon={<SearchX />}
           title="Search failed"
           description={(error as Error)?.message || "Something went wrong. Please try again."}
           action={
@@ -419,7 +419,7 @@ export default function JobsPage() {
       {/* No search yet */}
       {!jobSearchParams && !isLoading && (
         <EmptyState
-          icon={isFitVectorTab ? Zap : Search}
+          icon={isFitVectorTab ? <Zap /> : <Search />}
           title={isFitVectorTab ? "Browse FitVector jobs" : "Start your job search"}
           description={
             isFitVectorTab
@@ -436,7 +436,7 @@ export default function JobsPage() {
         <>
           {allJobs.length === 0 ? (
             <EmptyState
-              icon={SearchX}
+              icon={<SearchX />}
               title="No jobs found"
               description={
                 isFitVectorTab

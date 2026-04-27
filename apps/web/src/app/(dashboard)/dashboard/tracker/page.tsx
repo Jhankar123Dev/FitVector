@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { KanbanBoard } from "@/components/tracker/kanban-board";
 import { AppliedJobsList } from "@/components/tracker/applied-jobs-list";
 import { ApplicationDetailModal } from "@/components/tracker/application-detail-modal";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { UpgradePrompt } from "@/components/shared/upgrade-prompt";
 import {
@@ -229,7 +229,7 @@ export default function TrackerPage() {
       {/* Error */}
       {isError && (
         <EmptyState
-          icon={Kanban}
+          icon={<Kanban />}
           title="Failed to load tracker"
           description="Something went wrong. Please refresh the page."
         />
@@ -295,7 +295,7 @@ export default function TrackerPage() {
         <>
           {personalApps.length === 0 ? (
             <EmptyState
-              icon={BookOpen}
+              icon={<BookOpen />}
               title="No personal applications yet"
               description="Track jobs you found yourself — add them manually or save jobs from search."
               action={
