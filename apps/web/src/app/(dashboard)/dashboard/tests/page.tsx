@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<
   },
   submitted: {
     label: "Submitted",
-    className: "bg-gray-100 text-gray-700 border-gray-200",
+    className: "bg-muted text-muted-foreground border-border",
   },
   graded: {
     label: "Graded",

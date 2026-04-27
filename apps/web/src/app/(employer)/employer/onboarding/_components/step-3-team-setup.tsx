@@ -64,7 +64,7 @@ export function Step3TeamSetup({
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as TeamMemberRole)}
-              className="h-10 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              className="h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               {Object.entries(TEAM_ROLE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>

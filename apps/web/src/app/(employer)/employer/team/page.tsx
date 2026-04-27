@@ -271,7 +271,7 @@ function MemberRow({
           </Badge>
         ) : (
           <select
-            className="h-7 rounded-md border border-border bg-white px-2 text-[11px] sm:text-xs text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+            className="h-7 rounded-md border border-border bg-card px-2 text-[11px] sm:text-xs text-foreground outline-none focus:ring-2 focus:ring-primary/30"
             value={member.role}
             onChange={(e) => onChangeRole(member.id, e.target.value as CompanyMemberRole)}
             disabled={isUpdating}

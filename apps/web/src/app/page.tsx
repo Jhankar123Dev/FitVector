@@ -379,7 +379,7 @@ export default function HomePage() {
               {/* Hamburger label — toggles checkbox by ID */}
               <label
                 htmlFor="nav-toggle"
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-100 hover:text-foreground md:hidden"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
                 aria-label="Toggle navigation menu"
               >
                 <Menu className="h-5 w-5" />
@@ -393,19 +393,19 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl space-y-1 px-4 pb-4 pt-3 sm:px-6">
             <Link
               href="/#for-seekers"
-              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-100 hover:text-foreground"
+              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               For Job Seekers
             </Link>
             <Link
               href="/#for-employers"
-              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-100 hover:text-foreground"
+              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               For Employers
             </Link>
             <Link
               href="/#pricing"
-              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-100 hover:text-foreground"
+              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               Pricing
             </Link>
@@ -561,7 +561,7 @@ export default function HomePage() {
         {/* ── 3. For Job Seekers ──────────────────────────────────────────── */}
         <section
           id="for-seekers"
-          className="scroll-mt-20 border-t border-border bg-surface-50/40 py-20 dark:bg-slate-800/30 sm:py-28"
+          className="scroll-mt-20 border-t border-border bg-muted/20 py-20 dark:bg-slate-800/30 sm:py-28"
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
@@ -774,7 +774,7 @@ export default function HomePage() {
         </section>
 
         {/* ── 7. Testimonials ─────────────────────────────────────────────── */}
-        <section className="border-t border-border bg-surface-50/40 py-20 dark:bg-slate-800/30 sm:py-28">
+        <section className="border-t border-border bg-muted/20 py-20 dark:bg-slate-800/30 sm:py-28">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -1011,7 +1011,7 @@ export default function HomePage() {
         </section>
 
         {/* ── 9. Final Split CTA ──────────────────────────────────────────── */}
-        <section className="border-t border-border bg-surface-50/40 py-20 dark:bg-slate-800/30 sm:py-28">
+        <section className="border-t border-border bg-muted/20 py-20 dark:bg-slate-800/30 sm:py-28">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="grid gap-5 sm:grid-cols-2">
               {/* Seeker CTA */}

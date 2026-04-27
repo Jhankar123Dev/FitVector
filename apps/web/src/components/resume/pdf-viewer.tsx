@@ -128,11 +128,11 @@ export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps
       )}
 
       {/* PDF preview area */}
-      <div className="relative flex-1 overflow-auto bg-gray-200 p-4">
+      <div className="relative flex-1 overflow-auto bg-muted p-4">
         {compilePdfUrl ? (
           <>
             {pdfLoading && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-gray-200">
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-muted">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-xs text-muted-foreground">Compiling PDF…</p>
               </div>
@@ -171,7 +171,7 @@ export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps
                 </a>
                 .
               </div>
-              <pre className="max-h-[600px] overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-gray-800">
+              <pre className="max-h-[600px] overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-foreground">
                 {latexSource}
               </pre>
             </div>

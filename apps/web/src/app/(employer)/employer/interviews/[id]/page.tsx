@@ -429,7 +429,7 @@ export default function InterviewReportPage() {
                     "rounded-lg p-3",
                     turn.speaker === "ai"
                       ? "bg-muted/40 border border-border"
-                      : "bg-white border border-border",
+                      : "bg-card border border-border",
                   )}
                 >
                   <div className="mb-1 flex items-center gap-2">

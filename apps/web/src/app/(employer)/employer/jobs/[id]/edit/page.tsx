@@ -801,7 +801,7 @@ export default function EditJobPage() {
             {form.screeningQuestions.length > 0 && (
               <div className="space-y-2">
                 {form.screeningQuestions.map((q, i) => (
-                  <div key={q.id} className="flex items-start gap-2 rounded-lg border border-border bg-white px-3 py-2.5">
+                  <div key={q.id} className="flex items-start gap-2 rounded-lg border border-border bg-card px-3 py-2.5">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
                       {i + 1}
                     </span>
@@ -1002,7 +1002,7 @@ export default function EditJobPage() {
                   {form.interviewConfig.customQuestions.length > 0 && (
                     <div className="space-y-2 pt-1">
                       {form.interviewConfig.customQuestions.map((q, i) => (
-                        <div key={i} className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+                        <div key={i} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
                           <span className="flex-1 text-sm text-foreground/80">{i + 1}. {q}</span>
                           <button onClick={() => update({ interviewConfig: { ...form.interviewConfig, customQuestions: form.interviewConfig.customQuestions.filter((_, idx) => idx !== i) } })} className="text-muted-foreground/70 hover:text-red-500">
                             <X className="h-3.5 w-3.5" />
@@ -1073,7 +1073,7 @@ export default function EditJobPage() {
               <select
                 value={linkedAssessmentId ?? ""}
                 onChange={(e) => setLinkedAssessmentId(e.target.value || null)}
-                className="mt-3 h-9 w-full rounded-lg border border-border bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="mt-3 h-9 w-full rounded-lg border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">— No assessment linked —</option>
                 {companyAssessments.map((a) => (
@@ -1233,7 +1233,7 @@ export default function EditJobPage() {
                   {form.assessmentConfig.customQuestions.length > 0 && (
                     <div className="space-y-2 pt-1">
                       {form.assessmentConfig.customQuestions.map((q, i) => (
-                        <div key={i} className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+                        <div key={i} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
                           <span className="flex-1 text-sm text-foreground/80">{i + 1}. {q}</span>
                           <button onClick={() => update({ assessmentConfig: { ...form.assessmentConfig, customQuestions: form.assessmentConfig.customQuestions.filter((_, idx) => idx !== i) } })} className="text-muted-foreground/70 hover:text-red-500">
                             <X className="h-3 w-3" />
@@ -1368,7 +1368,7 @@ export default function EditJobPage() {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 className={cn(
-                                  "flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1.5 shadow-sm select-none",
+                                  "flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 shadow-sm select-none",
                                   snapshot.isDragging ? "border-brand-400 shadow-md ring-1 ring-brand-300" : "border-border",
                                 )}
                               >

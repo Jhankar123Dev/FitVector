@@ -196,7 +196,7 @@ export default function TalentPoolPage() {
               <select
                 value={matchJobPostId}
                 onChange={(e) => setMatchJobPostId(e.target.value)}
-                className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400"
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
               >
                 <option value="">Select a job post...</option>
                 {MOCK_JOB_POSTS.filter((j) => j.status === "active" || j.status === "draft").map(
@@ -446,7 +446,7 @@ export default function TalentPoolPage() {
                     "px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                     scoreFilter === opt.value
                       ? "bg-brand-500 text-white"
-                      : "bg-white text-muted-foreground hover:bg-muted/30",
+                      : "bg-background text-muted-foreground hover:bg-muted/30",
                   )}
                 >
                   {opt.label}

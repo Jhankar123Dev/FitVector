@@ -65,18 +65,18 @@ export function FitVectorStatusTimeline({
                 <span
                   className={cn(
                     "text-sm",
-                    isCurrent ? "font-semibold" : "font-medium text-surface-700",
+                    isCurrent ? "font-semibold" : "font-medium text-foreground/80",
                   )}
                   style={isCurrent ? { color: config?.color } : undefined}
                 >
                   {entry.label}
                 </span>
-                <span className="text-xs text-surface-400">
+                <span className="text-xs text-muted-foreground/70">
                   {formattedDate} · {formattedTime}
                 </span>
               </div>
               {entry.note && (
-                <p className="mt-0.5 text-xs text-surface-500">{entry.note}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{entry.note}</p>
               )}
             </div>
           </div>

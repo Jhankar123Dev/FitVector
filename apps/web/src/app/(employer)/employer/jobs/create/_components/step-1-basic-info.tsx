@@ -49,7 +49,7 @@ export function Step1BasicInfo({ form, update }: Props) {
             id="department"
             value={form.department}
             onChange={(e) => update({ department: e.target.value })}
-            className="flex h-10 w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            className="flex h-10 w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="">Select department</option>
             {DEPARTMENTS.map((d) => (
@@ -164,7 +164,7 @@ export function Step1BasicInfo({ form, update }: Props) {
             <select
               value={form.salaryCurrency}
               onChange={(e) => update({ salaryCurrency: e.target.value })}
-              className="h-10 rounded-lg border border-border bg-white px-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              className="h-10 rounded-lg border border-border bg-background px-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="INR">INR</option>
               <option value="USD">USD</option>

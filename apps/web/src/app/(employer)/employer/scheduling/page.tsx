@@ -769,7 +769,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
             <div className="space-y-1.5">
               <Label className="text-xs sm:text-sm">Type</Label>
               <select
-                className="flex h-9 w-full rounded-md border border-border bg-white px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                className="flex h-9 w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                 value={interviewType}
                 onChange={(e) => setInterviewType(e.target.value as ScheduledInterviewType)}
               >
@@ -781,7 +781,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
             <div className="space-y-1.5">
               <Label className="text-xs sm:text-sm">Duration</Label>
               <select
-                className="flex h-9 w-full rounded-md border border-border bg-white px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                className="flex h-9 w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
               >

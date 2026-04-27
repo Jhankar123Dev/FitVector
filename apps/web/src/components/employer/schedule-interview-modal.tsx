@@ -114,7 +114,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
       {/* Panel */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className="w-full max-w-lg rounded-xl bg-white shadow-2xl"
+          className="w-full max-w-lg rounded-xl bg-popover shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* ── Header ────────────────────────────────────────────── */}
@@ -152,7 +152,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
                       "flex flex-col items-center gap-1 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all",
                       format === value
                         ? "border-brand-400 bg-brand-50 text-brand-700 ring-1 ring-brand-300"
-                        : "border-border bg-white text-muted-foreground hover:border-border/60 hover:bg-muted/30",
+                        : "border-border bg-card text-muted-foreground hover:border-border/60 hover:bg-muted/30",
                     )}
                   >
                     <Icon className={cn("h-4 w-4", format === value ? "text-brand-600" : color)} />
@@ -186,7 +186,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
                 <select
                   value={interviewerId}
                   onChange={(e) => setInterviewerId(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-border bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">Select interviewer…</option>
                   {members.map((m) => (

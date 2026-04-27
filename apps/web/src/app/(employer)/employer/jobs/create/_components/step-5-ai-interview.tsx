@@ -170,7 +170,7 @@ export function Step5AIInterview({ form, update }: Props) {
                   {form.interviewConfig.customQuestions.map((q, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2"
+                      className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2"
                     >
                       <span className="flex-1 text-sm text-foreground/80">
                         {i + 1}. {q}

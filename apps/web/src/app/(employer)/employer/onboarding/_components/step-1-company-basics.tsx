@@ -86,7 +86,7 @@ export function Step1CompanyBasics({ data, updateData, onLogoUpload }: Props) {
             id="industry"
             value={data.industry}
             onChange={(e) => updateData({ industry: e.target.value as Industry | "" })}
-            className="flex h-10 w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            className="flex h-10 w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="">Select an industry</option>
             {Object.entries(INDUSTRY_LABELS).map(([value, label]) => (

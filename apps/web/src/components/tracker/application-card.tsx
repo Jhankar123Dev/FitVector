@@ -11,7 +11,7 @@ import { getStageName } from "@/types/employer";
 
 // Native <select> — renders above overflow-y-auto scroll containers (OS-level, never clipped)
 const STATUS_STYLES: Record<string, string> = {
-  saved:     "bg-surface-100 text-surface-600",
+  saved:     "bg-muted text-muted-foreground",
   applied:   "bg-blue-50 text-blue-700",
   screening: "bg-amber-50 text-amber-700",
   interview: "bg-violet-50 text-violet-700",
@@ -81,7 +81,7 @@ export function ApplicationCard({ application, index, onClick, onStatusChange }:
             <CardContent className="p-4">
               {/* Title row */}
               <div className="flex items-start justify-between gap-1.5">
-                <h4 className="truncate text-sm font-semibold leading-snug text-surface-800">{application.jobTitle}</h4>
+                <h4 className="truncate text-sm font-semibold leading-snug text-foreground">{application.jobTitle}</h4>
                 {isFV && (
                   <Badge className="shrink-0 gap-0.5 bg-accent-50 px-1 py-0 text-[9px] text-accent-700 hover:bg-accent-100">
                     <Zap className="h-2 w-2" />

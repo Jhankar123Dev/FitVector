@@ -19,12 +19,12 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
   return (
     <>
       {/* Logo */}
-      <div className="flex items-center gap-2 border-b border-surface-200 px-4 py-4">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-4">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600">
           <Shield className="h-4 w-4 text-white" />
         </div>
         <div>
-          <p className="text-sm font-bold text-surface-900">FitVector</p>
+          <p className="text-sm font-bold text-foreground">FitVector</p>
           <p className="text-[10px] font-medium uppercase tracking-wider text-red-600">Super Admin</p>
         </div>
       </div>
@@ -42,7 +42,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors",
                 isActive
                   ? "bg-red-50 font-medium text-red-700"
-                  : "text-surface-600 hover:bg-surface-50 hover:text-surface-800",
+                  : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -53,10 +53,10 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
       </nav>
 
       {/* Sign out */}
-      <div className="shrink-0 border-t border-surface-200 p-2">
+      <div className="shrink-0 border-t border-border p-2">
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-surface-500 transition-colors hover:bg-surface-50 hover:text-surface-700"
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground/80"
         >
           <LogOut className="h-4 w-4" />
           Sign out
@@ -70,9 +70,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-50">
+    <div className="flex h-screen overflow-hidden bg-muted/30">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex h-screen w-56 shrink-0 flex-col border-r border-surface-200 bg-white">
+      <aside className="hidden lg:flex h-screen w-56 shrink-0 flex-col border-r border-border bg-card">
         <SidebarContent />
       </aside>
 
@@ -87,7 +87,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-surface-200 bg-white transition-transform duration-200 lg:hidden",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-card transition-transform duration-200 lg:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -97,10 +97,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-surface-200 bg-white px-4 lg:hidden">
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4 lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="rounded-lg p-1.5 text-surface-500 hover:bg-surface-100"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -108,7 +108,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-red-600">
               <Shield className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="text-sm font-bold text-surface-900">Super Admin</span>
+            <span className="text-sm font-bold text-foreground">Super Admin</span>
           </div>
         </header>
 

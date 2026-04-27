@@ -74,7 +74,7 @@ export function Step4Screening({ form, update }: Props) {
                 <select
                   value={sqType}
                   onChange={(e) => setSqType(e.target.value as ScreeningQuestionType)}
-                  className="flex h-10 w-full rounded-lg border border-border bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="short_answer">Short Answer</option>
                   <option value="multiple_choice">Multiple Choice</option>
@@ -121,7 +121,7 @@ export function Step4Screening({ form, update }: Props) {
             {form.screeningQuestions.map((q, idx) => (
               <div
                 key={q.id}
-                className="flex items-start gap-3 rounded-lg border border-border bg-white p-3"
+                className="flex items-start gap-3 rounded-lg border border-border bg-card p-3"
               >
                 <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/40" />
                 <div className="flex-1 min-w-0">

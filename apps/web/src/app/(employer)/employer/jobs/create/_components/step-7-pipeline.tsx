@@ -159,7 +159,7 @@ export function Step7Pipeline({ form, update }: Props) {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           className={cn(
-                            "flex select-none items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1.5 shadow-sm",
+                            "flex select-none items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 shadow-sm",
                             snapshot.isDragging
                               ? "border-brand-400 shadow-md ring-1 ring-brand-300"
                               : "border-border",

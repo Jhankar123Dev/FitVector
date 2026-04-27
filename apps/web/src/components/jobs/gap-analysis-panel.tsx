@@ -30,7 +30,7 @@ interface GapAnalysisPanelProps {
 const importanceBadge: Record<string, { class: string; label: string }> = {
   critical: { class: "bg-red-100 text-red-700", label: "Critical" },
   important: { class: "bg-yellow-100 text-yellow-700", label: "Important" },
-  nice_to_have: { class: "bg-gray-100 text-gray-600", label: "Nice to have" },
+  nice_to_have: { class: "bg-muted text-muted-foreground", label: "Nice to have" },
 };
 
 export function GapAnalysisPanel({ job }: GapAnalysisPanelProps) {

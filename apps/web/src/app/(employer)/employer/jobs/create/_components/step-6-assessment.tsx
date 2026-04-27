@@ -284,7 +284,7 @@ export function Step6Assessment({
                     {form.assessmentConfig.customQuestions.map((q, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2"
+                        className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2"
                       >
                         <span className="flex-1 text-sm text-foreground/80">
                           {i + 1}. {q}
@@ -355,7 +355,7 @@ export function Step6Assessment({
               <select
                 value={linkedAssessmentId ?? ""}
                 onChange={(e) => setLinkedAssessmentId(e.target.value || null)}
-                className="h-9 w-full rounded-lg border border-border bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="h-9 w-full rounded-lg border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">— None (AI will auto-generate) —</option>
                 {existingAssessments.map((a) => (
