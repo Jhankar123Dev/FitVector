@@ -73,8 +73,8 @@ function CircularProgress({ score, size = 120 }: { score: number; size?: number 
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl sm:text-3xl font-bold text-surface-800">{score}</span>
-        <span className="text-[10px] text-surface-500">/ 100</span>
+        <span className="text-2xl sm:text-3xl font-bold text-foreground">{score}</span>
+        <span className="text-[10px] text-muted-foreground">/ 100</span>
       </div>
     </div>
   );
@@ -89,7 +89,7 @@ function StarRating({ score }: { score: number }) {
           key={i}
           className={cn(
             "h-3.5 w-3.5",
-            i <= score ? "fill-amber-400 text-amber-400" : "text-surface-200",
+            i <= score ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30",
           )}
         />
       ))}
@@ -105,47 +105,45 @@ export default function InterviewReportPage() {
   const { data: interviewData, isLoading } = useInterview(interviewId);
   const interview = interviewData?.data as unknown as AIInterview | undefined;
 
-  if (isLoading || !interview) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-      </div>
-    );
-  }
-
-  // Transcript state
+  // ── All hooks MUST be called unconditionally — before any early return ──
   const [transcriptExpanded, setTranscriptExpanded] = useState(false);
   const [transcriptSearch, setTranscriptSearch] = useState("");
-
-  // Audio player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [playbackProgress, setPlaybackProgress] = useState(0);
 
-  // Radar chart data
   const radarData = useMemo(
     () =>
-      interview.skillRatings.map((r) => ({
+      (interview?.skillRatings ?? []).map((r) => ({
         skill: r.skill.length > 15 ? r.skill.slice(0, 13) + "…" : r.skill,
         score: r.score,
         fullMark: 5,
       })),
-    [interview.skillRatings],
+    [interview?.skillRatings],
   );
 
-  // Filtered transcript
   const filteredTranscript = useMemo(() => {
+    if (!interview?.transcript) return [];
     if (!transcriptSearch.trim()) return interview.transcript;
     const q = transcriptSearch.toLowerCase();
     return interview.transcript.filter((t) => t.text.toLowerCase().includes(q));
-  }, [interview.transcript, transcriptSearch]);
+  }, [interview?.transcript, transcriptSearch]);
+
+  // ── Early returns AFTER all hooks ──────────────────────────────────────
+  if (isLoading || !interview) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   if (!interview.overallScore) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <MessageSquare className="h-12 w-12 text-surface-300" />
-        <p className="mt-3 text-lg font-medium text-surface-600">Interview Not Completed</p>
-        <p className="mt-1 text-sm text-surface-400">This interview report is not available yet.</p>
+        <p className="mt-3 text-lg font-medium text-muted-foreground">Interview Not Completed</p>
+        <p className="mt-1 text-sm text-muted-foreground/60">This interview report is not available yet.</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push("/employer/interviews")}>
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           Back to Interviews
@@ -168,13 +166,13 @@ export default function InterviewReportPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-lg sm:text-xl font-semibold text-surface-800">
+            <h1 className="text-lg sm:text-xl font-semibold text-foreground">
               AI Interview Report
             </h1>
-            <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+            <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
               {interview.applicantName} — {interview.jobTitle}
             </p>
-            <p className="mt-0.5 text-[11px] text-surface-400">
+            <p className="mt-0.5 text-[11px] text-muted-foreground/60">
               {interview.completedAt
                 ? new Date(interview.completedAt).toLocaleDateString("en-IN", {
                     day: "numeric",
@@ -214,7 +212,7 @@ export default function InterviewReportPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm leading-relaxed text-surface-700">
+          <p className="text-sm leading-relaxed text-foreground/80">
             {interview.executiveSummary}
           </p>
         </CardContent>
@@ -259,12 +257,12 @@ export default function InterviewReportPage() {
             {/* Skill table */}
             <div className="space-y-3">
               {interview.skillRatings.map((r) => (
-                <div key={r.skill} className="rounded-lg border border-surface-200 p-3">
+                <div key={r.skill} className="rounded-lg border border-border p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-surface-800">{r.skill}</span>
+                    <span className="text-sm font-medium text-foreground">{r.skill}</span>
                     <StarRating score={r.score} />
                   </div>
-                  <p className="mt-1 text-xs text-surface-500">{r.justification}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{r.justification}</p>
                 </div>
               ))}
             </div>
@@ -284,7 +282,7 @@ export default function InterviewReportPage() {
           <CardContent>
             <ul className="space-y-2.5">
               {interview.strengths.map((s, i) => (
-                <li key={i} className="flex gap-2 text-sm text-surface-700">
+                <li key={i} className="flex gap-2 text-sm text-foreground/80">
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                   {s}
                 </li>
@@ -303,7 +301,7 @@ export default function InterviewReportPage() {
           <CardContent>
             <ul className="space-y-2.5">
               {interview.concerns.map((c, i) => (
-                <li key={i} className="flex gap-2 text-sm text-surface-700">
+                <li key={i} className="flex gap-2 text-sm text-foreground/80">
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
                   {c}
                 </li>
@@ -317,7 +315,7 @@ export default function InterviewReportPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Shield className="h-4 w-4 text-surface-500" />
+            <Shield className="h-4 w-4 text-muted-foreground" />
             Cheating Assessment
           </CardTitle>
         </CardHeader>
@@ -344,10 +342,10 @@ export default function InterviewReportPage() {
               </Badge>
             )}
             <div className="flex-1">
-              <p className="text-sm text-surface-600">{interview.cheatingNote}</p>
+              <p className="text-sm text-muted-foreground">{interview.cheatingNote}</p>
               {interview.cheatingSignals.length > 0 && (
                 <div className="mt-3 space-y-1.5">
-                  <p className="text-xs font-semibold text-surface-500">Detected Signals:</p>
+                  <p className="text-xs font-semibold text-muted-foreground">Detected Signals:</p>
                   {interview.cheatingSignals.map((sig, i) => (
                     <div key={i} className="flex gap-2 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-800">
                       <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-amber-500" />
@@ -369,9 +367,9 @@ export default function InterviewReportPage() {
         <CardContent>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {interview.communicationScores.map((cs) => (
-              <div key={cs.label} className="rounded-lg border border-surface-200 p-3 sm:p-4">
+              <div key={cs.label} className="rounded-lg border border-border p-3 sm:p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs sm:text-sm font-medium text-surface-800">{cs.label}</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{cs.label}</p>
                   <span
                     className={cn(
                       "text-lg sm:text-xl font-bold",
@@ -381,7 +379,7 @@ export default function InterviewReportPage() {
                     {cs.score}/5
                   </span>
                 </div>
-                <p className="mt-1.5 text-[11px] sm:text-xs text-surface-500">{cs.note}</p>
+                <p className="mt-1.5 text-[11px] sm:text-xs text-muted-foreground">{cs.note}</p>
               </div>
             ))}
           </div>
@@ -397,7 +395,7 @@ export default function InterviewReportPage() {
             </CardTitle>
             <div className="flex items-center gap-2">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
                 <Input
                   placeholder="Search transcript..."
                   value={transcriptSearch}
@@ -430,26 +428,26 @@ export default function InterviewReportPage() {
                   className={cn(
                     "rounded-lg p-3",
                     turn.speaker === "ai"
-                      ? "bg-surface-50 border border-surface-200"
-                      : "bg-white border border-surface-200",
+                      ? "bg-muted/40 border border-border"
+                      : "bg-white border border-border",
                   )}
                 >
                   <div className="mb-1 flex items-center gap-2">
                     <span
                       className={cn(
                         "text-[10px] font-semibold uppercase tracking-wider",
-                        turn.speaker === "ai" ? "text-surface-400" : "text-brand-500",
+                        turn.speaker === "ai" ? "text-muted-foreground/60" : "text-brand-500",
                       )}
                     >
                       {turn.speaker === "ai" ? "AI Interviewer" : interview.applicantName}
                     </span>
-                    <span className="text-[10px] text-surface-400">{turn.timestamp}</span>
+                    <span className="text-[10px] text-muted-foreground/60">{turn.timestamp}</span>
                   </div>
-                  <p className="text-sm leading-relaxed text-surface-700">{turn.text}</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{turn.text}</p>
                 </div>
               ))}
               {filteredTranscript.length === 0 && (
-                <p className="py-8 text-center text-sm text-surface-400">
+                <p className="py-8 text-center text-sm text-muted-foreground/60">
                   No transcript matches for &ldquo;{transcriptSearch}&rdquo;
                 </p>
               )}
@@ -462,7 +460,7 @@ export default function InterviewReportPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Volume2 className="h-4 w-4 text-surface-500" />
+            <Volume2 className="h-4 w-4 text-muted-foreground" />
             Audio Recording
           </CardTitle>
         </CardHeader>
@@ -480,10 +478,10 @@ export default function InterviewReportPage() {
 
             {/* Timeline */}
             <div className="flex flex-1 items-center gap-3">
-              <span className="text-xs text-surface-500 tabular-nums w-10">
+              <span className="text-xs text-muted-foreground tabular-nums w-10">
                 {Math.floor(playbackProgress * (interview.durationActual || 20))}:00
               </span>
-              <div className="flex-1 h-2 bg-surface-100 rounded-full overflow-hidden cursor-pointer"
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden cursor-pointer"
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   setPlaybackProgress((e.clientX - rect.left) / rect.width);
@@ -494,7 +492,7 @@ export default function InterviewReportPage() {
                   style={{ width: `${playbackProgress * 100}%` }}
                 />
               </div>
-              <span className="text-xs text-surface-500 tabular-nums w-10">
+              <span className="text-xs text-muted-foreground tabular-nums w-10">
                 {interview.durationActual || 20}:00
               </span>
             </div>
@@ -508,7 +506,7 @@ export default function InterviewReportPage() {
                     "rounded-md px-2 py-1 text-xs font-medium transition-colors",
                     playbackSpeed === speed
                       ? "bg-brand-50 text-brand-700"
-                      : "text-surface-500 hover:bg-surface-100",
+                      : "text-muted-foreground hover:bg-muted",
                   )}
                   onClick={() => setPlaybackSpeed(speed)}
                 >
@@ -517,7 +515,7 @@ export default function InterviewReportPage() {
               ))}
             </div>
           </div>
-          <p className="mt-2 text-[11px] text-surface-400">
+          <p className="mt-2 text-[11px] text-muted-foreground/60">
             Mock audio player — actual audio playback will be available when connected to the backend.
           </p>
         </CardContent>
@@ -527,8 +525,8 @@ export default function InterviewReportPage() {
       <Card>
         <CardContent className="flex flex-col items-center gap-3 p-6 sm:flex-row sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-surface-700">Compare with other candidates</p>
-            <p className="text-xs text-surface-500">
+            <p className="text-sm font-medium text-foreground/80">Compare with other candidates</p>
+            <p className="text-xs text-muted-foreground">
               Side-by-side comparison of interview performance
             </p>
           </div>
@@ -542,7 +540,7 @@ export default function InterviewReportPage() {
       </Card>
 
       {/* ── Action bar ─────────────────────────────────────────────── */}
-      <div className="sticky bottom-0 -mx-3 sm:-mx-4 md:-mx-6 border-t border-surface-200 bg-white px-3 py-3 sm:px-4 sm:py-4 md:px-6">
+      <div className="sticky bottom-0 -mx-3 sm:-mx-4 md:-mx-6 border-t border-border bg-background px-3 py-3 sm:px-4 sm:py-4 md:px-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <Button className="gap-1.5 h-9 text-sm">
