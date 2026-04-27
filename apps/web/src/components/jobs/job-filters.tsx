@@ -48,9 +48,9 @@ const DATE_OPTIONS = [
 
 const DECISION_LABELS = [
   { value: "", label: "All jobs" },
-  { value: "apply_now", label: "Apply now", color: "border-green-500 bg-green-50 text-green-700" },
-  { value: "prepare_then_apply", label: "Prepare & apply", color: "border-yellow-500 bg-yellow-50 text-yellow-700" },
-  { value: "explore", label: "Explore", color: "border-gray-400 bg-gray-50 text-gray-600" },
+  { value: "apply_now", label: "Apply now", color: "border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400" },
+  { value: "prepare_then_apply", label: "Prepare & apply", color: "border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400" },
+  { value: "explore", label: "Explore", color: "border-border bg-muted text-muted-foreground" },
 ] as const;
 
 export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = false }: JobFiltersProps) {
@@ -78,7 +78,7 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
           <SlidersHorizontal className="h-3.5 w-3.5" />
           Filters
           {hasFilters && (
-            <span className="ml-1 rounded-full bg-brand-500 px-1.5 text-[10px] text-white">
+            <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] text-white">
               !
             </span>
           )}
@@ -89,12 +89,12 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
           {DECISION_LABELS.map((dl) => (
             <button
               key={dl.value}
-              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+              className={`cursor-pointer rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
                 filters.decisionLabel === dl.value
                   ? dl.value
                     ? dl.color
-                    : "border-brand-500 bg-brand-50 text-brand-700"
-                  : "border-surface-200 text-surface-500 hover:border-surface-300"
+                    : "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-border/60"
               }`}
               onClick={() =>
                 onChange({
@@ -118,7 +118,7 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
 
       {/* Filter panel */}
       {isOpen && (
-        <div className="mt-3 grid gap-4 rounded-xl border border-surface-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-3 grid gap-4 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Location */}
           <div>
             <Label className="text-xs">Location</Label>
@@ -139,10 +139,10 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
               {WORK_MODES.map((mode) => (
                 <button
                   key={mode.value}
-                  className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                  className={`cursor-pointer rounded-md border px-2 py-1 text-xs transition-colors ${
                     filters.workMode === mode.value
-                      ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-surface-200 text-surface-500 hover:border-surface-300"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-border/60"
                   }`}
                   onClick={() =>
                     onChange({
@@ -164,10 +164,10 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
               {JOB_TYPES.map((type) => (
                 <button
                   key={type.value}
-                  className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                  className={`cursor-pointer rounded-md border px-2 py-1 text-xs transition-colors ${
                     filters.jobType === type.value
-                      ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-surface-200 text-surface-500 hover:border-surface-300"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-border/60"
                   }`}
                   onClick={() =>
                     onChange({
@@ -190,10 +190,10 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
                 {DATE_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
-                    className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                    className={`cursor-pointer rounded-md border px-2 py-1 text-xs transition-colors ${
                       filters.hoursOld === opt.value
-                        ? "border-brand-500 bg-brand-50 text-brand-700"
-                        : "border-surface-200 text-surface-500 hover:border-surface-300"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-border/60"
                     }`}
                     onClick={() =>
                       onChange({ ...filters, hoursOld: opt.value })
@@ -213,10 +213,10 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
               {DECISION_LABELS.map((dl) => (
                 <button
                   key={dl.value}
-                  className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                  className={`cursor-pointer rounded-md border px-2 py-1 text-xs transition-colors ${
                     filters.decisionLabel === dl.value
-                      ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-surface-200 text-surface-500 hover:border-surface-300"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-border/60"
                   }`}
                   onClick={() =>
                     onChange({
@@ -244,7 +244,7 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
                 }
                 className="h-8 text-sm"
               />
-              <span className="text-xs text-surface-500">to</span>
+              <span className="text-xs text-muted-foreground">to</span>
               <Input
                 placeholder="Max"
                 type="number"

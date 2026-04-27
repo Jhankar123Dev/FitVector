@@ -267,8 +267,8 @@ export default function JobsPage() {
       <div className="flex-none space-y-4 pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-surface-800">Job Search</h1>
-            <p className="text-sm text-surface-500">
+            <h1 className="text-2xl font-semibold text-foreground">Job Search</h1>
+            <p className="text-sm text-muted-foreground">
               {isFitVectorTab
                 ? "Jobs posted directly by employers on FitVector"
                 : isExternalTab
@@ -279,7 +279,7 @@ export default function JobsPage() {
 
           {/* Usage counter (external / all only) */}
           {usage && usage.limit !== Infinity && (
-            <div className="hidden text-right text-xs text-surface-500 sm:block">
+            <div className="hidden text-right text-xs text-muted-foreground sm:block">
               <span className="font-medium">
                 {usage.used} of {usage.limit}
               </span>{" "}
@@ -289,7 +289,7 @@ export default function JobsPage() {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex gap-1 rounded-lg border bg-surface-50 p-1">
+        <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -297,10 +297,10 @@ export default function JobsPage() {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-white text-surface-900 shadow-sm"
-                    : "text-surface-500 hover:text-surface-700"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon
@@ -320,7 +320,7 @@ export default function JobsPage() {
 
         {/* FitVector tab badge */}
         {isFitVectorTab && (
-          <div className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700">
+          <div className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-400">
             <Zap className="h-3.5 w-3.5 shrink-0" />
             <span>
               FitVector jobs support one-click apply with your saved resume and go straight into the employer&apos;s pipeline.
@@ -330,7 +330,7 @@ export default function JobsPage() {
 
         {/* External tab disclaimer */}
         {isExternalTab && !isLoading && !jobSearchParams && (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-400">
             <Clock className="h-3.5 w-3.5 shrink-0" />
             <span>External searches scrape live results — expect 60–90 seconds per search.</span>
           </div>
@@ -447,7 +447,7 @@ export default function JobsPage() {
           ) : (
             <>
               {/* Results count */}
-              <div className="mb-3 flex items-center gap-2 text-xs text-surface-500">
+              <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
                 <span>
                   {totalJobs} job{totalJobs !== 1 ? "s" : ""} found
                 </span>
@@ -530,7 +530,7 @@ export default function JobsPage() {
                   ? "LinkedIn Message"
                   : "Referral Request"}
               {selectedJob && (
-                <span className="ml-2 text-sm font-normal text-surface-500">
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
                   · {selectedJob.companyName}
                 </span>
               )}

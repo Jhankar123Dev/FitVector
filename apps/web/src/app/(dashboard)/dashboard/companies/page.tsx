@@ -65,11 +65,11 @@ function CompanyCard({ company }: { company: Company }) {
               <CompanyInitials name={company.name} />
             )}
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-semibold text-surface-800">
+              <h3 className="truncate text-sm font-semibold text-foreground">
                 {company.name}
               </h3>
               {company.industry && (
-                <p className="mt-0.5 truncate text-xs text-surface-500">
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   {company.industry}
                 </p>
               )}
@@ -82,12 +82,12 @@ function CompanyCard({ company }: { company: Company }) {
           </div>
 
           {company.description && (
-            <p className="mt-3 line-clamp-2 text-xs text-surface-500">
+            <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">
               {company.description}
             </p>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-surface-500">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {locationStr && (
               <span className="inline-flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
@@ -176,9 +176,9 @@ export default function CompaniesPage() {
       <div>
         <div className="flex items-center gap-2">
           <Building2 className="h-6 w-6 text-brand-500" />
-          <h1 className="text-2xl font-semibold text-surface-800">Companies</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Companies</h1>
         </div>
-        <p className="mt-1 text-sm text-surface-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Browse employers hiring on FitVector and explore their open positions.
         </p>
       </div>
@@ -207,14 +207,14 @@ export default function CompaniesPage() {
 
       {/* Results count */}
       {!isLoading && data && (
-        <p className="text-sm text-surface-500">
+        <p className="text-sm text-muted-foreground">
           {data.total === 0
             ? "No companies found"
             : `${data.total} ${data.total === 1 ? "company" : "companies"} found`}
           {query && (
             <span>
               {" "}
-              for <span className="font-medium text-surface-700">"{query}"</span>
+              for <span className="font-medium text-foreground">"{query}"</span>
             </span>
           )}
         </p>
@@ -227,15 +227,15 @@ export default function CompaniesPage() {
             <Card key={i} className="h-40 animate-pulse">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-surface-200" />
+                  <div className="h-12 w-12 rounded-xl bg-muted" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-3/4 rounded bg-surface-200" />
-                    <div className="h-3 w-1/2 rounded bg-surface-200" />
+                    <div className="h-4 w-3/4 rounded bg-muted" />
+                    <div className="h-3 w-1/2 rounded bg-muted" />
                   </div>
                 </div>
                 <div className="mt-3 space-y-2">
-                  <div className="h-3 rounded bg-surface-200" />
-                  <div className="h-3 w-5/6 rounded bg-surface-200" />
+                  <div className="h-3 rounded bg-muted" />
+                  <div className="h-3 w-5/6 rounded bg-muted" />
                 </div>
               </CardContent>
             </Card>
@@ -245,10 +245,10 @@ export default function CompaniesPage() {
 
       {/* Empty state */}
       {!isLoading && allCompanies.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-surface-200 bg-surface-50 py-16 text-center">
-          <Building2 className="h-10 w-10 text-surface-300" />
-          <h3 className="mt-4 text-sm font-semibold text-surface-700">No companies found</h3>
-          <p className="mt-1 text-sm text-surface-500">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 py-16 text-center">
+          <Building2 className="h-10 w-10 text-muted-foreground/40" />
+          <h3 className="mt-4 text-sm font-semibold text-foreground">No companies found</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             {query
               ? "Try a different search term."
               : "No companies are listed yet. Check back soon."}
