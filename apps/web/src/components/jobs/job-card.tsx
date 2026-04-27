@@ -59,7 +59,7 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
       }${
         isSelected
           ? "border-brand-500 ring-1 ring-brand-500"
-          : "hover:border-surface-300"
+          : "hover:border-border/60"
       }`}
       onClick={() => onClick(job)}
     >
@@ -67,7 +67,7 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <h3 className="truncate text-sm font-semibold leading-tight text-surface-800">
+              <h3 className="truncate text-sm font-semibold leading-tight text-foreground">
                 {job.title}
               </h3>
               {isDirect && (
@@ -82,7 +82,7 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
                 </Badge>
               )}
             </div>
-            <p className="mt-0.5 text-sm text-surface-500">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {job.companyId ? (
                 <a
                   href={`/dashboard/companies/${job.companyId}`}
@@ -103,7 +103,7 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
         </div>
 
         {/* Meta row */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-surface-500">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {job.location && (
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-3 w-3" />
@@ -136,13 +136,13 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
             {job.skillsRequired.slice(0, 5).map((skill) => (
               <span
                 key={skill}
-                className="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-medium text-surface-600"
+                className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
               >
                 {skill}
               </span>
             ))}
             {job.skillsRequired.length > 5 && (
-              <span className="rounded-full px-2 py-0.5 text-[10px] text-surface-400">
+              <span className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground/70">
                 +{job.skillsRequired.length - 5} more
               </span>
             )}

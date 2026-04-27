@@ -186,7 +186,7 @@ export default function CompaniesPage() {
       {/* Search bar */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}

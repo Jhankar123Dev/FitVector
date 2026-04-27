@@ -65,26 +65,26 @@ export function SectionDiff({ sectionName, original, tailored, accepted, onToggl
 
   if (!hasChanges) {
     return (
-      <div className="rounded-lg border border-surface-200 p-4">
+      <div className="rounded-lg border border-border p-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium text-surface-700">{sectionName}</h4>
-          <span className="text-xs text-surface-400">No changes</span>
+          <h4 className="text-sm font-medium text-foreground/80">{sectionName}</h4>
+          <span className="text-xs text-muted-foreground/70">No changes</span>
         </div>
-        <p className="mt-2 text-sm text-surface-600">{original}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{original}</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-surface-200 p-4">
+    <div className="rounded-lg border border-border p-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-surface-700">{sectionName}</h4>
+        <h4 className="text-sm font-medium text-foreground/80">{sectionName}</h4>
         <button
           onClick={onToggle}
           className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
             accepted
               ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-              : "bg-surface-100 text-surface-500 hover:bg-surface-200"
+              : "bg-muted text-muted-foreground hover:bg-muted"
           }`}
         >
           {accepted ? "Accepted" : "Accept change"}

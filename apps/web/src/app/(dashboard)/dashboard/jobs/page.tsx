@@ -308,7 +308,7 @@ export default function JobsPage() {
                     isActive && tab.id === "fitvector"
                       ? "text-violet-600"
                       : isActive
-                        ? "text-surface-700"
+                        ? "text-foreground/80"
                         : ""
                   }`}
                 />
@@ -339,7 +339,7 @@ export default function JobsPage() {
         {/* Search bar */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="Job title... e.g. Frontend Developer"
               value={query}
@@ -349,7 +349,7 @@ export default function JobsPage() {
             />
           </div>
           <div className="relative w-40 shrink-0 sm:w-48">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="City or Remote"
               value={filters.location}

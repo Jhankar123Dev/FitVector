@@ -53,38 +53,38 @@ export function DiffView({
   const acceptedCount = Object.values(accepted).filter(Boolean).length;
 
   return (
-    <div className="rounded-xl border border-surface-200 bg-white shadow-card">
+    <div className="rounded-xl border border-border bg-card shadow-card">
       {/* Header */}
-      <div className="flex items-start justify-between border-b border-surface-200 p-6">
+      <div className="flex items-start justify-between border-b border-border p-6">
         <div>
-          <h3 className="text-lg font-semibold text-surface-800">Resume Changes</h3>
-          <p className="mt-1 text-sm text-surface-500">
-            Tailored for <span className="font-medium text-surface-700">{jobTitle}</span>
+          <h3 className="text-lg font-semibold text-foreground">Resume Changes</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Tailored for <span className="font-medium text-foreground/80">{jobTitle}</span>
             {companyName && (
               <>
-                {" "}at <span className="font-medium text-surface-700">{companyName}</span>
+                {" "}at <span className="font-medium text-foreground/80">{companyName}</span>
               </>
             )}
           </p>
         </div>
-        <button onClick={onClose} className="rounded-lg p-1 hover:bg-surface-100">
-          <X className="h-5 w-5 text-surface-400" />
+        <button onClick={onClose} className="rounded-lg p-1 hover:bg-muted">
+          <X className="h-5 w-5 text-muted-foreground/70" />
         </button>
       </div>
 
       {/* Score comparison */}
       {beforeScore !== undefined && afterScore !== undefined && (
-        <div className="flex items-center gap-6 border-b border-surface-200 px-6 py-4">
+        <div className="flex items-center gap-6 border-b border-border px-6 py-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-surface-500">Before:</span>
+            <span className="text-sm text-muted-foreground">Before:</span>
             <Badge className={getScoreColor(beforeScore)}>{beforeScore}%</Badge>
           </div>
-          <div className="text-surface-300">→</div>
+          <div className="text-muted-foreground/40">→</div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-surface-500">After:</span>
+            <span className="text-sm text-muted-foreground">After:</span>
             <Badge className={getScoreColor(afterScore)}>{afterScore}%</Badge>
           </div>
-          <div className="ml-auto text-sm text-surface-400">
+          <div className="ml-auto text-sm text-muted-foreground/70">
             {acceptedCount}/{sections.length} sections accepted
           </div>
         </div>
@@ -105,7 +105,7 @@ export function DiffView({
       </div>
 
       {/* Footer actions */}
-      <div className="flex items-center justify-end gap-3 border-t border-surface-200 px-6 py-4">
+      <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>

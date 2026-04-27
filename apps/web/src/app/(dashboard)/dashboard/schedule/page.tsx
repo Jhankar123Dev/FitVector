@@ -78,12 +78,12 @@ function EventCard({ calEvent }: { calEvent: CalendarEvent }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             {/* Title */}
-            <p className="font-semibold leading-snug text-surface-800">
+            <p className="font-semibold leading-snug text-foreground">
               {calEvent.title}
             </p>
 
             {/* Time row */}
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-surface-500">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               {calEvent.isAllDay ? (
                 <span className="flex items-center gap-1">
                   <CalendarDays className="h-3.5 w-3.5" />
@@ -94,7 +94,7 @@ function EventCard({ calEvent }: { calEvent: CalendarEvent }) {
                   <Clock className="h-3.5 w-3.5" />
                   {formatTime(calEvent.start)} – {formatTime(calEvent.end)}
                   {duration !== null && (
-                    <span className="text-surface-400">· {duration} min</span>
+                    <span className="text-muted-foreground/70">· {duration} min</span>
                   )}
                 </span>
               )}
@@ -109,7 +109,7 @@ function EventCard({ calEvent }: { calEvent: CalendarEvent }) {
 
             {/* Description preview */}
             {calEvent.description && (
-              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-surface-500">
+              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                 {calEvent.description.replace(/<[^>]*>/g, "")}
               </p>
             )}
@@ -124,7 +124,7 @@ function EventCard({ calEvent }: { calEvent: CalendarEvent }) {
               </Badge>
             )}
             {calEvent.isAllDay && (
-              <Badge variant="outline" className="text-[10px] text-surface-500">
+              <Badge variant="outline" className="text-[10px] text-muted-foreground">
                 All day
               </Badge>
             )}
@@ -133,7 +133,7 @@ function EventCard({ calEvent }: { calEvent: CalendarEvent }) {
 
         {/* Action row */}
         {(calEvent.meetLink || calEvent.htmlLink) && (
-          <div className="mt-3 flex items-center gap-2 border-t border-surface-100 pt-3">
+          <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
             {calEvent.meetLink && (
               <Button size="sm" className="h-7 gap-1.5 text-xs" asChild>
                 <a
@@ -150,7 +150,7 @@ function EventCard({ calEvent }: { calEvent: CalendarEvent }) {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 gap-1.5 text-xs text-surface-500"
+                className="h-7 gap-1.5 text-xs text-muted-foreground"
                 asChild
               >
                 <a
@@ -201,21 +201,21 @@ export default function SchedulePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold text-surface-800">Schedule</h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <h1 className="text-2xl font-semibold text-foreground">Schedule</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Your upcoming events from Google Calendar
           </p>
         </div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-100">
-              <LinkIcon className="h-6 w-6 text-surface-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <LinkIcon className="h-6 w-6 text-muted-foreground/70" />
             </div>
             <div>
-              <p className="font-semibold text-surface-700">
+              <p className="font-semibold text-foreground/80">
                 Google Calendar not connected
               </p>
-              <p className="mt-1 text-sm text-surface-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Connect your calendar from Settings to see your upcoming events
                 here.
               </p>
@@ -234,15 +234,15 @@ export default function SchedulePage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-surface-800">Schedule</h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <h1 className="text-2xl font-semibold text-foreground">Schedule</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Your upcoming events for the next 30 days
           </p>
         </div>
         {totalCount > 0 && (
           <Badge
             variant="outline"
-            className="mt-1 shrink-0 text-xs text-surface-500"
+            className="mt-1 shrink-0 text-xs text-muted-foreground"
           >
             {totalCount} event{totalCount !== 1 ? "s" : ""}
           </Badge>
@@ -267,9 +267,9 @@ export default function SchedulePage() {
       {!isLoading && !isError && events?.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <CalendarX className="h-10 w-10 text-surface-300" />
-            <p className="font-medium text-surface-600">No upcoming events</p>
-            <p className="text-sm text-surface-400">
+            <CalendarX className="h-10 w-10 text-muted-foreground/40" />
+            <p className="font-medium text-muted-foreground">No upcoming events</p>
+            <p className="text-sm text-muted-foreground/70">
               Your Google Calendar has no events in the next 30 days.
             </p>
           </CardContent>
@@ -283,11 +283,11 @@ export default function SchedulePage() {
             <div key={dateKey}>
               {/* Date header */}
               <div className="mb-3 flex items-center gap-3">
-                <h2 className="text-sm font-semibold text-surface-700">
+                <h2 className="text-sm font-semibold text-foreground/80">
                   {formatGroupHeader(dateKey)}
                 </h2>
-                <div className="flex-1 border-t border-surface-200" />
-                <span className="text-xs text-surface-400">
+                <div className="flex-1 border-t border-border" />
+                <span className="text-xs text-muted-foreground/70">
                   {dayEvents.length} event{dayEvents.length !== 1 ? "s" : ""}
                 </span>
               </div>

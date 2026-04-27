@@ -55,17 +55,17 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Welcome header */}
       <div>
-        <h1 className="text-2xl font-semibold text-surface-800 sm:text-3xl">
+        <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
           Welcome back, {firstName}!
         </h1>
-        <p className="mt-1 text-surface-500">
+        <p className="mt-1 text-muted-foreground">
           Here&apos;s what&apos;s happening with your job search.
         </p>
       </div>
 
       {/* Quick actions */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-surface-800">Quick Actions</h2>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">Quick Actions</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {QUICK_ACTIONS.map((action) => (
             <Card key={action.title} className="transition-shadow hover:shadow-card-hover">
@@ -91,11 +91,11 @@ export default function DashboardPage() {
         {statCards.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="p-6">
-              <p className="text-sm text-surface-500">{stat.label}</p>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
               {statsLoading ? (
-                <div className="mt-1 h-9 w-12 animate-pulse rounded bg-surface-100" />
+                <div className="mt-1 h-9 w-12 animate-pulse rounded bg-muted" />
               ) : (
-                <p className="mt-1 text-3xl font-bold text-surface-800">{stat.value}</p>
+                <p className="mt-1 text-3xl font-bold text-foreground">{stat.value}</p>
               )}
             </CardContent>
           </Card>

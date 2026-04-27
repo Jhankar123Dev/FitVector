@@ -60,10 +60,10 @@ export default function CommunityPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold text-surface-800">Community</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Community</h1>
           <Badge variant="brand">Beta</Badge>
         </div>
-        <p className="mt-1 text-sm text-surface-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Learn from other job seekers, share your experiences, and discover salary insights
         </p>
       </div>
@@ -78,12 +78,12 @@ export default function CommunityPage() {
         ].map((s) => (
           <Card key={s.label}>
             <CardContent className="flex items-center gap-3 p-3 sm:p-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-100">
-                <s.icon className="h-4 w-4 text-surface-500" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <s.icon className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-surface-800">{s.value}</p>
-                <p className="text-xs text-surface-500">{s.label}</p>
+                <p className="text-lg font-semibold text-foreground">{s.value}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -99,11 +99,11 @@ export default function CommunityPage() {
                 <div className={`mb-3 flex h-11 w-11 items-center justify-center rounded-xl ${section.iconBg}`}>
                   <section.icon className={`h-5 w-5 ${section.iconColor}`} />
                 </div>
-                <h2 className="text-base font-semibold text-surface-800">{section.title}</h2>
-                <p className="mt-1 flex-1 text-sm text-surface-500">{section.description}</p>
+                <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
+                <p className="mt-1 flex-1 text-sm text-muted-foreground">{section.description}</p>
                 <div className="mt-4 flex items-center justify-between">
                   <span className={`text-xs font-medium ${section.statColor}`}>{section.stat}</span>
-                  <ArrowRight className="h-4 w-4 text-surface-400" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/70" />
                 </div>
               </CardContent>
             </Card>

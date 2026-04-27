@@ -148,7 +148,7 @@ export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps
               <iframe
                 key={compilePdfUrl}
                 src={`${compilePdfUrl}#toolbar=0`}
-                className="h-[11in] w-[8.5in] bg-white shadow-lg"
+                className="h-[11in] w-[8.5in] bg-card shadow-lg"
                 title="Resume PDF preview"
                 onLoad={handleIframeLoad}
                 onError={handleIframeError}
@@ -157,7 +157,7 @@ export function PdfViewer({ resumeId, latexSource, versionName }: PdfViewerProps
           </>
         ) : (
           <div className="mx-auto max-w-[8.5in]">
-            <div className="rounded-lg bg-white p-8 shadow-lg">
+            <div className="rounded-lg bg-card p-8 shadow-lg">
               <div className="mb-4 rounded bg-yellow-50 p-3 text-xs text-yellow-700">
                 PDF preview unavailable — resume not yet saved. You can still
                 download the .tex file and compile it in{" "}

@@ -155,13 +155,13 @@ export default function InterviewExperiencesPage() {
         <div>
           <Link
             href="/dashboard/community"
-            className="mb-2 inline-flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700"
+            className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground/80"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Community
           </Link>
-          <h1 className="text-2xl font-semibold text-surface-800">Interview Experiences</h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <h1 className="text-2xl font-semibold text-foreground">Interview Experiences</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {filteredExperiences.length} anonymous experiences across {uniqueCompanyCount} companies
           </p>
         </div>
@@ -177,7 +177,7 @@ export default function InterviewExperiencesPage() {
           <div className="flex flex-wrap gap-3">
             {/* Company search */}
             <div className="relative w-full sm:w-44">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
               <Input
                 placeholder="Company..."
                 value={companySearch}
@@ -188,7 +188,7 @@ export default function InterviewExperiencesPage() {
 
             {/* Role search */}
             <div className="relative w-full sm:w-40">
-              <Briefcase className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+              <Briefcase className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
               <Input
                 placeholder="Role..."
                 value={roleSearch}
@@ -207,7 +207,7 @@ export default function InterviewExperiencesPage() {
                     "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                     difficulty === d
                       ? "bg-brand-500 text-white"
-                      : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                      : "bg-muted text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {d === "all" ? "All" : DIFFICULTY_CONFIG[d].label}
@@ -225,7 +225,7 @@ export default function InterviewExperiencesPage() {
                     "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                     outcome === o
                       ? "bg-brand-500 text-white"
-                      : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                      : "bg-muted text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {o === "all" ? "All" : OUTCOME_CONFIG[o].label}
@@ -246,8 +246,8 @@ export default function InterviewExperiencesPage() {
                   className={cn(
                     "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                     sort === s.id
-                      ? "bg-surface-800 text-white"
-                      : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                      ? "bg-foreground text-white"
+                      : "bg-muted text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {s.label}
@@ -273,16 +273,16 @@ export default function InterviewExperiencesPage() {
                 {/* Collapsed View */}
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : exp.id)}
-                  className="flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-surface-50"
+                  className="flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-muted/50"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="flex items-center gap-1 text-sm font-semibold text-surface-800">
-                        <Building2 className="h-3.5 w-3.5 text-surface-400" />
+                      <span className="flex items-center gap-1 text-sm font-semibold text-foreground">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground/70" />
                         {exp.companyName}
                       </span>
-                      <span className="text-sm text-surface-500">·</span>
-                      <span className="text-sm text-surface-600">{exp.role}</span>
+                      <span className="text-sm text-muted-foreground">·</span>
+                      <span className="text-sm text-muted-foreground">{exp.role}</span>
                     </div>
 
                     <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -292,11 +292,11 @@ export default function InterviewExperiencesPage() {
                       <Badge className={cn("text-[10px]", outcomeConfig.bg, outcomeConfig.color)}>
                         {outcomeConfig.label}
                       </Badge>
-                      <span className="text-xs text-surface-400">
+                      <span className="text-xs text-muted-foreground/70">
                         {exp.rounds.length} round{exp.rounds.length !== 1 ? "s" : ""}
                       </span>
-                      <span className="text-xs text-surface-400">·</span>
-                      <span className="text-xs text-surface-400">
+                      <span className="text-xs text-muted-foreground/70">·</span>
+                      <span className="text-xs text-muted-foreground/70">
                         {formatRelativeTime(exp.createdAt)}
                       </span>
                     </div>
@@ -310,7 +310,7 @@ export default function InterviewExperiencesPage() {
                             "h-3 w-3",
                             i < exp.overallRating
                               ? "fill-amber-400 text-amber-400"
-                              : "text-surface-200",
+                              : "text-muted-foreground/40",
                           )}
                         />
                       ))}
@@ -318,55 +318,55 @@ export default function InterviewExperiencesPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className={cn("flex items-center gap-1 text-xs", userVote === "up" ? "text-brand-600" : "text-surface-500")}>
+                    <div className={cn("flex items-center gap-1 text-xs", userVote === "up" ? "text-brand-600" : "text-muted-foreground")}>
                       <ThumbsUp className={cn("h-3 w-3", userVote === "up" && "fill-brand-500")} />
                       {v.up}
                     </div>
                     {isExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-surface-400" />
+                      <ChevronUp className="h-4 w-4 text-muted-foreground/70" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-surface-400" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground/70" />
                     )}
                   </div>
                 </button>
 
                 {/* Expanded View */}
                 {isExpanded && (
-                  <div className="border-t border-surface-100 bg-surface-50/50 p-4 space-y-4">
+                  <div className="border-t border-border bg-muted/30 p-4 space-y-4">
                     {/* Author */}
-                    <p className="text-xs text-surface-400">
+                    <p className="text-xs text-muted-foreground/70">
                       By {exp.isAnonymous ? "Anonymous" : exp.authorName}
                     </p>
 
                     {/* Process Description */}
                     <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Process
                       </h4>
-                      <p className="mt-1 text-sm text-surface-700 whitespace-pre-wrap">
+                      <p className="mt-1 text-sm text-foreground/80 whitespace-pre-wrap">
                         {exp.processDescription}
                       </p>
                     </div>
 
                     {/* Rounds */}
                     <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Interview Rounds
                       </h4>
                       <div className="mt-2 space-y-3">
                         {exp.rounds.map((round) => (
-                          <div key={round.roundNumber} className="rounded-lg border border-surface-200 bg-white p-3">
+                          <div key={round.roundNumber} className="rounded-lg border border-border bg-card p-3">
                             <div className="flex items-center gap-2">
                               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">
                                 {round.roundNumber}
                               </span>
-                              <span className="text-sm font-medium text-surface-700">
+                              <span className="text-sm font-medium text-foreground/80">
                                 {round.type}
                               </span>
                             </div>
                             <ul className="mt-2 space-y-1 pl-7">
                               {(round.questions ?? []).map((q, i) => (
-                                <li key={i} className="text-xs text-surface-600 before:content-['•'] before:mr-1.5 before:text-surface-400">
+                                <li key={i} className="text-xs text-muted-foreground before:content-['•'] before:mr-1.5 before:text-muted-foreground/70">
                                   {q}
                                 </li>
                               ))}
@@ -379,16 +379,16 @@ export default function InterviewExperiencesPage() {
                     {/* Tips */}
                     {exp.tips && (
                       <div>
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Tips
                         </h4>
-                        <p className="mt-1 text-sm text-surface-700">{exp.tips}</p>
+                        <p className="mt-1 text-sm text-foreground/80">{exp.tips}</p>
                       </div>
                     )}
 
                     {/* Votes */}
                     <div className="flex items-center gap-3 pt-2">
-                      <span className="text-xs text-surface-400">Was this helpful?</span>
+                      <span className="text-xs text-muted-foreground/70">Was this helpful?</span>
                       <Button
                         variant="outline"
                         size="sm"
@@ -417,8 +417,8 @@ export default function InterviewExperiencesPage() {
 
         {filteredExperiences.length === 0 && (
           <div className="py-12 text-center">
-            <Search className="mx-auto mb-2 h-8 w-8 text-surface-300" />
-            <p className="text-sm text-surface-500">No experiences match your filters</p>
+            <Search className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">No experiences match your filters</p>
           </div>
         )}
       </div>
@@ -490,7 +490,7 @@ function ShareExperienceModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
       <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b p-4">
-          <h2 className="text-base font-semibold text-surface-800">
+          <h2 className="text-base font-semibold text-foreground">
             {submitted ? "Thanks for sharing!" : "Share Your Interview Experience"}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -503,7 +503,7 @@ function ShareExperienceModal({ onClose }: { onClose: () => void }) {
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
               <ThumbsUp className="h-6 w-6 text-green-600" />
             </div>
-            <p className="text-sm text-surface-600">
+            <p className="text-sm text-muted-foreground">
               Your experience has been submitted and will help other job seekers!
             </p>
             <Button size="sm" onClick={onClose} className="mt-4">
@@ -535,7 +535,7 @@ function ShareExperienceModal({ onClose }: { onClose: () => void }) {
                       onClick={() => setDiff(d)}
                       className={cn(
                         "flex-1 rounded-md py-1.5 text-xs font-medium transition-colors",
-                        diff === d ? cn(DIFFICULTY_CONFIG[d].bg, DIFFICULTY_CONFIG[d].color, "ring-1 ring-current") : "bg-surface-100 text-surface-600",
+                        diff === d ? cn(DIFFICULTY_CONFIG[d].bg, DIFFICULTY_CONFIG[d].color, "ring-1 ring-current") : "bg-muted text-muted-foreground",
                       )}
                     >
                       {DIFFICULTY_CONFIG[d].label}
@@ -548,7 +548,7 @@ function ShareExperienceModal({ onClose }: { onClose: () => void }) {
                 <select
                   value={outcomeVal}
                   onChange={(e) => setOutcomeVal(e.target.value as InterviewOutcome)}
-                  className="mt-1 w-full rounded-lg border border-surface-200 px-2 py-1.5 text-sm outline-none focus:border-brand-300"
+                  className="mt-1 w-full rounded-lg border border-border px-2 py-1.5 text-sm outline-none focus:border-primary/50"
                 >
                   {(Object.keys(OUTCOME_CONFIG) as InterviewOutcome[]).map((o) => (
                     <option key={o} value={o}>{OUTCOME_CONFIG[o].label}</option>
@@ -567,13 +567,13 @@ function ShareExperienceModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className="mt-2 space-y-2">
                 {rounds.map((round, i) => (
-                  <div key={i} className="rounded-lg border border-surface-200 p-2.5">
+                  <div key={i} className="rounded-lg border border-border p-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-surface-400">R{i + 1}</span>
+                      <span className="text-xs font-medium text-muted-foreground/70">R{i + 1}</span>
                       <select
                         value={round.type}
                         onChange={(e) => updateRound(i, "type", e.target.value)}
-                        className="flex-1 rounded border border-surface-200 px-2 py-1 text-xs outline-none"
+                        className="flex-1 rounded border border-border px-2 py-1 text-xs outline-none"
                       >
                         {["Phone Screen", "Technical", "System Design", "Take-home", "HR", "Culture Fit"].map((t) => (
                           <option key={t} value={t}>{t}</option>
@@ -609,7 +609,7 @@ function ShareExperienceModal({ onClose }: { onClose: () => void }) {
               <div className="mt-1 flex gap-1">
                 {Array.from({ length: 5 }, (_, i) => (
                   <button key={i} onClick={() => setRating(i + 1)}>
-                    <Star className={cn("h-5 w-5", i < rating ? "fill-amber-400 text-amber-400" : "text-surface-200")} />
+                    <Star className={cn("h-5 w-5", i < rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40")} />
                   </button>
                 ))}
               </div>

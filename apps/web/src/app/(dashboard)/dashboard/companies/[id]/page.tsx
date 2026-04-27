@@ -131,12 +131,12 @@ function JobRow({
   }
 
   return (
-    <Card className="transition-all hover:border-surface-300 hover:shadow-sm">
+    <Card className="transition-all hover:border-border/60 hover:shadow-sm">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold text-surface-800">{job.title}</h3>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-surface-500">
+            <h3 className="text-sm font-semibold text-foreground">{job.title}</h3>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               {job.location && (
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
@@ -172,13 +172,13 @@ function JobRow({
                 {job.requiredSkills.slice(0, 6).map((skill) => (
                   <span
                     key={skill}
-                    className="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-medium text-surface-600"
+                    className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
                   >
                     {skill}
                   </span>
                 ))}
                 {job.requiredSkills.length > 6 && (
-                  <span className="rounded-full px-2 py-0.5 text-[10px] text-surface-400">
+                  <span className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground/70">
                     +{job.requiredSkills.length - 6} more
                   </span>
                 )}
@@ -235,20 +235,20 @@ export default function CompanyDetailPage({
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-32 animate-pulse rounded bg-surface-200" />
-        <div className="rounded-xl border border-surface-200 bg-white p-6">
+        <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+        <div className="rounded-xl border border-border bg-card p-6">
           <div className="flex items-start gap-4">
-            <div className="h-16 w-16 animate-pulse rounded-2xl bg-surface-200" />
+            <div className="h-16 w-16 animate-pulse rounded-2xl bg-muted" />
             <div className="flex-1 space-y-3">
-              <div className="h-6 w-48 animate-pulse rounded bg-surface-200" />
-              <div className="h-4 w-32 animate-pulse rounded bg-surface-200" />
-              <div className="h-4 w-64 animate-pulse rounded bg-surface-200" />
+              <div className="h-6 w-48 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-64 animate-pulse rounded bg-muted" />
             </div>
           </div>
         </div>
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-surface-200" />
+            <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />
           ))}
         </div>
       </div>
@@ -258,9 +258,9 @@ export default function CompanyDetailPage({
   if (isError || !company) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <Building2 className="h-12 w-12 text-surface-300" />
-        <h2 className="mt-4 text-lg font-semibold text-surface-700">Company not found</h2>
-        <p className="mt-1 text-sm text-surface-500">
+        <Building2 className="h-12 w-12 text-muted-foreground/40" />
+        <h2 className="mt-4 text-lg font-semibold text-foreground/80">Company not found</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           This company may have been removed or the link is invalid.
         </p>
         <Link href="/dashboard/companies">
@@ -281,14 +281,14 @@ export default function CompanyDetailPage({
       {/* Back button */}
       <Link
         href="/dashboard/companies"
-        className="inline-flex items-center gap-1.5 text-sm text-surface-500 hover:text-surface-700 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground/80 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Companies
       </Link>
 
       {/* Company header card */}
-      <div className="rounded-xl border border-surface-200 bg-white p-6">
+      <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-start gap-4">
           {company.logoUrl ? (
             <img
@@ -300,8 +300,8 @@ export default function CompanyDetailPage({
             <CompanyInitials name={company.name} />
           )}
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-semibold text-surface-800">{company.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-surface-500">
+            <h1 className="text-xl font-semibold text-foreground">{company.name}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
               {company.industry && (
                 <span className="inline-flex items-center gap-1">
                   <Building2 className="h-3.5 w-3.5" />
@@ -336,7 +336,7 @@ export default function CompanyDetailPage({
             </div>
 
             {company.description && (
-              <p className="mt-3 text-sm text-surface-600 leading-relaxed">
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                 {company.description}
               </p>
             )}
@@ -360,10 +360,10 @@ export default function CompanyDetailPage({
       {/* Active jobs section */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-surface-800">
+          <h2 className="text-base font-semibold text-foreground">
             Open Positions
             {company.activeJobs.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-surface-500">
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
                 ({company.activeJobs.length})
               </span>
             )}
@@ -371,10 +371,10 @@ export default function CompanyDetailPage({
         </div>
 
         {company.activeJobs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-surface-200 bg-surface-50 py-12 text-center">
-            <Briefcase className="h-8 w-8 text-surface-300" />
-            <h3 className="mt-3 text-sm font-semibold text-surface-700">No open positions</h3>
-            <p className="mt-1 text-sm text-surface-500">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
+            <Briefcase className="h-8 w-8 text-muted-foreground/40" />
+            <h3 className="mt-3 text-sm font-semibold text-foreground/80">No open positions</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
               This company has no active job listings right now. Check back later.
             </p>
           </div>
