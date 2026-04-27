@@ -22,7 +22,7 @@ export function Step8Review({ form, goToStep }: Props) {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-surface-800">
+            <h2 className="text-lg font-semibold text-foreground">
               {form.title || "Untitled Job"}
             </h2>
             <Button variant="ghost" size="sm" onClick={() => goToStep(1)} className="text-xs text-brand-600">
@@ -55,12 +55,12 @@ export function Step8Review({ form, goToStep }: Props) {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-surface-700">Job Description</h3>
+            <h3 className="text-sm font-semibold text-foreground/80">Job Description</h3>
             <Button variant="ghost" size="sm" onClick={() => goToStep(2)} className="text-xs text-brand-600">
               Edit
             </Button>
           </div>
-          <p className="mt-2 line-clamp-6 whitespace-pre-line text-sm text-surface-600">
+          <p className="mt-2 line-clamp-6 whitespace-pre-line text-sm text-muted-foreground">
             {form.description || "No description provided"}
           </p>
         </CardContent>
@@ -69,7 +69,7 @@ export function Step8Review({ form, goToStep }: Props) {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-surface-700">Skills</h3>
+            <h3 className="text-sm font-semibold text-foreground/80">Skills</h3>
             <Button variant="ghost" size="sm" onClick={() => goToStep(3)} className="text-xs text-brand-600">
               Edit
             </Button>
@@ -77,7 +77,7 @@ export function Step8Review({ form, goToStep }: Props) {
           <div className="mt-2 space-y-2">
             {form.requiredSkills.length > 0 && (
               <div>
-                <p className="text-xs text-surface-500">Required</p>
+                <p className="text-xs text-muted-foreground">Required</p>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {form.requiredSkills.map((s) => (
                     <Badge key={s} variant="brand">{s}</Badge>
@@ -87,7 +87,7 @@ export function Step8Review({ form, goToStep }: Props) {
             )}
             {form.niceToHaveSkills.length > 0 && (
               <div>
-                <p className="text-xs text-surface-500">Nice to have</p>
+                <p className="text-xs text-muted-foreground">Nice to have</p>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {form.niceToHaveSkills.map((s) => (
                     <Badge key={s} variant="secondary">{s}</Badge>
@@ -96,7 +96,7 @@ export function Step8Review({ form, goToStep }: Props) {
               </div>
             )}
             {form.requiredSkills.length === 0 && form.niceToHaveSkills.length === 0 && (
-              <p className="text-sm text-surface-400">No skills added</p>
+              <p className="text-sm text-muted-foreground/70">No skills added</p>
             )}
           </div>
         </CardContent>
@@ -105,42 +105,42 @@ export function Step8Review({ form, goToStep }: Props) {
       <Card>
         <CardContent className="space-y-4 p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-surface-700">Configuration</h3>
+            <h3 className="text-sm font-semibold text-foreground/80">Configuration</h3>
             <Button variant="ghost" size="sm" onClick={() => goToStep(4)} className="text-xs text-brand-600">
               Edit
             </Button>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-surface-200 p-3">
-              <p className="text-xs text-surface-500">Screening Questions</p>
-              <p className="mt-1 text-sm font-semibold text-surface-800">
+            <div className="rounded-lg border border-border p-3">
+              <p className="text-xs text-muted-foreground">Screening Questions</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">
                 {form.screeningQuestions.length} question
                 {form.screeningQuestions.length !== 1 ? "s" : ""}
               </p>
             </div>
-            <div className="rounded-lg border border-surface-200 p-3">
-              <p className="text-xs text-surface-500">AI Interview</p>
-              <p className="mt-1 text-sm font-semibold text-surface-800">
+            <div className="rounded-lg border border-border p-3">
+              <p className="text-xs text-muted-foreground">AI Interview</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">
                 {form.interviewConfig.enabled ? (
                   <>
                     {INTERVIEW_TYPE_LABELS[form.interviewConfig.interviewType]} ·{" "}
                     {form.interviewConfig.duration}min
                   </>
                 ) : (
-                  <span className="text-surface-400">Disabled</span>
+                  <span className="text-muted-foreground/70">Disabled</span>
                 )}
               </p>
             </div>
-            <div className="rounded-lg border border-surface-200 p-3">
-              <p className="text-xs text-surface-500">Assessment</p>
-              <p className="mt-1 text-sm font-semibold text-surface-800">
+            <div className="rounded-lg border border-border p-3">
+              <p className="text-xs text-muted-foreground">Assessment</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">
                 {form.assessmentConfig.enabled ? (
                   <>
                     {ASSESSMENT_TYPE_LABELS[form.assessmentConfig.assessmentType]} ·{" "}
                     {form.assessmentConfig.timeLimit}min
                   </>
                 ) : (
-                  <span className="text-surface-400">Disabled</span>
+                  <span className="text-muted-foreground/70">Disabled</span>
                 )}
               </p>
             </div>

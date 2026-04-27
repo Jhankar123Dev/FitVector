@@ -342,10 +342,10 @@ export default function CreateAssessmentPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg sm:text-xl font-semibold text-surface-800">
+          <h1 className="text-lg sm:text-xl font-semibold text-foreground">
             Create Assessment
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+          <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
             Step {step} of {STEPS.length} — {STEPS[step - 1].label}
           </p>
         </div>
@@ -365,7 +365,7 @@ export default function CreateAssessmentPage() {
                 onClick={() => s.id < step && setStep(s.id)}
                 className={cn(
                   "flex items-center gap-1.5 text-xs font-medium transition-colors",
-                  done ? "text-brand-600 cursor-pointer" : current ? "text-surface-800" : "text-surface-400",
+                  done ? "text-brand-600 cursor-pointer" : current ? "text-foreground" : "text-muted-foreground/70",
                   !done && !current && "cursor-default",
                 )}
               >
@@ -375,8 +375,8 @@ export default function CreateAssessmentPage() {
                     done
                       ? "bg-brand-500 text-white"
                       : current
-                        ? "bg-surface-800 text-white"
-                        : "bg-surface-200 text-surface-500",
+                        ? "bg-foreground text-white"
+                        : "bg-muted text-muted-foreground",
                   )}
                 >
                   {done ? <Check className="h-3 w-3" /> : s.id}
@@ -405,7 +405,7 @@ export default function CreateAssessmentPage() {
               <div className="space-y-1.5">
                 <Label className="text-xs sm:text-sm">Assessment Type</Label>
                 <select
-                  className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 py-1.5 text-sm text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30"
+                  className="flex h-9 w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                   value={form.type}
                   onChange={(e) => update("type", e.target.value as AssessmentType)}
                 >
@@ -418,7 +418,7 @@ export default function CreateAssessmentPage() {
               <div className="space-y-1.5">
                 <Label className="text-xs sm:text-sm">Difficulty Level</Label>
                 <select
-                  className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 py-1.5 text-sm text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30"
+                  className="flex h-9 w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                   value={form.difficulty}
                   onChange={(e) => update("difficulty", e.target.value as DifficultyLevel)}
                 >
@@ -459,9 +459,9 @@ export default function CreateAssessmentPage() {
           {form.questions.length === 0 && (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <FileQuestion className="h-10 w-10 text-surface-300" />
-                <p className="mt-3 text-sm font-medium text-surface-600">No questions yet</p>
-                <p className="mt-1 text-xs text-surface-400">Add your first question to get started.</p>
+                <FileQuestion className="h-10 w-10 text-muted-foreground/40" />
+                <p className="mt-3 text-sm font-medium text-muted-foreground">No questions yet</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">Add your first question to get started.</p>
               </CardContent>
             </Card>
           )}
@@ -471,7 +471,7 @@ export default function CreateAssessmentPage() {
               <CardContent className="space-y-4 p-3 sm:p-5">
                 {/* Question header */}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm font-semibold text-surface-800">
+                  <span className="text-xs sm:text-sm font-semibold text-foreground">
                     Question {qi + 1}
                   </span>
                   <Button
@@ -488,7 +488,7 @@ export default function CreateAssessmentPage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs">Question Type</Label>
                     <select
-                      className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 py-1.5 text-sm text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30"
+                      className="flex h-9 w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                       value={q.type}
                       onChange={(e) => {
                         const type = e.target.value as QuestionType;
@@ -518,7 +518,7 @@ export default function CreateAssessmentPage() {
                     <div className="space-y-1.5">
                       <Label className="text-xs">Language</Label>
                       <select
-                        className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 py-1.5 text-sm text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30"
+                        className="flex h-9 w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                         value={q.codeLanguage}
                         onChange={(e) => updateQuestion(q.id, { codeLanguage: e.target.value })}
                       >
@@ -551,7 +551,7 @@ export default function CreateAssessmentPage() {
                           name={`correct-${q.id}`}
                           checked={q.correctAnswer === opt && opt !== ""}
                           onChange={() => updateQuestion(q.id, { correctAnswer: opt })}
-                          className="h-3.5 w-3.5 accent-brand-500"
+                          className="h-3.5 w-3.5 accent-primary"
                         />
                         <Input
                           className="flex-1"
@@ -577,7 +577,7 @@ export default function CreateAssessmentPage() {
                         <Plus className="h-3 w-3" /> Add Option
                       </Button>
                     )}
-                    <p className="text-[10px] text-surface-400">Select the radio button next to the correct answer.</p>
+                    <p className="text-[10px] text-muted-foreground/70">Select the radio button next to the correct answer.</p>
                   </div>
                 )}
 
@@ -652,9 +652,9 @@ export default function CreateAssessmentPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-violet-600" />
-                  <h3 className="text-sm font-semibold text-surface-800">Generate Questions with AI</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Generate Questions with AI</h3>
                 </div>
-                <button onClick={() => setShowAiModal(false)} className="text-surface-400 hover:text-surface-700 text-lg font-bold leading-none">×</button>
+                <button onClick={() => setShowAiModal(false)} className="text-muted-foreground/70 hover:text-foreground/80 text-lg font-bold leading-none">×</button>
               </div>
 
               {aiPreview.length === 0 ? (
@@ -666,7 +666,7 @@ export default function CreateAssessmentPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label className="text-xs">Question Type</Label>
-                      <select className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-brand-500/30" value={aiForm.questionType} onChange={(e) => setAiForm((p) => ({ ...p, questionType: e.target.value as QuestionType }))}>
+                      <select className="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30" value={aiForm.questionType} onChange={(e) => setAiForm((p) => ({ ...p, questionType: e.target.value as QuestionType }))}>
                         {(["multiple_choice", "short_answer", "code"] as QuestionType[]).map((t) => (
                           <option key={t} value={t}>{QUESTION_TYPE_LABELS[t]}</option>
                         ))}
@@ -674,7 +674,7 @@ export default function CreateAssessmentPage() {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">Difficulty</Label>
-                      <select className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-brand-500/30" value={aiForm.difficulty} onChange={(e) => setAiForm((p) => ({ ...p, difficulty: e.target.value as DifficultyLevel }))}>
+                      <select className="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30" value={aiForm.difficulty} onChange={(e) => setAiForm((p) => ({ ...p, difficulty: e.target.value as DifficultyLevel }))}>
                         {(["easy", "medium", "hard"] as DifficultyLevel[]).map((d) => (
                           <option key={d} value={d}>{DIFFICULTY_LABELS[d]}</option>
                         ))}
@@ -684,7 +684,7 @@ export default function CreateAssessmentPage() {
                   {aiForm.questionType === "code" && (
                     <div className="space-y-1.5">
                       <Label className="text-xs">Code Language</Label>
-                      <select className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-brand-500/30" value={aiForm.codeLanguage} onChange={(e) => setAiForm((p) => ({ ...p, codeLanguage: e.target.value }))}>
+                      <select className="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30" value={aiForm.codeLanguage} onChange={(e) => setAiForm((p) => ({ ...p, codeLanguage: e.target.value }))}>
                         {CODE_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
                       </select>
                     </div>
@@ -693,7 +693,7 @@ export default function CreateAssessmentPage() {
                     <Label className="text-xs">Number of Questions</Label>
                     <div className="flex gap-2">
                       {[5, 10, 15, 20].map((n) => (
-                        <button key={n} onClick={() => setAiForm((p) => ({ ...p, count: n }))} className={cn("flex-1 rounded-md border py-1.5 text-xs font-medium transition-colors", aiForm.count === n ? "border-brand-500 bg-brand-50 text-brand-700" : "border-surface-200 text-surface-600 hover:border-surface-300")}>
+                        <button key={n} onClick={() => setAiForm((p) => ({ ...p, count: n }))} className={cn("flex-1 rounded-md border py-1.5 text-xs font-medium transition-colors", aiForm.count === n ? "border-brand-500 bg-brand-50 text-brand-700" : "border-border text-muted-foreground hover:border-border/60")}>
                           {n}
                         </button>
                       ))}
@@ -706,13 +706,13 @@ export default function CreateAssessmentPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs text-surface-500">{aiPreview.length} questions generated. Review and remove any you don't want before adding.</p>
+                  <p className="text-xs text-muted-foreground">{aiPreview.length} questions generated. Review and remove any you don't want before adding.</p>
                   <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
                     {aiPreview.map((q, i) => (
-                      <div key={q.id} className="flex items-start gap-2 rounded-lg border border-surface-200 p-3">
+                      <div key={q.id} className="flex items-start gap-2 rounded-lg border border-border p-3">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-700">{i + 1}</span>
-                        <p className="flex-1 text-xs text-surface-700 line-clamp-2">{q.prompt}</p>
-                        <button onClick={() => setAiPreview((p) => p.filter((_, idx) => idx !== i))} className="shrink-0 text-surface-400 hover:text-red-500">
+                        <p className="flex-1 text-xs text-foreground/80 line-clamp-2">{q.prompt}</p>
+                        <button onClick={() => setAiPreview((p) => p.filter((_, idx) => idx !== i))} className="shrink-0 text-muted-foreground/70 hover:text-red-500">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -737,19 +737,19 @@ export default function CreateAssessmentPage() {
           <Card className="w-full max-w-lg">
             <CardContent className="space-y-4 p-5 sm:p-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-surface-800">CSV Import Preview</h3>
-                <button onClick={() => { setShowCsvPreview(false); setCsvPreview([]); if (csvInputRef.current) csvInputRef.current.value = ""; }} className="text-surface-400 hover:text-surface-700 text-lg font-bold leading-none">×</button>
+                <h3 className="text-sm font-semibold text-foreground">CSV Import Preview</h3>
+                <button onClick={() => { setShowCsvPreview(false); setCsvPreview([]); if (csvInputRef.current) csvInputRef.current.value = ""; }} className="text-muted-foreground/70 hover:text-foreground/80 text-lg font-bold leading-none">×</button>
               </div>
-              <p className="text-xs text-surface-500">{csvPreview.length} questions found. Review before importing.</p>
+              <p className="text-xs text-muted-foreground">{csvPreview.length} questions found. Review before importing.</p>
               <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
                 {csvPreview.map((q, i) => (
-                  <div key={q.id} className="flex items-start gap-2 rounded-lg border border-surface-200 p-3">
+                  <div key={q.id} className="flex items-start gap-2 rounded-lg border border-border p-3">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">{i + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-surface-700 line-clamp-2">{q.prompt}</p>
-                      <p className="mt-0.5 text-[10px] text-surface-400">{QUESTION_TYPE_LABELS[q.type]} · {q.points}pts</p>
+                      <p className="text-xs text-foreground/80 line-clamp-2">{q.prompt}</p>
+                      <p className="mt-0.5 text-[10px] text-muted-foreground/70">{QUESTION_TYPE_LABELS[q.type]} · {q.points}pts</p>
                     </div>
-                    <button onClick={() => setCsvPreview((p) => p.filter((_, idx) => idx !== i))} className="shrink-0 text-surface-400 hover:text-red-500">
+                    <button onClick={() => setCsvPreview((p) => p.filter((_, idx) => idx !== i))} className="shrink-0 text-muted-foreground/70 hover:text-red-500">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -775,12 +775,12 @@ export default function CreateAssessmentPage() {
               {/* Header */}
               <div className="flex items-center justify-between shrink-0">
                 <div>
-                  <h3 className="text-sm font-semibold text-surface-800">Question Bank</h3>
-                  <p className="text-xs text-surface-500 mt-0.5">Select coding problems to import — test cases included</p>
+                  <h3 className="text-sm font-semibold text-foreground">Question Bank</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Select coding problems to import — test cases included</p>
                 </div>
                 <button
                   onClick={() => setShowBankModal(false)}
-                  className="text-surface-400 hover:text-surface-700 text-lg font-bold leading-none"
+                  className="text-muted-foreground/70 hover:text-foreground/80 text-lg font-bold leading-none"
                 >×</button>
               </div>
 
@@ -798,8 +798,8 @@ export default function CreateAssessmentPage() {
                           ? d === "easy"   ? "bg-emerald-100 border-emerald-400 text-emerald-700"
                           : d === "medium" ? "bg-amber-100 border-amber-400 text-amber-700"
                           : d === "hard"   ? "bg-red-100 border-red-400 text-red-700"
-                          : "bg-surface-800 border-surface-800 text-white"
-                          : "border-surface-200 text-surface-600 hover:border-surface-300",
+                          : "bg-foreground border-foreground text-white"
+                          : "border-border text-muted-foreground hover:border-border/60",
                       )}
                     >
                       {d === "" ? "All Difficulty" : d.charAt(0).toUpperCase() + d.slice(1)}
@@ -816,7 +816,7 @@ export default function CreateAssessmentPage() {
                         "rounded-full px-3 py-0.5 text-xs font-medium border transition-colors",
                         bankFilters.category === c
                           ? "bg-brand-600 border-brand-600 text-white"
-                          : "border-surface-200 text-surface-600 hover:border-surface-300",
+                          : "border-border text-muted-foreground hover:border-border/60",
                       )}
                     >
                       {c === "" ? "All Categories" : c}
@@ -829,12 +829,12 @@ export default function CreateAssessmentPage() {
               <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
                 {bankLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-16 rounded-lg border border-surface-200 bg-surface-100 animate-pulse" />
+                    <div key={i} className="h-16 rounded-lg border border-border bg-muted animate-pulse" />
                   ))
                 ) : bankItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <BookOpen className="h-8 w-8 text-surface-300" />
-                    <p className="mt-2 text-sm text-surface-500">No questions match the selected filters.</p>
+                    <BookOpen className="h-8 w-8 text-muted-foreground/40" />
+                    <p className="mt-2 text-sm text-muted-foreground">No questions match the selected filters.</p>
                   </div>
                 ) : (
                   bankItems.map((item: QuestionBankItem) => {
@@ -848,14 +848,14 @@ export default function CreateAssessmentPage() {
                           "w-full text-left rounded-lg border p-3 transition-colors",
                           selected
                             ? "border-emerald-400 bg-emerald-50"
-                            : "border-surface-200 hover:border-surface-300 hover:bg-surface-50",
+                            : "border-border hover:border-border/60 hover:bg-muted/30",
                         )}
                       >
                         <div className="flex items-start gap-3">
                           {/* Checkbox */}
                           <div className={cn(
                             "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
-                            selected ? "border-emerald-500 bg-emerald-500" : "border-surface-300",
+                            selected ? "border-emerald-500 bg-emerald-500" : "border-border/60",
                           )}>
                             {selected && <Check className="h-3 w-3 text-white" />}
                           </div>
@@ -863,7 +863,7 @@ export default function CreateAssessmentPage() {
                           {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="text-xs font-semibold text-surface-800">{item.title}</span>
+                              <span className="text-xs font-semibold text-foreground">{item.title}</span>
                               <Badge
                                 className={cn(
                                   "text-[10px] px-1.5 py-0",
@@ -875,12 +875,12 @@ export default function CreateAssessmentPage() {
                               >
                                 {item.difficulty}
                               </Badge>
-                              <Badge className="text-[10px] px-1.5 py-0 bg-surface-100 text-surface-600 border-surface-200" variant="outline">
+                              <Badge className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border" variant="outline">
                                 {item.category}
                               </Badge>
                             </div>
-                            <p className="mt-1 text-[11px] text-surface-500 line-clamp-1">{item.prompt}</p>
-                            <div className="mt-1 flex gap-2 text-[10px] text-surface-400">
+                            <p className="mt-1 text-[11px] text-muted-foreground line-clamp-1">{item.prompt}</p>
+                            <div className="mt-1 flex gap-2 text-[10px] text-muted-foreground/70">
                               <span>{item.testCases.length} test cases</span>
                               <span>·</span>
                               <span>{langCount} languages</span>
@@ -894,8 +894,8 @@ export default function CreateAssessmentPage() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between gap-3 shrink-0 pt-1 border-t border-surface-100">
-                <span className="text-xs text-surface-500">
+              <div className="flex items-center justify-between gap-3 shrink-0 pt-1 border-t border-border">
+                <span className="text-xs text-muted-foreground">
                   {bankSelected.size > 0 ? `${bankSelected.size} selected` : "Click questions to select"}
                 </span>
                 <div className="flex gap-2">
@@ -945,7 +945,7 @@ export default function CreateAssessmentPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs sm:text-sm">Assessment Deadline <span className="text-surface-400 font-normal">(Optional)</span></Label>
+              <Label className="text-xs sm:text-sm">Assessment Deadline <span className="text-muted-foreground/70 font-normal">(Optional)</span></Label>
               <Input
                 type="datetime-local"
                 value={form.expiresAt ?? ""}
@@ -953,13 +953,13 @@ export default function CreateAssessmentPage() {
                 onChange={(e) => update("expiresAt", e.target.value || null)}
                 className="max-w-sm"
               />
-              <p className="text-[11px] text-surface-400">
+              <p className="text-[11px] text-muted-foreground/70">
                 Candidates must submit before this date. Leave blank for no deadline (7-day invite window applies).
               </p>
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs sm:text-sm font-semibold text-surface-700">Options</p>
+              <p className="text-xs sm:text-sm font-semibold text-foreground/80">Options</p>
               {[
                 { key: "randomizeQuestions" as const, label: "Randomize question order" },
                 { key: "showResultsToCandidate" as const, label: "Show results to candidate after submission" },
@@ -969,15 +969,15 @@ export default function CreateAssessmentPage() {
                     type="checkbox"
                     checked={form[key]}
                     onChange={(e) => update(key, e.target.checked)}
-                    className="h-4 w-4 rounded border-surface-300 accent-brand-500"
+                    className="h-4 w-4 rounded border-border/60 accent-primary"
                   />
-                  <span className="text-xs sm:text-sm text-surface-700">{label}</span>
+                  <span className="text-xs sm:text-sm text-foreground/80">{label}</span>
                 </label>
               ))}
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs sm:text-sm font-semibold text-surface-700">Proctoring</p>
+              <p className="text-xs sm:text-sm font-semibold text-foreground/80">Proctoring</p>
               {[
                 { key: "tabSwitchDetection" as const, label: "Detect tab/window switches" },
                 { key: "copyPasteDetection" as const, label: "Detect copy-paste activity" },
@@ -987,9 +987,9 @@ export default function CreateAssessmentPage() {
                     type="checkbox"
                     checked={form[key]}
                     onChange={(e) => update(key, e.target.checked)}
-                    className="h-4 w-4 rounded border-surface-300 accent-brand-500"
+                    className="h-4 w-4 rounded border-border/60 accent-primary"
                   />
-                  <span className="text-xs sm:text-sm text-surface-700">{label}</span>
+                  <span className="text-xs sm:text-sm text-foreground/80">{label}</span>
                 </label>
               ))}
             </div>
@@ -1002,43 +1002,43 @@ export default function CreateAssessmentPage() {
         <div className="space-y-4">
           <Card>
             <CardContent className="space-y-4 p-4 sm:p-6">
-              <h3 className="text-sm sm:text-base font-semibold text-surface-800">Assessment Summary</h3>
+              <h3 className="text-sm sm:text-base font-semibold text-foreground">Assessment Summary</h3>
 
               <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <div>
-                  <p className="text-[11px] text-surface-500">Title</p>
-                  <p className="text-xs sm:text-sm font-medium text-surface-800">{form.title || "—"}</p>
+                  <p className="text-[11px] text-muted-foreground">Title</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{form.title || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-surface-500">Type</p>
-                  <p className="text-xs sm:text-sm font-medium text-surface-800">{ASSESSMENT_TYPE_LABELS[form.type]}</p>
+                  <p className="text-[11px] text-muted-foreground">Type</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{ASSESSMENT_TYPE_LABELS[form.type]}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-surface-500">Difficulty</p>
-                  <p className="text-xs sm:text-sm font-medium text-surface-800">{DIFFICULTY_LABELS[form.difficulty]}</p>
+                  <p className="text-[11px] text-muted-foreground">Difficulty</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{DIFFICULTY_LABELS[form.difficulty]}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-surface-500">Duration</p>
-                  <p className="text-xs sm:text-sm font-medium text-surface-800">{form.duration} minutes</p>
+                  <p className="text-[11px] text-muted-foreground">Duration</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{form.duration} minutes</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-surface-500">Passing Score</p>
-                  <p className="text-xs sm:text-sm font-medium text-surface-800">{form.passingScore}%</p>
+                  <p className="text-[11px] text-muted-foreground">Passing Score</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{form.passingScore}%</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-surface-500">Max Attempts</p>
-                  <p className="text-xs sm:text-sm font-medium text-surface-800">{form.maxAttempts}</p>
+                  <p className="text-[11px] text-muted-foreground">Max Attempts</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{form.maxAttempts}</p>
                 </div>
               </div>
 
               {form.description && (
                 <div>
-                  <p className="text-[11px] text-surface-500">Description</p>
-                  <p className="text-xs text-surface-700 mt-0.5">{form.description}</p>
+                  <p className="text-[11px] text-muted-foreground">Description</p>
+                  <p className="text-xs text-foreground/80 mt-0.5">{form.description}</p>
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2 text-xs text-surface-600">
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                 {form.randomizeQuestions && <Badge variant="default" className="text-[10px]">Randomize</Badge>}
                 {form.showResultsToCandidate && <Badge variant="default" className="text-[10px]">Show Results</Badge>}
                 {form.tabSwitchDetection && <Badge variant="default" className="text-[10px]">Tab Detection</Badge>}
@@ -1050,25 +1050,25 @@ export default function CreateAssessmentPage() {
           {/* Questions preview */}
           <Card>
             <CardContent className="space-y-3 p-4 sm:p-6">
-              <h3 className="text-sm sm:text-base font-semibold text-surface-800">
+              <h3 className="text-sm sm:text-base font-semibold text-foreground">
                 Questions ({form.questions.length})
               </h3>
               {form.questions.length === 0 ? (
-                <p className="text-xs text-surface-400">No questions added. Go back to Step 2 to add questions.</p>
+                <p className="text-xs text-muted-foreground/70">No questions added. Go back to Step 2 to add questions.</p>
               ) : (
                 <div className="space-y-2">
                   {form.questions.map((q, i) => (
                     <div
                       key={q.id}
-                      className="flex items-start gap-3 rounded-lg border border-surface-100 p-3"
+                      className="flex items-start gap-3 rounded-lg border border-border p-3"
                     >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] font-bold text-surface-600">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
                         {i + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-surface-800 line-clamp-2">{q.prompt || "Empty prompt"}</p>
-                        <div className="mt-1 flex items-center gap-2 text-[10px] text-surface-500">
-                          <Badge className="border text-[10px] bg-surface-50 text-surface-600 border-surface-200">
+                        <p className="text-xs font-medium text-foreground line-clamp-2">{q.prompt || "Empty prompt"}</p>
+                        <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <Badge className="border text-[10px] bg-muted/30 text-muted-foreground border-border">
                             {QUESTION_TYPE_LABELS[q.type]}
                           </Badge>
                           <span>{q.points} pts</span>
@@ -1079,7 +1079,7 @@ export default function CreateAssessmentPage() {
                   ))}
                 </div>
               )}
-              <p className="text-[11px] text-surface-500">
+              <p className="text-[11px] text-muted-foreground">
                 Total points: {form.questions.reduce((s, q) => s + q.points, 0)}
               </p>
             </CardContent>

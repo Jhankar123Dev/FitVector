@@ -89,14 +89,14 @@ function PanelSkeleton() {
       {[1, 2, 3].map((i) => (
         <Card key={i} className="animate-pulse">
           <CardHeader className="pb-3">
-            <div className="h-5 w-2/3 rounded bg-surface-200" />
-            <div className="mt-2 h-4 w-1/3 rounded bg-surface-200" />
+            <div className="h-5 w-2/3 rounded bg-muted" />
+            <div className="mt-2 h-4 w-1/3 rounded bg-muted" />
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="h-4 w-1/2 rounded bg-surface-100" />
-              <div className="h-4 w-1/3 rounded bg-surface-100" />
-              <div className="h-4 w-2/3 rounded bg-surface-100" />
+              <div className="h-4 w-1/2 rounded bg-muted" />
+              <div className="h-4 w-1/3 rounded bg-muted" />
+              <div className="h-4 w-2/3 rounded bg-muted" />
             </div>
           </CardContent>
         </Card>

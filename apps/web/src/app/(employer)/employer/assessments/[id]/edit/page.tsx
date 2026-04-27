@@ -131,7 +131,7 @@ export default function AssessmentEditPage() {
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
             <AlertTriangle className="h-10 w-10 text-amber-400" />
-            <p className="text-sm text-surface-600">{loadError || "Assessment not found."}</p>
+            <p className="text-sm text-muted-foreground">{loadError || "Assessment not found."}</p>
             <Button variant="outline" size="sm" onClick={() => router.push("/employer/assessments")}>
               Back to Assessments
             </Button>
@@ -154,8 +154,8 @@ export default function AssessmentEditPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-semibold text-surface-800">Edit Assessment</h1>
-          <p className="text-sm text-surface-500">{assessment.name}</p>
+          <h1 className="text-xl font-semibold text-foreground">Edit Assessment</h1>
+          <p className="text-sm text-muted-foreground">{assessment.name}</p>
         </div>
       </div>
 
@@ -177,7 +177,7 @@ export default function AssessmentEditPage() {
       {/* Editable metadata */}
       <Card>
         <CardContent className="space-y-5 p-6">
-          <h2 className="text-sm font-semibold text-surface-700">Assessment Details</h2>
+          <h2 className="text-sm font-semibold text-foreground/80">Assessment Details</h2>
 
           <div className="space-y-2">
             <Label htmlFor="name">Title</Label>
@@ -225,7 +225,7 @@ export default function AssessmentEditPage() {
                   className={`rounded-lg border px-4 py-2 text-sm font-medium capitalize transition-colors ${
                     difficulty === d
                       ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-surface-200 text-surface-600 hover:border-surface-300"
+                      : "border-border text-muted-foreground hover:border-border/60"
                   }`}
                 >
                   {d}
@@ -240,7 +240,7 @@ export default function AssessmentEditPage() {
       <Card>
         <CardContent className="p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-surface-700">
+            <h2 className="text-sm font-semibold text-foreground/80">
               Questions ({assessment.questions.length})
             </h2>
             {questionsLocked && (
@@ -252,19 +252,19 @@ export default function AssessmentEditPage() {
           </div>
 
           {assessment.questions.length === 0 ? (
-            <p className="text-sm text-surface-400 italic">No questions in this assessment.</p>
+            <p className="text-sm text-muted-foreground/70 italic">No questions in this assessment.</p>
           ) : (
             <div className="space-y-2">
               {assessment.questions.map((q, i) => (
                 <div
                   key={i}
-                  className="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3"
+                  className="rounded-lg border border-border bg-muted/30 px-4 py-3"
                 >
                   <div className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">
                       {i + 1}
                     </span>
-                    <p className="text-sm text-surface-700 line-clamp-2">
+                    <p className="text-sm text-foreground/80 line-clamp-2">
                       {(q.prompt as string) || (q.question as string) || "Question"}
                     </p>
                   </div>
@@ -274,7 +274,7 @@ export default function AssessmentEditPage() {
           )}
 
           {!questionsLocked && (
-            <p className="mt-4 text-xs text-surface-400">
+            <p className="mt-4 text-xs text-muted-foreground/70">
               To edit questions, use the{" "}
               <a href="/employer/assessments/create" className="text-brand-600 underline underline-offset-2">
                 Create Assessment

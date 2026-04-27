@@ -87,8 +87,8 @@ export function Step6Assessment({
                 <ClipboardCheck className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-surface-800">Assessment</h2>
-                <p className="text-sm text-surface-500">Add a skills assessment for candidates</p>
+                <h2 className="text-lg font-semibold text-foreground">Assessment</h2>
+                <p className="text-sm text-muted-foreground">Add a skills assessment for candidates</p>
               </div>
             </div>
             <label className="flex items-center gap-2">
@@ -98,9 +98,9 @@ export function Step6Assessment({
                 onChange={(e) =>
                   update({ assessmentConfig: { ...form.assessmentConfig, enabled: e.target.checked } })
                 }
-                className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+                className="rounded border-border/60 text-brand-500 focus:ring-brand-200"
               />
-              <span className="text-sm font-medium text-surface-700">Enable</span>
+              <span className="text-sm font-medium text-foreground/80">Enable</span>
             </label>
           </div>
 
@@ -117,7 +117,7 @@ export function Step6Assessment({
                           "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                           form.assessmentConfig.assessmentType === value
                             ? "border-brand-500 bg-brand-50 text-brand-700"
-                            : "border-surface-200 text-surface-600 hover:border-surface-300",
+                            : "border-border text-muted-foreground hover:border-border/60",
                         )}
                         onClick={() =>
                           update({ assessmentConfig: { ...form.assessmentConfig, assessmentType: value } })
@@ -150,7 +150,7 @@ export function Step6Assessment({
                     }
                     className="w-32"
                   />
-                  <p className="text-xs text-surface-500">
+                  <p className="text-xs text-muted-foreground">
                     AI will generate this many multiple-choice questions.
                   </p>
                 </div>
@@ -188,7 +188,7 @@ export function Step6Assessment({
                             "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                             (form.assessmentConfig.codeLanguage ?? "python3") === key
                               ? "border-brand-500 bg-brand-50 text-brand-700"
-                              : "border-surface-200 text-surface-600 hover:border-surface-300",
+                              : "border-border text-muted-foreground hover:border-border/60",
                           )}
                           onClick={() =>
                             update({
@@ -232,7 +232,7 @@ export function Step6Assessment({
                           "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
                           form.assessmentConfig.difficultyLevel === value
                             ? "border-brand-500 bg-brand-50 text-brand-700"
-                            : "border-surface-200 text-surface-600 hover:border-surface-300",
+                            : "border-border text-muted-foreground hover:border-border/60",
                         )}
                         onClick={() =>
                           update({
@@ -284,9 +284,9 @@ export function Step6Assessment({
                     {form.assessmentConfig.customQuestions.map((q, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-2 rounded-lg border border-surface-200 bg-white px-3 py-2"
+                        className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2"
                       >
-                        <span className="flex-1 text-sm text-surface-700">
+                        <span className="flex-1 text-sm text-foreground/80">
                           {i + 1}. {q}
                         </span>
                         <button
@@ -300,7 +300,7 @@ export function Step6Assessment({
                               },
                             })
                           }
-                          className="text-surface-400 hover:text-red-500"
+                          className="text-muted-foreground/70 hover:text-red-500"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -308,11 +308,11 @@ export function Step6Assessment({
                     ))}
                   </div>
                 )}
-                <div className="rounded-lg bg-surface-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                <div className="rounded-lg bg-muted/30 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Template Library
                   </p>
-                  <p className="mt-1 text-xs text-surface-400">
+                  <p className="mt-1 text-xs text-muted-foreground/70">
                     Pre-built assessment templates for common roles will be available here. Coming
                     soon.
                   </p>
@@ -322,26 +322,26 @@ export function Step6Assessment({
           )}
 
           {!form.assessmentConfig.enabled && (
-            <div className="rounded-xl border-2 border-dashed border-surface-200 py-10 text-center">
-              <ClipboardCheck className="mx-auto h-8 w-8 text-surface-300" />
-              <p className="mt-2 text-sm text-surface-500">Assessment is disabled</p>
-              <p className="mt-1 text-xs text-surface-400">
+            <div className="rounded-xl border-2 border-dashed border-border py-10 text-center">
+              <ClipboardCheck className="mx-auto h-8 w-8 text-muted-foreground/40" />
+              <p className="mt-2 text-sm text-muted-foreground">Assessment is disabled</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">
                 Toggle on to add a coding test, quiz, or assignment
               </p>
             </div>
           )}
 
-          <div className="border-t border-surface-200 pt-5">
-            <Label className="mb-1 block text-sm font-medium text-surface-700">
+          <div className="border-t border-border pt-5">
+            <Label className="mb-1 block text-sm font-medium text-foreground/80">
               Or link an existing assessment
             </Label>
-            <p className="mb-3 text-xs text-surface-500">
+            <p className="mb-3 text-xs text-muted-foreground">
               When a candidate reaches the{" "}
               <span className="font-medium">Assessment Pending</span> stage, they will automatically
               receive this assessment.
             </p>
             {existingAssessments.length === 0 ? (
-              <p className="text-xs italic text-surface-400">
+              <p className="text-xs italic text-muted-foreground/70">
                 No assessments found. Create one from the{" "}
                 <a
                   href="/employer/assessments"
@@ -355,7 +355,7 @@ export function Step6Assessment({
               <select
                 value={linkedAssessmentId ?? ""}
                 onChange={(e) => setLinkedAssessmentId(e.target.value || null)}
-                className="h-9 w-full rounded-lg border border-surface-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="h-9 w-full rounded-lg border border-border bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               >
                 <option value="">— None (AI will auto-generate) —</option>
                 {existingAssessments.map((a) => (
@@ -376,14 +376,14 @@ export function Step6Assessment({
             <CardContent className="flex h-full flex-col gap-4 overflow-hidden p-5 sm:p-6">
               <div className="flex shrink-0 items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-surface-800">Question Bank</h3>
-                  <p className="mt-0.5 text-xs text-surface-500">
+                  <h3 className="text-sm font-semibold text-foreground">Question Bank</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Select problems to import as assessment topics
                   </p>
                 </div>
                 <button
                   onClick={() => setShowBankModal(false)}
-                  className="text-lg font-bold leading-none text-surface-400 hover:text-surface-700"
+                  className="text-lg font-bold leading-none text-muted-foreground/70 hover:text-foreground/80"
                 >
                   ×
                 </button>
@@ -404,8 +404,8 @@ export function Step6Assessment({
                               ? "border-amber-400 bg-amber-100 text-amber-700"
                               : d === "hard"
                                 ? "border-red-400 bg-red-100 text-red-700"
-                                : "border-surface-800 bg-surface-800 text-white"
-                          : "border-surface-200 text-surface-600 hover:border-surface-300",
+                                : "border-foreground bg-foreground text-white"
+                          : "border-border text-muted-foreground hover:border-border/60",
                       )}
                     >
                       {d === "" ? "All Difficulty" : d.charAt(0).toUpperCase() + d.slice(1)}
@@ -421,7 +421,7 @@ export function Step6Assessment({
                         "rounded-full border px-3 py-0.5 text-xs font-medium transition-colors",
                         bankFilters.category === c
                           ? "border-brand-600 bg-brand-600 text-white"
-                          : "border-surface-200 text-surface-600 hover:border-surface-300",
+                          : "border-border text-muted-foreground hover:border-border/60",
                       )}
                     >
                       {c === "" ? "All Categories" : c}
@@ -435,13 +435,13 @@ export function Step6Assessment({
                   Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
-                      className="h-16 animate-pulse rounded-lg border border-surface-200 bg-surface-100"
+                      className="h-16 animate-pulse rounded-lg border border-border bg-muted"
                     />
                   ))
                 ) : bankItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <BookOpen className="h-8 w-8 text-surface-300" />
-                    <p className="mt-2 text-sm text-surface-500">
+                    <BookOpen className="h-8 w-8 text-muted-foreground/40" />
+                    <p className="mt-2 text-sm text-muted-foreground">
                       No questions match the selected filters.
                     </p>
                   </div>
@@ -456,21 +456,21 @@ export function Step6Assessment({
                           "w-full rounded-lg border p-3 text-left transition-colors",
                           selected
                             ? "border-emerald-400 bg-emerald-50"
-                            : "border-surface-200 hover:border-surface-300 hover:bg-surface-50",
+                            : "border-border hover:border-border/60 hover:bg-muted/30",
                         )}
                       >
                         <div className="flex items-start gap-3">
                           <div
                             className={cn(
                               "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
-                              selected ? "border-emerald-500 bg-emerald-500" : "border-surface-300",
+                              selected ? "border-emerald-500 bg-emerald-500" : "border-border/60",
                             )}
                           >
                             {selected && <Check className="h-3 w-3 text-white" />}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="text-xs font-semibold text-surface-800">
+                              <span className="text-xs font-semibold text-foreground">
                                 {item.title}
                               </span>
                               <Badge
@@ -487,16 +487,16 @@ export function Step6Assessment({
                                 {item.difficulty}
                               </Badge>
                               <Badge
-                                className="border-surface-200 bg-surface-100 px-1.5 py-0 text-[10px] text-surface-600"
+                                className="border-border bg-muted px-1.5 py-0 text-[10px] text-muted-foreground"
                                 variant="outline"
                               >
                                 {item.category}
                               </Badge>
                             </div>
-                            <p className="mt-1 line-clamp-1 text-[11px] text-surface-500">
+                            <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">
                               {item.prompt}
                             </p>
-                            <p className="mt-0.5 text-[10px] text-surface-400">
+                            <p className="mt-0.5 text-[10px] text-muted-foreground/70">
                               {item.testCases.length} test cases ·{" "}
                               {Object.keys(item.starterCode).length} languages
                             </p>
@@ -508,8 +508,8 @@ export function Step6Assessment({
                 )}
               </div>
 
-              <div className="flex shrink-0 items-center justify-between gap-3 border-t border-surface-100 pt-1">
-                <span className="text-xs text-surface-500">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border pt-1">
+                <span className="text-xs text-muted-foreground">
                   {bankSelected.size > 0 ? `${bankSelected.size} selected` : "Click questions to select"}
                 </span>
                 <div className="flex gap-2">

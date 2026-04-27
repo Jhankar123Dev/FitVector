@@ -134,8 +134,8 @@ export default function CreateJobPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-semibold text-surface-800 sm:text-2xl">Create Job Post</h1>
-          <p className="text-xs text-surface-500 sm:text-sm">
+          <h1 className="text-xl font-semibold text-foreground sm:text-2xl">Create Job Post</h1>
+          <p className="text-xs text-muted-foreground sm:text-sm">
             Step {step} of {STEPS.length} — {STEPS[step - 1].label}
           </p>
         </div>
@@ -156,7 +156,7 @@ export default function CreateJobPage() {
                     ? "text-brand-600"
                     : s.id < step
                       ? "text-accent-600"
-                      : "text-surface-400",
+                      : "text-muted-foreground/70",
                 )}
                 onClick={() => s.id < step && setStep(s.id)}
                 disabled={s.id > step}
@@ -168,7 +168,7 @@ export default function CreateJobPage() {
                       ? "bg-brand-500 text-white"
                       : s.id < step
                         ? "bg-accent-500 text-white"
-                        : "bg-surface-200 text-surface-500",
+                        : "bg-muted text-muted-foreground",
                   )}
                 >
                   {s.id < step ? <Check className="h-3.5 w-3.5" /> : s.id}
@@ -198,7 +198,7 @@ export default function CreateJobPage() {
       {step === 8 && <Step8Review form={form} goToStep={setStep} />}
 
       {/* Footer navigation */}
-      <div className="flex items-center justify-between border-t border-surface-200 pt-4">
+      <div className="flex items-center justify-between border-t border-border pt-4">
         <Button
           variant="outline"
           onClick={() => (step > 1 ? setStep(step - 1) : router.push("/employer/jobs"))}

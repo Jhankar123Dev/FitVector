@@ -52,8 +52,8 @@ export function Step2Description({ form, update }: Props) {
             <FileText className="h-5 w-5 text-accent-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-surface-800">Job Description</h2>
-            <p className="text-sm text-surface-500">Write a detailed description or let AI help</p>
+            <h2 className="text-lg font-semibold text-foreground">Job Description</h2>
+            <p className="text-sm text-muted-foreground">Write a detailed description or let AI help</p>
           </div>
         </div>
 
@@ -73,12 +73,12 @@ export function Step2Description({ form, update }: Props) {
           </div>
 
           {aiLoading ? (
-            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-surface-200 bg-surface-50">
+            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-border bg-muted/30">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-              <p className="mt-3 text-sm text-surface-500">
+              <p className="mt-3 text-sm text-muted-foreground">
                 AI is generating your job description...
               </p>
-              <p className="mt-1 text-xs text-surface-400">
+              <p className="mt-1 text-xs text-muted-foreground/70">
                 Based on: {form.title || "job title"}, {form.department || "department"},{" "}
                 {form.experienceMin}–{form.experienceMax} years
               </p>
@@ -95,12 +95,12 @@ export function Step2Description({ form, update }: Props) {
 
           {form.description && !aiLoading && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-surface-500">Preview</p>
-              <div className="prose prose-sm max-w-none rounded-lg border border-surface-200 bg-surface-50 p-4 text-surface-700">
+              <p className="text-xs font-medium text-muted-foreground">Preview</p>
+              <div className="prose prose-sm max-w-none rounded-lg border border-border bg-muted/30 p-4 text-foreground/80">
                 {form.description.split("\n").map((line, i) => {
                   if (line.startsWith("## "))
                     return (
-                      <h3 key={i} className="mb-2 mt-4 text-base font-semibold text-surface-800">
+                      <h3 key={i} className="mb-2 mt-4 text-base font-semibold text-foreground">
                         {line.replace("## ", "")}
                       </h3>
                     );

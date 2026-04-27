@@ -169,10 +169,10 @@ export default function EmployerOnboardingPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-8 py-4">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-surface-800">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Set up your company
         </h1>
-        <p className="mt-1 text-sm text-surface-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Complete these steps to start hiring with FitVector
         </p>
       </div>
@@ -189,7 +189,7 @@ export default function EmployerOnboardingPage() {
                   ? "text-brand-600"
                   : s.id < step
                     ? "text-accent-600"
-                    : "text-surface-400",
+                    : "text-muted-foreground/70",
               )}
               onClick={() => s.id < step && setStep(s.id)}
               disabled={s.id > step}
@@ -201,7 +201,7 @@ export default function EmployerOnboardingPage() {
                     ? "bg-brand-500 text-white"
                     : s.id < step
                       ? "bg-accent-500 text-white"
-                      : "bg-surface-200 text-surface-500",
+                      : "bg-muted text-muted-foreground",
                 )}
               >
                 {s.id < step ? <Check className="h-3.5 w-3.5" /> : s.id}

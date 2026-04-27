@@ -420,7 +420,7 @@ export default function EditJobPage() {
   if (isError || !jobData?.data) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-        <p className="text-surface-600">Job not found or you don't have access.</p>
+        <p className="text-muted-foreground">Job not found or you don't have access.</p>
         <Button variant="outline" onClick={() => router.push("/employer/jobs")}>
           Back to Jobs
         </Button>
@@ -442,10 +442,10 @@ export default function EditJobPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
             Edit Job
           </h1>
-          <p className="text-xs text-surface-500">
+          <p className="text-xs text-muted-foreground">
             {form.title || "Untitled"} · Step {step} of {STEPS.length}
           </p>
         </div>
@@ -469,8 +469,8 @@ export default function EditJobPage() {
                 active
                   ? "bg-brand-50 text-brand-700 border border-brand-200"
                   : done
-                  ? "text-surface-500 hover:text-surface-700"
-                  : "text-surface-400 hover:text-surface-600",
+                  ? "text-muted-foreground hover:text-foreground/80"
+                  : "text-muted-foreground/70 hover:text-muted-foreground",
               )}
             >
               {done ? (
@@ -535,7 +535,7 @@ export default function EditJobPage() {
                       "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                       form.workMode === value
                         ? "border-brand-500 bg-brand-50 text-brand-700"
-                        : "border-surface-200 text-surface-600 hover:border-surface-300",
+                        : "border-border text-muted-foreground hover:border-border/60",
                     )}
                     onClick={() => update({ workMode: value })}
                   >
@@ -555,7 +555,7 @@ export default function EditJobPage() {
                       "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                       form.jobType === value
                         ? "border-brand-500 bg-brand-50 text-brand-700"
-                        : "border-surface-200 text-surface-600 hover:border-surface-300",
+                        : "border-border text-muted-foreground hover:border-border/60",
                     )}
                     onClick={() => update({ jobType: value })}
                   >
@@ -577,7 +577,7 @@ export default function EditJobPage() {
                     onChange={(e) => update({ experienceMin: Number(e.target.value) })}
                     className="w-20"
                   />
-                  <span className="text-sm text-surface-500">to</span>
+                  <span className="text-sm text-muted-foreground">to</span>
                   <Input
                     type="number"
                     min={0}
@@ -620,19 +620,19 @@ export default function EditJobPage() {
                   onChange={(e) => update({ salaryMin: e.target.value })}
                   className="w-28"
                 />
-                <span className="text-sm text-surface-500">–</span>
+                <span className="text-sm text-muted-foreground">–</span>
                 <Input
                   placeholder="Max"
                   value={form.salaryMax}
                   onChange={(e) => update({ salaryMax: e.target.value })}
                   className="w-28"
                 />
-                <label className="flex items-center gap-1.5 text-sm text-surface-600">
+                <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <input
                     type="checkbox"
                     checked={form.salaryVisible}
                     onChange={(e) => update({ salaryVisible: e.target.checked })}
-                    className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+                    className="rounded border-border/60 text-brand-500 focus:ring-brand-200"
                   />
                   Show to candidates
                 </label>
@@ -662,12 +662,12 @@ export default function EditJobPage() {
                 </Button>
               </div>
               {aiLoading ? (
-                <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-surface-200 bg-surface-50">
+                <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-border bg-muted/30">
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-                  <p className="mt-3 text-sm text-surface-500">
+                  <p className="mt-3 text-sm text-muted-foreground">
                     AI is generating your job description...
                   </p>
-                  <p className="mt-1 text-xs text-surface-400">
+                  <p className="mt-1 text-xs text-muted-foreground/70">
                     Based on: {form.title || "job title"},{" "}
                     {form.department || "department"},{" "}
                     {form.experienceMin}–{form.experienceMax} years
@@ -683,7 +683,7 @@ export default function EditJobPage() {
                   className="resize-none font-mono text-sm"
                 />
               )}
-              <p className="text-xs text-surface-400">
+              <p className="text-xs text-muted-foreground/70">
                 Markdown is supported. Be specific about day-to-day responsibilities.
               </p>
             </div>
@@ -699,7 +699,7 @@ export default function EditJobPage() {
             <CardContent className="space-y-3 p-6">
               <div>
                 <Label>Required Skills</Label>
-                <p className="mt-0.5 text-xs text-surface-400">Must-have skills for this role</p>
+                <p className="mt-0.5 text-xs text-muted-foreground/70">Must-have skills for this role</p>
               </div>
               <div className="flex gap-2">
                 <Input
@@ -726,10 +726,10 @@ export default function EditJobPage() {
               )}
               {reqSuggestions.length > 0 && (
                 <div>
-                  <p className="text-xs text-surface-400 mb-1">Suggestions</p>
+                  <p className="text-xs text-muted-foreground/70 mb-1">Suggestions</p>
                   <div className="flex flex-wrap gap-1.5">
                     {reqSuggestions.slice(0, 10).map((s) => (
-                      <button key={s} onClick={() => addRequiredSkill(s)} className="rounded-full border border-surface-200 px-2.5 py-1 text-xs text-surface-600 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                      <button key={s} onClick={() => addRequiredSkill(s)} className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 transition-colors">
                         + {s}
                       </button>
                     ))}
@@ -744,7 +744,7 @@ export default function EditJobPage() {
             <CardContent className="space-y-3 p-6">
               <div>
                 <Label>Nice-to-have Skills</Label>
-                <p className="mt-0.5 text-xs text-surface-400">Optional skills that would be a bonus</p>
+                <p className="mt-0.5 text-xs text-muted-foreground/70">Optional skills that would be a bonus</p>
               </div>
               <div className="flex gap-2">
                 <Input
@@ -760,9 +760,9 @@ export default function EditJobPage() {
               {form.niceToHaveSkills.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {form.niceToHaveSkills.map((s) => (
-                    <span key={s} className="flex items-center gap-1 rounded-full bg-surface-100 border border-surface-200 px-2.5 py-1 text-xs font-medium text-surface-700">
+                    <span key={s} className="flex items-center gap-1 rounded-full bg-muted border border-border px-2.5 py-1 text-xs font-medium text-foreground/80">
                       {s}
-                      <button onClick={() => update({ niceToHaveSkills: form.niceToHaveSkills.filter((x) => x !== s) })} className="ml-0.5 text-surface-400 hover:text-surface-700">
+                      <button onClick={() => update({ niceToHaveSkills: form.niceToHaveSkills.filter((x) => x !== s) })} className="ml-0.5 text-muted-foreground/70 hover:text-foreground/80">
                         <X className="h-3 w-3" />
                       </button>
                     </span>
@@ -771,10 +771,10 @@ export default function EditJobPage() {
               )}
               {niceSuggestions.length > 0 && (
                 <div>
-                  <p className="text-xs text-surface-400 mb-1">Suggestions</p>
+                  <p className="text-xs text-muted-foreground/70 mb-1">Suggestions</p>
                   <div className="flex flex-wrap gap-1.5">
                     {niceSuggestions.slice(0, 10).map((s) => (
-                      <button key={s} onClick={() => addNiceSkill(s)} className="rounded-full border border-surface-200 px-2.5 py-1 text-xs text-surface-600 hover:border-surface-300 hover:bg-surface-100 transition-colors">
+                      <button key={s} onClick={() => addNiceSkill(s)} className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-border/60 hover:bg-muted transition-colors">
                         + {s}
                       </button>
                     ))}
@@ -792,7 +792,7 @@ export default function EditJobPage() {
           <CardContent className="space-y-5 p-6">
             <div>
               <Label>Screening Questions</Label>
-              <p className="mt-0.5 text-xs text-surface-400">
+              <p className="mt-0.5 text-xs text-muted-foreground/70">
                 Up to 10 questions shown to candidates at apply time
               </p>
             </div>
@@ -801,14 +801,14 @@ export default function EditJobPage() {
             {form.screeningQuestions.length > 0 && (
               <div className="space-y-2">
                 {form.screeningQuestions.map((q, i) => (
-                  <div key={q.id} className="flex items-start gap-2 rounded-lg border border-surface-200 bg-white px-3 py-2.5">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] font-semibold text-surface-500">
+                  <div key={q.id} className="flex items-start gap-2 rounded-lg border border-border bg-white px-3 py-2.5">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
                       {i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-surface-700">{q.question}</p>
+                      <p className="text-sm text-foreground/80">{q.question}</p>
                       <div className="mt-1 flex items-center gap-2">
-                        <span className="text-[10px] text-surface-400 capitalize">{q.type.replace("_", " ")}</span>
+                        <span className="text-[10px] text-muted-foreground/70 capitalize">{q.type.replace("_", " ")}</span>
                         {q.required && (
                           <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600">Required</span>
                         )}
@@ -816,12 +816,12 @@ export default function EditJobPage() {
                       {q.options && q.options.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {q.options.map((opt) => (
-                            <span key={opt} className="rounded-full bg-surface-50 border border-surface-100 px-2 py-0.5 text-[10px] text-surface-500">{opt}</span>
+                            <span key={opt} className="rounded-full bg-muted/30 border border-border px-2 py-0.5 text-[10px] text-muted-foreground">{opt}</span>
                           ))}
                         </div>
                       )}
                     </div>
-                    <button onClick={() => removeScreeningQuestion(q.id)} className="text-surface-300 hover:text-red-500 transition-colors shrink-0">
+                    <button onClick={() => removeScreeningQuestion(q.id)} className="text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -831,8 +831,8 @@ export default function EditJobPage() {
 
             {/* Add new question */}
             {form.screeningQuestions.length < 10 && (
-              <div className="rounded-lg border border-dashed border-surface-300 p-4 space-y-3">
-                <p className="text-xs font-semibold text-surface-600">Add Question</p>
+              <div className="rounded-lg border border-dashed border-border/60 p-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground">Add Question</p>
                 <Textarea
                   placeholder="e.g. How many years of experience do you have with React?"
                   value={sqQuestion}
@@ -849,7 +849,7 @@ export default function EditJobPage() {
                         "rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
                         sqType === t
                           ? "border-brand-500 bg-brand-50 text-brand-700"
-                          : "border-surface-200 text-surface-600 hover:border-surface-300",
+                          : "border-border text-muted-foreground hover:border-border/60",
                       )}
                     >
                       {t === "short_answer" ? "Short Answer" : t === "yes_no" ? "Yes / No" : t === "multiple_choice" ? "Multiple Choice" : "Number"}
@@ -868,12 +868,12 @@ export default function EditJobPage() {
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm text-surface-600 cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                     <input
                       type="checkbox"
                       checked={sqRequired}
                       onChange={(e) => setSqRequired(e.target.checked)}
-                      className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+                      className="rounded border-border/60 text-brand-500 focus:ring-brand-200"
                     />
                     Required
                   </label>
@@ -903,8 +903,8 @@ export default function EditJobPage() {
                   <Bot className="h-5 w-5 text-violet-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-surface-800">AI Interview</h2>
-                  <p className="text-sm text-surface-500">Configure the AI-led screening interview</p>
+                  <h2 className="text-lg font-semibold text-foreground">AI Interview</h2>
+                  <p className="text-sm text-muted-foreground">Configure the AI-led screening interview</p>
                 </div>
               </div>
               <label className="flex items-center gap-2">
@@ -912,9 +912,9 @@ export default function EditJobPage() {
                   type="checkbox"
                   checked={form.interviewConfig.enabled}
                   onChange={(e) => update({ interviewConfig: { ...form.interviewConfig, enabled: e.target.checked } })}
-                  className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+                  className="rounded border-border/60 text-brand-500 focus:ring-brand-200"
                 />
-                <span className="text-sm font-medium text-surface-700">Enable</span>
+                <span className="text-sm font-medium text-foreground/80">Enable</span>
               </label>
             </div>
 
@@ -930,7 +930,7 @@ export default function EditJobPage() {
                           "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                           form.interviewConfig.interviewType === value
                             ? "border-brand-500 bg-brand-50 text-brand-700"
-                            : "border-surface-200 text-surface-600 hover:border-surface-300",
+                            : "border-border text-muted-foreground hover:border-border/60",
                         )}
                         onClick={() => update({ interviewConfig: { ...form.interviewConfig, interviewType: value } })}
                       >
@@ -963,7 +963,7 @@ export default function EditJobPage() {
                             "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                             form.interviewConfig.difficultyLevel === value
                               ? "border-brand-500 bg-brand-50 text-brand-700"
-                              : "border-surface-200 text-surface-600 hover:border-surface-300",
+                              : "border-border text-muted-foreground hover:border-border/60",
                           )}
                           onClick={() => update({ interviewConfig: { ...form.interviewConfig, difficultyLevel: value } })}
                         >
@@ -1002,9 +1002,9 @@ export default function EditJobPage() {
                   {form.interviewConfig.customQuestions.length > 0 && (
                     <div className="space-y-2 pt-1">
                       {form.interviewConfig.customQuestions.map((q, i) => (
-                        <div key={i} className="flex items-center gap-2 rounded-lg border border-surface-200 bg-white px-3 py-2">
-                          <span className="flex-1 text-sm text-surface-700">{i + 1}. {q}</span>
-                          <button onClick={() => update({ interviewConfig: { ...form.interviewConfig, customQuestions: form.interviewConfig.customQuestions.filter((_, idx) => idx !== i) } })} className="text-surface-400 hover:text-red-500">
+                        <div key={i} className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+                          <span className="flex-1 text-sm text-foreground/80">{i + 1}. {q}</span>
+                          <button onClick={() => update({ interviewConfig: { ...form.interviewConfig, customQuestions: form.interviewConfig.customQuestions.filter((_, idx) => idx !== i) } })} className="text-muted-foreground/70 hover:text-red-500">
                             <X className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -1016,10 +1016,10 @@ export default function EditJobPage() {
             )}
 
             {!form.interviewConfig.enabled && (
-              <div className="rounded-xl border-2 border-dashed border-surface-200 py-10 text-center">
-                <Bot className="mx-auto h-8 w-8 text-surface-300" />
-                <p className="mt-2 text-sm text-surface-500">AI Interview is disabled</p>
-                <p className="mt-1 text-xs text-surface-400">Toggle on to configure an AI-led screening interview</p>
+              <div className="rounded-xl border-2 border-dashed border-border py-10 text-center">
+                <Bot className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                <p className="mt-2 text-sm text-muted-foreground">AI Interview is disabled</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">Toggle on to configure an AI-led screening interview</p>
               </div>
             )}
           </CardContent>
@@ -1036,8 +1036,8 @@ export default function EditJobPage() {
                   <ClipboardCheck className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-surface-800">Assessment</h2>
-                  <p className="text-sm text-surface-500">Add a skills assessment for candidates</p>
+                  <h2 className="text-lg font-semibold text-foreground">Assessment</h2>
+                  <p className="text-sm text-muted-foreground">Add a skills assessment for candidates</p>
                 </div>
               </div>
               <label className="flex items-center gap-2">
@@ -1045,18 +1045,18 @@ export default function EditJobPage() {
                   type="checkbox"
                   checked={form.assessmentConfig.enabled}
                   onChange={(e) => update({ assessmentConfig: { ...form.assessmentConfig, enabled: e.target.checked } })}
-                  className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+                  className="rounded border-border/60 text-brand-500 focus:ring-brand-200"
                 />
-                <span className="text-sm font-medium text-surface-700">Enable</span>
+                <span className="text-sm font-medium text-foreground/80">Enable</span>
               </label>
             </div>
 
             {/* ── Link an existing assessment ─────────────────────── */}
-            <div className="rounded-lg border border-surface-200 bg-surface-50 p-4">
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-surface-800">Link Existing Assessment</p>
-                  <p className="mt-0.5 text-xs text-surface-500">
+                  <p className="text-sm font-medium text-foreground">Link Existing Assessment</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Attach a pre-built assessment from your library. Candidates will be auto-assigned when they reach the assessment stage.
                   </p>
                 </div>
@@ -1073,7 +1073,7 @@ export default function EditJobPage() {
               <select
                 value={linkedAssessmentId ?? ""}
                 onChange={(e) => setLinkedAssessmentId(e.target.value || null)}
-                className="mt-3 h-9 w-full rounded-lg border border-surface-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="mt-3 h-9 w-full rounded-lg border border-border bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               >
                 <option value="">— No assessment linked —</option>
                 {companyAssessments.map((a) => (
@@ -1091,9 +1091,9 @@ export default function EditJobPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="h-px flex-1 bg-surface-200" />
-              <span className="text-xs text-surface-400 font-medium">OR generate with AI</span>
-              <div className="h-px flex-1 bg-surface-200" />
+              <div className="h-px flex-1 bg-muted" />
+              <span className="text-xs text-muted-foreground/70 font-medium">OR generate with AI</span>
+              <div className="h-px flex-1 bg-muted" />
             </div>
 
             {form.assessmentConfig.enabled && (
@@ -1108,7 +1108,7 @@ export default function EditJobPage() {
                           "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                           form.assessmentConfig.assessmentType === value
                             ? "border-brand-500 bg-brand-50 text-brand-700"
-                            : "border-surface-200 text-surface-600 hover:border-surface-300",
+                            : "border-border text-muted-foreground hover:border-border/60",
                         )}
                         onClick={() => update({ assessmentConfig: { ...form.assessmentConfig, assessmentType: value } })}
                       >
@@ -1131,7 +1131,7 @@ export default function EditJobPage() {
                       onChange={(e) => update({ assessmentConfig: { ...form.assessmentConfig, mcqCount: Number(e.target.value) } })}
                       className="w-32"
                     />
-                    <p className="text-xs text-surface-500">AI will generate this many multiple-choice questions.</p>
+                    <p className="text-xs text-muted-foreground">AI will generate this many multiple-choice questions.</p>
                   </div>
                 )}
 
@@ -1160,7 +1160,7 @@ export default function EditJobPage() {
                               "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                               (form.assessmentConfig.codeLanguage ?? "python3") === key
                                 ? "border-brand-500 bg-brand-50 text-brand-700"
-                                : "border-surface-200 text-surface-600 hover:border-surface-300",
+                                : "border-border text-muted-foreground hover:border-border/60",
                             )}
                             onClick={() => update({ assessmentConfig: { ...form.assessmentConfig, codeLanguage: key } })}
                           >
@@ -1195,7 +1195,7 @@ export default function EditJobPage() {
                           "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
                           form.assessmentConfig.difficultyLevel === value
                             ? "border-brand-500 bg-brand-50 text-brand-700"
-                            : "border-surface-200 text-surface-600 hover:border-surface-300",
+                            : "border-border text-muted-foreground hover:border-border/60",
                         )}
                         onClick={() => update({ assessmentConfig: { ...form.assessmentConfig, difficultyLevel: value } })}
                       >
@@ -1233,9 +1233,9 @@ export default function EditJobPage() {
                   {form.assessmentConfig.customQuestions.length > 0 && (
                     <div className="space-y-2 pt-1">
                       {form.assessmentConfig.customQuestions.map((q, i) => (
-                        <div key={i} className="flex items-center gap-2 rounded-lg border border-surface-200 bg-white px-3 py-2">
-                          <span className="flex-1 text-sm text-surface-700">{i + 1}. {q}</span>
-                          <button onClick={() => update({ assessmentConfig: { ...form.assessmentConfig, customQuestions: form.assessmentConfig.customQuestions.filter((_, idx) => idx !== i) } })} className="text-surface-400 hover:text-red-500">
+                        <div key={i} className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+                          <span className="flex-1 text-sm text-foreground/80">{i + 1}. {q}</span>
+                          <button onClick={() => update({ assessmentConfig: { ...form.assessmentConfig, customQuestions: form.assessmentConfig.customQuestions.filter((_, idx) => idx !== i) } })} className="text-muted-foreground/70 hover:text-red-500">
                             <X className="h-3 w-3" />
                           </button>
                         </div>
@@ -1244,18 +1244,18 @@ export default function EditJobPage() {
                   )}
                 </div>
 
-                <div className="rounded-lg bg-surface-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-surface-500">Template Library</p>
-                  <p className="mt-1 text-xs text-surface-400">Pre-built assessment templates for common roles will be available here. Coming soon.</p>
+                <div className="rounded-lg bg-muted/30 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Template Library</p>
+                  <p className="mt-1 text-xs text-muted-foreground/70">Pre-built assessment templates for common roles will be available here. Coming soon.</p>
                 </div>
               </div>
             )}
 
             {!form.assessmentConfig.enabled && (
-              <div className="rounded-xl border-2 border-dashed border-surface-200 py-10 text-center">
-                <ClipboardCheck className="mx-auto h-8 w-8 text-surface-300" />
-                <p className="mt-2 text-sm text-surface-500">Assessment is disabled</p>
-                <p className="mt-1 text-xs text-surface-400">Toggle on to add a coding test, quiz, or assignment</p>
+              <div className="rounded-xl border-2 border-dashed border-border py-10 text-center">
+                <ClipboardCheck className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                <p className="mt-2 text-sm text-muted-foreground">Assessment is disabled</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">Toggle on to add a coding test, quiz, or assignment</p>
               </div>
             )}
           </CardContent>
@@ -1303,29 +1303,29 @@ export default function EditJobPage() {
           <Card>
             <CardContent className="space-y-6 p-6">
               <div>
-                <h2 className="text-base font-semibold text-surface-800">Pipeline Configuration</h2>
-                <p className="mt-1 text-xs text-surface-500">
+                <h2 className="text-base font-semibold text-foreground">Pipeline Configuration</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
                   Design your hiring flow. Drag to reorder stages, click a preset to add, or type a custom stage name.
-                  <span className="ml-1 inline-flex items-center gap-0.5 text-surface-400">
+                  <span className="ml-1 inline-flex items-center gap-0.5 text-muted-foreground/70">
                     <Lock className="h-2.5 w-2.5" /> Locked stages are always included.
                   </span>
                 </p>
               </div>
 
               {/* Full pipeline preview */}
-              <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-surface-50 p-3 border border-surface-200">
+              <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-muted/30 p-3 border border-border">
                 {form.pipelineStages.map((stage, i) => (
                   <div key={`preview-${stage}-${i}`} className="flex items-center gap-1.5">
                     <span className={cn(
                       "rounded-full px-2.5 py-1 text-[11px] font-medium",
                       PIPELINE_LOCKED_SET.has(stage)
-                        ? "bg-surface-200 text-surface-600"
+                        ? "bg-muted text-muted-foreground"
                         : "bg-brand-50 border border-brand-200 text-brand-700",
                     )}>
                       {getStageName(stage)}
                     </span>
                     {i < form.pipelineStages.length - 1 && (
-                      <ChevronRight className="h-3 w-3 text-surface-300 shrink-0" />
+                      <ChevronRight className="h-3 w-3 text-muted-foreground/40 shrink-0" />
                     )}
                   </div>
                 ))}
@@ -1336,12 +1336,12 @@ export default function EditJobPage() {
                 {/* Locked head */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {PIPELINE_LOCKED_HEAD.map((stage) => (
-                    <span key={stage} className="flex items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-100 px-3 py-1.5 text-xs font-medium text-surface-500">
+                    <span key={stage} className="flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
                       <Lock className="h-3 w-3 shrink-0" />
                       {getStageName(stage)}
                     </span>
                   ))}
-                  <ChevronRight className="h-4 w-4 text-surface-300 shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                 </div>
 
                 {/* DnD zone */}
@@ -1355,11 +1355,11 @@ export default function EditJobPage() {
                           "flex flex-wrap items-center gap-2 min-h-[52px] rounded-lg border-2 border-dashed p-3 transition-colors",
                           snapshot.isDraggingOver
                             ? "border-brand-400 bg-brand-50/40"
-                            : "border-surface-200 bg-surface-50/50",
+                            : "border-border bg-muted/30",
                         )}
                       >
                         {middleStages.length === 0 && !snapshot.isDraggingOver && (
-                          <p className="text-xs text-surface-400 italic">No stages added — pick a preset below or type a custom name</p>
+                          <p className="text-xs text-muted-foreground/70 italic">No stages added — pick a preset below or type a custom name</p>
                         )}
                         {middleStages.map((stage, index) => (
                           <Draggable key={`${stage}-${index}`} draggableId={`stage-${index}`} index={index}>
@@ -1369,14 +1369,14 @@ export default function EditJobPage() {
                                 {...provided.draggableProps}
                                 className={cn(
                                   "flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1.5 shadow-sm select-none",
-                                  snapshot.isDragging ? "border-brand-400 shadow-md ring-1 ring-brand-300" : "border-surface-200",
+                                  snapshot.isDragging ? "border-brand-400 shadow-md ring-1 ring-brand-300" : "border-border",
                                 )}
                               >
-                                <div {...provided.dragHandleProps} className="cursor-grab text-surface-300 hover:text-surface-500 active:cursor-grabbing">
+                                <div {...provided.dragHandleProps} className="cursor-grab text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing">
                                   <GripVertical className="h-3.5 w-3.5" />
                                 </div>
-                                <span className="text-xs font-medium text-surface-700">{getStageName(stage)}</span>
-                                <button onClick={() => removeStage(index)} className="text-surface-300 hover:text-red-500 transition-colors" aria-label={`Remove ${getStageName(stage)}`}>
+                                <span className="text-xs font-medium text-foreground/80">{getStageName(stage)}</span>
+                                <button onClick={() => removeStage(index)} className="text-muted-foreground/40 hover:text-red-500 transition-colors" aria-label={`Remove ${getStageName(stage)}`}>
                                   <X className="h-3 w-3" />
                                 </button>
                               </div>
@@ -1391,9 +1391,9 @@ export default function EditJobPage() {
 
                 {/* Locked tail */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <ChevronRight className="h-4 w-4 text-surface-300 shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                   {PIPELINE_LOCKED_TAIL.map((stage) => (
-                    <span key={stage} className="flex items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-100 px-3 py-1.5 text-xs font-medium text-surface-500">
+                    <span key={stage} className="flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
                       <Lock className="h-3 w-3 shrink-0" />
                       {getStageName(stage)}
                     </span>
@@ -1401,12 +1401,12 @@ export default function EditJobPage() {
                 </div>
 
                 {/* Add stages */}
-                <div className="space-y-3 border-t border-surface-100 pt-4">
-                  <p className="text-xs font-semibold text-surface-600">Add Stages</p>
+                <div className="space-y-3 border-t border-border pt-4">
+                  <p className="text-xs font-semibold text-muted-foreground">Add Stages</p>
                   <div className="space-y-2">
                     {Object.entries(presetGroups).map(([group, presets]) => (
                       <div key={group} className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[10px] font-medium text-surface-400 w-24 shrink-0">{group}</span>
+                        <span className="text-[10px] font-medium text-muted-foreground/70 w-24 shrink-0">{group}</span>
                         {presets.map((preset) => {
                           const isAdded = middleStages.includes(preset.value);
                           return (
@@ -1417,7 +1417,7 @@ export default function EditJobPage() {
                               className={cn(
                                 "flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
                                 isAdded
-                                  ? "border-surface-200 bg-surface-100 text-surface-400 cursor-default"
+                                  ? "border-border bg-muted text-muted-foreground/70 cursor-default"
                                   : "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100 cursor-pointer",
                               )}
                             >
@@ -1454,7 +1454,7 @@ export default function EditJobPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-surface-800">{form.title || "Untitled Job"}</h2>
+                <h2 className="text-lg font-semibold text-foreground">{form.title || "Untitled Job"}</h2>
                 <Button variant="ghost" size="sm" onClick={() => setStep(1)} className="text-xs text-brand-600">Edit</Button>
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -1476,10 +1476,10 @@ export default function EditJobPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-surface-700">Job Description</h3>
+                <h3 className="text-sm font-semibold text-foreground/80">Job Description</h3>
                 <Button variant="ghost" size="sm" onClick={() => setStep(2)} className="text-xs text-brand-600">Edit</Button>
               </div>
-              <p className="mt-2 whitespace-pre-line text-sm text-surface-600 line-clamp-6">
+              <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground line-clamp-6">
                 {form.description || "No description provided"}
               </p>
             </CardContent>
@@ -1488,13 +1488,13 @@ export default function EditJobPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-surface-700">Skills</h3>
+                <h3 className="text-sm font-semibold text-foreground/80">Skills</h3>
                 <Button variant="ghost" size="sm" onClick={() => setStep(3)} className="text-xs text-brand-600">Edit</Button>
               </div>
               <div className="mt-2 space-y-2">
                 {form.requiredSkills.length > 0 && (
                   <div>
-                    <p className="text-xs text-surface-500">Required</p>
+                    <p className="text-xs text-muted-foreground">Required</p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {form.requiredSkills.map((s) => <Badge key={s} variant="brand">{s}</Badge>)}
                     </div>
@@ -1502,14 +1502,14 @@ export default function EditJobPage() {
                 )}
                 {form.niceToHaveSkills.length > 0 && (
                   <div>
-                    <p className="text-xs text-surface-500">Nice to have</p>
+                    <p className="text-xs text-muted-foreground">Nice to have</p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {form.niceToHaveSkills.map((s) => <Badge key={s} variant="secondary">{s}</Badge>)}
                     </div>
                   </div>
                 )}
                 {form.requiredSkills.length === 0 && form.niceToHaveSkills.length === 0 && (
-                  <p className="text-sm text-surface-400">No skills added</p>
+                  <p className="text-sm text-muted-foreground/70">No skills added</p>
                 )}
               </div>
             </CardContent>
@@ -1518,33 +1518,33 @@ export default function EditJobPage() {
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-surface-700">Configuration</h3>
+                <h3 className="text-sm font-semibold text-foreground/80">Configuration</h3>
                 <Button variant="ghost" size="sm" onClick={() => setStep(4)} className="text-xs text-brand-600">Edit</Button>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border border-surface-200 p-3">
-                  <p className="text-xs text-surface-500">Screening Questions</p>
-                  <p className="mt-1 text-sm font-semibold text-surface-800">
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Screening Questions</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">
                     {form.screeningQuestions.length} question{form.screeningQuestions.length !== 1 ? "s" : ""}
                   </p>
                 </div>
-                <div className="rounded-lg border border-surface-200 p-3">
-                  <p className="text-xs text-surface-500">AI Interview</p>
-                  <p className="mt-1 text-sm font-semibold text-surface-800">
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">AI Interview</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">
                     {form.interviewConfig.enabled ? (
                       <>{INTERVIEW_TYPE_LABELS[form.interviewConfig.interviewType]} · {form.interviewConfig.duration}min</>
                     ) : (
-                      <span className="text-surface-400">Disabled</span>
+                      <span className="text-muted-foreground/70">Disabled</span>
                     )}
                   </p>
                 </div>
-                <div className="rounded-lg border border-surface-200 p-3">
-                  <p className="text-xs text-surface-500">Assessment</p>
-                  <p className="mt-1 text-sm font-semibold text-surface-800">
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Assessment</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">
                     {form.assessmentConfig.enabled ? (
                       <>{ASSESSMENT_TYPE_LABELS[form.assessmentConfig.assessmentType]} · {form.assessmentConfig.timeLimit}min</>
                     ) : (
-                      <span className="text-surface-400">Disabled</span>
+                      <span className="text-muted-foreground/70">Disabled</span>
                     )}
                   </p>
                 </div>
@@ -1555,7 +1555,7 @@ export default function EditJobPage() {
       )}
 
       {/* ── Footer navigation ────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-t border-surface-200 pt-4">
+      <div className="flex items-center justify-between border-t border-border pt-4">
         <Button
           variant="outline"
           onClick={() => (step > 1 ? setStep(step - 1) : router.push("/employer/jobs"))}
@@ -1608,12 +1608,12 @@ export default function EditJobPage() {
             {/* Header */}
             <div className="flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-sm font-semibold text-surface-800">Question Bank</h3>
-                <p className="text-xs text-surface-500 mt-0.5">Select problems to import as assessment topics</p>
+                <h3 className="text-sm font-semibold text-foreground">Question Bank</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Select problems to import as assessment topics</p>
               </div>
               <button
                 onClick={() => setShowBankModal(false)}
-                className="text-surface-400 hover:text-surface-700 text-lg font-bold leading-none"
+                className="text-muted-foreground/70 hover:text-foreground/80 text-lg font-bold leading-none"
               >×</button>
             </div>
 
@@ -1630,8 +1630,8 @@ export default function EditJobPage() {
                         ? d === "easy"   ? "bg-emerald-100 border-emerald-400 text-emerald-700"
                         : d === "medium" ? "bg-amber-100 border-amber-400 text-amber-700"
                         : d === "hard"   ? "bg-red-100 border-red-400 text-red-700"
-                        : "bg-surface-800 border-surface-800 text-white"
-                        : "border-surface-200 text-surface-600 hover:border-surface-300",
+                        : "bg-foreground border-foreground text-white"
+                        : "border-border text-muted-foreground hover:border-border/60",
                     )}
                   >
                     {d === "" ? "All Difficulty" : d.charAt(0).toUpperCase() + d.slice(1)}
@@ -1647,7 +1647,7 @@ export default function EditJobPage() {
                       "rounded-full px-3 py-0.5 text-xs font-medium border transition-colors",
                       bankFilters.category === c
                         ? "bg-brand-600 border-brand-600 text-white"
-                        : "border-surface-200 text-surface-600 hover:border-surface-300",
+                        : "border-border text-muted-foreground hover:border-border/60",
                     )}
                   >
                     {c === "" ? "All Categories" : c}
@@ -1660,12 +1660,12 @@ export default function EditJobPage() {
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
               {bankLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-16 rounded-lg border border-surface-200 bg-surface-100 animate-pulse" />
+                  <div key={i} className="h-16 rounded-lg border border-border bg-muted animate-pulse" />
                 ))
               ) : bankItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <BookOpen className="h-8 w-8 text-surface-300" />
-                  <p className="mt-2 text-sm text-surface-500">No questions match the selected filters.</p>
+                  <BookOpen className="h-8 w-8 text-muted-foreground/40" />
+                  <p className="mt-2 text-sm text-muted-foreground">No questions match the selected filters.</p>
                 </div>
               ) : (
                 bankItems.map((item: QuestionBankItem) => {
@@ -1678,19 +1678,19 @@ export default function EditJobPage() {
                         "w-full text-left rounded-lg border p-3 transition-colors",
                         selected
                           ? "border-emerald-400 bg-emerald-50"
-                          : "border-surface-200 hover:border-surface-300 hover:bg-surface-50",
+                          : "border-border hover:border-border/60 hover:bg-muted/30",
                       )}
                     >
                       <div className="flex items-start gap-3">
                         <div className={cn(
                           "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
-                          selected ? "border-emerald-500 bg-emerald-500" : "border-surface-300",
+                          selected ? "border-emerald-500 bg-emerald-500" : "border-border/60",
                         )}>
                           {selected && <Check className="h-3 w-3 text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs font-semibold text-surface-800">{item.title}</span>
+                            <span className="text-xs font-semibold text-foreground">{item.title}</span>
                             <Badge
                               className={cn(
                                 "text-[10px] px-1.5 py-0",
@@ -1702,12 +1702,12 @@ export default function EditJobPage() {
                             >
                               {item.difficulty}
                             </Badge>
-                            <Badge className="text-[10px] px-1.5 py-0 bg-surface-100 text-surface-600 border-surface-200" variant="outline">
+                            <Badge className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border" variant="outline">
                               {item.category}
                             </Badge>
                           </div>
-                          <p className="mt-1 text-[11px] text-surface-500 line-clamp-1">{item.prompt}</p>
-                          <p className="mt-0.5 text-[10px] text-surface-400">
+                          <p className="mt-1 text-[11px] text-muted-foreground line-clamp-1">{item.prompt}</p>
+                          <p className="mt-0.5 text-[10px] text-muted-foreground/70">
                             {item.testCases.length} test cases · {Object.keys(item.starterCode).length} languages
                           </p>
                         </div>
@@ -1719,8 +1719,8 @@ export default function EditJobPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between gap-3 shrink-0 pt-1 border-t border-surface-100">
-              <span className="text-xs text-surface-500">
+            <div className="flex items-center justify-between gap-3 shrink-0 pt-1 border-t border-border">
+              <span className="text-xs text-muted-foreground">
                 {bankSelected.size > 0 ? `${bankSelected.size} selected` : "Click questions to select"}
               </span>
               <div className="flex gap-2">

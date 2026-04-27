@@ -193,10 +193,10 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
             Analytics
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+          <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
             Hiring performance and insights
           </p>
         </div>
@@ -235,9 +235,9 @@ export default function AnalyticsPage() {
                   <stat.icon className={cn("h-3.5 w-3.5", stat.iconColor)} />
                 </div>
               </div>
-              <p className="text-lg sm:text-xl font-bold text-surface-800">{stat.value}</p>
+              <p className="text-lg sm:text-xl font-bold text-foreground">{stat.value}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <p className="text-[10px] sm:text-[11px] text-surface-500">{stat.label}</p>
+                <p className="text-[10px] sm:text-[11px] text-muted-foreground">{stat.label}</p>
                 {stat.trend && (
                   <span className={cn("text-[10px] font-semibold", stat.trend.up ? "text-emerald-600" : "text-red-500")}>
                     {stat.trend.value}
@@ -263,7 +263,7 @@ export default function AnalyticsPage() {
               return (
                 <div key={stage.stage} className="flex items-center gap-3">
                   <div className="w-[100px] sm:w-[130px] shrink-0 text-right">
-                    <p className="text-[11px] sm:text-xs font-medium text-surface-700">{stage.stage}</p>
+                    <p className="text-[11px] sm:text-xs font-medium text-foreground/80">{stage.stage}</p>
                   </div>
                   <div className="flex-1 flex items-center gap-2">
                     <div
@@ -277,7 +277,7 @@ export default function AnalyticsPage() {
                       <span className="text-[11px] font-bold text-white">{stage.count}</span>
                     </div>
                     {stage.conversionRate != null && (
-                      <span className="text-[10px] text-surface-400 shrink-0">
+                      <span className="text-[10px] text-muted-foreground/70 shrink-0">
                         {stage.conversionRate}%
                       </span>
                     )}
@@ -286,7 +286,7 @@ export default function AnalyticsPage() {
               );
             })}
           </div>
-          <div className="mt-3 flex items-center gap-1 text-[10px] text-surface-400">
+          <div className="mt-3 flex items-center gap-1 text-[10px] text-muted-foreground/70">
             <ArrowRight className="h-3 w-3" />
             Percentages show conversion rate from previous stage
           </div>
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-[220px] sm:h-[280px]">
               {trendPoints.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-xs text-surface-400">
+                <div className="flex h-full items-center justify-center text-xs text-muted-foreground/70">
                   No hire data yet — trend will appear as candidates are hired
                 </div>
               ) : (
@@ -365,23 +365,23 @@ export default function AnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[450px]">
                 <thead>
-                  <tr className="border-b border-surface-200 bg-surface-50">
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Job</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Applicants</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Screen %</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Interview %</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Hired</th>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Job</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Applicants</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Screen %</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Interview %</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Hired</th>
                   </tr>
                 </thead>
                 <tbody>
                   {jobPerformance.length === 0 ? (
-                    <tr><td colSpan={5} className="px-3 py-6 text-center text-xs text-surface-400">No job data yet</td></tr>
+                    <tr><td colSpan={5} className="px-3 py-6 text-center text-xs text-muted-foreground/70">No job data yet</td></tr>
                   ) : jobPerformance.map((job) => (
-                    <tr key={job.jobId} className="border-b border-surface-100 hover:bg-surface-50">
+                    <tr key={job.jobId} className="border-b border-border hover:bg-muted/30">
                       <td className="px-3 py-2">
-                        <span className="text-xs font-medium text-surface-800 line-clamp-1">{job.title}</span>
+                        <span className="text-xs font-medium text-foreground line-clamp-1">{job.title}</span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-surface-600">{job.applicants}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{job.applicants}</td>
                       <td className="px-3 py-2">
                         <span className={cn(
                           "text-xs font-semibold",
@@ -398,7 +398,7 @@ export default function AnalyticsPage() {
                           {job.interviewRate}%
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-surface-600">{job.hired}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{job.hired}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -416,27 +416,27 @@ export default function AnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[400px]">
                 <thead>
-                  <tr className="border-b border-surface-200 bg-surface-50">
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Interviewer</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Interviews</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Avg Feedback</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Calibration</th>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Interviewer</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Interviews</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Avg Feedback</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Calibration</th>
                   </tr>
                 </thead>
                 <tbody>
                   {interviewerPerformance.length === 0 ? (
-                    <tr><td colSpan={4} className="px-3 py-6 text-center text-xs text-surface-400">No completed interviews yet</td></tr>
+                    <tr><td colSpan={4} className="px-3 py-6 text-center text-xs text-muted-foreground/70">No completed interviews yet</td></tr>
                   ) : interviewerPerformance.map((ip) => (
-                    <tr key={ip.memberId} className="border-b border-surface-100 hover:bg-surface-50">
+                    <tr key={ip.memberId} className="border-b border-border hover:bg-muted/30">
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[9px] font-bold text-surface-600">
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground">
                             {ip.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
                           </div>
-                          <span className="text-xs font-medium text-surface-800">{ip.name}</span>
+                          <span className="text-xs font-medium text-foreground">{ip.name}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-xs text-surface-600">{ip.interviewsDone}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{ip.interviewsDone}</td>
                       <td className="px-3 py-2">
                         {ip.avgFeedbackTime != null ? (
                           <span className={cn(
@@ -445,7 +445,7 @@ export default function AnalyticsPage() {
                           )}>
                             {ip.avgFeedbackTime}h
                           </span>
-                        ) : <span className="text-xs text-surface-400">—</span>}
+                        ) : <span className="text-xs text-muted-foreground/70">—</span>}
                       </td>
                       <td className="px-3 py-2">
                         {ip.avgScore != null ? (
@@ -457,7 +457,7 @@ export default function AnalyticsPage() {
                           )}>
                             {ip.avgScore}/10
                           </span>
-                        ) : <span className="text-xs text-surface-400">—</span>}
+                        ) : <span className="text-xs text-muted-foreground/70">—</span>}
                       </td>
                     </tr>
                   ))}

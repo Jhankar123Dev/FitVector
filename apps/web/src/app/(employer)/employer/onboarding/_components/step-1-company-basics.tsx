@@ -24,8 +24,8 @@ export function Step1CompanyBasics({ data, updateData, onLogoUpload }: Props) {
             <Building2 className="h-5 w-5 text-brand-500" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-surface-800">Company Basics</h2>
-            <p className="text-sm text-surface-500">Tell us about your company</p>
+            <h2 className="text-lg font-semibold text-foreground">Company Basics</h2>
+            <p className="text-sm text-muted-foreground">Tell us about your company</p>
           </div>
         </div>
 
@@ -47,29 +47,29 @@ export function Step1CompanyBasics({ data, updateData, onLogoUpload }: Props) {
                 <img
                   src={data.logoPreviewUrl}
                   alt="Logo preview"
-                  className="h-16 w-16 rounded-lg border border-surface-200 object-cover"
+                  className="h-16 w-16 rounded-lg border border-border object-cover"
                 />
                 <button
-                  className="absolute -right-1.5 -top-1.5 rounded-full bg-surface-800 p-0.5 text-white hover:bg-surface-700"
+                  className="absolute -right-1.5 -top-1.5 rounded-full bg-foreground p-0.5 text-white hover:bg-foreground/80"
                   onClick={() => updateData({ logoFile: null, logoPreviewUrl: null })}
                 >
                   <X className="h-3 w-3" />
                 </button>
               </div>
             ) : (
-              <label className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-surface-300 text-surface-400 transition-colors hover:border-brand-400 hover:text-brand-500">
+              <label className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border/60 text-muted-foreground/70 transition-colors hover:border-brand-400 hover:text-brand-500">
                 <Upload className="h-5 w-5" />
                 <input type="file" accept="image/*" className="hidden" onChange={onLogoUpload} />
               </label>
             )}
-            <p className="text-xs text-surface-400">PNG, JPG, or SVG. Max 2 MB.</p>
+            <p className="text-xs text-muted-foreground/70">PNG, JPG, or SVG. Max 2 MB.</p>
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="websiteUrl">Website URL</Label>
           <div className="relative">
-            <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+            <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               id="websiteUrl"
               placeholder="https://yourcompany.com"
@@ -86,7 +86,7 @@ export function Step1CompanyBasics({ data, updateData, onLogoUpload }: Props) {
             id="industry"
             value={data.industry}
             onChange={(e) => updateData({ industry: e.target.value as Industry | "" })}
-            className="flex h-10 w-full rounded-lg border border-surface-200 bg-white px-3.5 py-2.5 text-sm text-surface-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            className="flex h-10 w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
           >
             <option value="">Select an industry</option>
             {Object.entries(INDUSTRY_LABELS).map(([value, label]) => (
@@ -107,7 +107,7 @@ export function Step1CompanyBasics({ data, updateData, onLogoUpload }: Props) {
                   "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                   data.companySize === opt.value
                     ? "border-brand-500 bg-brand-50 text-brand-700"
-                    : "border-surface-200 text-surface-600 hover:border-surface-300",
+                    : "border-border text-muted-foreground hover:border-border/60",
                 )}
                 onClick={() => updateData({ companySize: opt.value })}
               >

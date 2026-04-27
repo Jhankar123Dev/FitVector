@@ -130,8 +130,8 @@ export default function BrandingPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-surface-800">Company Branding</h1>
-          <p className="mt-0.5 text-sm text-surface-500">
+          <h1 className="text-xl font-semibold text-foreground">Company Branding</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Build your employer brand to attract top talent
           </p>
         </div>
@@ -155,8 +155,8 @@ export default function BrandingPage() {
                 <s.icon className={cn("h-4 w-4", s.color)} />
               </div>
               <div>
-                <p className="text-lg font-semibold text-surface-800">{s.value}</p>
-                <p className="text-[11px] text-surface-500">{s.label}</p>
+                <p className="text-lg font-semibold text-foreground">{s.value}</p>
+                <p className="text-[11px] text-muted-foreground">{s.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -184,9 +184,9 @@ export default function BrandingPage() {
                 {bannerName ? (
                   <div className="flex items-center gap-2 rounded-lg bg-white/90 px-3 py-1.5 text-sm">
                     <Image className="h-4 w-4 text-brand-600" />
-                    <span className="text-surface-700">{bannerName}</span>
+                    <span className="text-foreground/80">{bannerName}</span>
                     <button onClick={() => setBannerName(null)}>
-                      <X className="h-3 w-3 text-surface-400" />
+                      <X className="h-3 w-3 text-muted-foreground/70" />
                     </button>
                   </div>
                 ) : (
@@ -232,14 +232,14 @@ export default function BrandingPage() {
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-brand-100 text-sm font-bold text-brand-700">
                       {photo.initials}
                     </div>
-                    <p className="mt-1 text-[10px] text-surface-500 line-clamp-1">{photo.caption}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground line-clamp-1">{photo.caption}</p>
                   </div>
                 ))}
                 <div className="flex flex-col items-center justify-center">
-                  <button className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-dashed border-surface-300 text-surface-400 hover:border-brand-300 hover:text-brand-500">
+                  <button className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-dashed border-border/60 text-muted-foreground/70 hover:border-brand-300 hover:text-brand-500">
                     <Plus className="h-5 w-5" />
                   </button>
-                  <p className="mt-1 text-[10px] text-surface-400">Add Photo</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground/70">Add Photo</p>
                 </div>
               </div>
             </CardContent>
@@ -286,7 +286,7 @@ export default function BrandingPage() {
                 {branding.cultureValues.map((value, i) => {
                   const Icon = ICON_MAP[value.icon] || Lightbulb;
                   return (
-                    <div key={i} className="rounded-lg border border-surface-200 p-3">
+                    <div key={i} className="rounded-lg border border-border p-3">
                       <div className="mb-2 flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50">
                           <Icon className="h-4 w-4 text-brand-600" />
@@ -317,8 +317,8 @@ export default function BrandingPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {branding.dayInTheLife.map((entry, i) => (
-                <div key={entry.jobPostId} className="rounded-lg border border-surface-200 p-3">
-                  <Label className="text-xs font-medium text-surface-700">
+                <div key={entry.jobPostId} className="rounded-lg border border-border p-3">
+                  <Label className="text-xs font-medium text-foreground/80">
                     {entry.jobTitle}
                   </Label>
                   <Textarea
@@ -378,27 +378,27 @@ export default function BrandingPage() {
                 {/* Story */}
                 {branding.story && (
                   <div>
-                    <h3 className="mb-2 text-sm font-semibold text-surface-800">About Us</h3>
-                    <p className="text-sm text-surface-600 whitespace-pre-wrap">{branding.story}</p>
+                    <h3 className="mb-2 text-sm font-semibold text-foreground">About Us</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{branding.story}</p>
                   </div>
                 )}
 
                 {/* Culture Values */}
                 {branding.cultureValues.length > 0 && (
                   <div>
-                    <h3 className="mb-3 text-sm font-semibold text-surface-800">Our Values</h3>
+                    <h3 className="mb-3 text-sm font-semibold text-foreground">Our Values</h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {branding.cultureValues.map((value, i) => {
                         const Icon = ICON_MAP[value.icon] || Lightbulb;
                         return (
-                          <div key={i} className="rounded-lg bg-surface-50 p-3">
+                          <div key={i} className="rounded-lg bg-muted/30 p-3">
                             <div className="flex items-center gap-2">
                               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
                                 <Icon className="h-4 w-4 text-brand-600" />
                               </div>
-                              <h4 className="text-sm font-medium text-surface-800">{value.title}</h4>
+                              <h4 className="text-sm font-medium text-foreground">{value.title}</h4>
                             </div>
-                            <p className="mt-1.5 text-xs text-surface-500">{value.description}</p>
+                            <p className="mt-1.5 text-xs text-muted-foreground">{value.description}</p>
                           </div>
                         );
                       })}
@@ -409,7 +409,7 @@ export default function BrandingPage() {
                 {/* Benefits */}
                 {branding.benefits.length > 0 && (
                   <div>
-                    <h3 className="mb-2 text-sm font-semibold text-surface-800">Benefits & Perks</h3>
+                    <h3 className="mb-2 text-sm font-semibold text-foreground">Benefits & Perks</h3>
                     <div className="flex flex-wrap gap-2">
                       {branding.benefits.map((b, i) => (
                         <Badge key={i} variant="brand" className="text-xs">{b}</Badge>
@@ -421,14 +421,14 @@ export default function BrandingPage() {
                 {/* Team */}
                 {branding.teamPhotos.length > 0 && (
                   <div>
-                    <h3 className="mb-3 text-sm font-semibold text-surface-800">Meet the Team</h3>
+                    <h3 className="mb-3 text-sm font-semibold text-foreground">Meet the Team</h3>
                     <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
                       {branding.teamPhotos.map((photo) => (
                         <div key={photo.id} className="text-center">
                           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
                             {photo.initials}
                           </div>
-                          <p className="mt-1 text-[10px] text-surface-500 line-clamp-1">{photo.caption}</p>
+                          <p className="mt-1 text-[10px] text-muted-foreground line-clamp-1">{photo.caption}</p>
                         </div>
                       ))}
                     </div>
@@ -438,15 +438,15 @@ export default function BrandingPage() {
                 {/* Day in the Life */}
                 {branding.dayInTheLife.length > 0 && (
                   <div>
-                    <h3 className="mb-3 text-sm font-semibold text-surface-800">A Day in the Life</h3>
+                    <h3 className="mb-3 text-sm font-semibold text-foreground">A Day in the Life</h3>
                     <div className="space-y-3">
                       {branding.dayInTheLife.map((entry) => (
-                        <div key={entry.jobPostId} className="rounded-lg border border-surface-200 p-3">
+                        <div key={entry.jobPostId} className="rounded-lg border border-border p-3">
                           <div className="flex items-center gap-2">
                             <Briefcase className="h-3.5 w-3.5 text-brand-500" />
-                            <h4 className="text-sm font-medium text-surface-800">{entry.jobTitle}</h4>
+                            <h4 className="text-sm font-medium text-foreground">{entry.jobTitle}</h4>
                           </div>
-                          <p className="mt-1.5 text-xs text-surface-600">{entry.description}</p>
+                          <p className="mt-1.5 text-xs text-muted-foreground">{entry.description}</p>
                         </div>
                       ))}
                     </div>

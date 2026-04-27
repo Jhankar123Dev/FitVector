@@ -94,10 +94,10 @@ export default function AssessmentsPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
             Assessment Templates
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+          <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
             Create and manage candidate assessments
           </p>
         </div>
@@ -123,8 +123,8 @@ export default function AssessmentsPage() {
                 <stat.icon className={cn("h-5 w-5", stat.iconColor)} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xl sm:text-2xl font-bold text-surface-800">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-surface-500">{stat.label}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -146,11 +146,11 @@ export default function AssessmentsPage() {
             {filterByTab(tab).length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
-                  <ClipboardCheck className="h-10 w-10 text-surface-300" />
-                  <p className="mt-3 text-sm font-medium text-surface-600">
+                  <ClipboardCheck className="h-10 w-10 text-muted-foreground/40" />
+                  <p className="mt-3 text-sm font-medium text-muted-foreground">
                     No {tab === "all" ? "" : ASSESSMENT_TYPE_LABELS[tab as AssessmentType].toLowerCase()} assessments
                   </p>
-                  <p className="mt-1 text-xs text-surface-400">
+                  <p className="mt-1 text-xs text-muted-foreground/70">
                     Create your first assessment to get started.
                   </p>
                 </CardContent>
@@ -192,15 +192,15 @@ function TemplateCard({ template }: { template: AssessmentTemplate }) {
         </div>
 
         {/* Title & description */}
-        <h3 className="text-sm sm:text-base font-semibold text-surface-800 line-clamp-1">
+        <h3 className="text-sm sm:text-base font-semibold text-foreground line-clamp-1">
           {template.title}
         </h3>
-        <p className="mt-1 text-[11px] sm:text-xs text-surface-500 line-clamp-2 flex-1">
+        <p className="mt-1 text-[11px] sm:text-xs text-muted-foreground line-clamp-2 flex-1">
           {template.description}
         </p>
 
         {/* Meta row */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] sm:text-xs text-surface-500">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] sm:text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" /> {template.duration} min
           </span>
@@ -215,11 +215,11 @@ function TemplateCard({ template }: { template: AssessmentTemplate }) {
         {/* Score & completion */}
         {template.candidatesTaken > 0 && (
           <div className="mt-2 flex items-center gap-4 text-[11px] sm:text-xs">
-            <span className="text-surface-500">
-              Avg Score: <strong className="text-surface-700">{template.avgScore}%</strong>
+            <span className="text-muted-foreground">
+              Avg Score: <strong className="text-foreground/80">{template.avgScore}%</strong>
             </span>
-            <span className="text-surface-500">
-              Completion: <strong className="text-surface-700">{template.completionRate}%</strong>
+            <span className="text-muted-foreground">
+              Completion: <strong className="text-foreground/80">{template.completionRate}%</strong>
             </span>
           </div>
         )}
@@ -230,7 +230,7 @@ function TemplateCard({ template }: { template: AssessmentTemplate }) {
             {template.tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-medium text-surface-600"
+                className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
               >
                 {tag}
               </span>
@@ -239,7 +239,7 @@ function TemplateCard({ template }: { template: AssessmentTemplate }) {
         )}
 
         {/* Actions */}
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-surface-100 pt-3">
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">
           {resultCount > 0 && (
             <Button variant="outline" size="sm" asChild className="h-7 px-2 text-[11px] sm:text-xs gap-1">
               <Link href={`/employer/assessments/${template.id}/results`}>

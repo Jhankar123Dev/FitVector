@@ -107,7 +107,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-surface-900/40 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -118,17 +118,17 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
           onClick={(e) => e.stopPropagation()}
         >
           {/* ── Header ────────────────────────────────────────────── */}
-          <div className="flex items-center gap-3 border-b border-surface-200 px-5 py-4">
+          <div className="flex items-center gap-3 border-b border-border px-5 py-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-50">
               <CalendarDays className="h-4 w-4 text-sky-600" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-surface-800">Schedule Interview</h3>
-              <p className="truncate text-xs text-surface-500">{applicant.name}</p>
+              <h3 className="text-sm font-semibold text-foreground">Schedule Interview</h3>
+              <p className="truncate text-xs text-muted-foreground">{applicant.name}</p>
             </div>
             <button
               onClick={onClose}
-              className="ml-auto text-surface-400 transition-colors hover:text-surface-700 text-lg font-bold leading-none"
+              className="ml-auto text-muted-foreground/70 transition-colors hover:text-foreground/80 text-lg font-bold leading-none"
             >
               ×
             </button>
@@ -139,7 +139,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
 
             {/* Format picker */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-surface-700">
+              <label className="mb-1.5 block text-xs font-medium text-foreground/80">
                 Interview Format <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -152,7 +152,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
                       "flex flex-col items-center gap-1 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all",
                       format === value
                         ? "border-brand-400 bg-brand-50 text-brand-700 ring-1 ring-brand-300"
-                        : "border-surface-200 bg-white text-surface-600 hover:border-surface-300 hover:bg-surface-50",
+                        : "border-border bg-white text-muted-foreground hover:border-border/60 hover:bg-muted/30",
                     )}
                   >
                     <Icon className={cn("h-4 w-4", format === value ? "text-brand-600" : color)} />
@@ -164,12 +164,12 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
 
             {/* Interviewer */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-surface-700">
+              <label className="mb-1 block text-xs font-medium text-foreground/80">
                 <Users className="mr-1 inline h-3 w-3" />
                 Interviewer <span className="text-red-500">*</span>
               </label>
               {membersLoading ? (
-                <div className="flex h-9 items-center gap-2 rounded-lg border border-surface-200 px-3 text-xs text-surface-400">
+                <div className="flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-xs text-muted-foreground/70">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading team members…
                 </div>
               ) : members.length === 0 ? (
@@ -186,7 +186,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
                 <select
                   value={interviewerId}
                   onChange={(e) => setInterviewerId(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-surface-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  className="h-9 w-full rounded-lg border border-border bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                 >
                   <option value="">Select interviewer…</option>
                   {members.map((m) => (
@@ -201,7 +201,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
 
             {/* Date & Time */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-surface-700">
+              <label className="mb-1 block text-xs font-medium text-foreground/80">
                 Date &amp; Time <span className="text-red-500">*</span>
               </label>
               <Input
@@ -215,7 +215,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
 
             {/* Duration */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-surface-700">
+              <label className="mb-1 block text-xs font-medium text-foreground/80">
                 Duration (minutes)
               </label>
               <div className="flex items-center gap-2">
@@ -239,7 +239,7 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
                         "rounded-md border px-2 py-1 text-xs transition-colors",
                         durationMins === d
                           ? "border-brand-400 bg-brand-50 text-brand-700"
-                          : "border-surface-200 text-surface-600 hover:border-surface-300",
+                          : "border-border text-muted-foreground hover:border-border/60",
                       )}
                     >
                       {d}m
@@ -252,10 +252,10 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
             {/* Meeting link — shown for video format */}
             {format === "video" && (
               <div>
-                <label className="mb-1 block text-xs font-medium text-surface-700">
+                <label className="mb-1 block text-xs font-medium text-foreground/80">
                   <Link2 className="mr-1 inline h-3 w-3" />
                   Meeting Link
-                  <span className="ml-1 text-surface-400">(optional)</span>
+                  <span className="ml-1 text-muted-foreground/70">(optional)</span>
                 </label>
                 <Input
                   type="url"
@@ -269,23 +269,23 @@ export function ScheduleInterviewModal({ applicant, jobPostId, onClose, onConfir
 
             {/* Notes */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-surface-700">
+              <label className="mb-1 block text-xs font-medium text-foreground/80">
                 <StickyNote className="mr-1 inline h-3 w-3" />
                 Notes for Interviewer
-                <span className="ml-1 text-surface-400">(optional)</span>
+                <span className="ml-1 text-muted-foreground/70">(optional)</span>
               </label>
               <textarea
                 rows={2}
                 placeholder="Focus areas, instructions, candidate context…"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full resize-none rounded-lg border border-surface-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="w-full resize-none rounded-lg border border-border px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
             </div>
           </div>
 
           {/* ── Footer ────────────────────────────────────────────── */}
-          <div className="flex justify-end gap-2 border-t border-surface-200 px-5 py-3">
+          <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
             <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
               Cancel
             </Button>

@@ -46,8 +46,8 @@ export function Step2CompanyProfile({
             <Globe className="h-5 w-5 text-accent-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-surface-800">Company Profile</h2>
-            <p className="text-sm text-surface-500">
+            <h2 className="text-lg font-semibold text-foreground">Company Profile</h2>
+            <p className="text-sm text-muted-foreground">
               Help candidates understand your company and culture
             </p>
           </div>
@@ -75,7 +75,7 @@ export function Step2CompanyProfile({
             className="min-h-[120px]"
           />
           {!data.websiteUrl && (
-            <p className="text-xs text-surface-400">
+            <p className="text-xs text-muted-foreground/70">
               Add your website URL in the previous step to enable AI Assist
             </p>
           )}
@@ -83,7 +83,7 @@ export function Step2CompanyProfile({
 
         <div className="space-y-2">
           <Label>Culture Keywords</Label>
-          <p className="text-xs text-surface-400">
+          <p className="text-xs text-muted-foreground/70">
             Keywords that define your company culture (used by AI for cultural fit evaluation)
           </p>
           <div className="flex gap-2">
@@ -154,7 +154,7 @@ export function Step2CompanyProfile({
                   {loc}
                   <button
                     onClick={() => removeLocation(loc)}
-                    className="ml-0.5 rounded-full p-0.5 hover:bg-surface-200"
+                    className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
                   >
                     <X className="h-3 w-3" />
                   </button>

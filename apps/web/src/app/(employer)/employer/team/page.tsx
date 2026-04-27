@@ -38,7 +38,7 @@ const ROLE_COLORS: Record<string, string> = {
   admin: "bg-brand-50 text-brand-700 border-brand-200",
   recruiter: "bg-emerald-50 text-emerald-700 border-emerald-200",
   hiring_manager: "bg-amber-50 text-amber-700 border-amber-200",
-  viewer: "bg-surface-100 text-surface-600 border-surface-200",
+  viewer: "bg-muted text-muted-foreground border-border",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -86,21 +86,21 @@ export default function TeamPage() {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <div className="h-6 w-48 animate-pulse rounded bg-surface-200" />
-          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-surface-100" />
+          <div className="h-6 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-muted" />
         </div>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
               <CardContent className="p-5">
-                <div className="h-12 animate-pulse rounded bg-surface-100" />
+                <div className="h-12 animate-pulse rounded bg-muted" />
               </CardContent>
             </Card>
           ))}
         </div>
         <Card>
           <CardContent className="py-12">
-            <div className="h-32 animate-pulse rounded bg-surface-100" />
+            <div className="h-32 animate-pulse rounded bg-muted" />
           </CardContent>
         </Card>
       </div>
@@ -121,10 +121,10 @@ export default function TeamPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
             Team Management
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+          <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
             Manage your hiring team members and roles
           </p>
         </div>
@@ -148,8 +148,8 @@ export default function TeamPage() {
                 <stat.icon className={cn("h-5 w-5", stat.iconColor)} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xl sm:text-2xl font-bold text-surface-800">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-surface-500">{stat.label}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -169,13 +169,13 @@ export default function TeamPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px]">
                 <thead>
-                  <tr className="border-b border-surface-200 bg-surface-50">
-                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Member</th>
-                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Email</th>
-                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Role</th>
-                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Status</th>
-                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Joined</th>
-                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Actions</th>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Member</th>
+                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Email</th>
+                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Role</th>
+                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Status</th>
+                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Joined</th>
+                    <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -199,7 +199,7 @@ export default function TeamPage() {
         <TabsContent value="activity">
           <Card>
             <CardContent className="flex items-center justify-center py-12">
-              <p className="text-sm text-surface-400">Activity log will be available with real-time events</p>
+              <p className="text-sm text-muted-foreground/70">Activity log will be available with real-time events</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -246,23 +246,23 @@ function MemberRow({
     : member.userEmail[0].toUpperCase();
 
   return (
-    <tr className="border-b border-surface-100 transition-colors hover:bg-surface-50">
+    <tr className="border-b border-border transition-colors hover:bg-muted/30">
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3">
           {member.userAvatarUrl ? (
             <img src={member.userAvatarUrl} alt={displayName} className="h-7 w-7 sm:h-8 sm:w-8 rounded-full object-cover" />
           ) : (
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] sm:text-xs font-semibold text-surface-600">
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] sm:text-xs font-semibold text-muted-foreground">
               {initials}
             </div>
           )}
-          <span className="text-xs sm:text-sm font-medium text-surface-800">
+          <span className="text-xs sm:text-sm font-medium text-foreground">
             {member.userName || "Pending invite"}
           </span>
         </div>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] sm:text-xs text-surface-500">{member.userEmail}</span>
+        <span className="text-[11px] sm:text-xs text-muted-foreground">{member.userEmail}</span>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         {isSelf ? (
@@ -271,7 +271,7 @@ function MemberRow({
           </Badge>
         ) : (
           <select
-            className="h-7 rounded-md border border-surface-200 bg-white px-2 text-[11px] sm:text-xs text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30"
+            className="h-7 rounded-md border border-border bg-white px-2 text-[11px] sm:text-xs text-foreground outline-none focus:ring-2 focus:ring-primary/30"
             value={member.role}
             onChange={(e) => onChangeRole(member.id, e.target.value as CompanyMemberRole)}
             disabled={isUpdating}
@@ -288,7 +288,7 @@ function MemberRow({
         </Badge>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] sm:text-xs text-surface-500">
+        <span className="text-[11px] sm:text-xs text-muted-foreground">
           {formatRelativeTime(member.invitedAt)}
         </span>
       </td>
@@ -334,7 +334,7 @@ function InviteMemberModal({
       <Card className="relative z-10 w-full max-w-md">
         <CardContent className="space-y-5 p-5 sm:p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-semibold text-surface-800">Invite Team Member</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Invite Team Member</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -367,7 +367,7 @@ function InviteMemberModal({
                     "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors",
                     role === r
                       ? "border-brand-500 bg-brand-50/50"
-                      : "border-surface-200 hover:border-surface-300",
+                      : "border-border hover:border-border/60",
                   )}
                 >
                   <input
@@ -376,13 +376,13 @@ function InviteMemberModal({
                     value={r}
                     checked={role === r}
                     onChange={() => setRole(r)}
-                    className="mt-0.5 accent-brand-500"
+                    className="mt-0.5 accent-primary"
                   />
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-surface-800">
+                    <p className="text-xs sm:text-sm font-medium text-foreground">
                       {TEAM_ROLE_LABELS[r as TeamMemberRole] || r}
                     </p>
-                    <p className="text-[11px] text-surface-400">{ROLE_DESCRIPTIONS[r]}</p>
+                    <p className="text-[11px] text-muted-foreground/70">{ROLE_DESCRIPTIONS[r]}</p>
                   </div>
                 </label>
               ))}

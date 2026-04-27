@@ -63,8 +63,8 @@ export function Step3Skills({ form, update }: Props) {
             <Code2 className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-surface-800">Skills</h2>
-            <p className="text-sm text-surface-500">Define required and nice-to-have skills</p>
+            <h2 className="text-lg font-semibold text-foreground">Skills</h2>
+            <p className="text-sm text-muted-foreground">Define required and nice-to-have skills</p>
           </div>
         </div>
 
@@ -88,7 +88,7 @@ export function Step3Skills({ form, update }: Props) {
               {reqSuggestions.slice(0, 6).map((s) => (
                 <button
                   key={s}
-                  className="rounded-full border border-surface-200 px-2.5 py-0.5 text-xs text-surface-500 transition-colors hover:border-brand-400 hover:text-brand-600"
+                  className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-brand-400 hover:text-brand-600"
                   onClick={() => addRequiredSkill(s)}
                 >
                   + {s}
@@ -133,7 +133,7 @@ export function Step3Skills({ form, update }: Props) {
               {niceSuggestions.slice(0, 6).map((s) => (
                 <button
                   key={s}
-                  className="rounded-full border border-surface-200 px-2.5 py-0.5 text-xs text-surface-500 transition-colors hover:border-surface-400 hover:text-surface-600"
+                  className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-border/60 hover:text-muted-foreground"
                   onClick={() => addNiceSkill(s)}
                 >
                   + {s}
@@ -148,7 +148,7 @@ export function Step3Skills({ form, update }: Props) {
                   {s}
                   <button
                     onClick={() => update({ niceToHaveSkills: form.niceToHaveSkills.filter((sk) => sk !== s) })}
-                    className="ml-0.5 rounded-full p-0.5 hover:bg-surface-200"
+                    className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
                   >
                     <X className="h-3 w-3" />
                   </button>

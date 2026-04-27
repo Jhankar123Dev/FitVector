@@ -232,7 +232,7 @@ function JobRow({
             <p className="text-lg font-bold text-accent-600">
               {job.hiredCount}
             </p>
-            <p className="text-[11px] text-surface-500">Hired</p>
+            <p className="text-[11px] text-muted-foreground">Hired</p>
           </div>
         )}
       </div>
@@ -375,11 +375,11 @@ export default function EmployerJobsPage() {
             ).length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                  <Briefcase className="h-10 w-10 text-surface-300" />
-                  <p className="mt-3 text-sm font-medium text-surface-600">
+                  <Briefcase className="h-10 w-10 text-muted-foreground/40" />
+                  <p className="mt-3 text-sm font-medium text-muted-foreground">
                     No {tab === "all" ? "" : tab} jobs found
                   </p>
-                  <p className="mt-1 text-xs text-surface-400">
+                  <p className="mt-1 text-xs text-muted-foreground/70">
                     {tab === "draft"
                       ? "Draft jobs will appear here when you save a job without publishing."
                       : "Create a new job posting to get started."}

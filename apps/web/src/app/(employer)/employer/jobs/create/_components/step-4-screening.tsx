@@ -51,15 +51,15 @@ export function Step4Screening({ form, update }: Props) {
             <MessageSquare className="h-5 w-5 text-sky-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-surface-800">Screening Questions</h2>
-            <p className="text-sm text-surface-500">
+            <h2 className="text-lg font-semibold text-foreground">Screening Questions</h2>
+            <p className="text-sm text-muted-foreground">
               Add up to 10 custom questions for applicants (optional)
             </p>
           </div>
         </div>
 
         {form.screeningQuestions.length < 10 && (
-          <div className="space-y-3 rounded-lg border border-surface-200 bg-surface-50 p-4">
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
             <div className="space-y-2">
               <Label>Question</Label>
               <Input
@@ -74,7 +74,7 @@ export function Step4Screening({ form, update }: Props) {
                 <select
                   value={sqType}
                   onChange={(e) => setSqType(e.target.value as ScreeningQuestionType)}
-                  className="flex h-10 w-full rounded-lg border border-surface-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  className="flex h-10 w-full rounded-lg border border-border bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                 >
                   <option value="short_answer">Short Answer</option>
                   <option value="multiple_choice">Multiple Choice</option>
@@ -97,7 +97,7 @@ export function Step4Screening({ form, update }: Props) {
                 onClick={() => setSqRequired((p) => !p)}
                 className={cn(
                   "relative h-5 w-9 rounded-full transition-colors",
-                  sqRequired ? "bg-brand-500" : "bg-surface-300",
+                  sqRequired ? "bg-brand-500" : "bg-muted/40",
                 )}
               >
                 <span
@@ -107,7 +107,7 @@ export function Step4Screening({ form, update }: Props) {
                   )}
                 />
               </div>
-              <span className="text-xs text-surface-600">Required</span>
+              <span className="text-xs text-muted-foreground">Required</span>
             </label>
             <Button size="sm" onClick={addScreeningQuestion} disabled={!sqQuestion.trim()}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -121,14 +121,14 @@ export function Step4Screening({ form, update }: Props) {
             {form.screeningQuestions.map((q, idx) => (
               <div
                 key={q.id}
-                className="flex items-start gap-3 rounded-lg border border-surface-200 bg-white p-3"
+                className="flex items-start gap-3 rounded-lg border border-border bg-white p-3"
               >
-                <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-surface-300" />
+                <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/40" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-surface-800">
+                  <p className="text-sm font-medium text-foreground">
                     {idx + 1}. {q.question}
                   </p>
-                  <p className="mt-0.5 text-xs text-surface-400">
+                  <p className="mt-0.5 text-xs text-muted-foreground/70">
                     {q.type === "short_answer"
                       ? "Short answer"
                       : q.type === "yes_no"
@@ -138,7 +138,7 @@ export function Step4Screening({ form, update }: Props) {
                 </div>
                 <button
                   onClick={() => removeScreeningQuestion(q.id)}
-                  className="rounded-md p-1 text-surface-400 hover:bg-surface-100 hover:text-red-500"
+                  className="rounded-md p-1 text-muted-foreground/70 hover:bg-muted hover:text-red-500"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -146,10 +146,10 @@ export function Step4Screening({ form, update }: Props) {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border-2 border-dashed border-surface-200 py-10 text-center">
-            <MessageSquare className="mx-auto h-8 w-8 text-surface-300" />
-            <p className="mt-2 text-sm text-surface-500">No screening questions added yet</p>
-            <p className="mt-1 text-xs text-surface-400">
+          <div className="rounded-xl border-2 border-dashed border-border py-10 text-center">
+            <MessageSquare className="mx-auto h-8 w-8 text-muted-foreground/40" />
+            <p className="mt-2 text-sm text-muted-foreground">No screening questions added yet</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
               These are shown to applicants when they apply
             </p>
           </div>

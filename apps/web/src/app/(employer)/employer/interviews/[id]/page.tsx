@@ -141,7 +141,7 @@ export default function InterviewReportPage() {
   if (!interview.overallScore) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <MessageSquare className="h-12 w-12 text-surface-300" />
+        <MessageSquare className="h-12 w-12 text-muted-foreground/40" />
         <p className="mt-3 text-lg font-medium text-muted-foreground">Interview Not Completed</p>
         <p className="mt-1 text-sm text-muted-foreground/60">This interview report is not available yet.</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push("/employer/interviews")}>
