@@ -26,8 +26,9 @@ import { cn } from "@/lib/utils";
 import { useInterviews } from "@/hooks/use-interviews";
 import type { AIInterview } from "@/types/employer";
 import { AI_RECOMMENDATION_LABELS, AI_RECOMMENDATION_COLORS } from "@/types/employer";
+import { CHART_COLORS } from "@/lib/chart-colors";
 
-const RADAR_COLORS = ["#6c5ce7", "#00d97e", "#f59e0b"];
+const RADAR_COLORS = CHART_COLORS.series.slice(0, 3);
 
 function StarRating({ score }: { score: number }) {
   return (
@@ -169,9 +170,9 @@ export default function ComparePage() {
               <div className="h-[280px] sm:h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="65%">
-                    <PolarGrid stroke="#e7e5e4" />
-                    <PolarAngleAxis dataKey="skill" tick={{ fontSize: 10, fill: "#78716c" }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fontSize: 9, fill: "#a8a29e" }} tickCount={6} />
+                    <PolarGrid stroke={CHART_COLORS.grid} />
+                    <PolarAngleAxis dataKey="skill" tick={{ fontSize: 10, fill: CHART_COLORS.axisTick }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fontSize: 9, fill: CHART_COLORS.axisTickMuted }} tickCount={6} />
                     {selected.map((interview, idx) => (
                       <Radar
                         key={interview.id}

@@ -47,8 +47,8 @@ interface ResumeOption {
 // ─── Confetti ──────────────────────────────────────────────────────────────
 
 const CONFETTI_COLORS = [
-  "#6c5ce7", "#00d97e", "#3B82F6", "#F59E0B", "#EF4444",
-  "#8B5CF6", "#EC4899", "#14B8A6", "#F97316", "#06B6D4",
+  "#0369a1", "#22c55e", "#3b82f6", "#f59e0b", "#ef4444",
+  "#0284c7", "#ec4899", "#0ea5e9", "#f97316", "#06b6d4",
 ];
 
 function ConfettiPiece({ index }: { index: number }) {

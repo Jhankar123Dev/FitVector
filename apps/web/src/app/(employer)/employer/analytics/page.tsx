@@ -32,9 +32,10 @@ import { cn } from "@/lib/utils";
 import type { AnalyticsDateRange } from "@/types/employer";
 import { SOURCE_LABELS } from "@/types/employer";
 import { useAnalytics, useFunnel, useSources, useJobPerformance, useTrend, useInterviewerPerformance } from "@/hooks/use-analytics";
+import { CHART_COLORS } from "@/lib/chart-colors";
 
-// ── Funnel colors (gradient from brand to emerald) ──────────────────
-const FUNNEL_COLORS = ["#6c5ce7", "#7c6cf7", "#8b7ff7", "#4ade80", "#22c55e", "#16a34a", "#059669"];
+// ── Funnel colors — brand blue scale (from chart-colors.ts) ─────────
+const FUNNEL_COLORS = CHART_COLORS.funnel;
 
 const DATE_RANGE_OPTIONS: { value: AnalyticsDateRange; label: string }[] = [
   { value: "7d", label: "7 days" },
@@ -137,7 +138,7 @@ export default function AnalyticsPage() {
                   "px-3 py-1.5 text-[11px] sm:text-xs font-medium transition-colors",
                   dateRange === opt.value
                     ? "bg-brand-500 text-white"
-                    : "bg-white text-surface-600 hover:bg-surface-50",
+                    : "bg-card text-muted-foreground hover:bg-muted",
                 )}
               >
                 {opt.label}
@@ -230,13 +231,13 @@ export default function AnalyticsPage() {
             <div className="h-[220px] sm:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={(sourcesData?.data || []).map((s) => ({ ...s, name: s.source }))} barSize={32}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#78716c" }} />
-                  <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "#a8a29e" }} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: "#a8a29e" }} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e7e5e4" }} />
-                  <Bar yAxisId="left" dataKey="count" name="Candidates" fill="#6c5ce7" radius={[4, 4, 0, 0]} />
-                  <Bar yAxisId="right" dataKey="avgScore" name="Avg Score" fill="#00d97e" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisTick }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 10, fill: CHART_COLORS.axisTickMuted }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: CHART_COLORS.axisTickMuted }} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: CHART_COLORS.tooltipBorder }} />
+                  <Bar yAxisId="left" dataKey="count" name="Candidates" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="avgScore" name="Avg Score" fill={CHART_COLORS.secondary} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -257,19 +258,19 @@ export default function AnalyticsPage() {
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendPoints}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                    <XAxis dataKey="week" tick={{ fontSize: 10, fill: "#78716c" }} />
-                    <YAxis tick={{ fontSize: 10, fill: "#a8a29e" }} domain={[0, "auto"]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                    <XAxis dataKey="week" tick={{ fontSize: 10, fill: CHART_COLORS.axisTick }} />
+                    <YAxis tick={{ fontSize: 10, fill: CHART_COLORS.axisTickMuted }} domain={[0, "auto"]} />
                     <Tooltip
-                      contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e7e5e4" }}
+                      contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: CHART_COLORS.tooltipBorder }}
                       formatter={(value: number) => [`${value} days`, "Time to Hire"]}
                     />
                     <Line
                       type="monotone"
                       dataKey="days"
-                      stroke="#6c5ce7"
+                      stroke={CHART_COLORS.primary}
                       strokeWidth={2.5}
-                      dot={{ fill: "#6c5ce7", r: 3 }}
+                      dot={{ fill: CHART_COLORS.primary, r: 3 }}
                       activeDot={{ r: 5 }}
                     />
                   </LineChart>

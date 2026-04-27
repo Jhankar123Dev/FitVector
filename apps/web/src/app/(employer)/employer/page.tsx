@@ -33,6 +33,7 @@ import {
 import { formatRelativeTime } from "@/lib/utils";
 import { useAnalytics, useFunnel } from "@/hooks/use-analytics";
 import { useEmployer, useActivityFeed } from "@/hooks/use-employer";
+import { CHART_COLORS } from "@/lib/chart-colors";
 
 // ── Activity icon map ───────────────────────────────────────────────
 const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
@@ -44,8 +45,8 @@ const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; bg: string; colo
   candidate_hired: { icon: CheckCircle2, bg: "bg-emerald-50", color: "text-emerald-600" },
 };
 
-// ── Funnel bar colors ───────────────────────────────────────────────
-const FUNNEL_COLORS = ["#6c5ce7", "#8278ff", "#a78bfa", "#00d97e", "#34d399", "#6ee7b7"];
+// ── Funnel bar colors — brand blue scale (from chart-colors.ts) ─────
+const FUNNEL_COLORS = CHART_COLORS.funnel;
 
 // ── Quick actions ───────────────────────────────────────────────────
 const QUICK_ACTIONS = [
@@ -192,24 +193,24 @@ export default function EmployerDashboardPage() {
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#e7e5e4"
+                    stroke={CHART_COLORS.grid}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="stage"
-                    tick={{ fontSize: 11, fill: "#78716c" }}
-                    axisLine={{ stroke: "#e7e5e4" }}
+                    tick={{ fontSize: 11, fill: CHART_COLORS.axisTick }}
+                    axisLine={{ stroke: CHART_COLORS.grid }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: "#78716c" }}
+                    tick={{ fontSize: 11, fill: CHART_COLORS.axisTick }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     contentStyle={{
                       borderRadius: "12px",
-                      border: "1px solid #e7e5e4",
+                      border: `1px solid ${CHART_COLORS.tooltipBorder}`,
                       boxShadow:
                         "0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06)",
                       fontSize: "13px",

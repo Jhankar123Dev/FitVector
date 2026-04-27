@@ -29,6 +29,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
+import { CHART_COLORS } from "@/lib/chart-colors";
 import { useAssessment, useAssessmentResults } from "@/hooks/use-assessments";
 import type { CandidateAssessmentResult } from "@/types/employer";
 import {
@@ -44,11 +45,11 @@ import { toast } from "sonner";
 // ── Score distribution buckets ───────────────────────────────────────
 function buildDistribution(results: CandidateAssessmentResult[]) {
   const buckets = [
-    { range: "0–20", count: 0, fill: "#ef4444" },
-    { range: "21–40", count: 0, fill: "#f97316" },
-    { range: "41–60", count: 0, fill: "#eab308" },
-    { range: "61–80", count: 0, fill: "#6c5ce7" },
-    { range: "81–100", count: 0, fill: "#00d97e" },
+    { range: "0–20",   count: 0, fill: CHART_COLORS.red },
+    { range: "21–40",  count: 0, fill: CHART_COLORS.orange },
+    { range: "41–60",  count: 0, fill: CHART_COLORS.amber },
+    { range: "61–80",  count: 0, fill: CHART_COLORS.primary },
+    { range: "81–100", count: 0, fill: CHART_COLORS.secondary },
   ];
   results
     .filter((r) => r.status === "completed")
@@ -272,11 +273,11 @@ export default function AssessmentResultsPage() {
           <div className="h-[220px] sm:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={distribution} barSize={36}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                <XAxis dataKey="range" tick={{ fontSize: 11, fill: "#78716c" }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#a8a29e" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="range" tick={{ fontSize: 11, fill: CHART_COLORS.axisTick }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: CHART_COLORS.axisTickMuted }} />
                 <Tooltip
-                  contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e7e5e4" }}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: CHART_COLORS.tooltipBorder }}
                   formatter={(value: number) => [`${value} candidates`, "Count"]}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>

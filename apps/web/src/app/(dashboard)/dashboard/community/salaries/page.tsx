@@ -35,6 +35,7 @@ import {
 } from "@/types/community";
 import { useSalaryInsights, useSubmitSalaryReport, useSalaryRoles } from "@/hooks/use-community";
 import { MOCK_SALARY_LOCATIONS } from "@/lib/mock/community-data";
+import { CHART_COLORS } from "@/lib/chart-colors";
 
 function formatSalary(n: number): string {
   if (n >= 10000000) return `₹${(n / 10000000).toFixed(1)}Cr`;
@@ -281,8 +282,8 @@ export default function SalaryInsightsPage() {
             </Card>
             <Card>
               <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
-                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-sky-900/40">
+                  <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-surface-500">Salary Range (P25–P75)</p>
@@ -352,15 +353,15 @@ export default function SalaryInsightsPage() {
                       barSize={40}
                       barGap={2}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
                       <XAxis
                         dataKey="bucket"
-                        tick={{ fontSize: 10, fill: "#78716c" }}
-                        axisLine={{ stroke: "#e7e5e4" }}
+                        tick={{ fontSize: 10, fill: CHART_COLORS.axisTick }}
+                        axisLine={{ stroke: CHART_COLORS.grid }}
                         tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 10, fill: "#a8a29e" }}
+                        tick={{ fontSize: 10, fill: CHART_COLORS.axisTickMuted }}
                         axisLine={false}
                         tickLine={false}
                         allowDecimals={false}
@@ -369,15 +370,15 @@ export default function SalaryInsightsPage() {
                         contentStyle={{
                           fontSize: 12,
                           borderRadius: 8,
-                          border: "1px solid #e7e5e4",
+                          border: `1px solid ${CHART_COLORS.tooltipBorder}`,
                           boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                         }}
                         formatter={(value: number) => [`${value} reports`, "Count"]}
                       />
                       <Bar
                         dataKey="count"
-                        fill="#7C3AED"
-                        fillOpacity={0.8}
+                        fill={CHART_COLORS.primary}
+                        fillOpacity={0.85}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>

@@ -36,6 +36,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { useInterview } from "@/hooks/use-interviews";
+import { CHART_COLORS } from "@/lib/chart-colors";
 import type { AIInterview } from "@/types/employer";
 import {
   AI_RECOMMENDATION_LABELS,
@@ -49,12 +50,15 @@ function CircularProgress({ score, size = 120 }: { score: number; size?: number 
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
   const color =
-    score >= 80 ? "#10b981" : score >= 60 ? "#6c5ce7" : score >= 40 ? "#f59e0b" : "#ef4444";
+    score >= 80 ? CHART_COLORS.scoreHigh
+    : score >= 60 ? CHART_COLORS.scoreMid
+    : score >= 40 ? CHART_COLORS.scoreWarn
+    : CHART_COLORS.scoreLow;
 
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke="#f1f0ee" strokeWidth="8" fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={radius} stroke={CHART_COLORS.svgTrack} strokeWidth="8" fill="none" />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -228,22 +232,22 @@ export default function InterviewReportPage() {
               <div className="h-[250px] sm:h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                    <PolarGrid stroke="#e7e5e4" />
+                    <PolarGrid stroke={CHART_COLORS.grid} />
                     <PolarAngleAxis
                       dataKey="skill"
-                      tick={{ fontSize: 10, fill: "#78716c" }}
+                      tick={{ fontSize: 10, fill: CHART_COLORS.axisTick }}
                     />
                     <PolarRadiusAxis
                       angle={30}
                       domain={[0, 5]}
-                      tick={{ fontSize: 9, fill: "#a8a29e" }}
+                      tick={{ fontSize: 9, fill: CHART_COLORS.axisTickMuted }}
                       tickCount={6}
                     />
                     <Radar
                       name="Score"
                       dataKey="score"
-                      stroke="#6c5ce7"
-                      fill="#6c5ce7"
+                      stroke={CHART_COLORS.primary}
+                      fill={CHART_COLORS.primary}
                       fillOpacity={0.2}
                       strokeWidth={2}
                     />
