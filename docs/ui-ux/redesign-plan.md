@@ -334,10 +334,29 @@ Make base components rock-solid against `DESIGN.md` before touching pages.
 - Code editor styling (if applicable)
 **PR title:** `phase 4e: assessment-taking flow polish`
 
-#### 4f — Marketing & onboarding
-- `/page.tsx` (landing) — `bg-canvas-marketing` (sky-50 tint)
-- `/onboarding/*`
-**PR title:** `phase 4f: marketing landing + onboarding polish`
+#### 4f — Marketing & onboarding ✅ (homepage done 2026-04-27)
+
+**Homepage (`/page.tsx`) — COMPLETE**
+
+Fully rewritten as a dual-sided B2B + B2C landing page. 9 sections:
+
+| # | Section | Key design detail |
+|---|---------|------------------|
+| 1 | Navbar | Dual CTA: "Post a Job" (green outline) + "Get Started Free" (primary) + audience links |
+| 2 | Hero | Neutral headline + two split audience cards (blue/green accent bars) + social proof inline |
+| 3 | For Job Seekers | `bg-surface-50` section, 4 feature cards, blue badge label |
+| 4 | For Employers | `bg-card` section, 4 feature cards (FitScore/Assessments/Interviews/Pipeline), green badge label |
+| 5 | How It Works | Side-by-side columns (seekers left, employers right), numbered step connectors |
+| 6 | Trust Stats | Dark `bg-brand-900` bar — 10,000+ seekers / 500+ companies / 95% accuracy / 3× faster |
+| 7 | Testimonials | 2 cards: Engineering Manager (FitScore praise) + Software Engineer (resume tailoring praise); audience labels |
+| 8 | Pricing | Seeker plans (Free/Starter/Pro/Elite) + Employer plans (Starter/Growth/Enterprise) — section dividers |
+| 9 | Final CTA | Split blue (seeker) / green (employer) cards with individual conversion copy |
+
+**Remaining 4f tasks:**
+- `/onboarding/*` polish
+- `/signup` page role-toggle slider (see Phase 4a)
+
+**PR title:** `phase 4f: dual-sided homepage + onboarding polish`
 
 ---
 
@@ -351,11 +370,46 @@ Make base components rock-solid against `DESIGN.md` before touching pages.
 
 **Cross-cutting:**
 - All `EmptyState` consumers → `ui/empty-state.tsx`
-- Loading skeletons (use `bg-muted animate-pulse`)
+- Loading skeletons — see table below
 - Sonner toast theming (configure to follow `useTheme()`)
 - Visual error boundary fallback (actual logic = Phase 7)
 
-**PR title:** `phase 5: shell + cross-cutting layout primitives`
+#### Loading Skeletons ✅ (partial — 2026-04-27)
+
+Loading skeletons use `animate-pulse` + `bg-surface-100/200` tokens (auto light/dark, no `dark:` overrides needed).
+
+**Completed:**
+
+| File | Route | Layout matched |
+|------|-------|---------------|
+| `(employer)/employer/loading.tsx` | `/employer` | 4-stat row + funnel chart + activity feed + quick actions + plan card |
+| `(dashboard)/dashboard/loading.tsx` | `/dashboard` | Welcome header + 4 quick-action cards + 4 stat cards |
+
+**Pattern rules for all future skeletons:**
+- `animate-pulse` on the root wrapper — single class, not per-element
+- Skeleton shapes must match actual rendered layout (same grid columns, same card heights)
+- Use `bg-surface-200` for primary skeleton elements (titles, large values)
+- Use `bg-surface-100` for secondary elements (subtitles, body text, icons)
+- Use `rounded-md` for text-like skeletons, `rounded-lg` for card blocks, `rounded-full` for avatars/badges
+- Never use hardcoded pixel widths — use Tailwind fractions (`w-2/3`, `w-36`) or `w-full`
+- Skeleton files have zero imports (no client boundary) — pure HTML divs only
+
+**Remaining skeletons to add (during page polish phases):**
+
+| Phase | File | Route |
+|-------|------|-------|
+| 4a | `(auth)/login/loading.tsx` | `/login` |
+| 4b | `(dashboard)/dashboard/jobs/loading.tsx` | `/dashboard/jobs` |
+| 4b | `(dashboard)/dashboard/tracker/loading.tsx` | `/dashboard/tracker` |
+| 4b | `(dashboard)/dashboard/resume/loading.tsx` | `/dashboard/resume` |
+| 4c1 | `(employer)/employer/jobs/loading.tsx` | `/employer/jobs` |
+| 4c3 | `(employer)/employer/candidates/loading.tsx` | `/employer/candidates` |
+| 4c3 | `(employer)/employer/pipeline/loading.tsx` | `/employer/pipeline` |
+| 4c4 | `(employer)/employer/analytics/loading.tsx` | `/employer/analytics` |
+| 4c4 | `(employer)/employer/interviews/loading.tsx` | `/employer/interviews` |
+| 4c4 | `(employer)/employer/assessments/loading.tsx` | `/employer/assessments` |
+
+**PR title:** `phase 5: shell + cross-cutting layout primitives + remaining loading skeletons`
 
 ---
 
