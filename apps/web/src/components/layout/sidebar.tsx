@@ -43,15 +43,15 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex h-full w-64 flex-col bg-surface-900",
+        "flex h-full w-64 flex-col bg-slate-50 dark:bg-slate-900 border-r border-border",
         className,
       )}
     >
       {/* Logo — links to home */}
-      <Link href="/" className="flex h-16 items-center gap-2 border-b border-surface-800 px-6">
+      <Link href="/" className="flex h-16 items-center gap-2 border-b border-border px-6">
         <span className="text-xl font-bold">
-          <span className="text-brand-400">Fit</span>
-          <span className="text-white">Vector</span>
+          <span className="text-primary">Fit</span>
+          <span className="text-foreground">Vector</span>
         </span>
       </Link>
 
@@ -69,11 +69,11 @@ export function Sidebar({ className }: SidebarProps) {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-brand-500/20 text-brand-300 border-l-2 border-brand-400"
-                  : "text-surface-400 hover:bg-surface-800 hover:text-white",
+                  ? "bg-primary/10 text-primary border-l-2 border-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className="h-4 w-4 shrink-0" />
               {item.label}
             </Link>
           );
@@ -81,18 +81,18 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       {/* Plan badge */}
-      <div className="border-t border-surface-800 p-4">
-        <div className="rounded-lg bg-surface-800 p-3">
+      <div className="border-t border-border p-4">
+        <div className="rounded-lg bg-muted p-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-surface-400">Current Plan</span>
-            <span className="rounded-full bg-brand-500/20 px-2.5 py-0.5 text-xs font-medium capitalize text-brand-300">
+            <span className="text-xs font-medium text-muted-foreground">Current Plan</span>
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium capitalize text-primary">
               {user?.planTier || "free"}
             </span>
           </div>
           {user?.planTier === "free" && (
             <Link
               href="/dashboard/settings/plan"
-              className="mt-2 block text-xs text-brand-400 hover:text-brand-300 transition-colors"
+              className="mt-2 block text-xs text-primary hover:text-primary/80 transition-colors"
             >
               Upgrade for more features
             </Link>
