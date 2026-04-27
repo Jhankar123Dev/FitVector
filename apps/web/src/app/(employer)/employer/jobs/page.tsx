@@ -36,6 +36,7 @@ import {
   useDuplicateJobPost,
   type JobPostWithCounts,
 } from "@/hooks/use-employer-jobs";
+import { Skeleton, SkeletonJobRow } from "@/components/ui/skeleton";
 import type { JobPost, JobPostStatus, PromotionType, PromotionDuration } from "@/types/employer";
 import {
   JOB_STATUS_LABELS,
@@ -299,14 +300,23 @@ export default function EmployerJobsPage() {
   if (isLoading) {
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="h-6 w-24 animate-pulse rounded bg-muted" />
-            <div className="mt-2 h-4 w-48 animate-pulse rounded bg-muted" />
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1.5">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-4 w-56 opacity-60" />
           </div>
+          <Skeleton className="h-10 w-32 rounded-lg" />
         </div>
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-lg border border-border bg-muted/30" />
+        {/* Tabs bar */}
+        <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
+          {[52, 56, 52, 52, 44].map((w, i) => (
+            <Skeleton key={i} className="h-8 rounded-md" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Job rows */}
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkeletonJobRow key={i} />
         ))}
       </div>
     );

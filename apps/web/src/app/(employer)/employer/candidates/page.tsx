@@ -10,6 +10,7 @@ import {
   Users,
   Eye,
 } from "lucide-react";
+import { Skeleton, SkeletonCandidateRow } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAllApplicants } from "@/hooks/use-applicants";
@@ -61,10 +62,24 @@ export default function CandidatesPage() {
   if (isLoading) {
     return (
       <div className="space-y-5">
-        <div className="h-8 w-48 animate-pulse rounded bg-surface-200" />
-        <div className="h-12 animate-pulse rounded-lg bg-surface-100" />
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 animate-pulse rounded-lg border border-surface-200 bg-surface-50" />
+        {/* Header */}
+        <div className="space-y-1.5">
+          <Skeleton className="h-7 w-44" />
+          <Skeleton className="h-4 w-64 opacity-60" />
+        </div>
+        {/* Search bar + filter chips row */}
+        <div className="flex gap-2">
+          <Skeleton className="h-10 flex-1 rounded-lg" />
+          <Skeleton className="h-10 w-24 rounded-lg" />
+        </div>
+        <div className="flex gap-2">
+          {[80, 72, 68, 64, 60].map((w, i) => (
+            <Skeleton key={i} className="h-7 rounded-full" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Candidate rows */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonCandidateRow key={i} />
         ))}
       </div>
     );

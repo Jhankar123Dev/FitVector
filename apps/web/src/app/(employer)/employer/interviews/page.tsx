@@ -18,6 +18,7 @@ import {
   Send,
   RotateCcw,
 } from "lucide-react";
+import { Skeleton, SkeletonStatCard, SkeletonInterviewRow } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
 import { useInterviews, useInviteInterview } from "@/hooks/use-interviews";
@@ -58,6 +59,34 @@ export default function InterviewsPage() {
   const interviews = (interviewsData?.data || []) as unknown as AIInterview[];
   const stats = useMemo(() => computeStats(interviews), [interviews]);
   const resendInvite = useInviteInterview();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="space-y-1.5">
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-4 w-64 opacity-60" />
+        </div>
+        {/* 4 stat cards */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+        {/* Tabs bar */}
+        <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
+          {[60, 52, 68, 52].map((w, i) => (
+            <Skeleton key={i} className="h-8 rounded-md" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Interview rows */}
+        {Array.from({ length: 5 }).map((_, i) => (
+          <SkeletonInterviewRow key={i} />
+        ))}
+      </div>
+    );
+  }
 
   const filterByTab = (tab: string) => {
     switch (tab) {

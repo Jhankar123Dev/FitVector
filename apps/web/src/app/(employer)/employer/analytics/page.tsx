@@ -30,6 +30,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import type { AnalyticsDateRange } from "@/types/employer";
+import { Skeleton, SkeletonBarChart, SkeletonLineChart } from "@/components/ui/skeleton";
 import { SOURCE_LABELS } from "@/types/employer";
 import { useAnalytics, useFunnel, useSources, useJobPerformance, useTrend, useInterviewerPerformance } from "@/hooks/use-analytics";
 import { CHART_COLORS } from "@/lib/chart-colors";
@@ -115,6 +116,78 @@ export default function AnalyticsPage() {
     { label: "Cost/Hire", value: metrics.costPerHire != null ? `₹${(metrics.costPerHire / 1000).toFixed(0)}K` : "—", icon: DollarSign, iconBg: "bg-rose-50", iconColor: "text-rose-600", trend: null },
   ];
 
+  if (metricsLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1.5">
+            <Skeleton className="h-7 w-28" />
+            <Skeleton className="h-4 w-52 opacity-60" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-40 rounded-lg" />
+            <Skeleton className="h-8 w-28 rounded-lg" />
+          </div>
+        </div>
+        {/* 6 stat cards */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-3 sm:p-4">
+              <div className="mb-1.5 h-7 w-7 animate-pulse rounded-md bg-muted" />
+              <Skeleton className="h-6 w-10" />
+              <Skeleton className="mt-1 h-3 w-20 opacity-60" />
+            </div>
+          ))}
+        </div>
+        {/* Two-column chart row: funnel bar + trend line */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+          {/* Bar chart */}
+          <div className="rounded-lg border border-border bg-card p-5 lg:col-span-3">
+            <Skeleton className="mb-4 h-5 w-36" />
+            <SkeletonBarChart
+              bars={7}
+              heights={[90, 72, 55, 44, 32, 20, 12]}
+              className="h-[220px] sm:h-[260px]"
+            />
+            <div className="mt-3 flex gap-3">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton key={i} className="h-2.5 flex-1 opacity-50" />
+              ))}
+            </div>
+          </div>
+          {/* Line chart */}
+          <div className="rounded-lg border border-border bg-card p-5 lg:col-span-2">
+            <Skeleton className="mb-4 h-5 w-32" />
+            <SkeletonLineChart className="h-[220px] sm:h-[260px]" />
+            <div className="mt-3 flex gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-2.5 flex-1 opacity-50" />
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* Source + job performance row */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          {[0, 1].map((j) => (
+            <div key={j} className="rounded-lg border border-border bg-card p-5">
+              <Skeleton className="mb-4 h-5 w-36" />
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3">
+                    <Skeleton className="h-3.5 w-32 opacity-70" />
+                    <Skeleton className="h-2 flex-1 rounded-full opacity-40" />
+                    <Skeleton className="h-3.5 w-10 opacity-70" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -129,7 +202,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Date range picker */}
-          <div className="flex rounded-lg border border-surface-200 overflow-hidden">
+          <div className="flex overflow-hidden rounded-lg border border-border">
             {DATE_RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}

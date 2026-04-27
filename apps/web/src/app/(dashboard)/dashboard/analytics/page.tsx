@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BarChart3, TrendingUp, Target, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { Skeleton, SkeletonStatCard } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/use-user";
 
 interface AnalyticsData {
@@ -78,13 +78,42 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-surface-800">Analytics</h1>
-        <p className="mt-1 text-sm text-surface-500">
+        <h1 className="text-2xl font-semibold text-foreground">Analytics</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Track your job search performance and trends
         </p>
       </div>
 
-      {isLoading && <LoadingSpinner message="Loading analytics..." />}
+      {isLoading && (
+        <div className="space-y-6">
+          {/* 4 stat cards */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonStatCard key={i} showIcon={false} />
+            ))}
+          </div>
+          {/* Pipeline breakdown card */}
+          <div className="rounded-lg border border-border bg-card p-5 sm:p-6">
+            <Skeleton className="mb-5 h-5 w-40" />
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3.5 w-20 opacity-70" />
+                    <Skeleton className="h-3.5 w-16 opacity-60" />
+                  </div>
+                  <div className="h-2 w-full animate-pulse rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary/30"
+                      style={{ width: `${[65, 42, 28, 18, 10][i]}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {!isLoading && data && data.totalApplications === 0 && (
         <EmptyState
@@ -101,14 +130,14 @@ export default function AnalyticsPage() {
             {stats.map((stat) => (
               <Card key={stat.title}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-xs font-medium uppercase tracking-wider text-surface-500">
+                  <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {stat.title}
                   </CardTitle>
-                  <stat.icon className="h-4 w-4 text-surface-400" />
+                  <stat.icon className="h-4 w-4 text-muted-foreground/60" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-surface-800">{stat.value}</div>
-                  <p className="text-xs text-surface-500">{stat.description}</p>
+                  <div className="text-3xl font-bold text-foreground">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -128,12 +157,12 @@ export default function AnalyticsPage() {
                   return (
                     <div key={status}>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="capitalize text-surface-700">{status}</span>
-                        <span className="text-surface-500">
+                        <span className="capitalize text-foreground/80">{status}</span>
+                        <span className="text-muted-foreground">
                           {countNum} ({pct}%)
                         </span>
                       </div>
-                      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-surface-100">
+                      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
                         <div
                           className="h-full rounded-full bg-brand-500 transition-all"
                           style={{ width: `${pct}%` }}
