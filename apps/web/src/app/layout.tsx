@@ -1,9 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Providers } from "@/components/shared/providers";
 import "@/styles/globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+// Plus Jakarta Sans: the sole typeface for FitVector Pro
+// Weights: 300 (light), 400 (regular), 500 (medium), 600 (semibold), 700 (bold), 800 (extrabold)
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -20,16 +27,27 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#6c5ce7",
+  // Theme-aware browser chrome: brand blue in light, dark slate in dark
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0369A1" },
+    { media: "(prefers-color-scheme: dark)",  color: "#0F172A" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
+    // suppressHydrationWarning required by next-themes (class injection on <html>)
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased bg-surface-50 text-surface-800`}>
+      <body
+        className={`${jakarta.variable} font-sans antialiased bg-background text-foreground`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

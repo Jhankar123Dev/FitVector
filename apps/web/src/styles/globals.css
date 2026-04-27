@@ -2,6 +2,159 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════════════
+   FitVector Pro — Global Design Tokens
+   Architecture: 3-layer CSS variable system
+     Layer 1  Primitives — raw HSL channel values (no hsl() wrapper)
+     Layer 2  Semantic   — named roles mapped to primitives
+     Layer 3  Tailwind   — utilities using hsl(var(--*)) in config
+   ═══════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* ── Layer 1: Primitive HSL channels ─────────────────────────
+       Format: H S% L%  (no hsl() wrapper — consumed by hsl(var(--*)))
+       Source palette: Tailwind sky + slate + green                 */
+
+    /* Sky / Ocean blue ─────────────────────── */
+    --p-sky-50:   204 100% 97%;
+    --p-sky-100:  204  94% 94%;
+    --p-sky-200:  201  94% 86%;
+    --p-sky-300:  199  95% 74%;
+    --p-sky-400:  198  93% 60%;   /* #38BDF8 — dark-mode primary    */
+    --p-sky-500:  199  89% 48%;   /* #0EA5E9 — secondary blue       */
+    --p-sky-600:  200  98% 39%;   /* #0284C7                        */
+    --p-sky-700:  201  96% 32%;   /* #0369A1 — light-mode primary   */
+    --p-sky-800:  201  90% 27%;   /* #075985                        */
+    --p-sky-900:  202  80% 24%;   /* #0C4A6E — navy text/authority  */
+    --p-sky-950:  204  80% 16%;   /* #082F49                        */
+
+    /* Slate ────────────────────────────────── */
+    --p-slate-50:  210  40% 98%;
+    --p-slate-100: 210  40% 96%;
+    --p-slate-200: 214  32% 91%;
+    --p-slate-300: 213  27% 84%;
+    --p-slate-400: 215  20% 65%;
+    --p-slate-500: 215  16% 47%;
+    --p-slate-600: 215  19% 35%;
+    --p-slate-700: 215  25% 27%;
+    --p-slate-800: 217  33% 17%;   /* #1E293B — dark card           */
+    --p-slate-900: 222  47% 11%;   /* #0F172A — dark bg             */
+    --p-slate-950: 229  84%  5%;
+
+    /* Green / CTA ──────────────────────────── */
+    --p-green-500: 142  71% 45%;   /* #22C55E — CTA only            */
+    --p-green-600: 142  76% 36%;   /* #16A34A                       */
+
+    /* Neutral ──────────────────────────────── */
+    --p-white:     0    0% 100%;
+    --p-red-500:   0   84% 60%;
+
+    /* ── Layer 2: Semantic tokens — LIGHT mode ───────────────────
+       These are the canonical names used by Tailwind utilities
+       and shadcn/ui components.                                     */
+
+    --background:            var(--p-sky-50);    /* #F0F9FF page bg */
+    --foreground:            var(--p-sky-900);   /* #0C4A6E nav txt */
+
+    --card:                  var(--p-white);
+    --card-foreground:       var(--p-sky-900);
+
+    --popover:               var(--p-white);
+    --popover-foreground:    var(--p-sky-900);
+
+    --primary:               var(--p-sky-700);   /* #0369A1 buttons */
+    --primary-foreground:    var(--p-white);
+
+    --secondary:             var(--p-sky-100);   /* subtle bg       */
+    --secondary-foreground:  var(--p-sky-800);
+
+    --muted:                 var(--p-slate-100);
+    --muted-foreground:      var(--p-slate-500);
+
+    /* shadcn accent = subtle hover bg, NOT the green CTA          */
+    --accent:                var(--p-slate-100);
+    --accent-foreground:     var(--p-slate-700);
+
+    --destructive:           var(--p-red-500);
+    --destructive-foreground: var(--p-white);
+
+    --border:                var(--p-slate-200);
+    --input:                 var(--p-slate-200);
+    --ring:                  var(--p-sky-700);
+
+    /* ── Spacing & Shape ─────────────────────────────────────────
+       Conservative radii per DESIGN.md (Stripe/Linear reference) */
+    --radius:        0.375rem;   /* 6px  base (tailwind: rounded-lg)  */
+    --section-gap:   2rem;
+    --card-padding:  1.5rem;
+  }
+
+  /* ── Layer 2: Semantic tokens — DARK mode ──────────────────────
+     Overrides; primitives are identical references above.          */
+  .dark {
+    --background:            var(--p-slate-900);   /* #0F172A       */
+    --foreground:            var(--p-slate-50);    /* near-white     */
+
+    --card:                  var(--p-slate-800);   /* #1E293B        */
+    --card-foreground:       var(--p-slate-50);
+
+    --popover:               var(--p-slate-800);
+    --popover-foreground:    var(--p-slate-50);
+
+    --primary:               var(--p-sky-400);    /* #38BDF8 WCAG AA */
+    --primary-foreground:    var(--p-slate-900);  /* dark bg text    */
+
+    --secondary:             var(--p-slate-700);
+    --secondary-foreground:  var(--p-slate-50);
+
+    --muted:                 var(--p-slate-700);
+    --muted-foreground:      var(--p-slate-400);
+
+    --accent:                var(--p-slate-700);
+    --accent-foreground:     var(--p-slate-50);
+
+    --destructive:           0 62% 30%;
+    --destructive-foreground: var(--p-slate-50);
+
+    --border:                var(--p-slate-700);
+    --input:                 var(--p-slate-700);
+    --ring:                  var(--p-sky-400);
+  }
+
+  /* ── Base resets ────────────────────────────────────────────── */
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Reduce layout shift from theme transitions */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: ease;
+    transition-duration: 150ms;
+  }
+
+  /* Disable transitions on page load to prevent FOUC flash */
+  .no-transitions *,
+  .no-transitions *::before,
+  .no-transitions *::after {
+    transition: none !important;
+  }
+}
+
+/* ── Scrollbar utilities ──────────────────────────────────────── */
 @layer utilities {
   .scrollbar-hidden {
     -ms-overflow-style: none;
@@ -11,106 +164,100 @@
     display: none;
   }
 
-  /* Thin dark scrollbar for dark containers */
-  .scrollbar-dark {
+  /* Themed thin scrollbar — follows light/dark automatically */
+  .scrollbar-themed {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+    scrollbar-color: hsl(var(--border)) transparent;
   }
-  .scrollbar-dark::-webkit-scrollbar {
+  .scrollbar-themed::-webkit-scrollbar {
     width: 4px;
   }
-  .scrollbar-dark::-webkit-scrollbar-track {
+  .scrollbar-themed::-webkit-scrollbar-track {
     background: transparent;
   }
-  .scrollbar-dark::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+  .scrollbar-themed::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
     border-radius: 9999px;
   }
-  .scrollbar-dark::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
+  .scrollbar-themed::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+
+  /* Backwards-compat alias — dark containers still work */
+  .scrollbar-dark {
+    @apply scrollbar-themed;
   }
 }
 
-@layer base {
-  :root {
-    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --radius: 0.75rem;
-
-    /* Spacing scale for consistent rhythm */
-    --section-gap: 2rem;
-    --card-padding: 1.5rem;
-    --card-radius: 12px;
-    --button-radius: 8px;
-    --input-radius: 8px;
-  }
-
-  * {
-    @apply border-surface-200;
-  }
-
-  body {
-    @apply bg-surface-50 text-surface-800 font-sans antialiased;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
-}
-
+/* ── Component utilities ─────────────────────────────────────── */
 @layer components {
-  /* Stripe-style card shadows */
+  /* Blue-tinted shadows per DESIGN.md */
   .card-shadow {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 1px 3px rgba(2, 55, 112, 0.06),
+      0 1px 2px rgba(2, 55, 112, 0.04);
   }
 
   .card-shadow-hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 4px 12px rgba(2, 55, 112, 0.10),
+      0 2px 4px  rgba(2, 55, 112, 0.06);
   }
 
-  /* Consistent page layout */
+  /* Page layout helpers */
   .page-container {
     @apply mx-auto max-w-7xl px-6;
   }
 
-  /* Page header pattern */
   .page-header {
     @apply flex items-center justify-between;
   }
 
   .page-title {
-    @apply text-2xl font-semibold text-surface-800;
+    @apply text-2xl font-semibold text-foreground;
   }
 
   .page-subtitle {
-    @apply text-sm text-surface-500 mt-1;
+    @apply text-sm text-muted-foreground mt-1;
   }
 
   /* Stat card pattern */
   .stat-value {
-    @apply text-3xl font-bold text-surface-800;
+    @apply text-3xl font-bold text-foreground;
   }
 
   .stat-label {
-    @apply text-sm text-surface-500;
+    @apply text-sm text-muted-foreground;
   }
 
   /* Empty state pattern */
   .empty-state {
-    @apply flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-surface-200 p-12 text-center;
+    @apply flex flex-col items-center justify-center rounded-xl
+           border-2 border-dashed border-border p-12 text-center;
   }
 }
 
+/* ── Extra utilities ─────────────────────────────────────────── */
 @layer utilities {
-  /* Focus ring utility for brand color */
+  /* Brand focus ring */
   .focus-brand {
-    @apply focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none;
+    @apply focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
   }
 
-  /* Gradient text utility */
+  /* Gradient text */
   .text-gradient-brand {
-    @apply bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-brand-700 to-brand-500 bg-clip-text text-transparent;
+  }
+
+  /* Ensure prefers-reduced-motion is respected */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
