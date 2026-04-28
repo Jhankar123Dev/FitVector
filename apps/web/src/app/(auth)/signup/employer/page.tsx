@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/auth/signup-form";
 
 export const metadata: Metadata = {
@@ -6,6 +8,10 @@ export const metadata: Metadata = {
   description: "Create your FitVector recruiter account and hire smarter with AI",
 };
 
-export default function EmployerSignupPage() {
+export default async function EmployerSignupPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect(session.user.role === "employer" ? "/employer/dashboard" : "/dashboard");
+  }
   return <SignupForm defaultRole="employer" />;
 }

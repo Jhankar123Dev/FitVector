@@ -190,7 +190,7 @@ export function ApplicationDetailModal({
                         style={{ backgroundColor: cfg?.color || "#6B7280" }}
                       />
                       <span className="font-medium">{cfg?.label || entry.status}</span>
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground" suppressHydrationWarning>
                         {new Date(entry.changed_at).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",

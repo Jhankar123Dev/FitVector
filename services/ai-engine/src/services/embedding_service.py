@@ -284,7 +284,7 @@ Respond ONLY with valid JSON matching the schema below — no markdown, no extra
 async def generate_gap_analysis(request: GapAnalysisRequest) -> GapAnalysisResponse:
     """Generate detailed gap analysis using Gemini Flash."""
     try:
-        from src.services.ai_service import _call_gemini
+        from src.services.ai_service import _call_gemini, _clean_gemini_json_response
 
         user_prompt = f"""Candidate Profile:
 {json.dumps(request.parsed_resume, indent=2)}

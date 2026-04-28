@@ -119,8 +119,11 @@ export default function JobsPage() {
 
       setOutreachResult(null);
       setLoadingOutreachType(null);
-      // Re-trigger search with new view if already searched
-      if (jobSearchParams) {
+      // Switching back to "all" resets the search — "All Jobs" is a browse view, not a search view.
+      // Switching between fitvector ↔ external re-runs the search with the new data source.
+      if (tab === "all") {
+        setJobSearchParams(null);
+      } else if (jobSearchParams) {
         setJobSearchParams((prev) => prev ? { ...prev, view: tab } : prev);
       }
     },

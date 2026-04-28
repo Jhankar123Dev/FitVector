@@ -192,7 +192,7 @@ function AppCard({
             {/* Meta row */}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {app.appliedAt && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground" suppressHydrationWarning>
                   <Calendar className="h-2.5 w-2.5" />
                   Applied {formatDate(app.appliedAt)}
                 </span>

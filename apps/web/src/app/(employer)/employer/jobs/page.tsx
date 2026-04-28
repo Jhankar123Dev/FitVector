@@ -340,7 +340,7 @@ export default function EmployerJobsPage() {
             Manage your job postings and track applicants
           </p>
         </div>
-        <Button asChild>
+        <Button variant="cta" asChild>
           <Link href="/employer/jobs/create">
             <Plus className="mr-1.5 h-4 w-4" />
             Post New Job
@@ -384,7 +384,7 @@ export default function EmployerJobsPage() {
                       ? "Draft jobs will appear here when you save a job without publishing."
                       : "Create a new job posting to get started."}
                   </p>
-                  <Button size="sm" className="mt-4" asChild>
+                  <Button variant="cta" size="sm" className="mt-4" asChild>
                     <Link href="/employer/jobs/create">
                       <Plus className="mr-1.5 h-3.5 w-3.5" />
                       Post a Job

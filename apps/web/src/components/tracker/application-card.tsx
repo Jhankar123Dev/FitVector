@@ -129,7 +129,7 @@ export function ApplicationCard({ application, index, onClick, onStatusChange }:
               <div className="mt-3 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                   {application.appliedAt && (
-                    <span className="inline-flex items-center gap-0.5">
+                    <span className="inline-flex items-center gap-0.5" suppressHydrationWarning>
                       <Calendar className="h-2.5 w-2.5" />
                       {formatDate(application.appliedAt)}
                     </span>
@@ -141,7 +141,7 @@ export function ApplicationCard({ application, index, onClick, onStatusChange }:
                     </span>
                   )}
                   {application.nextFollowupDate && (
-                    <span className="rounded bg-yellow-100 px-1 text-yellow-700">
+                    <span className="rounded bg-yellow-100 px-1 text-yellow-700" suppressHydrationWarning>
                       Follow up {formatDate(application.nextFollowupDate)}
                     </span>
                   )}

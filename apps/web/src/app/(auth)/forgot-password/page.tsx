@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 
 export const metadata: Metadata = {
@@ -6,6 +8,10 @@ export const metadata: Metadata = {
   description: "Reset your FitVector account password",
 };
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect("/dashboard");
+  }
   return <ForgotPasswordForm />;
 }
