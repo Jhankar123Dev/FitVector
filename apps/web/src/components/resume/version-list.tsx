@@ -132,7 +132,13 @@ export function VersionList({ versions }: VersionListProps) {
                   View
                 </Link>
               </Button>
-              <DownloadButton versionId={version.id} versionName={version.versionName} />
+              {version.hasLatex ? (
+                <DownloadButton versionId={version.id} versionName={version.versionName} />
+              ) : (
+                <span className="text-[10px] text-muted-foreground px-2 py-1 rounded-md bg-muted whitespace-nowrap">
+                  Re-tailor for PDF
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>

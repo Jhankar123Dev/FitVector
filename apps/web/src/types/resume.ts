@@ -24,6 +24,7 @@ export interface ResumeVersion {
   jobTitle: string | null;
   companyName: string | null;
   createdAt: string;
+  hasLatex: boolean;
 }
 
 export type ResumeTemplate = {

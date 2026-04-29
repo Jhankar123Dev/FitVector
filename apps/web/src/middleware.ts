@@ -144,21 +144,30 @@ export async function middleware(req: NextRequest) {
     if (rule.pattern.test(pathname)) {
       const limiter = limiters[rule.limiterKey];
       const key = rule.keyFn(req, ip);
-      const { success, limit, remaining, reset } = await limiter.limit(key);
 
-      if (!success) {
-        return NextResponse.json(
-          { error: "Too many requests. Please slow down and try again." },
-          {
-            status: 429,
-            headers: {
-              "Retry-After":           String(Math.ceil((reset - Date.now()) / 1000)),
-              "X-RateLimit-Limit":     String(limit),
-              "X-RateLimit-Remaining": "0",
-              "X-RateLimit-Reset":     String(reset),
+      try {
+        const { success, limit, remaining, reset } = await limiter.limit(key);
+
+        if (!success) {
+          return NextResponse.json(
+            { error: "Too many requests. Please slow down and try again." },
+            {
+              status: 429,
+              headers: {
+                "Retry-After":           String(Math.ceil((reset - Date.now()) / 1000)),
+                "X-RateLimit-Limit":     String(limit),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset":     String(reset),
+              },
             },
-          },
-        );
+          );
+        }
+      } catch {
+        // Redis unreachable (network issue / bad credentials) — fail open:
+        // allow the request through rather than blocking all traffic.
+        // This is intentional: rate limiting is a best-effort defence, not a
+        // hard gate. The request will still be served normally.
+        console.warn("[middleware] Upstash rate-limit failed — allowing request through:", pathname);
       }
 
       break; // first matching rule wins

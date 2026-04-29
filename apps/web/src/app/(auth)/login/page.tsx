@@ -12,7 +12,7 @@ export default async function LoginPage() {
   // Server-side session check — already logged-in users never see the login form
   const session = await auth();
   if (session?.user) {
-    redirect(session.user.role === "employer" ? "/employer/dashboard" : "/dashboard");
+    redirect(session.user.role === "employer" ? "/employer" : "/dashboard");
   }
   return <LoginForm />;
 }
