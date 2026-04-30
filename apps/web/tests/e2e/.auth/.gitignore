@@ -1,0 +1,2 @@
+# Cached Playwright auth sessions — contain live cookies, never commit these
+*.json

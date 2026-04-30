@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createHash, randomBytes } from "crypto";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email";
 
 // Rate limiting: max 3 requests per email per 15 minutes
 // (enforced at DB level via token count check)
@@ -50,15 +50,12 @@ export async function POST(req: Request) {
 
         const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/reset-password?token=${rawToken}`;
 
-        // ── Email delivery via Resend ─────────────────────────────────────
-        if (process.env.RESEND_API_KEY) {
-          const resend = new Resend(process.env.RESEND_API_KEY);
-          const from = process.env.EMAIL_FROM ?? "FitVector <noreply@fitvector.pro>";
-          await resend.emails.send({
-            from,
-            to: user.email,
-            subject: "Reset your FitVector password",
-            html: `<!DOCTYPE html>
+        // ── Email delivery (forks to email-sink in test mode) ──────────────
+        await sendEmail({
+          to: user.email,
+          subject: "Reset your FitVector password",
+          template: "password-reset",
+          html: `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:ui-sans-serif,system-ui,sans-serif;">
@@ -91,8 +88,7 @@ export async function POST(req: Request) {
   </table>
 </body>
 </html>`,
-          });
-        }
+        });
 
         // ── Dev / no-key fallback: log the link ────────────────────────────
         if (process.env.NODE_ENV !== "production" || !process.env.RESEND_API_KEY) {

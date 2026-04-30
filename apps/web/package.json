@@ -10,7 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "tsx scripts/seed.ts",
-    "seed:wipe": "tsx scripts/seed.ts --wipe"
+    "seed:wipe": "tsx scripts/seed.ts --wipe",
+    "seed:test-users": "tsx scripts/seed-test-users.ts",
+    "seed:test-users:reset": "tsx scripts/seed-test-users.ts --reset"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.0.0",

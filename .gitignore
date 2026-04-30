@@ -67,6 +67,11 @@ yarn-error.log*
 coverage/
 .playwright/
 
+# Playwright
+playwright-report/
+test-results/
+tests/e2e/.auth/*.json
+
 # Misc
 *.tsbuildinfo
 book1.xlsx

@@ -1,0 +1,12 @@
+# Next.js build output
+.next/
+out/
+
+# Playwright — generated artifacts, never commit these
+playwright-report/
+test-results/
+
+# Playwright cached auth sessions — contain live cookies / JWTs
+# The .auth/ directory itself is tracked (it holds a .gitignore), but the
+# session JSON files inside must never be committed.
+tests/e2e/.auth/*.json
