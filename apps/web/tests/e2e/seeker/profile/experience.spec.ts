@@ -51,6 +51,7 @@ async function fetchWorkHistory(userId: string): Promise<WorkEntry[]> {
 
 test.describe("Profile — work history (experience)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ ephemeralSeekerOptions: { onboardingCompleted: true } });
 
   test("preloads existing entries from user_profiles.work_history", async ({
     page,

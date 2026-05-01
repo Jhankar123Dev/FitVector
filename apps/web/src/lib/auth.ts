@@ -299,6 +299,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const dest = authResult!.user.onboardingCompleted ? "/employer" : "/employer/onboarding";
           return Response.redirect(new URL(dest, request.nextUrl.origin));
         }
+
+        // Seeker onboarding gate — incomplete seekers can't reach /dashboard; completed seekers can't re-enter /onboarding
+        if (role === "seeker") {
+          const onboarded = authResult!.user.onboardingCompleted;
+          if (!onboarded && pathname.startsWith("/dashboard")) {
+            return Response.redirect(new URL("/onboarding", request.nextUrl.origin));
+          }
+          if (onboarded && pathname.startsWith("/onboarding")) {
+            return Response.redirect(new URL("/dashboard", request.nextUrl.origin));
+          }
+        }
       }
 
       return true;

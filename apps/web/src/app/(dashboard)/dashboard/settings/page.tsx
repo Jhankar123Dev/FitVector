@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user";
 import { useSeekerProfile, useUpdateSeekerProfile } from "@/hooks/use-seeker-profile";
 import type { WorkHistoryEntry } from "@/hooks/use-seeker-profile";
@@ -54,13 +54,19 @@ export default function SettingsPage() {
   const [name, setName]       = useState(user?.name || "");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Sync name from session once it resolves (useState only initialises once,
+  // so user?.name is null on the first render while the session is loading)
+  useEffect(() => {
+    if (user?.name) setName(user.name);
+  }, [user?.name]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await fetch("/api/user/profile", {
         method:  "PUT",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ fullName: name }),
+        body:    JSON.stringify(name.trim() ? { name: name.trim() } : {}),
       });
     } finally {
       setIsSaving(false);
@@ -223,16 +229,17 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>Full Name</Label>
+            <Label htmlFor="settings-full-name">Full Name</Label>
             <Input
+              id="settings-full-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1.5 max-w-sm"
             />
           </div>
           <div>
-            <Label>Email</Label>
-            <Input value={user?.email || ""} disabled className="mt-1.5 max-w-sm" />
+            <Label htmlFor="settings-email">Email</Label>
+            <Input id="settings-email" value={user?.email || ""} disabled className="mt-1.5 max-w-sm" />
             <p className="mt-1 text-xs text-muted-foreground/70">Email cannot be changed</p>
           </div>
           <Button onClick={handleSave} disabled={isSaving} className="gap-1.5">

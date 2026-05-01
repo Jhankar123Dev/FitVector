@@ -70,6 +70,7 @@ async function mockSeekerProfile(
 
 test.describe("Settings — Professional Profile (contact info)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ ephemeralSeekerOptions: { onboardingCompleted: true } });
 
   test("all 5 contact-info fields render and preload from the API", async ({
     page,

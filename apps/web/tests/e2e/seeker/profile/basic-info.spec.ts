@@ -29,6 +29,7 @@ import { getAdminClient } from "../../support/helpers/db-helpers";
 
 test.describe("Profile — basic info (lives on /dashboard/settings)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ ephemeralSeekerOptions: { onboardingCompleted: true } });
 
   test("Full Name and Email inputs preload the seeker's current data", async ({
     page,
@@ -42,7 +43,7 @@ test.describe("Profile — basic info (lives on /dashboard/settings)", () => {
     await expect(settings.emailInput).toHaveValue(ephemeralSeeker.email);
   });
 
-  test("clicking Save Changes is a no-op for full_name (TODO:BUG — settings sends fullName, /api/user/profile schema only reads name)", async ({
+  test("clicking Save Changes persists the new full name to the database", async ({
     page,
     ephemeralSeeker,
   }) => {
@@ -53,7 +54,6 @@ test.describe("Profile — basic info (lives on /dashboard/settings)", () => {
     const newName = "Updated Name";
     await settings.fullNameInput.fill(newName);
 
-    // Wait for the PUT to complete before checking DB.
     const putPromise = page.waitForResponse(
       (res) => res.url().includes("/api/user/profile") && res.request().method() === "PUT",
     );
@@ -61,18 +61,13 @@ test.describe("Profile — basic info (lives on /dashboard/settings)", () => {
     const put = await putPromise;
     expect(put.status()).toBe(200);
 
-    // Current reality: full_name is unchanged because the client field name
-    // doesn't match the schema. When the bug is fixed, flip this to .toBe(newName).
     const supabase = getAdminClient();
     const { data } = await supabase
       .from("users")
       .select("full_name")
       .eq("id", ephemeralSeeker.id)
       .single();
-    expect(
-      data?.full_name,
-      "TODO:BUG — once /api/user/profile accepts fullName, this should equal newName",
-    ).toBe(ephemeralSeeker.fullName);
+    expect(data?.full_name).toBe(newName);
   });
 
   test("Email input is disabled and shows the immutable copy", async ({

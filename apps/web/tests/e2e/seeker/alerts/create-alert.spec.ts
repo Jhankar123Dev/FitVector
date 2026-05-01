@@ -25,6 +25,8 @@
 import { test } from "../../support/fixtures";
 
 test.describe("Job alerts — create (NOT YET BUILT)", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ ephemeralSeekerOptions: { onboardingCompleted: true } });
   test.fixme(
     "Pro/Elite seeker can create a new job alert (TODO: build /dashboard/alerts page + /api/user/alerts route — feature listed on Starter plan card but not implemented)",
     async () => {

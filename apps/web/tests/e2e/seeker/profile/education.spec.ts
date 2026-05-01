@@ -28,6 +28,8 @@
 import { test } from "../../support/fixtures";
 
 test.describe("Profile — education (NOT YET IMPLEMENTED in UI)", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ ephemeralSeekerOptions: { onboardingCompleted: true } });
   test.fixme(
     "education list renders existing entries (TODO: add Education section to /dashboard/settings + extend /api/seeker/profile schema with education[])",
     async () => {

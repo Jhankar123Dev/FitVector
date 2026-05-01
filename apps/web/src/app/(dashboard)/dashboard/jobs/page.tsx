@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SearchX, Loader2, MapPin, Zap, Globe, LayoutGrid, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,7 @@ export default function JobsPage() {
   const [loadingOutreachType, setLoadingOutreachType] = useState<OutreachButtonType | null>(null);
   const [outreachResult, setOutreachResult] = useState<OutreachResult | null>(null);
 
-  // Saved jobs (local optimistic state keyed by job id)
+  // Saved jobs — seeded from server-stamped isSaved on each job, then updated optimistically
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
 
   const {
@@ -100,6 +100,18 @@ export default function JobsPage() {
   const allJobs = useMemo(() => {
     return data?.pages ? data.pages.flatMap((page) => page.data.jobs) : [];
   }, [data]);
+
+  // Seed savedJobIds from the server-stamped isSaved on every search result change
+  useEffect(() => {
+    if (!allJobs.length) return;
+    setSavedJobIds((prev) => {
+      const next = new Set(prev);
+      for (const job of allJobs) {
+        if (job.isSaved) next.add(job.id);
+      }
+      return next;
+    });
+  }, [allJobs]);
 
   const totalJobs = data?.pages?.[0]?.data.total ?? 0;
   const usage = data?.pages?.[0]?.data.usage;

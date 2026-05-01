@@ -30,6 +30,7 @@ async function seedSkills(userId: string, skills: string[]): Promise<void> {
 
 test.describe("Profile — skills", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ ephemeralSeekerOptions: { onboardingCompleted: true } });
 
   test("preloads the existing skills from user_profiles.skills", async ({
     page,
