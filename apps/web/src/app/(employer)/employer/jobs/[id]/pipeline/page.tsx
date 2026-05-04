@@ -357,7 +357,7 @@ export default function PipelinePage() {
   return (
     <div className="flex h-full flex-col -m-3 sm:-m-4 md:-m-6">
       {/* ── Top bar ──────────────────────────────────────────────── */}
-      <div className="border-b border-surface-200 bg-white px-3 py-3 sm:px-4 sm:py-4 md:px-6">
+      <div className="border-b border-border bg-background px-3 py-3 sm:px-4 sm:py-4 md:px-6">
         {/* Header row */}
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -370,10 +370,10 @@ export default function PipelinePage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="min-w-0">
-              <h1 className="truncate text-base sm:text-lg font-semibold text-surface-800">
+              <h1 className="truncate text-base sm:text-lg font-semibold text-foreground">
                 {job?.title || "Loading..."}
               </h1>
-              <p className="truncate text-[11px] sm:text-xs text-surface-500">
+              <p className="truncate text-[11px] sm:text-xs text-muted-foreground">
                 {applicantsData?.total ?? filtered.length} total &middot; {filtered.length} showing &middot;{" "}
                 {job?.location || ""} &middot; {job?.department || ""}
               </p>
@@ -382,13 +382,13 @@ export default function PipelinePage() {
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {/* View toggle */}
-            <div className="flex rounded-lg border border-surface-200 p-0.5">
+            <div className="flex rounded-lg border border-border p-0.5">
               <button
                 className={cn(
                   "rounded-md px-2 py-1 sm:px-2.5 sm:py-1.5 text-[11px] sm:text-xs font-medium transition-colors",
                   viewMode === "kanban"
-                    ? "bg-surface-100 text-surface-800"
-                    : "text-surface-500 hover:text-surface-700",
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
                 onClick={() => setViewMode("kanban")}
               >
@@ -399,8 +399,8 @@ export default function PipelinePage() {
                 className={cn(
                   "rounded-md px-2 py-1 sm:px-2.5 sm:py-1.5 text-[11px] sm:text-xs font-medium transition-colors",
                   viewMode === "table"
-                    ? "bg-surface-100 text-surface-800"
-                    : "text-surface-500 hover:text-surface-700",
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
                 onClick={() => setViewMode("table")}
               >
@@ -529,9 +529,9 @@ export default function PipelinePage() {
 
         {/* ── Filters panel ────────────────────────────────────── */}
         {showFilters && (
-          <div className="mt-3 grid gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3 sm:p-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-3 grid gap-3 rounded-lg border border-border bg-muted/30 p-3 sm:p-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
             <div>
-              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
+              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-muted-foreground">
                 Score Min
               </label>
               <Input
@@ -544,7 +544,7 @@ export default function PipelinePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
+              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-muted-foreground">
                 Score Max
               </label>
               <Input
@@ -557,7 +557,7 @@ export default function PipelinePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
+              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-muted-foreground">
                 Skill
               </label>
               <Input
@@ -568,13 +568,13 @@ export default function PipelinePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
+              <label className="mb-1 block text-[11px] sm:text-xs font-medium text-muted-foreground">
                 Source
               </label>
               <select
                 value={filterSource}
                 onChange={(e) => setFilterSource(e.target.value)}
-                className="h-8 w-full rounded-lg border border-surface-200 bg-white px-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:bg-muted/30"
               >
                 <option value="">All</option>
                 <option value="fitvector">FitVector</option>
@@ -585,7 +585,7 @@ export default function PipelinePage() {
             </div>
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
+                <label className="mb-1 block text-[11px] sm:text-xs font-medium text-muted-foreground">
                   Exp Min
                 </label>
                 <Input
@@ -597,7 +597,7 @@ export default function PipelinePage() {
                 />
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600">
+                <label className="mb-1 block text-[11px] sm:text-xs font-medium text-muted-foreground">
                   Exp Max
                 </label>
                 <Input
@@ -615,7 +615,7 @@ export default function PipelinePage() {
               .filter((q) => q.type === "yes_no" || q.type === "multiple_choice")
               .map((q) => (
                 <div key={q.id}>
-                  <label className="mb-1 block text-[11px] sm:text-xs font-medium text-surface-600 truncate" title={q.question}>
+                  <label className="mb-1 block text-[11px] sm:text-xs font-medium text-muted-foreground truncate" title={q.question}>
                     {q.question.length > 40 ? q.question.slice(0, 38) + "…" : q.question}
                   </label>
                   <select
@@ -623,7 +623,7 @@ export default function PipelinePage() {
                     onChange={(e) =>
                       setFilterScreeningAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
                     }
-                    className="h-8 w-full rounded-lg border border-surface-200 bg-white px-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                    className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:bg-muted/30"
                   >
                     <option value="">Any</option>
                     {q.type === "yes_no" ? (
@@ -646,7 +646,7 @@ export default function PipelinePage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs text-surface-500 hover:text-surface-700"
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
                   onClick={() => {
                     setFilterScoreMin(0);
                     setFilterScoreMax(100);
@@ -679,13 +679,13 @@ export default function PipelinePage() {
                 <div
                   key={stage}
                   className={cn(
-                    "flex w-[220px] sm:w-[250px] md:w-[260px] shrink-0 flex-col rounded-lg border-t-[3px] bg-surface-50",
+                    "flex w-[220px] sm:w-[250px] md:w-[260px] shrink-0 flex-col rounded-lg border-t-[3px] bg-muted/30",
                     COLUMN_COLORS[stage] ?? "border-t-surface-300",
                   )}
                 >
                   {/* Column header */}
                   <div className="flex items-center justify-between px-2.5 py-2 sm:px-3 sm:py-2.5">
-                    <span className="text-[11px] sm:text-xs font-semibold text-surface-700">
+                    <span className="text-[11px] sm:text-xs font-semibold text-foreground/80">
                       {getStageName(stage)}
                     </span>
                     <div className="flex items-center gap-1">
@@ -707,8 +707,8 @@ export default function PipelinePage() {
                   {/* Cards */}
                   <div className="flex-1 space-y-1.5 sm:space-y-2 overflow-y-auto px-1.5 pb-2 sm:px-2">
                     {items.length === 0 ? (
-                      <div className="flex items-center justify-center rounded-lg border border-dashed border-surface-200 py-6 sm:py-8">
-                        <p className="text-[11px] sm:text-xs text-surface-400">No candidates</p>
+                      <div className="flex items-center justify-center rounded-lg border border-dashed border-border py-6 sm:py-8">
+                        <p className="text-[11px] sm:text-xs text-muted-foreground">No candidates</p>
                       </div>
                     ) : (
                       items.map((a) => (
@@ -730,7 +730,7 @@ export default function PipelinePage() {
             {/* Rejected column (collapsible) */}
             <div
               className={cn(
-                "flex shrink-0 flex-col rounded-lg border-t-[3px] bg-surface-50",
+                "flex shrink-0 flex-col rounded-lg border-t-[3px] bg-muted/30",
                 COLUMN_COLORS.rejected,
                 showRejected ? "w-[220px] sm:w-[250px] md:w-[260px]" : "w-[44px] sm:w-[50px]",
               )}
@@ -741,20 +741,20 @@ export default function PipelinePage() {
               >
                 {showRejected ? (
                   <>
-                    <span className="text-[11px] sm:text-xs font-semibold text-surface-700">
+                    <span className="text-[11px] sm:text-xs font-semibold text-foreground/80">
                       Rejected
                     </span>
                     <div className="flex items-center gap-1">
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                         {byStage.rejected.length}
                       </Badge>
-                      <ChevronDown className="h-3.5 w-3.5 text-surface-400" />
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
                   </>
                 ) : (
                   <div className="flex flex-col items-center gap-1 w-full">
-                    <ChevronRight className="h-3.5 w-3.5 text-surface-400" />
-                    <span className="text-[10px] font-semibold text-surface-500 [writing-mode:vertical-rl] rotate-180">
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-[10px] font-semibold text-muted-foreground [writing-mode:vertical-rl] rotate-180">
                       Rejected ({byStage.rejected.length})
                     </span>
                   </div>
@@ -784,7 +784,7 @@ export default function PipelinePage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[700px]">
                   <thead>
-                    <tr className="border-b border-surface-200 bg-surface-50">
+                    <tr className="border-b border-border bg-muted/30">
                       <th className="w-10 px-3 py-2.5 sm:px-4 sm:py-3">
                         <input
                           type="checkbox"
@@ -796,25 +796,25 @@ export default function PipelinePage() {
                             }
                           }}
                           checked={selectedIds.size === filtered.length && filtered.length > 0}
-                          className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+                          className="rounded border-border text-brand-500 focus:ring-brand-200"
                         />
                       </th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">
                         Candidate
                       </th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">
                         Current Role
                       </th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">
                         Score
                       </th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">
                         Source
                       </th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">
                         Stage
                       </th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">
                         Applied
                       </th>
                     </tr>
@@ -832,8 +832,8 @@ export default function PipelinePage() {
                     {filtered.length === 0 && (
                       <tr>
                         <td colSpan={7} className="py-12 sm:py-16 text-center">
-                          <Users className="mx-auto h-8 w-8 text-surface-300" />
-                          <p className="mt-2 text-sm text-surface-500">
+                          <Users className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                          <p className="mt-2 text-sm text-muted-foreground">
                             No candidates match your filters
                           </p>
                         </td>
@@ -843,7 +843,7 @@ export default function PipelinePage() {
                 </table>
               </div>
               {applicantsData?.hasMore && (
-                <div className="flex justify-center border-t border-surface-100 px-4 py-3">
+                <div className="flex justify-center border-t border-border px-4 py-3">
                   <Button
                     variant="outline"
                     size="sm"
@@ -962,22 +962,22 @@ export default function PipelinePage() {
       {/* ── Pipeline config modal ────────────────────────────────── */}
       {showPipelineConfig && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-surface-200 px-5 py-4">
-              <h3 className="text-sm font-semibold text-surface-800">Configure Pipeline</h3>
-              <button onClick={() => setShowPipelineConfig(false)} className="text-surface-400 hover:text-surface-700 text-xl font-bold leading-none">×</button>
+          <div className="w-full max-w-md rounded-xl bg-popover shadow-xl">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <h3 className="text-sm font-semibold text-foreground">Configure Pipeline</h3>
+              <button onClick={() => setShowPipelineConfig(false)} className="text-muted-foreground hover:text-foreground text-xl font-bold leading-none">×</button>
             </div>
             <div className="space-y-3 p-5">
-              <p className="text-xs text-surface-500">Toggle stages on or off. Stages with active candidates cannot be removed.</p>
+              <p className="text-xs text-muted-foreground">Toggle stages on or off. Stages with active candidates cannot be removed.</p>
 
               {/* Preview */}
-              <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-surface-50 p-3">
+              <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-muted/30 p-3">
                 {editingStages.map((stage, i) => (
                   <div key={stage} className="flex items-center gap-1">
                     <span className="rounded-full bg-brand-50 border border-brand-200 px-2 py-0.5 text-[10px] font-medium text-brand-700">
                       {getStageName(stage)}
                     </span>
-                    {i < editingStages.length - 1 && <span className="text-surface-300 text-[10px]">→</span>}
+                    {i < editingStages.length - 1 && <span className="text-muted-foreground text-[10px]">→</span>}
                   </div>
                 ))}
               </div>
@@ -994,12 +994,12 @@ export default function PipelinePage() {
                     key={group.label}
                     className={cn(
                       "flex items-center justify-between rounded-lg border p-3 transition-colors",
-                      isActive ? "border-brand-200 bg-brand-50/50" : "border-surface-200",
+                      isActive ? "border-brand-200 bg-brand-50/50" : "border-border",
                       hasActiveCandidates && "opacity-70",
                     )}
                   >
                     <div>
-                      <p className="text-xs font-medium text-surface-800">{group.label}</p>
+                      <p className="text-xs font-medium text-foreground">{group.label}</p>
                       {hasActiveCandidates && (
                         <p className="text-[10px] text-amber-600 mt-0.5">
                           Has active candidates — move them first to disable
@@ -1007,7 +1007,7 @@ export default function PipelinePage() {
                       )}
                       <div className="mt-1 flex flex-wrap gap-1">
                         {group.stages.map((s) => (
-                          <span key={s} className="text-[9px] rounded bg-surface-100 px-1.5 py-0.5 text-surface-600">
+                          <span key={s} className="text-[9px] rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
                             {PIPELINE_STAGE_LABELS[s]}
                           </span>
                         ))}
@@ -1027,7 +1027,7 @@ export default function PipelinePage() {
                       }}
                       className={cn(
                         "relative h-6 w-11 rounded-full transition-colors",
-                        isActive ? "bg-brand-500" : "bg-surface-200",
+                        isActive ? "bg-brand-500" : "bg-muted",
                         hasActiveCandidates && "cursor-not-allowed",
                       )}
                     >
@@ -1040,7 +1040,7 @@ export default function PipelinePage() {
                 );
               })}
             </div>
-            <div className="flex gap-2 border-t border-surface-200 px-5 py-4">
+            <div className="flex gap-2 border-t border-border px-5 py-4">
               <Button variant="outline" className="flex-1" onClick={() => setShowPipelineConfig(false)}>
                 Cancel
               </Button>
@@ -1086,7 +1086,7 @@ function CandidateTableRow({
 
   const SOURCE_COLORS: Record<string, string> = {
     fitvector: "bg-brand-50 text-brand-600",
-    external: "bg-surface-100 text-surface-600",
+    external: "bg-muted text-muted-foreground",
     referral: "bg-accent-50 text-accent-700",
     imported: "bg-sky-50 text-sky-600",
   };
@@ -1101,7 +1101,7 @@ function CandidateTableRow({
   return (
     <tr
       className={cn(
-        "cursor-pointer border-b border-surface-100 transition-colors hover:bg-surface-50",
+        "cursor-pointer border-b border-border transition-colors hover:bg-muted/50",
         selected && "bg-brand-50/50",
       )}
       onClick={() => onClick?.(applicant)}
@@ -1115,25 +1115,25 @@ function CandidateTableRow({
             onSelect?.(applicant.id);
           }}
           onClick={(e) => e.stopPropagation()}
-          className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+          className="rounded border-border text-brand-500 focus:ring-brand-200"
         />
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] sm:text-xs font-semibold text-surface-600">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] sm:text-xs font-semibold text-muted-foreground">
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xs sm:text-sm font-medium text-surface-800">
+            <p className="truncate text-xs sm:text-sm font-medium text-foreground">
               {applicant.name}
             </p>
-            <p className="truncate text-[11px] sm:text-xs text-surface-500">{applicant.email}</p>
+            <p className="truncate text-[11px] sm:text-xs text-muted-foreground">{applicant.email}</p>
           </div>
         </div>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <p className="text-xs sm:text-sm text-surface-700">{applicant.currentRole}</p>
-        <p className="text-[11px] sm:text-xs text-surface-400">{applicant.currentCompany}</p>
+        <p className="text-xs sm:text-sm text-foreground/80">{applicant.currentRole}</p>
+        <p className="text-[11px] sm:text-xs text-muted-foreground">{applicant.currentCompany}</p>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         {applicant.screeningScore > 0 ? (
@@ -1146,7 +1146,7 @@ function CandidateTableRow({
             {applicant.screeningScore}
           </span>
         ) : (
-          <span className="text-xs text-surface-400">—</span>
+          <span className="text-xs text-muted-foreground">—</span>
         )}
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
@@ -1165,7 +1165,7 @@ function CandidateTableRow({
         </Badge>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] sm:text-xs text-surface-500">
+        <span className="text-[11px] sm:text-xs text-muted-foreground">
           {new Date(applicant.appliedAt).toLocaleDateString("en-IN", {
             day: "numeric",
             month: "short",
@@ -1215,17 +1215,17 @@ function AssessmentPickerModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-surface-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+        <div className="w-full max-w-md rounded-xl bg-popover shadow-xl">
           {/* Header */}
-          <div className="flex items-center gap-3 border-b border-surface-200 px-5 py-4">
+          <div className="flex items-center gap-3 border-b border-border px-5 py-4">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50">
               <ClipboardCheck className="h-4 w-4 text-amber-600" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-surface-800">Send Assessment</h3>
-              <p className="text-xs text-surface-500">{candidateLabel}</p>
+              <h3 className="text-sm font-semibold text-foreground">Send Assessment</h3>
+              <p className="text-xs text-muted-foreground">{candidateLabel}</p>
             </div>
           </div>
 
@@ -1233,13 +1233,13 @@ function AssessmentPickerModal({
           <div className="px-5 py-4 max-h-[320px] overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-surface-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : assessments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-surface-200 py-10 text-center">
-                <ClipboardCheck className="h-8 w-8 text-surface-300" />
-                <p className="mt-2 text-sm font-medium text-surface-700">No assessments yet</p>
-                <p className="mt-1 text-xs text-surface-500">Create an assessment first, then assign it here.</p>
+              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-10 text-center">
+                <ClipboardCheck className="h-8 w-8 text-muted-foreground/40" />
+                <p className="mt-2 text-sm font-medium text-foreground">No assessments yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">Create an assessment first, then assign it here.</p>
                 <a
                   href="/employer/assessments/create"
                   target="_blank"
@@ -1251,7 +1251,7 @@ function AssessmentPickerModal({
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-surface-500 mb-3">Select an assessment to assign:</p>
+                <p className="text-xs text-muted-foreground mb-3">Select an assessment to assign:</p>
                 {assessments.map((a) => {
                   const id = a.id as string;
                   const name = a.name as string;
@@ -1268,31 +1268,31 @@ function AssessmentPickerModal({
                         "w-full rounded-lg border px-3 py-2.5 text-left transition-colors",
                         isSelected
                           ? "border-brand-400 bg-brand-50"
-                          : "border-surface-200 hover:border-surface-300 hover:bg-surface-50"
+                          : "border-border hover:border-border/80 hover:bg-muted/50"
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-surface-800 truncate">{name}</p>
+                          <p className="text-sm font-medium text-foreground truncate">{name}</p>
                           <div className="mt-1 flex flex-wrap items-center gap-1.5">
                             {type && (
-                              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", ASSESSMENT_TYPE_COLORS[type] || "bg-surface-100 text-surface-600")}>
+                              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", ASSESSMENT_TYPE_COLORS[type] || "bg-muted text-muted-foreground")}>
                                 {ASSESSMENT_TYPE_LABELS[type] || type}
                               </span>
                             )}
                             {difficulty && (
-                              <span className="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-medium text-surface-600 capitalize">
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">
                                 {difficulty}
                               </span>
                             )}
                             {timeLimit && (
-                              <span className="text-[10px] text-surface-400">{timeLimit} min</span>
+                              <span className="text-[10px] text-muted-foreground">{timeLimit} min</span>
                             )}
                           </div>
                         </div>
                         <div className={cn(
                           "mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 transition-colors",
-                          isSelected ? "border-brand-500 bg-brand-500" : "border-surface-300"
+                          isSelected ? "border-brand-500 bg-brand-500" : "border-muted-foreground/50"
                         )} />
                       </div>
                     </button>
@@ -1303,7 +1303,7 @@ function AssessmentPickerModal({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-2 border-t border-surface-200 px-5 py-3">
+          <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
             <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
               Cancel
             </Button>
@@ -1353,28 +1353,28 @@ function OfferReviewModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-surface-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+        <div className="w-full max-w-md rounded-xl bg-popover shadow-xl">
           {/* Header */}
-          <div className="flex items-center gap-3 border-b border-surface-200 px-5 py-4">
+          <div className="flex items-center gap-3 border-b border-border px-5 py-4">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-surface-800">Make Offer</h3>
-              <p className="text-xs text-surface-500">{applicant.name}</p>
+              <h3 className="text-sm font-semibold text-foreground">Make Offer</h3>
+              <p className="text-xs text-muted-foreground">{applicant.name}</p>
             </div>
           </div>
 
           {/* Stage review */}
           <div className="px-5 py-4 space-y-4">
-            <p className="text-xs text-surface-500">Review all completed stages before extending an offer.</p>
+            <p className="text-xs text-muted-foreground">Review all completed stages before extending an offer.</p>
 
             {/* Score */}
             {applicant.screeningScore > 0 && (
-              <div className="flex items-center justify-between rounded-lg border border-surface-200 px-3 py-2.5">
-                <span className="text-sm text-surface-700">AI Screening Score</span>
+              <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+                <span className="text-sm text-foreground/80">AI Screening Score</span>
                 <span className={cn("rounded-full px-2.5 py-0.5 text-sm font-bold", scoreColor)}>
                   {applicant.screeningScore}/100
                 </span>
@@ -1385,23 +1385,23 @@ function OfferReviewModal({
             <div className="space-y-2">
               {stagesPassed.map((s) => (
                 <div key={s.label} className="flex items-center gap-2.5 text-sm">
-                  <CheckCircle2 className={cn("h-4 w-4 shrink-0", s.done ? "text-emerald-500" : "text-surface-300")} />
-                  <span className={s.done ? "text-surface-700" : "text-surface-400"}>{s.label}</span>
+                  <CheckCircle2 className={cn("h-4 w-4 shrink-0", s.done ? "text-emerald-500" : "text-muted-foreground/30")} />
+                  <span className={s.done ? "text-foreground/80" : "text-muted-foreground"}>{s.label}</span>
                 </div>
               ))}
             </div>
 
             {/* Screening summary */}
             {applicant.screeningSummary && (
-              <div className="rounded-lg bg-surface-50 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-surface-400 mb-1">AI Summary</p>
-                <p className="text-xs leading-relaxed text-surface-600">{applicant.screeningSummary}</p>
+              <div className="rounded-lg bg-muted/30 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">AI Summary</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{applicant.screeningSummary}</p>
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-2 border-t border-surface-200 px-5 py-3">
+          <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
             <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
               Cancel
             </Button>

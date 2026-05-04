@@ -28,8 +28,8 @@ export function Step1BasicInfo({ form, update }: Props) {
             <Briefcase className="h-5 w-5 text-brand-500" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-surface-800">Basic Information</h2>
-            <p className="text-sm text-surface-500">Job title, location, and compensation</p>
+            <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+            <p className="text-sm text-muted-foreground">Job title, location, and compensation</p>
           </div>
         </div>
 
@@ -49,7 +49,7 @@ export function Step1BasicInfo({ form, update }: Props) {
             id="department"
             value={form.department}
             onChange={(e) => update({ department: e.target.value })}
-            className="flex h-10 w-full rounded-lg border border-surface-200 bg-white px-3.5 py-2.5 text-sm text-surface-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            className="flex h-10 w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="">Select department</option>
             {DEPARTMENTS.map((d) => (
@@ -78,7 +78,7 @@ export function Step1BasicInfo({ form, update }: Props) {
                     "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                     form.workMode === value
                       ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-surface-200 text-surface-600 hover:border-surface-300",
+                      : "border-border text-muted-foreground hover:border-border/60",
                   )}
                   onClick={() => update({ workMode: value })}
                 >
@@ -99,7 +99,7 @@ export function Step1BasicInfo({ form, update }: Props) {
                   "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                   form.jobType === value
                     ? "border-brand-500 bg-brand-50 text-brand-700"
-                    : "border-surface-200 text-surface-600 hover:border-surface-300",
+                    : "border-border text-muted-foreground hover:border-border/60",
                 )}
                 onClick={() => update({ jobType: value })}
               >
@@ -137,12 +137,12 @@ export function Step1BasicInfo({ form, update }: Props) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>Salary Range (optional)</Label>
-            <label className="flex items-center gap-2 text-xs text-surface-500">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
               <input
                 type="checkbox"
                 checked={!form.salaryVisible}
                 onChange={(e) => update({ salaryVisible: !e.target.checked })}
-                className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+                className="rounded border-border/60 text-brand-500 focus:ring-brand-200"
               />
               Hide from candidates
             </label>
@@ -154,7 +154,7 @@ export function Step1BasicInfo({ form, update }: Props) {
               value={form.salaryMin}
               onChange={(e) => update({ salaryMin: e.target.value })}
             />
-            <span className="text-xs text-surface-500">to</span>
+            <span className="text-xs text-muted-foreground">to</span>
             <Input
               type="number"
               placeholder="Max"
@@ -164,7 +164,7 @@ export function Step1BasicInfo({ form, update }: Props) {
             <select
               value={form.salaryCurrency}
               onChange={(e) => update({ salaryCurrency: e.target.value })}
-              className="h-10 rounded-lg border border-surface-200 bg-white px-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              className="h-10 rounded-lg border border-border bg-background px-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="INR">INR</option>
               <option value="USD">USD</option>

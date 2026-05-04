@@ -27,15 +27,15 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="border-t border-surface-200 bg-white">
-      <div className="mx-auto max-w-7xl px-6 py-12">
+    <footer className="border-t border-border bg-card">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
           <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="flex items-center text-xl font-bold">
-              <span className="text-brand-500">Fit</span>
-              <span className="text-surface-800">Vector</span>
+              <span className="text-primary">Fit</span>
+              <span className="text-foreground">Vector</span>
             </Link>
-            <p className="mt-4 text-sm text-surface-500">
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               AI-powered job search platform that helps you find, tailor, and apply to your dream
               jobs.
             </p>
@@ -43,13 +43,13 @@ export function Footer() {
 
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h3 className="text-sm font-semibold text-surface-800">{category}</h3>
+              <h3 className="text-sm font-semibold text-foreground">{category}</h3>
               <ul className="mt-4 space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-surface-500 transition-colors hover:text-surface-800"
+                      className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
                     >
                       {link.label}
                     </Link>
@@ -60,8 +60,8 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 border-t border-surface-200 pt-8">
-          <p className="text-center text-sm text-surface-400">
+        <div className="mt-12 border-t border-border pt-8">
+          <p className="text-center text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} FitVector. All rights reserved.
           </p>
         </div>

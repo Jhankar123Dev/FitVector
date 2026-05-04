@@ -47,18 +47,18 @@ export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps)
   return (
     <aside
       className={cn(
-        "flex h-full w-[240px] flex-col bg-surface-900",
+        "flex h-full w-[240px] flex-col border-r border-border bg-slate-50 dark:bg-slate-900",
         className,
       )}
     >
       {/* Company header — links to home */}
-      <Link href="/" className="flex h-14 items-center gap-2.5 border-b border-surface-800 px-4">
+      <Link href="/" className="flex h-14 items-center gap-2.5 border-b border-border px-4">
         {isLoading ? (
           <>
-            <div className="h-7 w-7 shrink-0 animate-pulse rounded-lg bg-surface-700" />
+            <div className="h-7 w-7 shrink-0 animate-pulse rounded-lg bg-muted" />
             <div className="min-w-0 flex-1 space-y-1">
-              <div className="h-3 w-24 animate-pulse rounded bg-surface-700" />
-              <div className="h-2 w-16 animate-pulse rounded bg-surface-800" />
+              <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+              <div className="h-2 w-16 animate-pulse rounded bg-muted" />
             </div>
           </>
         ) : company ? (
@@ -70,34 +70,34 @@ export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps)
                 className="h-7 w-7 rounded-lg object-cover"
               />
             ) : (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-xs font-bold text-white">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">
                 {company.name.charAt(0)}
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold text-white leading-tight">
+              <p className="truncate text-[13px] font-semibold text-foreground leading-tight">
                 {company.name}
               </p>
-              <p className="truncate text-[10px] text-surface-500 leading-tight">Employer Portal</p>
+              <p className="truncate text-[10px] text-muted-foreground leading-tight">Employer Portal</p>
             </div>
           </>
         ) : (
           <>
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-700 text-xs font-bold text-surface-400">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold text-muted-foreground">
               ?
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold text-surface-400 leading-tight">
+              <p className="truncate text-[13px] font-semibold text-muted-foreground leading-tight">
                 No Company
               </p>
-              <p className="truncate text-[10px] text-surface-500 leading-tight">Employer Portal</p>
+              <p className="truncate text-[10px] text-muted-foreground leading-tight">Employer Portal</p>
             </div>
           </>
         )}
       </Link>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto scrollbar-dark px-2.5 py-3">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3">
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -111,11 +111,11 @@ export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps)
               className={cn(
                 "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
                 isActive
-                  ? "bg-brand-500/15 text-brand-300"
-                  : "text-surface-400 hover:bg-surface-800 hover:text-surface-200",
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <item.icon className={cn("h-[16px] w-[16px] shrink-0", isActive && "text-brand-400")} />
+              <item.icon className={cn("h-[16px] w-[16px] shrink-0", isActive && "text-primary")} />
               {item.label}
             </Link>
           );
@@ -123,10 +123,10 @@ export function EmployerSidebar({ className, onNavigate }: EmployerSidebarProps)
       </nav>
 
       {/* Plan badge */}
-      <div className="border-t border-surface-800 p-3">
-        <div className="flex items-center justify-between rounded-md bg-surface-800/60 px-3 py-2">
-          <span className="text-[11px] font-medium text-surface-400">Plan</span>
-          <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[11px] font-semibold capitalize text-brand-300">
+      <div className="border-t border-border p-3">
+        <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
+          <span className="text-[11px] font-medium text-muted-foreground">Plan</span>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold capitalize text-primary">
             {company?.planTier || "starter"}
           </span>
         </div>

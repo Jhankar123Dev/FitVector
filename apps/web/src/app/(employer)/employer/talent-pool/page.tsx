@@ -167,14 +167,14 @@ export default function TalentPoolPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
             Talent Pool
           </h1>
           <Badge className="text-[11px] bg-brand-50 text-brand-700 border-brand-200">
             {candidates.length} candidates
           </Badge>
         </div>
-        <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+        <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
           Candidates saved for future opportunities
         </p>
       </div>
@@ -184,7 +184,7 @@ export default function TalentPoolPage() {
         <CardContent className="space-y-4 p-4 sm:p-5">
           <div className="flex items-center gap-2">
             <Crosshair className="h-4 w-4 text-brand-600" />
-            <h2 className="text-sm sm:text-base font-semibold text-surface-800">
+            <h2 className="text-sm sm:text-base font-semibold text-foreground">
               Find Matches for a Job
             </h2>
           </div>
@@ -192,11 +192,11 @@ export default function TalentPoolPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {/* Job post selector */}
             <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-              <Label className="text-xs text-surface-600">Job Post</Label>
+              <Label className="text-xs text-muted-foreground">Job Post</Label>
               <select
                 value={matchJobPostId}
                 onChange={(e) => setMatchJobPostId(e.target.value)}
-                className="w-full rounded-md border border-surface-200 bg-white px-3 py-2 text-sm text-surface-800 outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400"
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
               >
                 <option value="">Select a job post...</option>
                 {MOCK_JOB_POSTS.filter((j) => j.status === "active" || j.status === "draft").map(
@@ -211,7 +211,7 @@ export default function TalentPoolPage() {
 
             {/* Max candidates */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-surface-600">Max Candidates</Label>
+              <Label className="text-xs text-muted-foreground">Max Candidates</Label>
               <Input
                 type="number"
                 min={1}
@@ -224,7 +224,7 @@ export default function TalentPoolPage() {
 
             {/* Last active date */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-surface-600">Last Active After</Label>
+              <Label className="text-xs text-muted-foreground">Last Active After</Label>
               <Input
                 type="date"
                 value={matchLastActive}
@@ -235,7 +235,7 @@ export default function TalentPoolPage() {
 
             {/* Skills filter */}
             <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-              <Label className="text-xs text-surface-600">Skills (comma-separated)</Label>
+              <Label className="text-xs text-muted-foreground">Skills (comma-separated)</Label>
               <Input
                 placeholder="e.g. React, Node.js, Python"
                 value={matchSkills}
@@ -246,7 +246,7 @@ export default function TalentPoolPage() {
 
             {/* Location filter */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-surface-600">Location</Label>
+              <Label className="text-xs text-muted-foreground">Location</Label>
               <Input
                 placeholder="e.g. Bangalore"
                 value={matchLocation}
@@ -285,12 +285,12 @@ export default function TalentPoolPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span className="text-sm font-medium text-surface-800">
+                  <span className="text-sm font-medium text-foreground">
                     {talentSearch.data.data.length} matching candidate{talentSearch.data.data.length !== 1 ? "s" : ""} found
                   </span>
                 </div>
                 {talentSearch.data.cached && talentSearch.data.cachedAt && (
-                  <div className="flex items-center gap-1 text-[11px] text-surface-400">
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground/70">
                     <Clock className="h-3 w-3" />
                     Cached from {getCacheAgeMinutes(talentSearch.data.cachedAt)} min ago
                   </div>
@@ -298,31 +298,31 @@ export default function TalentPoolPage() {
               </div>
 
               {talentSearch.data.data.length === 0 ? (
-                <div className="rounded-lg border border-surface-200 bg-surface-50 py-8 text-center">
-                  <Database className="mx-auto h-8 w-8 text-surface-300" />
-                  <p className="mt-2 text-sm text-surface-500">No matching candidates found</p>
-                  <p className="mt-1 text-xs text-surface-400">Try broadening your filters.</p>
+                <div className="rounded-lg border border-border bg-muted/30 py-8 text-center">
+                  <Database className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                  <p className="mt-2 text-sm text-muted-foreground">No matching candidates found</p>
+                  <p className="mt-1 text-xs text-muted-foreground/70">Try broadening your filters.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-surface-200">
+                <div className="overflow-x-auto rounded-lg border border-border">
                   <table className="w-full min-w-[700px]">
                     <thead>
-                      <tr className="border-b border-surface-200 bg-surface-50">
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Candidate</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Matching Skills</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Match</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Score</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Location</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Tags</th>
+                      <tr className="border-b border-border bg-muted/30">
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Candidate</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Matching Skills</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Match</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Score</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Location</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Tags</th>
                       </tr>
                     </thead>
                     <tbody>
                       {talentSearch.data.data.map((c: TalentPoolSearchCandidate) => (
-                        <tr key={c.id} className="border-b border-surface-100 transition-colors hover:bg-surface-50">
+                        <tr key={c.id} className="border-b border-border transition-colors hover:bg-muted/30">
                           <td className="px-3 py-2.5">
                             <div className="min-w-0">
-                              <p className="truncate text-xs font-medium text-surface-800">{c.name}</p>
-                              <p className="truncate text-[11px] text-surface-500">{c.email}</p>
+                              <p className="truncate text-xs font-medium text-foreground">{c.name}</p>
+                              <p className="truncate text-[11px] text-muted-foreground">{c.email}</p>
                             </div>
                           </td>
                           <td className="px-3 py-2.5">
@@ -336,12 +336,12 @@ export default function TalentPoolPage() {
                                 </span>
                               ))}
                               {c.matchingSkills.length > 4 && (
-                                <span className="text-[10px] text-surface-400">
+                                <span className="text-[10px] text-muted-foreground/70">
                                   +{c.matchingSkills.length - 4}
                                 </span>
                               )}
                               {c.matchingSkills.length === 0 && (
-                                <span className="text-[10px] text-surface-400 italic">None</span>
+                                <span className="text-[10px] text-muted-foreground/70 italic">None</span>
                               )}
                             </div>
                           </td>
@@ -366,12 +366,12 @@ export default function TalentPoolPage() {
                           </td>
                           <td className="px-3 py-2.5">
                             {c.location ? (
-                              <div className="flex items-center gap-1 text-[11px] text-surface-600">
-                                <MapPin className="h-3 w-3 shrink-0 text-surface-400" />
+                              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                                 {c.location}
                               </div>
                             ) : (
-                              <span className="text-[10px] text-surface-400 italic">N/A</span>
+                              <span className="text-[10px] text-muted-foreground/70 italic">N/A</span>
                             )}
                           </td>
                           <td className="px-3 py-2.5">
@@ -385,7 +385,7 @@ export default function TalentPoolPage() {
                                 </span>
                               ))}
                               {c.tags.length > 3 && (
-                                <span className="text-[9px] text-surface-400">+{c.tags.length - 3}</span>
+                                <span className="text-[9px] text-muted-foreground/70">+{c.tags.length - 3}</span>
                               )}
                             </div>
                           </td>
@@ -424,7 +424,7 @@ export default function TalentPoolPage() {
           {/* Search + score filter row */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
               <Input
                 placeholder="Search by name, email, or skills..."
                 value={searchTerm}
@@ -432,7 +432,7 @@ export default function TalentPoolPage() {
                 className="pl-9"
               />
             </div>
-            <div className="flex rounded-lg border border-surface-200 overflow-hidden shrink-0">
+            <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
               {[
                 { value: "all", label: "All" },
                 { value: "80+", label: "80+" },
@@ -446,7 +446,7 @@ export default function TalentPoolPage() {
                     "px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                     scoreFilter === opt.value
                       ? "bg-brand-500 text-white"
-                      : "bg-white text-surface-600 hover:bg-surface-50",
+                      : "bg-background text-muted-foreground hover:bg-muted/30",
                   )}
                 >
                   {opt.label}
@@ -457,8 +457,8 @@ export default function TalentPoolPage() {
 
           {/* Tags filter */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <Filter className="h-3 w-3 text-surface-400 shrink-0" />
-            <span className="text-[11px] text-surface-500 shrink-0">Tags:</span>
+            <Filter className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+            <span className="text-[11px] text-muted-foreground shrink-0">Tags:</span>
             {allTags.map((tag) => (
               <button
                 key={tag}
@@ -476,7 +476,7 @@ export default function TalentPoolPage() {
             {selectedTags.length > 0 && (
               <button
                 onClick={() => setSelectedTags([])}
-                className="text-[10px] text-surface-400 hover:text-surface-600 underline"
+                className="text-[10px] text-muted-foreground/70 hover:text-muted-foreground underline"
               >
                 Clear
               </button>
@@ -489,9 +489,9 @@ export default function TalentPoolPage() {
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
-            <Database className="h-10 w-10 text-surface-300" />
-            <p className="mt-3 text-sm font-medium text-surface-600">No candidates found</p>
-            <p className="mt-1 text-xs text-surface-400">
+            <Database className="h-10 w-10 text-muted-foreground/40" />
+            <p className="mt-3 text-sm font-medium text-muted-foreground">No candidates found</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
               Try adjusting your filters or search term.
             </p>
           </CardContent>
@@ -501,14 +501,14 @@ export default function TalentPoolPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[800px]">
               <thead>
-                <tr className="border-b border-surface-200 bg-surface-50">
-                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Candidate</th>
-                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Skills</th>
-                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Last Role</th>
-                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Score</th>
-                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Added</th>
-                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Tags</th>
-                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Actions</th>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Candidate</th>
+                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Skills</th>
+                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Last Role</th>
+                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Score</th>
+                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Added</th>
+                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Tags</th>
+                  <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -576,32 +576,32 @@ function CandidateRow({
     .slice(0, 2);
 
   return (
-    <tr className="border-b border-surface-100 transition-colors hover:bg-surface-50">
+    <tr className="border-b border-border transition-colors hover:bg-muted/30">
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] sm:text-xs font-semibold text-surface-600">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] sm:text-xs font-semibold text-muted-foreground">
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xs sm:text-sm font-medium text-surface-800">{candidate.name}</p>
-            <p className="truncate text-[11px] text-surface-500">{candidate.email}</p>
+            <p className="truncate text-xs sm:text-sm font-medium text-foreground">{candidate.name}</p>
+            <p className="truncate text-[11px] text-muted-foreground">{candidate.email}</p>
           </div>
         </div>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex flex-wrap gap-1 max-w-[180px]">
           {candidate.skills.slice(0, 3).map((skill) => (
-            <span key={skill} className="rounded bg-surface-100 px-1.5 py-0.5 text-[10px] text-surface-600">
+            <span key={skill} className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
               {skill}
             </span>
           ))}
           {candidate.skills.length > 3 && (
-            <span className="text-[10px] text-surface-400">+{candidate.skills.length - 3}</span>
+            <span className="text-[10px] text-muted-foreground/70">+{candidate.skills.length - 3}</span>
           )}
         </div>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] sm:text-xs text-surface-700">{candidate.lastAppliedRole}</span>
+        <span className="text-[11px] sm:text-xs text-foreground/80">{candidate.lastAppliedRole}</span>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold", getScoreColor(candidate.score))}>
@@ -609,7 +609,7 @@ function CandidateRow({
         </span>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] text-surface-500">{formatRelativeTime(candidate.dateAdded)}</span>
+        <span className="text-[11px] text-muted-foreground">{formatRelativeTime(candidate.dateAdded)}</span>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex flex-wrap items-center gap-1 max-w-[200px]">
@@ -630,20 +630,20 @@ function CandidateRow({
                 onChange={(e) => onNewTagChange(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") onAddTag(); if (e.key === "Escape") onCancelAddTag(); }}
                 placeholder="tag..."
-                className="w-16 rounded border border-surface-200 px-1 py-0.5 text-[10px] outline-none focus:border-brand-400"
+                className="w-16 rounded border border-border px-1 py-0.5 text-[10px] outline-none focus:border-brand-400"
                 autoFocus
               />
               <button onClick={onAddTag} className="text-emerald-500 hover:text-emerald-700">
                 <Plus className="h-3 w-3" />
               </button>
-              <button onClick={onCancelAddTag} className="text-surface-400 hover:text-surface-600">
+              <button onClick={onCancelAddTag} className="text-muted-foreground/70 hover:text-muted-foreground">
                 <X className="h-3 w-3" />
               </button>
             </div>
           ) : (
             <button
               onClick={onStartAddTag}
-              className="rounded-full border border-dashed border-surface-300 px-1.5 py-0.5 text-[9px] text-surface-400 hover:border-surface-400 hover:text-surface-600"
+              className="rounded-full border border-dashed border-border/60 px-1.5 py-0.5 text-[9px] text-muted-foreground/70 hover:border-border/60 hover:text-muted-foreground"
             >
               + tag
             </button>
@@ -696,15 +696,15 @@ function ReengageModal({
       <Card className="relative z-10 w-full max-w-lg">
         <CardContent className="space-y-4 p-5 sm:p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-semibold text-surface-800">Re-engage Candidate</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Re-engage Candidate</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
 
-          <div className="rounded-lg bg-surface-50 p-3">
-            <p className="text-xs text-surface-500">To:</p>
-            <p className="text-sm font-medium text-surface-800">{candidate.name} &lt;{candidate.email}&gt;</p>
+          <div className="rounded-lg bg-muted/30 p-3">
+            <p className="text-xs text-muted-foreground">To:</p>
+            <p className="text-sm font-medium text-foreground">{candidate.name} &lt;{candidate.email}&gt;</p>
           </div>
 
           <div className="space-y-1.5">

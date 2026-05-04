@@ -126,7 +126,7 @@ export function ApplicationDetailModal({
 
           {/* Status history / FitVector timeline */}
           {isFV && fvLoading ? (
-            <div className="text-xs text-surface-400 py-2">Loading application details…</div>
+            <div className="text-xs text-muted-foreground/70 py-2">Loading application details…</div>
           ) : isFV && fvApp ? (
             <div>
               <Label className="text-xs">Application Timeline</Label>
@@ -150,28 +150,28 @@ export function ApplicationDetailModal({
                 Application Details
               </button>
               {showFVDetails && (
-                <div className="mt-2 space-y-2 rounded-lg bg-surface-50 p-3">
+                <div className="mt-2 space-y-2 rounded-lg bg-muted/30 p-3">
                   <div className="flex items-center gap-2 text-xs">
-                    <FileText className="h-3 w-3 text-surface-400" />
-                    <span className="text-surface-500">Resume:</span>
-                    <span className="font-medium text-surface-700">{fvApp.resumeName}</span>
+                    <FileText className="h-3 w-3 text-muted-foreground/70" />
+                    <span className="text-muted-foreground">Resume:</span>
+                    <span className="font-medium text-foreground/80">{fvApp.resumeName}</span>
                   </div>
                   <div className="text-xs">
-                    <span className="text-surface-500">Match Score:</span>{" "}
-                    <span className="font-medium text-surface-700">{fvApp.matchScore}%</span>
+                    <span className="text-muted-foreground">Match Score:</span>{" "}
+                    <span className="font-medium text-foreground/80">{fvApp.matchScore}%</span>
                   </div>
                   {fvApp.screeningAnswers.length > 0 && (
                     <div className="text-xs">
-                      <span className="text-surface-500">Screening Questions:</span>{" "}
-                      <span className="font-medium text-surface-700">
+                      <span className="text-muted-foreground">Screening Questions:</span>{" "}
+                      <span className="font-medium text-foreground/80">
                         {fvApp.screeningAnswers.length} answered
                       </span>
                     </div>
                   )}
                   {fvApp.coverNote && (
                     <div className="text-xs">
-                      <p className="text-surface-500">Cover Note:</p>
-                      <p className="mt-1 text-surface-600">{fvApp.coverNote}</p>
+                      <p className="text-muted-foreground">Cover Note:</p>
+                      <p className="mt-1 text-muted-foreground">{fvApp.coverNote}</p>
                     </div>
                   )}
                 </div>
@@ -190,7 +190,7 @@ export function ApplicationDetailModal({
                         style={{ backgroundColor: cfg?.color || "#6B7280" }}
                       />
                       <span className="font-medium">{cfg?.label || entry.status}</span>
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground" suppressHydrationWarning>
                         {new Date(entry.changed_at).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",
@@ -207,7 +207,7 @@ export function ApplicationDetailModal({
 
           {/* Boost Application (FitVector apps only) */}
           {isFV && (
-            <div className="border-t border-surface-200 pt-3">
+            <div className="border-t border-border pt-3">
               {isBoosted ? (
                 <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-3">
                   <CheckCircle2 className="h-4 w-4 text-amber-600" />
@@ -222,9 +222,9 @@ export function ApplicationDetailModal({
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Rocket className="h-4 w-4 text-brand-500" />
-                    <h4 className="text-xs font-semibold text-surface-800">Boost Your Application</h4>
+                    <h4 className="text-xs font-semibold text-foreground">Boost Your Application</h4>
                   </div>
-                  <p className="mb-3 text-xs text-surface-500">
+                  <p className="mb-3 text-xs text-muted-foreground">
                     Highlight your application in the employer&apos;s pipeline with a &quot;Boosted&quot; badge
                   </p>
                   <div className="space-y-1.5">
@@ -236,22 +236,22 @@ export function ApplicationDetailModal({
                           "flex w-full items-center justify-between rounded-lg border p-2.5 text-left transition-colors",
                           selectedBoostTier === option.tier
                             ? "border-brand-300 bg-brand-50/50"
-                            : "border-surface-200 hover:border-surface-300",
+                            : "border-border hover:border-border/60",
                         )}
                       >
                         <div>
-                          <p className="text-xs font-medium text-surface-800">{option.label}</p>
-                          <p className="text-[10px] text-surface-500">{option.description}</p>
+                          <p className="text-xs font-medium text-foreground">{option.label}</p>
+                          <p className="text-[10px] text-muted-foreground">{option.description}</p>
                         </div>
                         <span className="text-sm font-bold text-brand-600">₹{option.price}</span>
                       </button>
                     ))}
                   </div>
-                  <p className="mt-2 text-[10px] text-surface-400">
+                  <p className="mt-2 text-[10px] text-muted-foreground/70">
                     <Sparkles className="mr-0.5 inline h-2.5 w-2.5" />
                     Or buy a credit pack: {BOOST_CREDIT_PACKS[0].count} boosts for ₹{BOOST_CREDIT_PACKS[0].price} ({BOOST_CREDIT_PACKS[0].savings})
                   </p>
-                  <p className="mt-1 text-[10px] text-surface-400">
+                  <p className="mt-1 text-[10px] text-muted-foreground/70">
                     Boosted applications are highlighted but do not affect your match score.
                   </p>
                   <Button

@@ -12,7 +12,7 @@ export async function GET() {
 
     const { data: resumes, error } = await supabase
       .from("tailored_resumes")
-      .select("id, version_name, template_id, job_title, company_name, created_at")
+      .select("id, version_name, template_id, job_title, company_name, created_at, latex_source")
       .eq("user_id", session.user.id)
       .order("created_at", { ascending: false })
       .limit(50);
@@ -29,6 +29,7 @@ export async function GET() {
       jobTitle: r.job_title,
       companyName: r.company_name,
       createdAt: r.created_at,
+      hasLatex: !!r.latex_source,
     }));
 
     return Response.json({ data: formatted });

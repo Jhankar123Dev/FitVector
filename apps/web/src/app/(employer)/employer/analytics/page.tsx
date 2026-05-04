@@ -30,11 +30,13 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import type { AnalyticsDateRange } from "@/types/employer";
+import { Skeleton, SkeletonBarChart, SkeletonLineChart } from "@/components/ui/skeleton";
 import { SOURCE_LABELS } from "@/types/employer";
 import { useAnalytics, useFunnel, useSources, useJobPerformance, useTrend, useInterviewerPerformance } from "@/hooks/use-analytics";
+import { CHART_COLORS } from "@/lib/chart-colors";
 
-// ── Funnel colors (gradient from brand to emerald) ──────────────────
-const FUNNEL_COLORS = ["#6c5ce7", "#7c6cf7", "#8b7ff7", "#4ade80", "#22c55e", "#16a34a", "#059669"];
+// ── Funnel colors — brand blue scale (from chart-colors.ts) ─────────
+const FUNNEL_COLORS = CHART_COLORS.funnel;
 
 const DATE_RANGE_OPTIONS: { value: AnalyticsDateRange; label: string }[] = [
   { value: "7d", label: "7 days" },
@@ -114,21 +116,93 @@ export default function AnalyticsPage() {
     { label: "Cost/Hire", value: metrics.costPerHire != null ? `₹${(metrics.costPerHire / 1000).toFixed(0)}K` : "—", icon: DollarSign, iconBg: "bg-rose-50", iconColor: "text-rose-600", trend: null },
   ];
 
+  if (metricsLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1.5">
+            <Skeleton className="h-7 w-28" />
+            <Skeleton className="h-4 w-52 opacity-60" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-40 rounded-lg" />
+            <Skeleton className="h-8 w-28 rounded-lg" />
+          </div>
+        </div>
+        {/* 6 stat cards */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-3 sm:p-4">
+              <div className="mb-1.5 h-7 w-7 animate-pulse rounded-md bg-muted" />
+              <Skeleton className="h-6 w-10" />
+              <Skeleton className="mt-1 h-3 w-20 opacity-60" />
+            </div>
+          ))}
+        </div>
+        {/* Two-column chart row: funnel bar + trend line */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+          {/* Bar chart */}
+          <div className="rounded-lg border border-border bg-card p-5 lg:col-span-3">
+            <Skeleton className="mb-4 h-5 w-36" />
+            <SkeletonBarChart
+              bars={7}
+              heights={[90, 72, 55, 44, 32, 20, 12]}
+              className="h-[220px] sm:h-[260px]"
+            />
+            <div className="mt-3 flex gap-3">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton key={i} className="h-2.5 flex-1 opacity-50" />
+              ))}
+            </div>
+          </div>
+          {/* Line chart */}
+          <div className="rounded-lg border border-border bg-card p-5 lg:col-span-2">
+            <Skeleton className="mb-4 h-5 w-32" />
+            <SkeletonLineChart className="h-[220px] sm:h-[260px]" />
+            <div className="mt-3 flex gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-2.5 flex-1 opacity-50" />
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* Source + job performance row */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          {[0, 1].map((j) => (
+            <div key={j} className="rounded-lg border border-border bg-card p-5">
+              <Skeleton className="mb-4 h-5 w-36" />
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3">
+                    <Skeleton className="h-3.5 w-32 opacity-70" />
+                    <Skeleton className="h-2 flex-1 rounded-full opacity-40" />
+                    <Skeleton className="h-3.5 w-10 opacity-70" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
             Analytics
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+          <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
             Hiring performance and insights
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Date range picker */}
-          <div className="flex rounded-lg border border-surface-200 overflow-hidden">
+          <div className="flex overflow-hidden rounded-lg border border-border">
             {DATE_RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -137,7 +211,7 @@ export default function AnalyticsPage() {
                   "px-3 py-1.5 text-[11px] sm:text-xs font-medium transition-colors",
                   dateRange === opt.value
                     ? "bg-brand-500 text-white"
-                    : "bg-white text-surface-600 hover:bg-surface-50",
+                    : "bg-card text-muted-foreground hover:bg-muted",
                 )}
               >
                 {opt.label}
@@ -161,9 +235,9 @@ export default function AnalyticsPage() {
                   <stat.icon className={cn("h-3.5 w-3.5", stat.iconColor)} />
                 </div>
               </div>
-              <p className="text-lg sm:text-xl font-bold text-surface-800">{stat.value}</p>
+              <p className="text-lg sm:text-xl font-bold text-foreground">{stat.value}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <p className="text-[10px] sm:text-[11px] text-surface-500">{stat.label}</p>
+                <p className="text-[10px] sm:text-[11px] text-muted-foreground">{stat.label}</p>
                 {stat.trend && (
                   <span className={cn("text-[10px] font-semibold", stat.trend.up ? "text-emerald-600" : "text-red-500")}>
                     {stat.trend.value}
@@ -189,7 +263,7 @@ export default function AnalyticsPage() {
               return (
                 <div key={stage.stage} className="flex items-center gap-3">
                   <div className="w-[100px] sm:w-[130px] shrink-0 text-right">
-                    <p className="text-[11px] sm:text-xs font-medium text-surface-700">{stage.stage}</p>
+                    <p className="text-[11px] sm:text-xs font-medium text-foreground/80">{stage.stage}</p>
                   </div>
                   <div className="flex-1 flex items-center gap-2">
                     <div
@@ -203,7 +277,7 @@ export default function AnalyticsPage() {
                       <span className="text-[11px] font-bold text-white">{stage.count}</span>
                     </div>
                     {stage.conversionRate != null && (
-                      <span className="text-[10px] text-surface-400 shrink-0">
+                      <span className="text-[10px] text-muted-foreground/70 shrink-0">
                         {stage.conversionRate}%
                       </span>
                     )}
@@ -212,7 +286,7 @@ export default function AnalyticsPage() {
               );
             })}
           </div>
-          <div className="mt-3 flex items-center gap-1 text-[10px] text-surface-400">
+          <div className="mt-3 flex items-center gap-1 text-[10px] text-muted-foreground/70">
             <ArrowRight className="h-3 w-3" />
             Percentages show conversion rate from previous stage
           </div>
@@ -230,13 +304,13 @@ export default function AnalyticsPage() {
             <div className="h-[220px] sm:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={(sourcesData?.data || []).map((s) => ({ ...s, name: s.source }))} barSize={32}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#78716c" }} />
-                  <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "#a8a29e" }} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: "#a8a29e" }} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e7e5e4" }} />
-                  <Bar yAxisId="left" dataKey="count" name="Candidates" fill="#6c5ce7" radius={[4, 4, 0, 0]} />
-                  <Bar yAxisId="right" dataKey="avgScore" name="Avg Score" fill="#00d97e" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisTick }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 10, fill: CHART_COLORS.axisTickMuted }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: CHART_COLORS.axisTickMuted }} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: CHART_COLORS.tooltipBorder }} />
+                  <Bar yAxisId="left" dataKey="count" name="Candidates" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="avgScore" name="Avg Score" fill={CHART_COLORS.secondary} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -251,25 +325,25 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-[220px] sm:h-[280px]">
               {trendPoints.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-xs text-surface-400">
+                <div className="flex h-full items-center justify-center text-xs text-muted-foreground/70">
                   No hire data yet — trend will appear as candidates are hired
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendPoints}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                    <XAxis dataKey="week" tick={{ fontSize: 10, fill: "#78716c" }} />
-                    <YAxis tick={{ fontSize: 10, fill: "#a8a29e" }} domain={[0, "auto"]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                    <XAxis dataKey="week" tick={{ fontSize: 10, fill: CHART_COLORS.axisTick }} />
+                    <YAxis tick={{ fontSize: 10, fill: CHART_COLORS.axisTickMuted }} domain={[0, "auto"]} />
                     <Tooltip
-                      contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e7e5e4" }}
+                      contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: CHART_COLORS.tooltipBorder }}
                       formatter={(value: number) => [`${value} days`, "Time to Hire"]}
                     />
                     <Line
                       type="monotone"
                       dataKey="days"
-                      stroke="#6c5ce7"
+                      stroke={CHART_COLORS.primary}
                       strokeWidth={2.5}
-                      dot={{ fill: "#6c5ce7", r: 3 }}
+                      dot={{ fill: CHART_COLORS.primary, r: 3 }}
                       activeDot={{ r: 5 }}
                     />
                   </LineChart>
@@ -291,23 +365,23 @@ export default function AnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[450px]">
                 <thead>
-                  <tr className="border-b border-surface-200 bg-surface-50">
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Job</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Applicants</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Screen %</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Interview %</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Hired</th>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Job</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Applicants</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Screen %</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Interview %</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Hired</th>
                   </tr>
                 </thead>
                 <tbody>
                   {jobPerformance.length === 0 ? (
-                    <tr><td colSpan={5} className="px-3 py-6 text-center text-xs text-surface-400">No job data yet</td></tr>
+                    <tr><td colSpan={5} className="px-3 py-6 text-center text-xs text-muted-foreground/70">No job data yet</td></tr>
                   ) : jobPerformance.map((job) => (
-                    <tr key={job.jobId} className="border-b border-surface-100 hover:bg-surface-50">
+                    <tr key={job.jobId} className="border-b border-border hover:bg-muted/30">
                       <td className="px-3 py-2">
-                        <span className="text-xs font-medium text-surface-800 line-clamp-1">{job.title}</span>
+                        <span className="text-xs font-medium text-foreground line-clamp-1">{job.title}</span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-surface-600">{job.applicants}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{job.applicants}</td>
                       <td className="px-3 py-2">
                         <span className={cn(
                           "text-xs font-semibold",
@@ -324,7 +398,7 @@ export default function AnalyticsPage() {
                           {job.interviewRate}%
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-surface-600">{job.hired}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{job.hired}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -342,27 +416,27 @@ export default function AnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[400px]">
                 <thead>
-                  <tr className="border-b border-surface-200 bg-surface-50">
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Interviewer</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Interviews</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Avg Feedback</th>
-                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-surface-600">Calibration</th>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Interviewer</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Interviews</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Avg Feedback</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-muted-foreground">Calibration</th>
                   </tr>
                 </thead>
                 <tbody>
                   {interviewerPerformance.length === 0 ? (
-                    <tr><td colSpan={4} className="px-3 py-6 text-center text-xs text-surface-400">No completed interviews yet</td></tr>
+                    <tr><td colSpan={4} className="px-3 py-6 text-center text-xs text-muted-foreground/70">No completed interviews yet</td></tr>
                   ) : interviewerPerformance.map((ip) => (
-                    <tr key={ip.memberId} className="border-b border-surface-100 hover:bg-surface-50">
+                    <tr key={ip.memberId} className="border-b border-border hover:bg-muted/30">
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[9px] font-bold text-surface-600">
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground">
                             {ip.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
                           </div>
-                          <span className="text-xs font-medium text-surface-800">{ip.name}</span>
+                          <span className="text-xs font-medium text-foreground">{ip.name}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-xs text-surface-600">{ip.interviewsDone}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{ip.interviewsDone}</td>
                       <td className="px-3 py-2">
                         {ip.avgFeedbackTime != null ? (
                           <span className={cn(
@@ -371,7 +445,7 @@ export default function AnalyticsPage() {
                           )}>
                             {ip.avgFeedbackTime}h
                           </span>
-                        ) : <span className="text-xs text-surface-400">—</span>}
+                        ) : <span className="text-xs text-muted-foreground/70">—</span>}
                       </td>
                       <td className="px-3 py-2">
                         {ip.avgScore != null ? (
@@ -383,7 +457,7 @@ export default function AnalyticsPage() {
                           )}>
                             {ip.avgScore}/10
                           </span>
-                        ) : <span className="text-xs text-surface-400">—</span>}
+                        ) : <span className="text-xs text-muted-foreground/70">—</span>}
                       </td>
                     </tr>
                   ))}

@@ -114,16 +114,16 @@ function AddJobModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
     }
   }
 
-  const labelClass = "block text-xs font-medium text-surface-600 mb-1";
-  const inputClass = "w-full rounded-lg border border-surface-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-400";
+  const labelClass = "block text-xs font-medium text-muted-foreground mb-1";
+  const inputClass = "w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-400";
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/50 p-0 sm:items-start sm:p-4 sm:pt-10">
-      <div className="w-full max-w-xl rounded-t-2xl border border-surface-200 bg-white shadow-xl sm:rounded-xl">
-        <div className="flex items-center justify-between border-b border-surface-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-surface-800">Add New Job</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-surface-100">
-            <X className="h-4 w-4 text-surface-500" />
+      <div className="w-full max-w-xl rounded-t-2xl border border-border bg-card shadow-xl sm:rounded-xl">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <h2 className="text-base font-semibold text-foreground">Add New Job</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-muted">
+            <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
@@ -172,11 +172,11 @@ function AddJobModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
               <input className={inputClass} type="number" placeholder="e.g. 2000000" {...field("salaryMax")} />
             </div>
             <div className="col-span-2">
-              <label className={labelClass}>Required Skills <span className="font-normal text-surface-400">(comma-separated)</span></label>
+              <label className={labelClass}>Required Skills <span className="font-normal text-muted-foreground/70">(comma-separated)</span></label>
               <input className={inputClass} placeholder="React, TypeScript, Node.js" {...field("skillsRequired")} />
             </div>
             <div className="col-span-2">
-              <label className={labelClass}>Nice-to-have Skills <span className="font-normal text-surface-400">(comma-separated)</span></label>
+              <label className={labelClass}>Nice-to-have Skills <span className="font-normal text-muted-foreground/70">(comma-separated)</span></label>
               <input className={inputClass} placeholder="GraphQL, Docker" {...field("skillsNiceToHave")} />
             </div>
             <div className="col-span-2">
@@ -201,7 +201,7 @@ function AddJobModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
             </div>
           )}
 
-          <div className="flex justify-end gap-2 border-t border-surface-100 pt-3">
+          <div className="flex justify-end gap-2 border-t border-border pt-3">
             <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
             <Button type="submit" size="sm" disabled={submitting}>
               {submitting ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Plus className="mr-1.5 h-3.5 w-3.5" />}
@@ -255,22 +255,22 @@ function BulkImportModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/50 p-0 sm:items-start sm:p-4 sm:pt-10">
-      <div className="w-full max-w-2xl rounded-t-2xl border border-surface-200 bg-white shadow-xl sm:rounded-xl">
-        <div className="flex items-center justify-between border-b border-surface-200 px-5 py-4">
+      <div className="w-full max-w-2xl rounded-t-2xl border border-border bg-card shadow-xl sm:rounded-xl">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-surface-800">Bulk Import Jobs</h2>
-            <p className="mt-0.5 text-xs text-surface-400">Paste a JSON array of job objects</p>
+            <h2 className="text-base font-semibold text-foreground">Bulk Import Jobs</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground/70">Paste a JSON array of job objects</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-surface-100">
-            <X className="h-4 w-4 text-surface-500" />
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-muted">
+            <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
           {/* Schema reference */}
-          <div className="rounded-lg border border-surface-200 bg-surface-50 p-3">
-            <p className="mb-1.5 text-xs font-semibold text-surface-600">Required fields: <code className="text-brand-600">title</code>, <code className="text-brand-600">companyName</code></p>
-            <p className="text-xs text-surface-500">
+          <div className="rounded-lg border border-border bg-muted/30 p-3">
+            <p className="mb-1.5 text-xs font-semibold text-muted-foreground">Required fields: <code className="text-brand-600">title</code>, <code className="text-brand-600">companyName</code></p>
+            <p className="text-xs text-muted-foreground">
               Optional: <code>location</code>, <code>workMode</code> (remote/hybrid/onsite), <code>jobType</code> (full_time/part_time/contract/internship),{" "}
               <code>description</code>, <code>skillsRequired</code> (array), <code>skillsNiceToHave</code> (array),{" "}
               <code>salaryMin</code>, <code>salaryMax</code>, <code>url</code>, <code>source</code> (direct/linkedin/naukri/…)
@@ -288,7 +288,7 @@ function BulkImportModal({ onClose, onSuccess }: { onClose: () => void; onSucces
               Load example template
             </Button>
             {json && (
-              <Button size="sm" variant="ghost" className="text-xs text-surface-400" onClick={() => setJson("")}>
+              <Button size="sm" variant="ghost" className="text-xs text-muted-foreground/70" onClick={() => setJson("")}>
                 Clear
               </Button>
             )}
@@ -296,7 +296,7 @@ function BulkImportModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
           {/* JSON textarea */}
           <textarea
-            className="h-64 w-full rounded-lg border border-surface-200 bg-white px-3 py-2 font-mono text-xs text-surface-700 focus:outline-none focus:ring-1 focus:ring-brand-400"
+            className="h-64 w-full rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs text-foreground/80 focus:outline-none focus:ring-1 focus:ring-brand-400"
             placeholder='[{"title": "...", "companyName": "...", ...}]'
             value={json}
             onChange={(e) => setJson(e.target.value)}
@@ -317,7 +317,7 @@ function BulkImportModal({ onClose, onSuccess }: { onClose: () => void; onSucces
             </div>
           )}
 
-          <div className="flex justify-end gap-2 border-t border-surface-100 pt-3">
+          <div className="flex justify-end gap-2 border-t border-border pt-3">
             <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
             <Button size="sm" onClick={handleImport} disabled={submitting || !json.trim()}>
               {submitting ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
@@ -382,8 +382,8 @@ export default function AdminJobsPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-surface-900 sm:text-2xl">Jobs</h1>
-          <p className="mt-0.5 text-xs text-surface-500 sm:mt-1 sm:text-sm">{total} total jobs in database</p>
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Jobs</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground sm:mt-1 sm:text-sm">{total} total jobs in database</p>
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => setShowBulkModal(true)}>
@@ -401,7 +401,7 @@ export default function AdminJobsPage() {
       {/* Filters */}
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
           <Input
             placeholder="Search title or company..."
             value={search}
@@ -425,24 +425,24 @@ export default function AdminJobsPage() {
       </div>
 
       {/* Desktop table */}
-      <div className="hidden overflow-hidden rounded-xl border border-surface-200 bg-white md:block">
+      <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-surface-200 bg-surface-50">
-              <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Job</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Source</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Mode</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Posted</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Active</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Actions</th>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Job</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Source</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Mode</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Posted</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Active</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i} className="border-b border-surface-100">
+                <tr key={i} className="border-b border-border">
                   <td colSpan={6} className="px-4 py-3">
-                    <div className="h-4 w-full animate-pulse rounded bg-surface-100" />
+                    <div className="h-4 w-full animate-pulse rounded bg-muted" />
                   </td>
                 </tr>
               ))
@@ -450,7 +450,7 @@ export default function AdminJobsPage() {
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-surface-400">No jobs found</p>
+                    <p className="text-sm text-muted-foreground/70">No jobs found</p>
                     <Button size="sm" onClick={() => setShowAddModal(true)}>
                       <Plus className="mr-1.5 h-3.5 w-3.5" />Add first job
                     </Button>
@@ -459,21 +459,21 @@ export default function AdminJobsPage() {
               </tr>
             ) : (
               jobs.map((job) => (
-                <tr key={job.id} className="border-b border-surface-100 hover:bg-surface-50">
+                <tr key={job.id} className="border-b border-border hover:bg-muted/30">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      <p className="max-w-[200px] truncate font-medium text-surface-800">{job.title}</p>
+                      <p className="max-w-[200px] truncate font-medium text-foreground">{job.title}</p>
                       {job.isDirect && <Badge className="bg-brand-50 px-1.5 py-0 text-[10px] text-brand-700">Direct</Badge>}
                     </div>
-                    <p className="text-xs text-surface-400">{job.companyName}</p>
+                    <p className="text-xs text-muted-foreground/70">{job.companyName}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] capitalize text-surface-600">{job.source}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] capitalize text-muted-foreground">{job.source}</span>
                   </td>
-                  <td className="px-4 py-3 text-xs capitalize text-surface-500">{job.workMode || "—"}</td>
-                  <td className="px-4 py-3 text-xs text-surface-500">{formatDate(job.postedAt)}</td>
+                  <td className="px-4 py-3 text-xs capitalize text-muted-foreground">{job.workMode || "—"}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(job.postedAt)}</td>
                   <td className="px-4 py-3">
-                    <Badge className={job.isActive ? "bg-green-100 text-green-700" : "bg-surface-100 text-surface-500"}>
+                    <Badge className={job.isActive ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}>
                       {job.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </td>
@@ -495,25 +495,25 @@ export default function AdminJobsPage() {
       <div className="space-y-2 md:hidden">
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-surface-100" />
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-muted" />
           ))
         ) : jobs.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10">
-            <p className="text-sm text-surface-400">No jobs found</p>
+            <p className="text-sm text-muted-foreground/70">No jobs found</p>
             <Button size="sm" onClick={() => setShowAddModal(true)}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />Add first job
             </Button>
           </div>
         ) : (
           jobs.map((job) => (
-            <div key={job.id} className="rounded-xl border border-surface-200 bg-white p-4">
+            <div key={job.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="truncate text-sm font-medium text-surface-800">{job.title}</p>
+                    <p className="truncate text-sm font-medium text-foreground">{job.title}</p>
                     {job.isDirect && <Badge className="shrink-0 bg-brand-50 px-1.5 py-0 text-[10px] text-brand-700">Direct</Badge>}
                   </div>
-                  <p className="text-xs text-surface-400">{job.companyName}</p>
+                  <p className="text-xs text-muted-foreground/70">{job.companyName}</p>
                 </div>
                 <Button size="sm" variant="ghost" className="h-7 shrink-0 text-xs"
                   onClick={() => toggleActive.mutate({ jobId: job.id, isActive: !job.isActive })}
@@ -522,12 +522,12 @@ export default function AdminJobsPage() {
                 </Button>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] capitalize text-surface-600">{job.source}</span>
-                {job.workMode && <span className="text-xs capitalize text-surface-400">{job.workMode}</span>}
-                <Badge className={job.isActive ? "bg-green-100 text-green-700" : "bg-surface-100 text-surface-500"}>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] capitalize text-muted-foreground">{job.source}</span>
+                {job.workMode && <span className="text-xs capitalize text-muted-foreground/70">{job.workMode}</span>}
+                <Badge className={job.isActive ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}>
                   {job.isActive ? "Active" : "Inactive"}
                 </Badge>
-                <span className="ml-auto text-xs text-surface-400">{formatDate(job.postedAt)}</span>
+                <span className="ml-auto text-xs text-muted-foreground/70">{formatDate(job.postedAt)}</span>
               </div>
             </div>
           ))
@@ -540,7 +540,7 @@ export default function AdminJobsPage() {
           <Button size="sm" variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-xs text-surface-500">Page {page} of {totalPages}</span>
+          <span className="text-xs text-muted-foreground">Page {page} of {totalPages}</span>
           <Button size="sm" variant="outline" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
             <ChevronRight className="h-4 w-4" />
           </Button>

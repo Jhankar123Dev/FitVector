@@ -36,6 +36,7 @@ import {
   useDuplicateJobPost,
   type JobPostWithCounts,
 } from "@/hooks/use-employer-jobs";
+import { Skeleton, SkeletonJobRow } from "@/components/ui/skeleton";
 import type { JobPost, JobPostStatus, PromotionType, PromotionDuration } from "@/types/employer";
 import {
   JOB_STATUS_LABELS,
@@ -90,9 +91,9 @@ function JobActionsMenu({
             className="fixed inset-0 z-40"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-50 mt-1 w-44 rounded-xl border border-surface-200 bg-white py-1 shadow-card-hover">
+          <div className="absolute right-0 z-50 mt-1 w-44 rounded-xl border border-border bg-popover py-1 shadow-lg">
             <button
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-600 hover:bg-surface-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
               onClick={() => {
                 onAction("edit", job.id);
                 setOpen(false);
@@ -103,7 +104,7 @@ function JobActionsMenu({
             </button>
             {job.status === "active" && (
               <button
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-600 hover:bg-surface-50"
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
                 onClick={() => {
                   onAction("pause", job.id);
                   setOpen(false);
@@ -115,7 +116,7 @@ function JobActionsMenu({
             )}
             {job.status === "paused" && (
               <button
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-600 hover:bg-surface-50"
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
                 onClick={() => {
                   onAction("resume", job.id);
                   setOpen(false);
@@ -138,7 +139,7 @@ function JobActionsMenu({
               </button>
             )}
             <button
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-600 hover:bg-surface-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
               onClick={() => {
                 onAction("duplicate", job.id);
                 setOpen(false);
@@ -176,13 +177,13 @@ function JobRow({
   onBoost: (job: JobPostWithCounts) => void;
 }) {
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-surface-200 bg-white p-4 transition-shadow hover:shadow-card sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
       {/* Left: job info */}
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex items-center gap-2">
           <Link
             href={`/employer/jobs/${job.id}/pipeline`}
-            className="truncate text-sm font-semibold text-surface-800 hover:text-brand-600 transition-colors"
+            className="truncate text-sm font-semibold text-card-foreground hover:text-primary transition-colors"
           >
             {job.title}
           </Link>
@@ -190,7 +191,7 @@ function JobRow({
             {JOB_STATUS_LABELS[job.status]}
           </Badge>
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-surface-500">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Briefcase className="h-3 w-3" />
             {job.department} &middot; {JOB_TYPE_LABELS[job.jobType]}
@@ -209,29 +210,29 @@ function JobRow({
       {/* Middle: applicant stats */}
       <div className="flex items-center gap-6 text-center">
         <div>
-          <p className="text-lg font-bold text-surface-800">
+          <p className="text-lg font-bold text-foreground">
             {job.applicantsCount}
           </p>
-          <p className="text-[11px] text-surface-500">Applicants</p>
+          <p className="text-[11px] text-muted-foreground">Applicants</p>
         </div>
         <div className="hidden sm:block">
-          <p className="text-lg font-bold text-surface-800">
+          <p className="text-lg font-bold text-foreground">
             {job.screenedCount}
           </p>
-          <p className="text-[11px] text-surface-500">Screened</p>
+          <p className="text-[11px] text-muted-foreground">Screened</p>
         </div>
         <div className="hidden sm:block">
-          <p className="text-lg font-bold text-surface-800">
+          <p className="text-lg font-bold text-foreground">
             {job.interviewedCount}
           </p>
-          <p className="text-[11px] text-surface-500">Interviewed</p>
+          <p className="text-[11px] text-muted-foreground">Interviewed</p>
         </div>
         {job.hiredCount > 0 && (
           <div>
             <p className="text-lg font-bold text-accent-600">
               {job.hiredCount}
             </p>
-            <p className="text-[11px] text-surface-500">Hired</p>
+            <p className="text-[11px] text-muted-foreground">Hired</p>
           </div>
         )}
       </div>
@@ -299,14 +300,23 @@ export default function EmployerJobsPage() {
   if (isLoading) {
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="h-6 w-24 animate-pulse rounded bg-surface-200" />
-            <div className="mt-2 h-4 w-48 animate-pulse rounded bg-surface-100" />
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1.5">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-4 w-56 opacity-60" />
           </div>
+          <Skeleton className="h-10 w-32 rounded-lg" />
         </div>
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-lg border border-surface-200 bg-surface-50" />
+        {/* Tabs bar */}
+        <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
+          {[52, 56, 52, 52, 44].map((w, i) => (
+            <Skeleton key={i} className="h-8 rounded-md" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Job rows */}
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkeletonJobRow key={i} />
         ))}
       </div>
     );
@@ -325,12 +335,12 @@ export default function EmployerJobsPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">Jobs</h1>
-          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-surface-500">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Jobs</h1>
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">
             Manage your job postings and track applicants
           </p>
         </div>
-        <Button asChild>
+        <Button variant="cta" asChild>
           <Link href="/employer/jobs/create">
             <Plus className="mr-1.5 h-4 w-4" />
             Post New Job
@@ -365,16 +375,16 @@ export default function EmployerJobsPage() {
             ).length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                  <Briefcase className="h-10 w-10 text-surface-300" />
-                  <p className="mt-3 text-sm font-medium text-surface-600">
+                  <Briefcase className="h-10 w-10 text-muted-foreground/40" />
+                  <p className="mt-3 text-sm font-medium text-muted-foreground">
                     No {tab === "all" ? "" : tab} jobs found
                   </p>
-                  <p className="mt-1 text-xs text-surface-400">
+                  <p className="mt-1 text-xs text-muted-foreground/70">
                     {tab === "draft"
                       ? "Draft jobs will appear here when you save a job without publishing."
                       : "Create a new job posting to get started."}
                   </p>
-                  <Button size="sm" className="mt-4" asChild>
+                  <Button variant="cta" size="sm" className="mt-4" asChild>
                     <Link href="/employer/jobs/create">
                       <Plus className="mr-1.5 h-3.5 w-3.5" />
                       Post a Job
@@ -424,7 +434,7 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
       <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b p-4">
-          <h2 className="text-base font-semibold text-surface-800">
+          <h2 className="text-base font-semibold text-foreground">
             {submitted ? "Promotion Active!" : "Boost Job Listing"}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -437,10 +447,10 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
               <CheckCircle2 className="h-6 w-6 text-green-600" />
             </div>
-            <p className="text-sm font-medium text-surface-800">
+            <p className="text-sm font-medium text-foreground">
               {job.title} is now promoted!
             </p>
-            <p className="mt-1 text-xs text-surface-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               {PROMOTION_TYPE_LABELS[promoType].label} for {duration} days
             </p>
             <div className="mt-4 flex gap-2">
@@ -453,9 +463,9 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
         ) : (
           <div className="space-y-4 p-4">
             {/* Job info */}
-            <div className="rounded-lg bg-surface-50 p-3">
-              <p className="text-sm font-medium text-surface-800">{job.title}</p>
-              <p className="text-xs text-surface-500">
+            <div className="rounded-lg bg-muted p-3">
+              <p className="text-sm font-medium text-foreground">{job.title}</p>
+              <p className="text-xs text-muted-foreground">
                 {job.location} · {job.applicantsCount} applicants
               </p>
             </div>
@@ -473,19 +483,19 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
                       className={cn(
                         "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors",
                         promoType === type
-                          ? "border-brand-300 bg-brand-50/50"
-                          : "border-surface-200 hover:border-surface-300",
+                          ? "border-primary/40 bg-primary/5"
+                          : "border-border hover:border-border/80",
                       )}
                     >
                       <div className={cn(
                         "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
-                        promoType === type ? "border-brand-500 bg-brand-500" : "border-surface-300",
+                        promoType === type ? "border-primary bg-primary" : "border-muted-foreground/40",
                       )}>
                         {promoType === type && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-surface-800">{config.label}</p>
-                        <p className="text-xs text-surface-500">{config.description}</p>
+                        <p className="text-sm font-medium text-foreground">{config.label}</p>
+                        <p className="text-xs text-muted-foreground">{config.description}</p>
                       </div>
                     </button>
                   );
@@ -506,11 +516,11 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
                       className={cn(
                         "rounded-lg border p-3 text-center transition-colors",
                         duration === d
-                          ? "border-brand-300 bg-brand-50"
-                          : "border-surface-200 hover:border-surface-300",
+                          ? "border-primary/40 bg-primary/5"
+                          : "border-border hover:border-border/80",
                       )}
                     >
-                      <p className="text-sm font-semibold text-surface-800">{p.label}</p>
+                      <p className="text-sm font-semibold text-foreground">{p.label}</p>
                       <p className="text-lg font-bold text-brand-600">₹{p.price.toLocaleString()}</p>
                     </button>
                   );
@@ -519,16 +529,16 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
             </div>
 
             {/* Preview */}
-            <div className="rounded-lg border border-surface-200 p-3">
-              <p className="mb-1 text-xs font-medium text-surface-500">Preview</p>
+            <div className="rounded-lg border border-border p-3">
+              <p className="mb-1 text-xs font-medium text-muted-foreground">Preview</p>
               <div className="flex items-center gap-2">
                 <Badge className="bg-amber-400 text-white text-[10px]">
                   <Megaphone className="mr-0.5 h-2.5 w-2.5" />
                   Sponsored
                 </Badge>
-                <span className="text-sm font-medium text-surface-800">{job.title}</span>
+                <span className="text-sm font-medium text-foreground">{job.title}</span>
               </div>
-              <p className="mt-0.5 text-xs text-surface-400">{job.companyId ? "TechStartup Inc" : ""} · {job.location}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground/70">{job.companyId ? "TechStartup Inc" : ""} · {job.location}</p>
             </div>
 
             {/* Payment Method */}
@@ -540,8 +550,8 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
                   className={cn(
                     "flex flex-1 items-center justify-center gap-2 rounded-lg border py-2 text-xs font-medium transition-colors",
                     paymentMethod === "card"
-                      ? "border-brand-300 bg-brand-50 text-brand-700"
-                      : "border-surface-200 text-surface-600",
+                      ? "border-primary/40 bg-primary/5 text-primary"
+                      : "border-border text-muted-foreground",
                   )}
                 >
                   <CreditCard className="h-3.5 w-3.5" />
@@ -552,15 +562,15 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
                   className={cn(
                     "flex flex-1 items-center justify-center gap-2 rounded-lg border py-2 text-xs font-medium transition-colors",
                     paymentMethod === "upi"
-                      ? "border-brand-300 bg-brand-50 text-brand-700"
-                      : "border-surface-200 text-surface-600",
+                      ? "border-primary/40 bg-primary/5 text-primary"
+                      : "border-border text-muted-foreground",
                   )}
                 >
                   <Smartphone className="h-3.5 w-3.5" />
                   UPI
                 </button>
               </div>
-              <p className="mt-1.5 text-[10px] text-surface-400">
+              <p className="mt-1.5 text-[10px] text-muted-foreground/70">
                 Payment powered by Razorpay · Secure checkout
               </p>
             </div>
@@ -568,8 +578,8 @@ function BoostJobModal({ job, onClose }: { job: JobPost; onClose: () => void }) 
             {/* Total + Submit */}
             <div className="flex items-center justify-between border-t pt-3">
               <div>
-                <p className="text-xs text-surface-500">Total</p>
-                <p className="text-xl font-bold text-surface-800">₹{price.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-xl font-bold text-foreground">₹{price.toLocaleString()}</p>
               </div>
               <Button onClick={handleSubmit} disabled={submitting} className="gap-1.5">
                 {submitting ? (

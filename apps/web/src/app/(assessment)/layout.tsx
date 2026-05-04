@@ -4,7 +4,7 @@ export default function AssessmentLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-surface-50">
+    <div className="min-h-screen bg-muted/30">
       {children}
     </div>
   );

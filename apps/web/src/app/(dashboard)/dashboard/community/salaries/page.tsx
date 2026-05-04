@@ -35,6 +35,7 @@ import {
 } from "@/types/community";
 import { useSalaryInsights, useSubmitSalaryReport, useSalaryRoles } from "@/hooks/use-community";
 import { MOCK_SALARY_LOCATIONS } from "@/lib/mock/community-data";
+import { CHART_COLORS } from "@/lib/chart-colors";
 
 function formatSalary(n: number): string {
   if (n >= 10000000) return `₹${(n / 10000000).toFixed(1)}Cr`;
@@ -133,13 +134,13 @@ export default function SalaryInsightsPage() {
         <div>
           <Link
             href="/dashboard/community"
-            className="mb-2 inline-flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700"
+            className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground/80"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Community
           </Link>
-          <h1 className="text-2xl font-semibold text-surface-800">Salary Insights</h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <h1 className="text-2xl font-semibold text-foreground">Salary Insights</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Anonymous salary data for {salaryRoles.length} roles · Contributed by the community
           </p>
         </div>
@@ -155,7 +156,7 @@ export default function SalaryInsightsPage() {
           <div className="flex flex-wrap gap-3">
             {/* Role search with suggestions */}
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
               <Input
                 placeholder="Search role... e.g. Frontend Developer"
                 value={roleQuery}
@@ -165,12 +166,12 @@ export default function SalaryInsightsPage() {
                 className="pl-8"
               />
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-lg border border-surface-200 bg-white shadow-lg">
+                <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg">
                   {suggestions.map((r) => (
                     <button
                       key={r}
                       onClick={() => handleSelectRole(r)}
-                      className="flex w-full items-center px-3 py-2 text-sm text-surface-700 hover:bg-surface-50"
+                      className="flex w-full items-center px-3 py-2 text-sm text-foreground/80 hover:bg-muted/50"
                     >
                       {r}
                     </button>
@@ -183,7 +184,7 @@ export default function SalaryInsightsPage() {
             <select
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="rounded-lg border border-surface-200 px-3 py-2 text-sm outline-none focus:border-brand-300"
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary/50"
             >
               {MOCK_SALARY_LOCATIONS.map((l) => (
                 <option key={l} value={l}>{l}</option>
@@ -200,7 +201,7 @@ export default function SalaryInsightsPage() {
                     "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                     expFilter === f
                       ? "bg-brand-500 text-white"
-                      : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                      : "bg-muted text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {EXPERIENCE_FILTERS[f].label}
@@ -218,14 +219,14 @@ export default function SalaryInsightsPage() {
       {/* No Selection State */}
       {!selectedRole && (
         <div className="py-12 text-center">
-          <IndianRupee className="mx-auto mb-2 h-8 w-8 text-surface-300" />
-          <p className="text-sm text-surface-500">Search for a role to see salary insights</p>
+          <IndianRupee className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">Search for a role to see salary insights</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {salaryRoles.slice(0, 8).map((r) => (
               <button
                 key={r}
                 onClick={() => handleSelectRole(r)}
-                className="rounded-full border border-surface-200 px-3 py-1 text-xs text-surface-600 hover:border-brand-300 hover:text-brand-600"
+                className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-brand-300 hover:text-brand-600"
               >
                 {r}
               </button>
@@ -239,10 +240,10 @@ export default function SalaryInsightsPage() {
         <div className="space-y-4">
           {/* Title */}
           <div>
-            <h2 className="text-lg font-semibold text-surface-800">
+            <h2 className="text-lg font-semibold text-foreground">
               {selectedRole}
             </h2>
-            <p className="text-sm text-surface-500">
+            <p className="text-sm text-muted-foreground">
               {location === "All" ? "All locations" : location}
               {expFilter !== "all" ? ` · ${EXPERIENCE_FILTERS[expFilter].label} experience` : ""}
             </p>
@@ -272,8 +273,8 @@ export default function SalaryInsightsPage() {
                   <IndianRupee className="h-5 w-5 text-brand-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-surface-500">Median Total Comp</p>
-                  <p className="text-lg font-semibold text-surface-800">
+                  <p className="text-xs text-muted-foreground">Median Total Comp</p>
+                  <p className="text-lg font-semibold text-foreground">
                     {formatSalary(aggregation.median)}
                   </p>
                 </div>
@@ -281,12 +282,12 @@ export default function SalaryInsightsPage() {
             </Card>
             <Card>
               <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
-                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-sky-900/40">
+                  <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-surface-500">Salary Range (P25–P75)</p>
-                  <p className="text-lg font-semibold text-surface-800">
+                  <p className="text-xs text-muted-foreground">Salary Range (P25–P75)</p>
+                  <p className="text-lg font-semibold text-foreground">
                     {formatSalary(aggregation.p25)} – {formatSalary(aggregation.p75)}
                   </p>
                 </div>
@@ -298,8 +299,8 @@ export default function SalaryInsightsPage() {
                   <Users className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-surface-500">Sample Size</p>
-                  <p className="text-lg font-semibold text-surface-800">
+                  <p className="text-xs text-muted-foreground">Sample Size</p>
+                  <p className="text-lg font-semibold text-foreground">
                     {aggregation.sampleSize} reports
                   </p>
                 </div>
@@ -310,10 +311,10 @@ export default function SalaryInsightsPage() {
           {/* Salary Range Bar */}
           <Card>
             <CardContent className="p-4">
-              <h3 className="mb-3 text-sm font-semibold text-surface-800">Salary Range</h3>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Salary Range</h3>
               <div className="relative h-8">
                 {/* Track */}
-                <div className="absolute inset-x-0 top-3 h-2 rounded-full bg-surface-100" />
+                <div className="absolute inset-x-0 top-3 h-2 rounded-full bg-muted" />
                 {/* P25-P75 range */}
                 <div
                   className="absolute top-3 h-2 rounded-full bg-brand-400/60"
@@ -330,7 +331,7 @@ export default function SalaryInsightsPage() {
                   }}
                 />
               </div>
-              <div className="mt-2 flex justify-between text-[10px] text-surface-400">
+              <div className="mt-2 flex justify-between text-[10px] text-muted-foreground/70">
                 <span>{formatSalary(aggregation.min)}</span>
                 <span className="font-medium text-brand-600">Median: {formatSalary(aggregation.median)}</span>
                 <span>{formatSalary(aggregation.max)}</span>
@@ -352,15 +353,15 @@ export default function SalaryInsightsPage() {
                       barSize={40}
                       barGap={2}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
                       <XAxis
                         dataKey="bucket"
-                        tick={{ fontSize: 10, fill: "#78716c" }}
-                        axisLine={{ stroke: "#e7e5e4" }}
+                        tick={{ fontSize: 10, fill: CHART_COLORS.axisTick }}
+                        axisLine={{ stroke: CHART_COLORS.grid }}
                         tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 10, fill: "#a8a29e" }}
+                        tick={{ fontSize: 10, fill: CHART_COLORS.axisTickMuted }}
                         axisLine={false}
                         tickLine={false}
                         allowDecimals={false}
@@ -369,15 +370,15 @@ export default function SalaryInsightsPage() {
                         contentStyle={{
                           fontSize: 12,
                           borderRadius: 8,
-                          border: "1px solid #e7e5e4",
+                          border: `1px solid ${CHART_COLORS.tooltipBorder}`,
                           boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                         }}
                         formatter={(value: number) => [`${value} reports`, "Count"]}
                       />
                       <Bar
                         dataKey="count"
-                        fill="#7C3AED"
-                        fillOpacity={0.8}
+                        fill={CHART_COLORS.primary}
+                        fillOpacity={0.85}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -390,15 +391,15 @@ export default function SalaryInsightsPage() {
           {/* Percentile Comparison */}
           <Card>
             <CardContent className="p-4">
-              <h3 className="mb-2 text-sm font-semibold text-surface-800">
+              <h3 className="mb-2 text-sm font-semibold text-foreground">
                 Compare Your Salary
               </h3>
-              <p className="mb-3 text-xs text-surface-500">
+              <p className="mb-3 text-xs text-muted-foreground">
                 Enter your total compensation to see where you stand
               </p>
               <div className="flex items-center gap-3">
                 <div className="relative flex-1 max-w-xs">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-surface-400">₹</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground/70">₹</span>
                   <Input
                     type="number"
                     placeholder="e.g. 2500000"
@@ -422,7 +423,7 @@ export default function SalaryInsightsPage() {
                 )}
               </div>
               {percentile !== null && (
-                <p className="mt-2 text-xs text-surface-500">
+                <p className="mt-2 text-xs text-muted-foreground">
                   Your total compensation of {formatSalary(Number(userSalary))} is{" "}
                   {percentile >= 75 ? "above" : percentile >= 50 ? "at or above" : percentile >= 25 ? "below" : "well below"}{" "}
                   the median for {selectedRole} in {location === "All" ? "all locations" : location}.
@@ -436,11 +437,11 @@ export default function SalaryInsightsPage() {
       {/* No data state */}
       {selectedRole && !aggregation && (
         <div className="py-12 text-center">
-          <AlertCircle className="mx-auto mb-2 h-8 w-8 text-surface-300" />
-          <p className="text-sm text-surface-500">
+          <AlertCircle className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">
             No salary data available for {selectedRole} in {location}.
           </p>
-          <p className="mt-1 text-xs text-surface-400">
+          <p className="mt-1 text-xs text-muted-foreground/70">
             Try a different location or experience filter.
           </p>
         </div>
@@ -486,7 +487,7 @@ function ContributeSalaryModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
       <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b p-4">
-          <h2 className="text-base font-semibold text-surface-800">
+          <h2 className="text-base font-semibold text-foreground">
             {submitted ? "Thanks for contributing!" : "Contribute Your Salary"}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -499,7 +500,7 @@ function ContributeSalaryModal({ onClose }: { onClose: () => void }) {
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
               <IndianRupee className="h-6 w-6 text-green-600" />
             </div>
-            <p className="text-sm text-surface-600">
+            <p className="text-sm text-muted-foreground">
               Your anonymous salary data has been added! This helps the community make better decisions.
             </p>
             <Button size="sm" onClick={onClose} className="mt-4">Done</Button>
@@ -512,7 +513,7 @@ function ContributeSalaryModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div>
-              <Label className="text-xs">Company <span className="text-surface-400">(optional)</span></Label>
+              <Label className="text-xs">Company <span className="text-muted-foreground/70">(optional)</span></Label>
               <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g. Google" className="mt-1" />
             </div>
 
@@ -522,7 +523,7 @@ function ContributeSalaryModal({ onClose }: { onClose: () => void }) {
                 <select
                   value={loc}
                   onChange={(e) => setLoc(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-surface-200 px-3 py-2 text-sm outline-none focus:border-brand-300"
+                  className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary/50"
                 >
                   {MOCK_SALARY_LOCATIONS.filter((l) => l !== "All").map((l) => (
                     <option key={l} value={l}>{l}</option>
@@ -546,7 +547,7 @@ function ContributeSalaryModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            <p className="text-[10px] text-surface-400">
+            <p className="text-[10px] text-muted-foreground/70">
               All data is submitted anonymously. Your name and email will never be shared.
             </p>
 

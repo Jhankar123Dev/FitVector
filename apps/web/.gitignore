@@ -1,0 +1,16 @@
+# Next.js build output
+.next/
+out/
+
+# Local env files — contain secrets, never commit
+.env.test
+.env.local
+
+# Playwright — generated artifacts, never commit these
+playwright-report/
+test-results/
+
+# Playwright cached auth sessions — contain live cookies / JWTs
+# The .auth/ directory itself is tracked (it holds a .gitignore), but the
+# session JSON files inside must never be committed.
+tests/e2e/.auth/*.json

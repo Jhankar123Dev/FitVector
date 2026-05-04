@@ -87,32 +87,32 @@ export function Step7Pipeline({ form, update }: Props) {
     <Card>
       <CardContent className="space-y-6 p-6">
         <div>
-          <h2 className="text-base font-semibold text-surface-800">Pipeline Configuration</h2>
-          <p className="mt-1 text-xs text-surface-500">
+          <h2 className="text-base font-semibold text-foreground">Pipeline Configuration</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
             Design your hiring flow. Drag to reorder stages, click a preset to add, or type a
             custom stage name.
-            <span className="ml-1 inline-flex items-center gap-0.5 text-surface-400">
+            <span className="ml-1 inline-flex items-center gap-0.5 text-muted-foreground/70">
               <Lock className="h-2.5 w-2.5" /> Locked stages are always included.
             </span>
           </p>
         </div>
 
         {/* Full pipeline preview */}
-        <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-50 p-3">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-muted/30 p-3">
           {form.pipelineStages.map((stage, i) => (
             <div key={`preview-${stage}-${i}`} className="flex items-center gap-1.5">
               <span
                 className={cn(
                   "rounded-full px-2.5 py-1 text-[11px] font-medium",
                   PIPELINE_LOCKED_SET.has(stage)
-                    ? "bg-surface-200 text-surface-600"
+                    ? "bg-muted text-muted-foreground"
                     : "border border-brand-200 bg-brand-50 text-brand-700",
                 )}
               >
                 {getStageName(stage)}
               </span>
               {i < form.pipelineStages.length - 1 && (
-                <ChevronRight className="h-3 w-3 shrink-0 text-surface-300" />
+                <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40" />
               )}
             </div>
           ))}
@@ -124,13 +124,13 @@ export function Step7Pipeline({ form, update }: Props) {
             {PIPELINE_LOCKED_HEAD.map((stage) => (
               <span
                 key={stage}
-                className="flex items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-100 px-3 py-1.5 text-xs font-medium text-surface-500"
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground"
               >
                 <Lock className="h-3 w-3 shrink-0" />
                 {getStageName(stage)}
               </span>
             ))}
-            <ChevronRight className="h-4 w-4 shrink-0 text-surface-300" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
           </div>
 
           {/* DnD zone */}
@@ -144,11 +144,11 @@ export function Step7Pipeline({ form, update }: Props) {
                     "flex min-h-[52px] flex-wrap items-center gap-2 rounded-lg border-2 border-dashed p-3 transition-colors",
                     snapshot.isDraggingOver
                       ? "border-brand-400 bg-brand-50/40"
-                      : "border-surface-200 bg-surface-50/50",
+                      : "border-border bg-muted/30",
                   )}
                 >
                   {middleStages.length === 0 && !snapshot.isDraggingOver && (
-                    <p className="text-xs italic text-surface-400">
+                    <p className="text-xs italic text-muted-foreground/70">
                       No stages added — pick a preset below or type a custom name
                     </p>
                   )}
@@ -159,24 +159,24 @@ export function Step7Pipeline({ form, update }: Props) {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           className={cn(
-                            "flex select-none items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1.5 shadow-sm",
+                            "flex select-none items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 shadow-sm",
                             snapshot.isDragging
                               ? "border-brand-400 shadow-md ring-1 ring-brand-300"
-                              : "border-surface-200",
+                              : "border-border",
                           )}
                         >
                           <div
                             {...provided.dragHandleProps}
-                            className="cursor-grab text-surface-300 hover:text-surface-500 active:cursor-grabbing"
+                            className="cursor-grab text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
                           >
                             <GripVertical className="h-3.5 w-3.5" />
                           </div>
-                          <span className="text-xs font-medium text-surface-700">
+                          <span className="text-xs font-medium text-foreground/80">
                             {getStageName(stage)}
                           </span>
                           <button
                             onClick={() => removeStage(index)}
-                            className="text-surface-300 transition-colors hover:text-red-500"
+                            className="text-muted-foreground/40 transition-colors hover:text-red-500"
                             aria-label={`Remove ${getStageName(stage)}`}
                           >
                             <X className="h-3 w-3" />
@@ -193,11 +193,11 @@ export function Step7Pipeline({ form, update }: Props) {
 
           {/* Locked tail */}
           <div className="flex flex-wrap items-center gap-2">
-            <ChevronRight className="h-4 w-4 shrink-0 text-surface-300" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
             {PIPELINE_LOCKED_TAIL.map((stage) => (
               <span
                 key={stage}
-                className="flex items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-100 px-3 py-1.5 text-xs font-medium text-surface-500"
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground"
               >
                 <Lock className="h-3 w-3 shrink-0" />
                 {getStageName(stage)}
@@ -206,12 +206,12 @@ export function Step7Pipeline({ form, update }: Props) {
           </div>
 
           {/* Add stages */}
-          <div className="space-y-3 border-t border-surface-100 pt-4">
-            <p className="text-xs font-semibold text-surface-600">Add Stages</p>
+          <div className="space-y-3 border-t border-border pt-4">
+            <p className="text-xs font-semibold text-muted-foreground">Add Stages</p>
             <div className="space-y-2">
               {Object.entries(presetGroups).map(([group, presets]) => (
                 <div key={group} className="flex flex-wrap items-center gap-1.5">
-                  <span className="w-24 shrink-0 text-[10px] font-medium text-surface-400">
+                  <span className="w-24 shrink-0 text-[10px] font-medium text-muted-foreground/70">
                     {group}
                   </span>
                   {presets.map((preset) => {
@@ -224,7 +224,7 @@ export function Step7Pipeline({ form, update }: Props) {
                         className={cn(
                           "flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
                           isAdded
-                            ? "cursor-default border-surface-200 bg-surface-100 text-surface-400"
+                            ? "cursor-default border-border bg-muted text-muted-foreground/70"
                             : "cursor-pointer border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100",
                         )}
                       >

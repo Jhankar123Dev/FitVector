@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useEmployer, useUpdateCompany } from "@/hooks/use-employer";
 import { CalendarSyncCard } from "@/components/settings/calendar-sync-card";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function EmployerSettingsPage() {
   const { data: employerData, isLoading, error } = useEmployer();
@@ -60,13 +61,13 @@ export default function EmployerSettingsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <div className="h-6 w-32 animate-pulse rounded bg-surface-200" />
-          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-surface-100" />
+          <div className="h-6 w-32 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-muted" />
         </div>
         {[1, 2, 3].map((i) => (
           <Card key={i}>
             <CardContent className="py-8">
-              <div className="h-24 animate-pulse rounded bg-surface-100" />
+              <div className="h-24 animate-pulse rounded bg-muted" />
             </CardContent>
           </Card>
         ))}
@@ -87,8 +88,8 @@ export default function EmployerSettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-semibold text-surface-800">Settings</h1>
-        <p className="mt-0.5 text-sm text-surface-500">
+        <h1 className="text-xl font-semibold text-foreground">Settings</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Manage your company profile and account settings
         </p>
       </div>
@@ -196,7 +197,7 @@ export default function EmployerSettingsPage() {
               Upgrade Plan
             </Button>
           </div>
-          <p className="mt-2 text-sm text-surface-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             Your Growth plan includes AI screening, interviews, and team collaboration for up to 50 employees.
           </p>
         </CardContent>
@@ -220,17 +221,41 @@ export default function EmployerSettingsPage() {
             { label: "Weekly hiring digest", description: "Summary of pipeline activity", enabled: false },
             { label: "Team activity", description: "When team members take actions", enabled: true },
           ].map((notif) => (
-            <div key={notif.label} className="flex items-center justify-between rounded-lg border border-surface-200 px-4 py-3">
+            <div key={notif.label} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
               <div>
-                <p className="text-sm font-medium text-surface-700">{notif.label}</p>
-                <p className="text-xs text-surface-400">{notif.description}</p>
+                <p className="text-sm font-medium text-foreground/80">{notif.label}</p>
+                <p className="text-xs text-muted-foreground/70">{notif.description}</p>
               </div>
               <label className="relative inline-flex cursor-pointer items-center">
                 <input type="checkbox" defaultChecked={notif.enabled} className="peer sr-only" />
-                <div className="h-5 w-9 rounded-full bg-surface-200 peer-checked:bg-brand-500 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
+                <div className="h-5 w-9 rounded-full bg-muted peer-checked:bg-brand-500 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
               </label>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      {/* Appearance */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364-.707.707M6.343 17.657l-.707.707m12.728 0-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 1 1 0 10A5 5 0 0 1 12 7z" />
+              </svg>
+            </div>
+            Appearance
+          </CardTitle>
+          <CardDescription>Customize how FitVector looks for you</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">Theme</p>
+              <p className="text-xs text-muted-foreground">Switch between light and dark mode</p>
+            </div>
+            <ThemeToggle />
+          </div>
         </CardContent>
       </Card>
 
@@ -251,15 +276,15 @@ export default function EmployerSettingsPage() {
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-surface-700">Two-Factor Authentication</p>
-              <p className="text-xs text-surface-400">Add an extra layer of security</p>
+              <p className="text-sm font-medium text-foreground/80">Two-Factor Authentication</p>
+              <p className="text-xs text-muted-foreground/70">Add an extra layer of security</p>
             </div>
             <Button variant="outline" size="sm">Enable 2FA</Button>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-surface-700">API Keys</p>
-              <p className="text-xs text-surface-400">Manage integration API keys</p>
+              <p className="text-sm font-medium text-foreground/80">API Keys</p>
+              <p className="text-xs text-muted-foreground/70">Manage integration API keys</p>
             </div>
             <Button variant="outline" size="sm">Manage Keys</Button>
           </div>

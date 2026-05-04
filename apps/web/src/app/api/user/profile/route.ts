@@ -100,7 +100,14 @@ export async function PUT(req: Request) {
 
     // Update user name if provided
     if (body.name) {
-      await supabase.from("users").update({ name: body.name }).eq("id", session.user.id);
+      const { error: nameError } = await supabase
+        .from("users")
+        .update({ full_name: body.name })
+        .eq("id", session.user.id);
+      if (nameError) {
+        console.error("Name update error:", nameError);
+        return NextResponse.json({ error: "Failed to update name" }, { status: 500 });
+      }
     }
 
     // Build profile update object (only include provided fields)

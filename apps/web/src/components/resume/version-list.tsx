@@ -35,11 +35,13 @@ function DownloadButton({ versionId, versionName }: { versionId: string; version
       const res = await fetch(`/api/user/resumes/${versionId}/pdf`);
       if (!res.ok) {
         const text = await res.text();
-        const msg = text.includes("compilation failed")
-          ? "PDF compilation failed — resume may be missing LaTeX content."
+        const msg = text.includes("PDF not available") || res.status === 422
+          ? "PDF not available — re-tailor this resume to generate one."
+          : text.includes("compilation failed")
+          ? "PDF compilation failed — LaTeX content may be corrupted."
           : text.includes("not found")
-            ? "Resume not found."
-            : "PDF generation failed. Please try again.";
+          ? "Resume not found."
+          : "PDF generation failed. Please try again.";
         setDlError(msg);
         return;
       }
@@ -130,7 +132,13 @@ export function VersionList({ versions }: VersionListProps) {
                   View
                 </Link>
               </Button>
-              <DownloadButton versionId={version.id} versionName={version.versionName} />
+              {version.hasLatex ? (
+                <DownloadButton versionId={version.id} versionName={version.versionName} />
+              ) : (
+                <span className="text-[10px] text-muted-foreground px-2 py-1 rounded-md bg-muted whitespace-nowrap">
+                  Re-tailor for PDF
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>

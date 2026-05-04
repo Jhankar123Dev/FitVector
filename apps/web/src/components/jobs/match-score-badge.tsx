@@ -13,7 +13,7 @@ const BUCKET_CONFIG: Record<string, { color: string; bg: string; label: string }
   strong_fit: { color: "text-green-700", bg: "bg-green-100", label: "Strong fit" },
   good_fit: { color: "text-blue-700", bg: "bg-blue-100", label: "Good fit" },
   potential_fit: { color: "text-yellow-700", bg: "bg-yellow-100", label: "Potential fit" },
-  weak_fit: { color: "text-gray-600", bg: "bg-gray-100", label: "Explore" },
+  weak_fit: { color: "text-muted-foreground", bg: "bg-muted", label: "Explore" },
 };
 
 export function MatchScoreBadge({

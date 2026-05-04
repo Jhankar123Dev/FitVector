@@ -478,6 +478,26 @@ export async function GET(req: NextRequest) {
     const startIdx = (page - 1) * limit;
     const paginatedJobs = filteredJobs.slice(startIdx, startIdx + limit);
 
+    // Stamp isSaved from the tracker so the client never needs a second fetch
+    const { data: savedApps } = await supabase
+      .from("applications")
+      .select("job_id, job_title, company_name")
+      .eq("user_id", userId)
+      .eq("status", "saved")
+      .eq("is_archived", false);
+
+    if (savedApps && savedApps.length > 0) {
+      const savedByJobId = new Set(savedApps.map((a) => a.job_id).filter(Boolean));
+      const savedByTitleCompany = new Set(
+        savedApps.filter((a) => !a.job_id).map((a) => `${a.job_title}::${a.company_name}`),
+      );
+      for (const job of paginatedJobs) {
+        job.isSaved =
+          savedByJobId.has(job.id) ||
+          savedByTitleCompany.has(`${job.title}::${job.companyName}`);
+      }
+    }
+
     const searchLimit = PLAN_LIMITS[planTier].job_search;
 
     return Response.json({

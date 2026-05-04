@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { KanbanBoard } from "@/components/tracker/kanban-board";
 import { AppliedJobsList } from "@/components/tracker/applied-jobs-list";
 import { ApplicationDetailModal } from "@/components/tracker/application-detail-modal";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { UpgradePrompt } from "@/components/shared/upgrade-prompt";
 import {
@@ -113,15 +113,15 @@ export default function TrackerPage() {
       {/* Header */}
       <div className="flex items-center justify-between pb-3">
         <div>
-          <h1 className="text-2xl font-semibold text-surface-800">Application Tracker</h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <h1 className="text-2xl font-semibold text-foreground">Application Tracker</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Track all your job applications in one place
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* Search */}
           <div className="relative hidden sm:block">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="Search by company..."
               value={search}
@@ -140,14 +140,14 @@ export default function TrackerPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-4 flex items-center gap-1 rounded-xl border border-surface-200 bg-surface-50 p-1">
+      <div className="mb-4 flex items-center gap-1 rounded-xl border border-border bg-muted/40 p-1">
         <button
           onClick={() => setActiveTab("applied")}
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
             activeTab === "applied"
-              ? "bg-white shadow-sm text-accent-700"
-              : "text-surface-500 hover:text-surface-700",
+              ? "bg-background shadow-sm text-accent-700"
+              : "text-muted-foreground hover:text-foreground/80",
           )}
         >
           <Zap className="h-3.5 w-3.5" />
@@ -155,7 +155,7 @@ export default function TrackerPage() {
           {appliedApps.length > 0 && (
             <span className={cn(
               "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-              activeTab === "applied" ? "bg-accent-100 text-accent-700" : "bg-surface-200 text-surface-500",
+              activeTab === "applied" ? "bg-accent-100 text-accent-700" : "bg-muted text-muted-foreground",
             )}>
               {appliedApps.length}
             </span>
@@ -166,8 +166,8 @@ export default function TrackerPage() {
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
             activeTab === "personal"
-              ? "bg-white shadow-sm text-surface-800"
-              : "text-surface-500 hover:text-surface-700",
+              ? "bg-background shadow-sm text-foreground"
+              : "text-muted-foreground hover:text-foreground/80",
           )}
         >
           <BookOpen className="h-3.5 w-3.5" />
@@ -175,7 +175,7 @@ export default function TrackerPage() {
           {personalApps.length > 0 && (
             <span className={cn(
               "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-              activeTab === "personal" ? "bg-surface-200 text-surface-700" : "bg-surface-200 text-surface-500",
+              activeTab === "personal" ? "bg-muted text-foreground/80" : "bg-muted text-muted-foreground",
             )}>
               {personalApps.length}
             </span>
@@ -185,9 +185,9 @@ export default function TrackerPage() {
 
       {/* Add form — Personal tab only */}
       {activeTab === "personal" && showAddForm && (
-        <div className="mb-4 flex items-end gap-2 rounded-xl border border-surface-200 bg-surface-50 p-3">
+        <div className="mb-4 flex items-end gap-2 rounded-xl border border-border bg-muted/30 p-3">
           <div className="flex-1">
-            <label className="text-xs font-medium text-surface-700">Job Title *</label>
+            <label className="text-xs font-medium text-foreground/80">Job Title *</label>
             <Input
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
@@ -196,7 +196,7 @@ export default function TrackerPage() {
             />
           </div>
           <div className="flex-1">
-            <label className="text-xs font-medium text-surface-700">Company *</label>
+            <label className="text-xs font-medium text-foreground/80">Company *</label>
             <Input
               value={newCompany}
               onChange={(e) => setNewCompany(e.target.value)}
@@ -229,7 +229,7 @@ export default function TrackerPage() {
       {/* Error */}
       {isError && (
         <EmptyState
-          icon={Kanban}
+          icon={<Kanban />}
           title="Failed to load tracker"
           description="Something went wrong. Please refresh the page."
         />
@@ -241,7 +241,7 @@ export default function TrackerPage() {
           {/* Filter bar */}
           <div className="flex flex-wrap items-center gap-2">
             <select
-              className="h-8 rounded-md border border-surface-200 bg-white px-2 text-xs text-surface-700 outline-none focus:ring-1 focus:ring-brand-500/30"
+              className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground/80 outline-none focus:ring-1 focus:ring-primary/30"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
             >
@@ -254,7 +254,7 @@ export default function TrackerPage() {
               <option value="rejected">Rejected</option>
             </select>
             <select
-              className="h-8 rounded-md border border-surface-200 bg-white px-2 text-xs text-surface-700 outline-none focus:ring-1 focus:ring-brand-500/30"
+              className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground/80 outline-none focus:ring-1 focus:ring-primary/30"
               value={filterCompany}
               onChange={(e) => setFilterCompany(e.target.value)}
             >
@@ -262,7 +262,7 @@ export default function TrackerPage() {
               {appliedCompanies.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
             <select
-              className="h-8 rounded-md border border-surface-200 bg-white px-2 text-xs text-surface-700 outline-none focus:ring-1 focus:ring-brand-500/30"
+              className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground/80 outline-none focus:ring-1 focus:ring-primary/30"
               value={filterRange}
               onChange={(e) => setFilterRange(e.target.value)}
             >
@@ -295,7 +295,7 @@ export default function TrackerPage() {
         <>
           {personalApps.length === 0 ? (
             <EmptyState
-              icon={BookOpen}
+              icon={<BookOpen />}
               title="No personal applications yet"
               description="Track jobs you found yourself — add them manually or save jobs from search."
               action={

@@ -5,6 +5,7 @@ import { Bell, Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationDropdown } from "./notification-dropdown";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useUser } from "@/hooks/use-user";
 import { useNotifications, useMarkAllRead } from "@/hooks/use-notifications";
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -56,7 +57,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
     : "U";
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-surface-200 bg-white px-4 sm:px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background px-4 sm:px-6">
       {/* Left: mobile menu */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
@@ -66,18 +67,21 @@ export function Navbar({ onMenuClick }: NavbarProps) {
       </div>
 
       {/* Right: actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Plan badge */}
-        <span className="hidden rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium capitalize text-brand-700 sm:inline-flex">
+        <span className="hidden rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium capitalize text-primary sm:inline-flex">
           {user?.planTier || "free"}
         </span>
+
+        {/* Dark mode toggle */}
+        <ThemeToggle />
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <Button
             variant="ghost"
             size="icon"
-            className="relative text-surface-500 hover:text-surface-700"
+            className="relative text-muted-foreground hover:text-foreground"
             onClick={() => {
               setShowNotifications(!showNotifications);
               setShowDropdown(false);
@@ -103,7 +107,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         {/* User avatar + dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
-            className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-200 focus:ring-offset-2"
+            className="flex cursor-pointer items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
             onClick={() => {
               setShowDropdown(!showDropdown);
               setShowNotifications(false);
@@ -116,22 +120,22 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-surface-200 bg-white shadow-card-hover">
-              <div className="border-b border-surface-100 px-4 py-3">
-                <p className="text-sm font-medium text-surface-800">{user?.name || "User"}</p>
-                <p className="text-xs text-surface-500">{user?.email}</p>
+            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-popover shadow-lg">
+              <div className="border-b border-border px-4 py-3">
+                <p className="text-sm font-medium text-popover-foreground">{user?.name || "User"}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
               <div className="py-1">
                 <a
                   href="/dashboard/settings"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-surface-600 hover:bg-surface-50 hover:text-surface-800 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
                   <User className="h-4 w-4" />
                   Profile Settings
                 </a>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-surface-600 hover:bg-surface-50 hover:text-surface-800 transition-colors"
+                  className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign Out

@@ -5,7 +5,7 @@ import { FileText, Plus, Upload, CheckCircle2, Loader2, AlertCircle, Eye } from 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VersionList } from "@/components/resume/version-list";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { useResumeVersions } from "@/hooks/use-resume";
 import { useUser } from "@/hooks/use-user";
@@ -39,15 +39,15 @@ function BaseResumeUpload({ hasResume, resumeData }: { hasResume: boolean; resum
   }, []);
 
   return (
-    <div className="rounded-xl border border-surface-200 bg-white p-4 shadow-card">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-card">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
             <FileText className="h-5 w-5 text-brand-500" />
           </div>
           <div>
-            <p className="text-sm font-medium text-surface-800">Base Resume</p>
-            <p className="text-xs text-surface-500">
+            <p className="text-sm font-medium text-foreground">Base Resume</p>
+            <p className="text-xs text-muted-foreground">
               {success ? "Resume uploaded — AI will use this for tailoring" : hasResume ? "Resume on file — upload a new one to replace it" : "Upload your resume so AI can tailor it for jobs"}
             </p>
           </div>
@@ -88,7 +88,7 @@ function BaseResumeUpload({ hasResume, resumeData }: { hasResume: boolean; resum
       {error && <p className="mt-2 flex items-center gap-1 text-xs text-red-600"><AlertCircle className="h-3 w-3" />{error}</p>}
       {success && <p className="mt-2 text-xs text-accent-600">Resume uploaded and parsed successfully!</p>}
       {showParsed && resumeData && (
-        <div className="mt-3 rounded-lg border border-surface-200 bg-surface-50 p-3 text-xs text-surface-700 space-y-1">
+        <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3 text-xs text-foreground/80 space-y-1">
           {!!resumeData.name && <p><span className="font-medium">Name:</span> {String(resumeData.name)}</p>}
           {!!resumeData.email && <p><span className="font-medium">Email:</span> {String(resumeData.email)}</p>}
           {Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && (
@@ -100,7 +100,7 @@ function BaseResumeUpload({ hasResume, resumeData }: { hasResume: boolean; resum
           {Array.isArray(resumeData.education) && (
             <p><span className="font-medium">Education entries:</span> {(resumeData.education as unknown[]).length}</p>
           )}
-          <p className="text-surface-400 pt-1">Stored in your profile · Used for AI resume tailoring</p>
+          <p className="text-muted-foreground/40 pt-1">Stored in your profile · Used for AI resume tailoring</p>
         </div>
       )}
     </div>
@@ -119,14 +119,14 @@ export default function ResumePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-surface-800">Resume Versions</h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <h1 className="text-2xl font-semibold text-foreground">Resume Versions</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Your AI-tailored resumes optimized for specific job descriptions
           </p>
         </div>
         <div className="flex items-center gap-3">
           {resumeUsage && (
-            <div className="text-right text-xs text-surface-500">
+            <div className="text-right text-xs text-muted-foreground">
               <span className="font-medium">
                 {resumeUsage.used} of{" "}
                 {resumeUsage.limit === -1 ? "unlimited" : resumeUsage.limit}
@@ -141,9 +141,9 @@ export default function ResumePage() {
       <BaseResumeUpload hasResume={!!(user as any)?.resume_data} resumeData={(user as any)?.resume_data} />
 
       {/* How it works */}
-      <div className="rounded-xl border border-surface-200 bg-surface-50 p-4">
-        <h3 className="mb-2 text-sm font-medium text-surface-700">How resume tailoring works</h3>
-        <ol className="space-y-1 text-xs text-surface-500">
+      <div className="rounded-xl border border-border bg-muted/30 p-4">
+        <h3 className="mb-2 text-sm font-medium text-foreground/80">How resume tailoring works</h3>
+        <ol className="space-y-1 text-xs text-muted-foreground">
           <li>
             1. Open any job from the Jobs tab and click{" "}
             <Badge variant="outline" className="text-[10px]">
@@ -160,7 +160,7 @@ export default function ResumePage() {
 
       {isError && (
         <EmptyState
-          icon={FileText}
+          icon={<FileText />}
           title="Failed to load resumes"
           description="Something went wrong. Please try again."
         />
@@ -168,7 +168,7 @@ export default function ResumePage() {
 
       {!isLoading && !isError && versions && versions.length === 0 && (
         <EmptyState
-          icon={FileText}
+          icon={<FileText />}
           title="No tailored resumes yet"
           description="Search for jobs and click 'Tailor Resume' on any job card to generate your first ATS-optimized resume."
           action={

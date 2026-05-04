@@ -17,112 +17,143 @@ const config: Config = {
       },
     },
     extend: {
+      // ── Typography ────────────────────────────────────────────────
       fontFamily: {
         sans: [
-          "var(--font-inter)",
+          "var(--font-jakarta)",
           "-apple-system",
           "BlinkMacSystemFont",
           "Segoe UI",
           "sans-serif",
         ],
       },
+
+      // ── Color System ──────────────────────────────────────────────
       colors: {
-        // Brand: Deep indigo-violet
+        // ── Brand scale: sky/ocean blue (replaces purple) ──────────
+        // Light-mode primary: brand-700 (#0369A1)
+        // Dark-mode  primary: brand-400 (#38BDF8) via dark: class
         brand: {
-          50: "#f0f0ff",
-          100: "#e0e0ff",
-          200: "#c7c4ff",
-          300: "#a5a0ff",
-          400: "#8278ff",
-          500: "#6c5ce7",
-          600: "#5a45d6",
-          700: "#4a37b8",
-          800: "#3d2e96",
-          900: "#2d2270",
-          950: "#1a1445",
+          50:  "#f0f9ff",
+          100: "#e0f2fe",
+          200: "#bae6fd",
+          300: "#7dd3fc",
+          400: "#38bdf8",
+          500: "#0ea5e9",
+          600: "#0284c7",
+          700: "#0369a1",
+          800: "#075985",
+          900: "#0c4a6e",
+          950: "#082f49",
         },
-        // Accent: Bright teal-green
+
+        // ── Accent / CTA scale: Tailwind green ─────────────────────
+        // CTA button: accent-500 (#22C55E). Per DESIGN.md: CTA only.
         accent: {
-          50: "#eefff6",
-          100: "#d7ffeb",
-          200: "#b2ffd9",
-          300: "#76ffbe",
-          400: "#33f59c",
-          500: "#00d97e",
-          600: "#00b368",
-          700: "#008f54",
-          800: "#007044",
-          900: "#005c3a",
-          DEFAULT: "#00d97e",
-          foreground: "#005c3a",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+          50:  "#f0fdf4",
+          100: "#dcfce7",
+          200: "#bbf7d0",
+          300: "#86efac",
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
+          700: "#15803d",
+          800: "#166534",
+          900: "#14532d",
         },
-        // Surface: Warm slate grays
+
+        // ── Surface scale: cool slate (replaces warm stone) ────────
         surface: {
-          50: "#fafaf9",
-          100: "#f5f5f4",
-          200: "#e7e5e4",
-          300: "#d6d3d1",
-          400: "#a8a29e",
-          500: "#78716c",
-          600: "#57534e",
-          700: "#44403c",
-          800: "#292524",
-          900: "#1c1917",
+          50:  "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
         },
-        // shadcn/ui semantic tokens (mapped to brand/surface)
-        border: "#e7e5e4",
-        input: "#e7e5e4",
-        ring: "#6c5ce7",
-        background: "#fafaf9",
-        foreground: "#292524",
+
+        // ── shadcn/ui semantic tokens ── driven by CSS variables ───
+        // Variables defined in globals.css with light + .dark variants
+        border:     "hsl(var(--border))",
+        input:      "hsl(var(--input))",
+        ring:       "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+
         primary: {
-          DEFAULT: "#6c5ce7",
-          foreground: "#ffffff",
+          DEFAULT:    "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "#f5f5f4",
-          foreground: "#44403c",
+          DEFAULT:    "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "#ef4444",
-          foreground: "#ffffff",
+          DEFAULT:    "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "#f5f5f4",
-          foreground: "#78716c",
+          DEFAULT:    "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         popover: {
-          DEFAULT: "#ffffff",
-          foreground: "#292524",
+          DEFAULT:    "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
         card: {
-          DEFAULT: "#ffffff",
-          foreground: "#292524",
+          DEFAULT:    "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
       },
+
+      // ── Border Radius ─────────────────────────────────────────────
+      // --radius = 0.375rem (6px) set in globals.css
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+
+      // ── Shadows: blue-tinted per DESIGN.md ───────────────────────
       boxShadow: {
-        card: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)",
+        card:
+          "0 1px 3px rgba(2, 55, 112, 0.06), 0 1px 2px rgba(2, 55, 112, 0.04)",
         "card-hover":
-          "0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06)",
+          "0 4px 12px rgba(2, 55, 112, 0.10), 0 2px 4px rgba(2, 55, 112, 0.06)",
+        "card-raised":
+          "0 8px 24px rgba(2, 55, 112, 0.12), 0 4px 8px rgba(2, 55, 112, 0.08)",
       },
+
+      // ── Animations ────────────────────────────────────────────────
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+          to:   { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          to:   { height: "0" },
+        },
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to:   { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-in-right": {
+          from: { opacity: "0", transform: "translateX(8px)" },
+          to:   { opacity: "1", transform: "translateX(0)" },
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-down":  "accordion-down 0.2s ease-out",
+        "accordion-up":    "accordion-up 0.2s ease-out",
+        "fade-in":         "fade-in 0.2s ease-out",
+        "slide-in-right":  "slide-in-right 0.2s ease-out",
       },
     },
   },

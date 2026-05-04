@@ -21,7 +21,7 @@ function scoreBgColor(score: number) {
 
 const SOURCE_COLORS: Record<string, string> = {
   fitvector: "bg-brand-50 text-brand-600",
-  external: "bg-surface-100 text-surface-600",
+  external: "bg-muted text-muted-foreground",
   referral: "bg-accent-50 text-accent-700",
   imported: "bg-sky-50 text-sky-600",
 };
@@ -51,10 +51,10 @@ export function CandidateCard({
   return (
     <div
       className={cn(
-        "group cursor-pointer rounded-lg border bg-white p-3 transition-all hover:shadow-card",
+        "group cursor-pointer rounded-lg border bg-card p-3 transition-all hover:shadow-card",
         selected
           ? "border-brand-500 ring-1 ring-brand-500"
-          : "border-surface-200 hover:border-surface-300",
+          : "border-border hover:border-border/80",
         compact && "p-2",
       )}
       onClick={() => onClick?.(applicant)}
@@ -70,19 +70,19 @@ export function CandidateCard({
               onSelect(applicant.id);
             }}
             onClick={(e) => e.stopPropagation()}
-            className="mt-1 rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+            className="mt-1 rounded border-border text-brand-500 focus:ring-brand-200"
           />
         )}
 
         {/* Avatar */}
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold text-surface-600">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
           {initials}
         </div>
 
         {/* Info */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <p className="truncate text-sm font-medium text-surface-800">
+            <p className="truncate text-sm font-medium text-foreground">
               {applicant.name}
             </p>
             {applicant.screeningScore > 0 ? (
@@ -95,7 +95,7 @@ export function CandidateCard({
                 AI Match: {applicant.screeningScore}
               </span>
             ) : (
-              <span className="shrink-0 rounded-full bg-surface-100 px-1.5 py-0.5 text-[10px] font-medium text-surface-400">
+              <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/70">
                 Not scored
               </span>
             )}
@@ -110,7 +110,7 @@ export function CandidateCard({
               </span>
             )}
           </div>
-          <p className="truncate text-xs text-surface-500">
+          <p className="truncate text-xs text-muted-foreground">
             {applicant.currentRole} @ {applicant.currentCompany}
           </p>
 
@@ -124,7 +124,7 @@ export function CandidateCard({
               >
                 {SOURCE_LABELS[applicant.source]}
               </span>
-              <span className="text-[10px] text-surface-400">
+              <span className="text-[10px] text-muted-foreground/70">
                 {formatRelativeTime(applicant.appliedAt)}
               </span>
             </div>
@@ -159,7 +159,7 @@ export function CandidateRow({
   return (
     <tr
       className={cn(
-        "cursor-pointer border-b border-surface-100 transition-colors hover:bg-surface-50",
+        "cursor-pointer border-b border-border transition-colors hover:bg-muted/50",
         selected && "bg-brand-50/50",
       )}
       onClick={() => onClick?.(applicant)}
@@ -173,25 +173,25 @@ export function CandidateRow({
             onSelect?.(applicant.id);
           }}
           onClick={(e) => e.stopPropagation()}
-          className="rounded border-surface-300 text-brand-500 focus:ring-brand-200"
+          className="rounded border-border text-brand-500 focus:ring-brand-200"
         />
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold text-surface-600">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
             {initials}
           </div>
           <div>
-            <p className="text-sm font-medium text-surface-800">
+            <p className="text-sm font-medium text-foreground">
               {applicant.name}
             </p>
-            <p className="text-xs text-surface-500">{applicant.email}</p>
+            <p className="text-xs text-muted-foreground">{applicant.email}</p>
           </div>
         </div>
       </td>
       <td className="px-4 py-3">
-        <p className="text-sm text-surface-700">{applicant.currentRole}</p>
-        <p className="text-xs text-surface-400">{applicant.currentCompany}</p>
+        <p className="text-sm text-foreground/80">{applicant.currentRole}</p>
+        <p className="text-xs text-muted-foreground/70">{applicant.currentCompany}</p>
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1">
@@ -205,7 +205,7 @@ export function CandidateRow({
               AI Match: {applicant.screeningScore}
             </span>
           ) : (
-            <span className="inline-flex w-fit rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-400">
+            <span className="inline-flex w-fit rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground/70">
               —
             </span>
           )}
@@ -232,7 +232,7 @@ export function CandidateRow({
         </span>
       </td>
       <td className="px-4 py-3">
-        <span className="text-xs text-surface-500">
+        <span className="text-xs text-muted-foreground">
           {formatRelativeTime(applicant.appliedAt)}
         </span>
       </td>

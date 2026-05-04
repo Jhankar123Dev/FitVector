@@ -89,6 +89,19 @@ export async function POST(req: Request) {
       template_id: body.templateId || "modern",
     }, { timeout: 60000 });
 
+    // Guard: reject if Python returned garbage instead of valid LaTeX
+    if (
+      !result.latex_source?.trim() ||
+      !result.latex_source.includes("\\documentclass") ||
+      !result.latex_source.includes("\\begin{document}")
+    ) {
+      console.error("[tailor-resume] Python service returned invalid LaTeX — not storing in DB.");
+      return Response.json(
+        { error: "Resume tailoring failed: the AI did not return valid LaTeX. Please try again." },
+        { status: 500 },
+      );
+    }
+
     // Store LaTeX in DB — pdf_url stays null, compiled on-demand
     const { data: resume, error: insertError } = await supabase
       .from("tailored_resumes")

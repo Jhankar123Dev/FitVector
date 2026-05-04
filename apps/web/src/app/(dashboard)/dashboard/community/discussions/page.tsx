@@ -113,13 +113,13 @@ export default function DiscussionsPage() {
         <div>
           <Link
             href="/dashboard/community"
-            className="mb-2 inline-flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700"
+            className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground/80"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Community
           </Link>
-          <h1 className="text-2xl font-semibold text-surface-800">Discussions</h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <h1 className="text-2xl font-semibold text-foreground">Discussions</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {filteredThreads.length} threads · Join the conversation
           </p>
         </div>
@@ -150,8 +150,8 @@ export default function DiscussionsPage() {
             className={cn(
               "rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors",
               sort === s
-                ? "bg-surface-800 text-white"
-                : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                ? "bg-foreground text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted",
             )}
           >
             {s}
@@ -174,7 +174,7 @@ export default function DiscussionsPage() {
                 {/* Thread Row */}
                 <button
                   onClick={() => setExpandedThreadId(isExpanded ? null : thread.id)}
-                  className="flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-surface-50"
+                  className="flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-muted/50"
                 >
                   {/* Upvote column */}
                   <div className="flex flex-col items-center gap-0.5 pt-0.5">
@@ -187,9 +187,9 @@ export default function DiscussionsPage() {
                         handleThreadVote(thread, "up");
                       }}
                     >
-                      <ThumbsUp className={cn("h-3 w-3", threadVote === "up" ? "fill-brand-500 text-brand-600" : "text-surface-400")} />
+                      <ThumbsUp className={cn("h-3 w-3", threadVote === "up" ? "fill-brand-500 text-brand-600" : "text-muted-foreground/70")} />
                     </Button>
-                    <span className={cn("text-xs font-medium", threadVote === "up" ? "text-brand-600" : "text-surface-600")}>
+                    <span className={cn("text-xs font-medium", threadVote === "up" ? "text-brand-600" : "text-muted-foreground")}>
                       {thread.upvotes}
                     </span>
                   </div>
@@ -200,11 +200,11 @@ export default function DiscussionsPage() {
                       <Badge className={cn("text-[10px]", catConfig.bg, catConfig.color)}>
                         {catConfig.label}
                       </Badge>
-                      <h3 className="text-sm font-medium text-surface-800 line-clamp-1">
+                      <h3 className="text-sm font-medium text-foreground line-clamp-1">
                         {thread.title}
                       </h3>
                     </div>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-surface-400">
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground/70">
                       <span className="flex items-center gap-0.5">
                         <User className="h-2.5 w-2.5" />
                         {thread.isAnonymous ? "Anonymous" : thread.authorName}
@@ -223,21 +223,21 @@ export default function DiscussionsPage() {
                   </div>
 
                   {isExpanded ? (
-                    <ChevronUp className="h-4 w-4 shrink-0 text-surface-400" />
+                    <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground/70" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-surface-400" />
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground/70" />
                   )}
                 </button>
 
                 {/* Expanded Thread Detail */}
                 {isExpanded && (
-                  <div className="border-t border-surface-100 bg-surface-50/50 p-4 space-y-4">
+                  <div className="border-t border-border bg-muted/30 p-4 space-y-4">
                     {/* Thread body */}
-                    <div className="rounded-lg bg-white p-3 border border-surface-200">
-                      <p className="text-sm text-surface-700 whitespace-pre-wrap">
+                    <div className="rounded-lg bg-card p-3 border border-border">
+                      <p className="text-sm text-foreground/80 whitespace-pre-wrap">
                         {thread.body}
                       </p>
-                      <p className="mt-2 text-xs text-surface-400">
+                      <p className="mt-2 text-xs text-muted-foreground/70">
                         Posted {formatRelativeTime(thread.createdAt)} by{" "}
                         {thread.isAnonymous ? "Anonymous" : thread.authorName}
                       </p>
@@ -246,7 +246,7 @@ export default function DiscussionsPage() {
                     {/* Replies */}
                     {topReplies.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Replies ({replies.length})
                         </h4>
                         {topReplies.map((reply) => {
@@ -315,7 +315,7 @@ export default function DiscussionsPage() {
                                     className="text-xs flex-1"
                                   />
                                   <div className="flex flex-col gap-1 items-end">
-                                    <label className="flex items-center gap-1 text-xs text-surface-500 cursor-pointer">
+                                    <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer">
                                       <input
                                         type="checkbox"
                                         checked={replyAnon}
@@ -350,7 +350,7 @@ export default function DiscussionsPage() {
                     )}
 
                     {/* Reply to thread */}
-                    <div className="flex gap-2 border-t border-surface-200 pt-3">
+                    <div className="flex gap-2 border-t border-border pt-3">
                       <Textarea
                         value={threadReplyText}
                         onChange={(e) => setThreadReplyText(e.target.value)}
@@ -359,7 +359,7 @@ export default function DiscussionsPage() {
                         className="text-sm flex-1"
                       />
                       <div className="flex flex-col gap-1 items-end">
-                        <label className="flex items-center gap-1 text-xs text-surface-500 cursor-pointer">
+                        <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer">
                           <input
                             type="checkbox"
                             checked={threadReplyAnon}
@@ -392,8 +392,8 @@ export default function DiscussionsPage() {
 
         {filteredThreads.length === 0 && (
           <div className="py-12 text-center">
-            <MessageSquare className="mx-auto mb-2 h-8 w-8 text-surface-300" />
-            <p className="text-sm text-surface-500">No threads in this category yet</p>
+            <MessageSquare className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">No threads in this category yet</p>
           </div>
         )}
       </div>
@@ -422,9 +422,9 @@ function ReplyCard({
   isNested?: boolean;
 }) {
   return (
-    <div className={cn("rounded-lg border border-surface-200 bg-white p-3", isNested && "border-surface-150")}>
-      <p className="text-sm text-surface-700">{reply.body}</p>
-      <div className="mt-2 flex items-center gap-3 text-xs text-surface-400">
+    <div className={cn("rounded-lg border border-border bg-card p-3", isNested && "border-border")}>
+      <p className="text-sm text-foreground/80">{reply.body}</p>
+      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground/70">
         <span>{reply.isAnonymous ? "Anonymous" : reply.authorName}</span>
         <span>{formatRelativeTime(reply.createdAt)}</span>
         <button onClick={onUpvote} className={cn("flex items-center gap-0.5", userVote === "up" ? "text-brand-600" : "hover:text-brand-600")}>
@@ -464,7 +464,7 @@ function NewDiscussionModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
       <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b p-4">
-          <h2 className="text-base font-semibold text-surface-800">
+          <h2 className="text-base font-semibold text-foreground">
             {submitted ? "Discussion Posted!" : "New Discussion"}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -477,7 +477,7 @@ function NewDiscussionModal({ onClose }: { onClose: () => void }) {
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
               <MessageSquare className="h-6 w-6 text-green-600" />
             </div>
-            <p className="text-sm text-surface-600">Your discussion has been posted!</p>
+            <p className="text-sm text-muted-foreground">Your discussion has been posted!</p>
             <Button size="sm" onClick={onClose} className="mt-4">Done</Button>
           </div>
         ) : (
@@ -492,7 +492,7 @@ function NewDiscussionModal({ onClose }: { onClose: () => void }) {
               <select
                 value={cat}
                 onChange={(e) => setCat(e.target.value as DiscussionCategory)}
-                className="mt-1 w-full rounded-lg border border-surface-200 px-3 py-2 text-sm outline-none focus:border-brand-300"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary/50"
               >
                 {CATEGORY_IDS.map((c) => (
                   <option key={c} value={c}>{CATEGORY_CONFIG[c].label}</option>

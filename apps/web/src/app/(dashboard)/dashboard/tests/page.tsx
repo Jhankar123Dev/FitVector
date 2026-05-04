@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<
   },
   submitted: {
     label: "Submitted",
-    className: "bg-gray-100 text-gray-700 border-gray-200",
+    className: "bg-muted text-muted-foreground border-border",
   },
   graded: {
     label: "Graded",
@@ -66,7 +66,7 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-16 animate-pulse rounded-lg bg-surface-100" />
+        <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
       ))}
     </div>
   );
@@ -76,11 +76,11 @@ function EmptyState({ tab }: { tab: "pending" | "completed" }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-16">
-        <ClipboardList className="mb-4 h-12 w-12 text-surface-300" />
-        <h3 className="text-lg font-medium text-surface-700">
+        <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground/40" />
+        <h3 className="text-lg font-medium text-foreground/80">
           {tab === "pending" ? "No pending tests" : "No completed tests"}
         </h3>
-        <p className="mt-1 text-sm text-surface-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           {tab === "pending"
             ? "When employers invite you to take assessments, they will appear here."
             : "Your submitted or graded tests will appear here."}
@@ -97,7 +97,7 @@ function TestsTable({ tests }: { tests: CandidateTest[] }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-surface-200 text-left text-xs font-medium uppercase tracking-wider text-surface-500">
+              <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 <th className="px-4 py-3">Test Name</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Job</th>
@@ -107,7 +107,7 @@ function TestsTable({ tests }: { tests: CandidateTest[] }) {
                 <th className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-100">
+            <tbody className="divide-y divide-border">
               {tests.map((test) => {
                 const statusCfg = STATUS_CONFIG[test.status] ?? STATUS_CONFIG.submitted;
                 const effectiveScore =
@@ -116,14 +116,14 @@ function TestsTable({ tests }: { tests: CandidateTest[] }) {
                 const passed = isPassed(effectiveScore, test.passingScore);
 
                 return (
-                  <tr key={test.id} className="hover:bg-surface-50">
-                    <td className="px-4 py-3 font-medium text-surface-800">
+                  <tr key={test.id} className="hover:bg-muted/30">
+                    <td className="px-4 py-3 font-medium text-foreground">
                       <div className="flex items-center gap-2">
-                        <ClipboardList className="h-4 w-4 shrink-0 text-surface-400" />
+                        <ClipboardList className="h-4 w-4 shrink-0 text-muted-foreground/70" />
                         {test.assessmentName}
                       </div>
                       {test.timeLimit && (
-                        <div className="mt-0.5 flex items-center gap-1 text-xs text-surface-400">
+                        <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground/70">
                           <Clock className="h-3 w-3" />
                           {test.timeLimit} min
                         </div>
@@ -134,7 +134,7 @@ function TestsTable({ tests }: { tests: CandidateTest[] }) {
                         {TYPE_LABELS[test.assessmentType] ?? test.assessmentType}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-surface-600">{test.jobTitle}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{test.jobTitle}</td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className={statusCfg.className}>
                         {statusCfg.label}
@@ -142,7 +142,7 @@ function TestsTable({ tests }: { tests: CandidateTest[] }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-surface-700">{displayScore}</span>
+                        <span className="font-medium text-foreground/80">{displayScore}</span>
                         {passed === true && (
                           <Badge
                             variant="outline"
@@ -161,7 +161,7 @@ function TestsTable({ tests }: { tests: CandidateTest[] }) {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-surface-500">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(test.submittedAt ?? test.startedAt ?? test.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -221,7 +221,7 @@ export default function CandidateTestsPage() {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 pb-4">
-        <h1 className="text-2xl font-semibold text-surface-800">My Tests</h1>
+        <h1 className="text-2xl font-semibold text-foreground">My Tests</h1>
         {tests && tests.length > 0 && (
           <Badge variant="secondary" className="text-sm">
             {tests.length}
@@ -230,7 +230,7 @@ export default function CandidateTestsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-1 border-b border-surface-200">
+      <div className="mb-4 flex gap-1 border-b border-border">
         {(["pending", "completed"] as Tab[]).map((tab) => {
           const count = tab === "pending" ? pending.length : completed.length;
           return (
@@ -240,7 +240,7 @@ export default function CandidateTestsPage() {
               className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium capitalize transition-colors ${
                 activeTab === tab
                   ? "border-brand-500 text-brand-600"
-                  : "border-transparent text-surface-500 hover:text-surface-700"
+                  : "border-transparent text-muted-foreground hover:text-foreground/80"
               }`}
             >
               {tab}
@@ -249,7 +249,7 @@ export default function CandidateTestsPage() {
                   className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                     activeTab === tab
                       ? "bg-brand-100 text-brand-700"
-                      : "bg-surface-100 text-surface-500"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {count}

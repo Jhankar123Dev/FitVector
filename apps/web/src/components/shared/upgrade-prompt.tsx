@@ -18,9 +18,9 @@ export function UpgradePrompt({ message, feature }: UpgradePromptProps) {
           <Sparkles className="h-5 w-5 text-brand-500" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium text-surface-800">{message}</p>
+          <p className="text-sm font-medium text-foreground">{message}</p>
           {feature && (
-            <p className="mt-0.5 text-xs text-surface-500">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Upgrade to unlock {feature}
             </p>
           )}

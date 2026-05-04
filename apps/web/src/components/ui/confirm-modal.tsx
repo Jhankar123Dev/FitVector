@@ -35,7 +35,7 @@ export function ConfirmModal({
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
     >
       <div
-        className="w-full max-w-sm rounded-xl border border-surface-200 bg-white p-6 shadow-xl"
+        className="w-full max-w-sm rounded-xl border border-border bg-popover p-6 shadow-xl"
         onKeyDown={(e) => {
           if (e.key === "Escape") onCancel();
           if (e.key === "Enter" && !isLoading) onConfirm();
@@ -45,19 +45,19 @@ export function ConfirmModal({
         {/* Icon */}
         <div className={cn(
           "mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full",
-          variant === "destructive" ? "bg-red-100"
-          : variant === "warning"   ? "bg-amber-100"
-          : "bg-brand-50",
+          variant === "destructive" ? "bg-red-100 dark:bg-red-950"
+          : variant === "warning"   ? "bg-amber-100 dark:bg-amber-950"
+          : "bg-primary/10",
         )}>
           {variant === "destructive"
-            ? <Trash2 className="h-6 w-6 text-red-600" />
-            : <AlertTriangle className={cn("h-6 w-6", variant === "warning" ? "text-amber-600" : "text-brand-600")} />
+            ? <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
+            : <AlertTriangle className={cn("h-6 w-6", variant === "warning" ? "text-amber-600 dark:text-amber-400" : "text-primary")} />
           }
         </div>
 
         {/* Text */}
-        <h3 className="text-center text-base font-semibold text-surface-800">{title}</h3>
-        <p className="mt-1.5 text-center text-sm text-surface-500">{description}</p>
+        <h3 className="text-center text-base font-semibold text-foreground">{title}</h3>
+        <p className="mt-1.5 text-center text-sm text-muted-foreground">{description}</p>
 
         {/* Actions */}
         <div className="mt-5 flex gap-3">

@@ -36,10 +36,10 @@ function formatDate(dateStr: string): string {
 
 function SkeletonRow() {
   return (
-    <tr className="border-b border-surface-100">
+    <tr className="border-b border-border">
       {Array.from({ length: 9 }).map((_, i) => (
         <td key={i} className="px-4 py-3">
-          <div className="h-4 animate-pulse rounded bg-surface-100" />
+          <div className="h-4 animate-pulse rounded bg-muted" />
         </td>
       ))}
     </tr>
@@ -59,8 +59,8 @@ export default function PromotionsPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-surface-800">Promoted Listings</h1>
-          <p className="mt-0.5 text-sm text-surface-500">
+          <h1 className="text-xl font-semibold text-foreground">Promoted Listings</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Boost your job visibility to attract more qualified candidates
           </p>
         </div>
@@ -87,11 +87,11 @@ export default function PromotionsPage() {
               </div>
               <div>
                 {isLoading ? (
-                  <div className="h-6 w-16 animate-pulse rounded bg-surface-100" />
+                  <div className="h-6 w-16 animate-pulse rounded bg-muted" />
                 ) : (
-                  <p className="text-lg font-semibold text-surface-800">{s.value}</p>
+                  <p className="text-lg font-semibold text-foreground">{s.value}</p>
                 )}
-                <p className="text-xs text-surface-500">{s.label}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -104,16 +104,16 @@ export default function PromotionsPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px]">
               <thead>
-                <tr className="border-b border-surface-200 bg-surface-50">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Job</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Duration</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-surface-500">Impressions</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-surface-500">Clicks</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-surface-500">CTR</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-surface-500">Apps</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-surface-500">Spend</th>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Job</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Duration</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Impressions</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Clicks</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">CTR</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Apps</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Spend</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,10 +133,10 @@ export default function PromotionsPage() {
                         : "0";
 
                     return (
-                      <tr key={promo.id} className="border-b border-surface-100 last:border-0">
+                      <tr key={promo.id} className="border-b border-border last:border-0">
                         <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-surface-800">{promo.jobTitle}</p>
-                          <p className="text-xs text-surface-400">
+                          <p className="text-sm font-medium text-foreground">{promo.jobTitle}</p>
+                          <p className="text-xs text-muted-foreground/70">
                             {formatDate(promo.startDate)} – {formatDate(promo.endDate)}
                           </p>
                         </td>
@@ -145,7 +145,7 @@ export default function PromotionsPage() {
                             {typeConfig.label}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-sm text-surface-600">
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
                           {promo.duration} days
                         </td>
                         <td className="px-4 py-3">
@@ -153,19 +153,19 @@ export default function PromotionsPage() {
                             {statusConfig.label}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-right text-sm text-surface-700">
+                        <td className="px-4 py-3 text-right text-sm text-foreground/80">
                           {promo.impressions.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-right text-sm text-surface-700">
+                        <td className="px-4 py-3 text-right text-sm text-foreground/80">
                           {promo.clicks}
                         </td>
-                        <td className="px-4 py-3 text-right text-sm text-surface-700">
+                        <td className="px-4 py-3 text-right text-sm text-foreground/80">
                           {ctr}%
                         </td>
-                        <td className="px-4 py-3 text-right text-sm font-medium text-surface-800">
+                        <td className="px-4 py-3 text-right text-sm font-medium text-foreground">
                           {promo.applications}
                         </td>
-                        <td className="px-4 py-3 text-right text-sm font-medium text-surface-800">
+                        <td className="px-4 py-3 text-right text-sm font-medium text-foreground">
                           {formatCurrency(promo.amountPaid)}
                         </td>
                       </tr>
@@ -181,9 +181,9 @@ export default function PromotionsPage() {
       {/* Empty state */}
       {!isLoading && promotions.length === 0 && (
         <div className="py-12 text-center">
-          <Rocket className="mx-auto mb-2 h-8 w-8 text-surface-300" />
-          <p className="text-sm text-surface-500">No promoted listings yet</p>
-          <p className="mt-1 text-xs text-surface-400">
+          <Rocket className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">No promoted listings yet</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
             Boost your job posts to reach more qualified candidates
           </p>
         </div>

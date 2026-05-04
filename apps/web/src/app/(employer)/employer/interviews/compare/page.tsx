@@ -26,8 +26,9 @@ import { cn } from "@/lib/utils";
 import { useInterviews } from "@/hooks/use-interviews";
 import type { AIInterview } from "@/types/employer";
 import { AI_RECOMMENDATION_LABELS, AI_RECOMMENDATION_COLORS } from "@/types/employer";
+import { CHART_COLORS } from "@/lib/chart-colors";
 
-const RADAR_COLORS = ["#6c5ce7", "#00d97e", "#f59e0b"];
+const RADAR_COLORS = CHART_COLORS.series.slice(0, 3);
 
 function StarRating({ score }: { score: number }) {
   return (
@@ -37,7 +38,7 @@ function StarRating({ score }: { score: number }) {
           key={i}
           className={cn(
             "h-3 w-3",
-            i <= score ? "fill-amber-400 text-amber-400" : "text-surface-200",
+            i <= score ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30",
           )}
         />
       ))}
@@ -107,10 +108,10 @@ export default function ComparePage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-lg sm:text-xl font-semibold text-surface-800">
+          <h1 className="text-lg sm:text-xl font-semibold text-foreground">
             Compare Candidates
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+          <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
             Side-by-side comparison of AI interview performance (select up to 3)
           </p>
         </div>
@@ -119,7 +120,7 @@ export default function ComparePage() {
       {/* ── Candidate selector ────────────────────────────────────── */}
       <Card>
         <CardContent className="p-3 sm:p-4">
-          <p className="mb-2 text-xs font-medium text-surface-600">Select candidates to compare:</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Select candidates to compare:</p>
           <div className="flex flex-wrap gap-2">
             {completedInterviews.map((interview) => (
               <button
@@ -129,12 +130,12 @@ export default function ComparePage() {
                   "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                   selectedIds.includes(interview.id)
                     ? "border-brand-500 bg-brand-50 text-brand-700"
-                    : "border-surface-200 text-surface-600 hover:border-surface-300",
+                    : "border-border text-muted-foreground hover:border-border/60",
                   selectedIds.length >= 3 && !selectedIds.includes(interview.id) && "opacity-50 cursor-not-allowed",
                 )}
                 disabled={selectedIds.length >= 3 && !selectedIds.includes(interview.id)}
               >
-                <span className="h-6 w-6 rounded-full bg-surface-100 text-[10px] font-bold flex items-center justify-center text-surface-600">
+                <span className="h-6 w-6 rounded-full bg-muted text-[10px] font-bold flex items-center justify-center text-muted-foreground">
                   {interview.applicantName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
                 </span>
                 <span className="text-xs sm:text-sm">{interview.applicantName}</span>
@@ -155,7 +156,7 @@ export default function ComparePage() {
       {selected.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
-            <p className="text-sm text-surface-500">Select at least one candidate to compare.</p>
+            <p className="text-sm text-muted-foreground">Select at least one candidate to compare.</p>
           </CardContent>
         </Card>
       ) : (
@@ -169,9 +170,9 @@ export default function ComparePage() {
               <div className="h-[280px] sm:h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="65%">
-                    <PolarGrid stroke="#e7e5e4" />
-                    <PolarAngleAxis dataKey="skill" tick={{ fontSize: 10, fill: "#78716c" }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fontSize: 9, fill: "#a8a29e" }} tickCount={6} />
+                    <PolarGrid stroke={CHART_COLORS.grid} />
+                    <PolarAngleAxis dataKey="skill" tick={{ fontSize: 10, fill: CHART_COLORS.axisTick }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fontSize: 9, fill: CHART_COLORS.axisTickMuted }} tickCount={6} />
                     {selected.map((interview, idx) => (
                       <Radar
                         key={interview.id}
@@ -242,14 +243,14 @@ function CandidateCompareCard({ interview }: { interview: AIInterview }) {
       <CardContent className="space-y-4 p-4 sm:p-5">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-100 text-sm font-bold text-surface-600">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-surface-800">
+            <p className="truncate text-sm font-semibold text-foreground">
               {interview.applicantName}
             </p>
-            <p className="truncate text-xs text-surface-500">
+            <p className="truncate text-xs text-muted-foreground">
               {interview.applicantRole} @ {interview.applicantCompany}
             </p>
           </div>
@@ -272,11 +273,11 @@ function CandidateCompareCard({ interview }: { interview: AIInterview }) {
 
         {/* Skill breakdown */}
         <div>
-          <p className="mb-2 text-xs font-semibold text-surface-500">Skills</p>
+          <p className="mb-2 text-xs font-semibold text-muted-foreground">Skills</p>
           <div className="space-y-2">
             {interview.skillRatings.map((r) => (
               <div key={r.skill} className="flex items-center justify-between">
-                <span className="text-xs text-surface-700 truncate mr-2">{r.skill}</span>
+                <span className="text-xs text-foreground/80 truncate mr-2">{r.skill}</span>
                 <StarRating score={r.score} />
               </div>
             ))}
@@ -290,7 +291,7 @@ function CandidateCompareCard({ interview }: { interview: AIInterview }) {
           </p>
           <ul className="space-y-1">
             {interview.strengths.slice(0, 3).map((s, i) => (
-              <li key={i} className="text-[11px] text-surface-600 line-clamp-2">
+              <li key={i} className="text-[11px] text-muted-foreground line-clamp-2">
                 • {s}
               </li>
             ))}
@@ -304,7 +305,7 @@ function CandidateCompareCard({ interview }: { interview: AIInterview }) {
           </p>
           <ul className="space-y-1">
             {interview.concerns.slice(0, 3).map((c, i) => (
-              <li key={i} className="text-[11px] text-surface-600 line-clamp-2">
+              <li key={i} className="text-[11px] text-muted-foreground line-clamp-2">
                 • {c}
               </li>
             ))}

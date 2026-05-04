@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { JobDetailPanel } from "@/components/jobs/job-detail";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FileX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { JobSearchResult } from "@/types/job";
@@ -31,7 +31,7 @@ export default function JobDetailPage() {
   if (isError || !data?.data) {
     return (
       <EmptyState
-        icon={FileX}
+        icon={<FileX />}
         title="Job not found"
         description="This job listing may have been removed or is no longer available."
         action={

@@ -297,7 +297,7 @@ export default function TakeAssessmentPage() {
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center space-y-4">
             <AlertTriangle className="mx-auto h-10 w-10 text-amber-500" />
-            <p className="text-sm text-surface-600">{loadError || "Assessment not found."}</p>
+            <p className="text-sm text-muted-foreground">{loadError || "Assessment not found."}</p>
             <Button variant="outline" size="sm" asChild>
               <Link href="/dashboard/tests">← Back to My Tests</Link>
             </Button>
@@ -383,8 +383,8 @@ export default function TakeAssessmentPage() {
         <Card className="w-full max-w-lg">
           <CardContent className="space-y-5 p-5 sm:p-8">
             <div className="text-center">
-              <h1 className="text-xl sm:text-2xl font-bold text-surface-800">{assessment.title}</h1>
-              <p className="mt-1 text-xs sm:text-sm text-surface-500">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">{assessment.title}</h1>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                 Please read the instructions before starting.
               </p>
             </div>
@@ -397,7 +397,7 @@ export default function TakeAssessmentPage() {
               </div>
             )}
 
-            <div className="space-y-3 rounded-lg bg-surface-50 p-4">
+            <div className="space-y-3 rounded-lg bg-muted/30 p-4">
               {[
                 ["Duration",      `${assessment.duration} minutes`],
                 ["Questions",     String(questions.length)],
@@ -405,15 +405,15 @@ export default function TakeAssessmentPage() {
                 ["Passing Score", `${assessment.passingScore}%`],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-center justify-between text-xs sm:text-sm">
-                  <span className="text-surface-500">{label}</span>
-                  <span className="font-medium text-surface-800">{value}</span>
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="font-medium text-foreground">{value}</span>
                 </div>
               ))}
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-surface-700">Instructions:</p>
-              <ul className="space-y-1 text-[11px] sm:text-xs text-surface-600">
+              <p className="text-xs font-semibold text-foreground/80">Instructions:</p>
+              <ul className="space-y-1 text-[11px] sm:text-xs text-muted-foreground">
                 <li>• The timer starts as soon as you begin the assessment.</li>
                 <li>• You can navigate between questions using the navigation bar.</li>
                 <li>• Flag questions to review them later before submitting.</li>
@@ -467,10 +467,10 @@ export default function TakeAssessmentPage() {
             </div>
 
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-surface-800">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">
                 {displayPassed ? "Assessment Passed!" : "Assessment Not Passed"}
               </h2>
-              <p className="mt-1 text-xs sm:text-sm text-surface-500">
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                 {displayPassed
                   ? "Congratulations! You met the passing threshold."
                   : "Unfortunately you did not meet the passing score this time."}
@@ -482,18 +482,18 @@ export default function TakeAssessmentPage() {
                 <p className={cn("text-3xl font-bold", displayPassed ? "text-emerald-600" : "text-red-600")}>
                   {displayPct}%
                 </p>
-                <p className="text-[11px] text-surface-500">Score</p>
+                <p className="text-[11px] text-muted-foreground">Score</p>
               </div>
-              <div className="h-10 w-px bg-surface-200" />
+              <div className="h-10 w-px bg-muted" />
               <div>
-                <p className="text-3xl font-bold text-surface-800">{displayEarned}/{score.max}</p>
-                <p className="text-[11px] text-surface-500">Points</p>
+                <p className="text-3xl font-bold text-foreground">{displayEarned}/{score.max}</p>
+                <p className="text-[11px] text-muted-foreground">Points</p>
               </div>
             </div>
 
             {(assessment.settings as Record<string, boolean>)?.showResultsToCandidate && (
               <div className="space-y-2 text-left">
-                <p className="text-xs font-semibold text-surface-700">Question Breakdown</p>
+                <p className="text-xs font-semibold text-foreground/80">Question Breakdown</p>
                 {questions.map((q, i) => {
                   const ans          = answers[q.id];
                   const serverGraded = (
@@ -509,20 +509,20 @@ export default function TakeAssessmentPage() {
                         "flex items-center gap-3 rounded-lg border p-3",
                         correct ? "border-emerald-200 bg-emerald-50/50"
                           : ans  ? "border-amber-200 bg-amber-50/50"
-                          :        "border-surface-200",
+                          :        "border-border",
                       )}
                     >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] font-bold text-surface-600">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
                         {i + 1}
                       </span>
-                      <p className="text-xs text-surface-700 flex-1 line-clamp-1">{q.prompt}</p>
+                      <p className="text-xs text-foreground/80 flex-1 line-clamp-1">{q.prompt}</p>
                       <span className="text-[10px] font-bold">
                         {correct ? (
                           <span className="text-emerald-600">✓ {pointsEarned}pts</span>
                         ) : ans ? (
                           <span className="text-amber-600">✗ 0pts</span>
                         ) : (
-                          <span className="text-surface-400">skipped</span>
+                          <span className="text-muted-foreground/70">skipped</span>
                         )}
                       </span>
                     </div>
@@ -554,8 +554,8 @@ export default function TakeAssessmentPage() {
         <Card className="w-full max-w-md">
           <CardContent className="space-y-5 p-5 sm:p-8 text-center">
             <AlertTriangle className="mx-auto h-12 w-12 text-amber-500" />
-            <h2 className="text-lg font-semibold text-surface-800">Submit Assessment?</h2>
-            <div className="space-y-1 text-xs sm:text-sm text-surface-600">
+            <h2 className="text-lg font-semibold text-foreground">Submit Assessment?</h2>
+            <div className="space-y-1 text-xs sm:text-sm text-muted-foreground">
               <p>You have answered <strong>{answered}</strong> of <strong>{questions.length}</strong> questions.</p>
               {flaggedCount > 0 && (
                 <p className="text-amber-600">
@@ -630,20 +630,20 @@ export default function TakeAssessmentPage() {
       )}
 
       {/* Sticky timer bar */}
-      <div className="sticky top-0 z-30 border-b border-surface-200 bg-white px-3 py-2 sm:px-6 sm:py-3">
+      <div className="sticky top-0 z-30 border-b border-border bg-card px-3 py-2 sm:px-6 sm:py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="hidden sm:block text-sm font-semibold text-surface-800 truncate max-w-[200px]">
+            <h2 className="hidden sm:block text-sm font-semibold text-foreground truncate max-w-[200px]">
               {assessment.title}
             </h2>
-            <Badge className="text-[10px] sm:text-[11px] bg-surface-100 text-surface-600 border-surface-200">
+            <Badge className="text-[10px] sm:text-[11px] bg-muted text-muted-foreground border-border">
               {currentQ + 1} / {questions.length}
             </Badge>
           </div>
           <div className="flex items-center gap-3">
             <div className={cn(
               "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-mono font-bold",
-              timeWarning ? "bg-red-50 text-red-600 animate-pulse" : "bg-surface-100 text-surface-700",
+              timeWarning ? "bg-red-50 text-red-600 animate-pulse" : "bg-muted text-foreground/80",
             )}>
               <Clock className="h-3.5 w-3.5" />
               {formatTime(timeLeft)}
@@ -659,8 +659,8 @@ export default function TakeAssessmentPage() {
       {/* Main content */}
       <div className="flex flex-1 min-h-0 flex-col lg:flex-row">
         {/* Question nav sidebar (desktop) */}
-        <div className="hidden lg:flex flex-col gap-2 border-r border-surface-200 bg-white p-4 w-[200px]">
-          <p className="text-[11px] font-semibold text-surface-500 mb-1">Questions</p>
+        <div className="hidden lg:flex flex-col gap-2 border-r border-border bg-card p-4 w-[200px]">
+          <p className="text-[11px] font-semibold text-muted-foreground mb-1">Questions</p>
           <div className="grid grid-cols-4 gap-1.5">
             {questions.map((q, i) => {
               const isAnswered = q.type === "code" ? !!getAnswerWithStarter(q).trim() : !!answers[q.id];
@@ -674,7 +674,7 @@ export default function TakeAssessmentPage() {
                     "relative flex h-8 w-8 items-center justify-center rounded text-xs font-bold transition-colors",
                     isCurrent  ? "bg-brand-500 text-white"
                     : isAnswered ? "bg-emerald-100 text-emerald-700"
-                    : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                    : "bg-muted text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {i + 1}
@@ -685,11 +685,11 @@ export default function TakeAssessmentPage() {
               );
             })}
           </div>
-          <div className="mt-3 space-y-1 text-[10px] text-surface-500">
+          <div className="mt-3 space-y-1 text-[10px] text-muted-foreground">
             <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-emerald-100" /> Answered</div>
-            <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-surface-100" /> Unanswered</div>
+            <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-muted" /> Unanswered</div>
             <div className="flex items-center gap-1.5">
-              <span className="relative h-3 w-3 rounded bg-surface-100">
+              <span className="relative h-3 w-3 rounded bg-muted">
                 <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-400" />
               </span>
               Flagged
@@ -722,7 +722,7 @@ export default function TakeAssessmentPage() {
       </div>
 
       {/* Bottom nav */}
-      <div className="sticky bottom-0 border-t border-surface-200 bg-white px-3 py-2.5 sm:px-6 sm:py-3">
+      <div className="sticky bottom-0 border-t border-border bg-card px-3 py-2.5 sm:px-6 sm:py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <Button
             variant="outline" size="sm"
@@ -741,7 +741,7 @@ export default function TakeAssessmentPage() {
                 onClick={() => setCurrentQ(i)}
                 className={cn(
                   "h-2.5 w-2.5 shrink-0 rounded-full transition-colors",
-                  i === currentQ ? "bg-brand-500" : (q.type === "code" ? !!getAnswerWithStarter(q).trim() : !!answers[q.id]) ? "bg-emerald-400" : "bg-surface-300",
+                  i === currentQ ? "bg-brand-500" : (q.type === "code" ? !!getAnswerWithStarter(q).trim() : !!answers[q.id]) ? "bg-emerald-400" : "bg-muted/40",
                 )}
               />
             ))}
@@ -799,7 +799,7 @@ function QuestionView({
   // ── LeetCode-style split pane for code questions ────────────────────────────
   if (question.type === "code") {
     return (
-      <div className="flex h-full divide-x divide-surface-200 border-t border-surface-100 bg-white">
+      <div className="flex h-full divide-x divide-border border-t border-border bg-card">
         {/* LEFT — Question description (scrollable) */}
         <div className="flex w-[42%] min-w-0 shrink-0 flex-col overflow-y-auto p-4 sm:p-6">
           {/* Header row */}
@@ -812,11 +812,11 @@ function QuestionView({
                 <Code2 className="h-2.5 w-2.5" />
                 {LANG_LABEL[selectedLang ?? question.codeLanguage ?? "nodejs"] ?? question.codeLanguage}
               </Badge>
-              <span className="text-[10px] text-surface-400">{question.points} pts</span>
+              <span className="text-[10px] text-muted-foreground/70">{question.points} pts</span>
             </div>
             <Button
               variant="ghost" size="sm"
-              className={cn("h-7 gap-1 text-[11px] shrink-0", isFlagged ? "text-amber-600" : "text-surface-400")}
+              className={cn("h-7 gap-1 text-[11px] shrink-0", isFlagged ? "text-amber-600" : "text-muted-foreground/70")}
               onClick={onToggleFlag}
             >
               <Flag className={cn("h-3 w-3", isFlagged && "fill-amber-400")} />
@@ -825,7 +825,7 @@ function QuestionView({
           </div>
 
           {/* Prompt */}
-          <div className="text-xs sm:text-sm text-surface-800 whitespace-pre-wrap leading-relaxed flex-1">
+          <div className="text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed flex-1">
             {question.prompt}
           </div>
         </div>
@@ -948,10 +948,10 @@ function QuestionView({
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
               {index + 1}
             </span>
-            <Badge className="border text-[10px] bg-surface-50 text-surface-600 border-surface-200">
+            <Badge className="border text-[10px] bg-muted/30 text-muted-foreground border-border">
               {QUESTION_TYPE_LABELS[question.type]}
             </Badge>
-            <span className="text-[10px] text-surface-400">{question.points} pts</span>
+            <span className="text-[10px] text-muted-foreground/70">{question.points} pts</span>
             {question.codeLanguage && (
               <Badge className="border text-[10px] bg-sky-50 text-sky-700 border-sky-200 gap-0.5">
                 <Code2 className="h-2.5 w-2.5" />
@@ -961,7 +961,7 @@ function QuestionView({
           </div>
           <Button
             variant="ghost" size="sm"
-            className={cn("h-7 gap-1 text-[11px]", isFlagged ? "text-amber-600" : "text-surface-400")}
+            className={cn("h-7 gap-1 text-[11px]", isFlagged ? "text-amber-600" : "text-muted-foreground/70")}
             onClick={onToggleFlag}
           >
             <Flag className={cn("h-3 w-3", isFlagged && "fill-amber-400")} />
@@ -970,7 +970,7 @@ function QuestionView({
         </div>
 
         {/* Prompt */}
-        <div className="text-xs sm:text-sm text-surface-800 whitespace-pre-wrap leading-relaxed">
+        <div className="text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed">
           {question.prompt}
         </div>
 
@@ -985,12 +985,12 @@ function QuestionView({
                   "flex w-full items-center gap-3 rounded-lg border p-3 text-left text-xs sm:text-sm transition-colors",
                   answer === opt
                     ? "border-brand-500 bg-brand-50 text-brand-800"
-                    : "border-surface-200 text-surface-700 hover:border-surface-300 hover:bg-surface-50",
+                    : "border-border text-foreground/80 hover:border-border/60 hover:bg-muted/30",
                 )}
               >
                 <span className={cn(
                   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold",
-                  answer === opt ? "border-brand-500 bg-brand-500 text-white" : "border-surface-300 text-surface-500",
+                  answer === opt ? "border-brand-500 bg-brand-500 text-white" : "border-border/60 text-muted-foreground",
                 )}>
                   {String.fromCharCode(65 + i)}
                 </span>
@@ -1005,10 +1005,10 @@ function QuestionView({
           <div className="space-y-3">
             {/* Language picker — lets candidate switch to a preferred language */}
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold text-surface-500">Your Code:</p>
+              <p className="text-[11px] font-semibold text-muted-foreground">Your Code:</p>
               {onLangChange && (
                 <div className="flex items-center gap-2">
-                  <Code2 className="h-3.5 w-3.5 text-surface-400" />
+                  <Code2 className="h-3.5 w-3.5 text-muted-foreground/70" />
                   <select
                     value={selectedLang ?? question.codeLanguage ?? "nodejs"}
                     onChange={(e) => onLangChange(e.target.value)}
@@ -1132,10 +1132,10 @@ function QuestionView({
         {/* ── Short answer ─────────────────────────────────────────────────── */}
         {question.type === "short_answer" && (
           <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold text-surface-500">Your Answer:</p>
+            <p className="text-[11px] font-semibold text-muted-foreground">Your Answer:</p>
             <textarea
               rows={6}
-              className="w-full rounded-lg border border-surface-200 bg-white p-3 text-xs sm:text-sm text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30 placeholder:text-surface-400"
+              className="w-full rounded-lg border border-border bg-card p-3 text-xs sm:text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/70"
               placeholder="Type your answer here…"
               value={answer}
               onChange={(e) => onAnswer(e.target.value)}

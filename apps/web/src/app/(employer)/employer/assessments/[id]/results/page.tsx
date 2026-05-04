@@ -29,6 +29,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
+import { CHART_COLORS } from "@/lib/chart-colors";
 import { useAssessment, useAssessmentResults } from "@/hooks/use-assessments";
 import type { CandidateAssessmentResult } from "@/types/employer";
 import {
@@ -44,11 +45,11 @@ import { toast } from "sonner";
 // ── Score distribution buckets ───────────────────────────────────────
 function buildDistribution(results: CandidateAssessmentResult[]) {
   const buckets = [
-    { range: "0–20", count: 0, fill: "#ef4444" },
-    { range: "21–40", count: 0, fill: "#f97316" },
-    { range: "41–60", count: 0, fill: "#eab308" },
-    { range: "61–80", count: 0, fill: "#6c5ce7" },
-    { range: "81–100", count: 0, fill: "#00d97e" },
+    { range: "0–20",   count: 0, fill: CHART_COLORS.red },
+    { range: "21–40",  count: 0, fill: CHART_COLORS.orange },
+    { range: "41–60",  count: 0, fill: CHART_COLORS.amber },
+    { range: "61–80",  count: 0, fill: CHART_COLORS.primary },
+    { range: "81–100", count: 0, fill: CHART_COLORS.secondary },
   ];
   results
     .filter((r) => r.status === "completed")
@@ -93,7 +94,7 @@ function DeadlineEditor({ assessmentId, initialDeadline }: { assessmentId: strin
     return (
       <button
         onClick={() => setEditing(true)}
-        className="flex items-center gap-1.5 text-[11px] text-surface-500 hover:text-brand-600 transition-colors"
+        className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-brand-600 transition-colors"
       >
         <CalendarDays className="h-3.5 w-3.5" />
         {deadline
@@ -105,12 +106,12 @@ function DeadlineEditor({ assessmentId, initialDeadline }: { assessmentId: strin
 
   return (
     <div className="flex items-center gap-2">
-      <CalendarDays className="h-3.5 w-3.5 text-surface-400 shrink-0" />
+      <CalendarDays className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
       <input
         type="date"
         value={deadline}
         onChange={(e) => setDeadline(e.target.value)}
-        className="rounded border border-surface-200 px-2 py-0.5 text-[11px] text-surface-700 focus:outline-none focus:ring-1 focus:ring-brand-400"
+        className="rounded border border-border px-2 py-0.5 text-[11px] text-foreground/80 focus:outline-none focus:ring-1 focus:ring-brand-400"
       />
       <Button size="sm" className="h-6 px-2 text-[11px] gap-1" onClick={saveDeadline} disabled={saving}>
         <Save className="h-3 w-3" />
@@ -118,7 +119,7 @@ function DeadlineEditor({ assessmentId, initialDeadline }: { assessmentId: strin
       </Button>
       <button
         onClick={() => setEditing(false)}
-        className="text-[11px] text-surface-400 hover:text-surface-600"
+        className="text-[11px] text-muted-foreground/70 hover:text-muted-foreground"
       >
         Cancel
       </button>
@@ -173,7 +174,7 @@ export default function AssessmentResultsPage() {
   if (!assessment) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-sm text-surface-500">Assessment not found.</p>
+        <p className="text-sm text-muted-foreground">Assessment not found.</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push("/employer/assessments")}>
           Back to Assessments
         </Button>
@@ -217,17 +218,17 @@ export default function AssessmentResultsPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg sm:text-xl font-semibold text-surface-800">
+          <h1 className="text-lg sm:text-xl font-semibold text-foreground">
             {assessment.title}
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <Badge className="border text-[10px] bg-brand-50 text-brand-700 border-brand-200">
               {ASSESSMENT_TYPE_LABELS[assessment.type as AssessmentType] || assessment.type}
             </Badge>
-            <Badge className="border text-[10px] bg-surface-100 text-surface-600 border-surface-200">
+            <Badge className="border text-[10px] bg-muted text-muted-foreground border-border">
               {DIFFICULTY_LABELS[assessment.difficulty as DifficultyLevel] || assessment.difficulty}
             </Badge>
-            <span className="text-[11px] text-surface-500 flex items-center gap-1">
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" /> {assessment.duration} min
             </span>
           </div>
@@ -255,8 +256,8 @@ export default function AssessmentResultsPage() {
                 <stat.icon className={cn("h-5 w-5", stat.iconColor)} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xl sm:text-2xl font-bold text-surface-800">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-surface-500">{stat.label}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -272,11 +273,11 @@ export default function AssessmentResultsPage() {
           <div className="h-[220px] sm:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={distribution} barSize={36}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                <XAxis dataKey="range" tick={{ fontSize: 11, fill: "#78716c" }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#a8a29e" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="range" tick={{ fontSize: 11, fill: CHART_COLORS.axisTick }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: CHART_COLORS.axisTickMuted }} />
                 <Tooltip
-                  contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e7e5e4" }}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: CHART_COLORS.tooltipBorder }}
                   formatter={(value: number) => [`${value} candidates`, "Count"]}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -307,9 +308,9 @@ export default function AssessmentResultsPage() {
             {filterByTab(tab).length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
-                  <Users className="h-10 w-10 text-surface-300" />
-                  <p className="mt-3 text-sm font-medium text-surface-600">No results</p>
-                  <p className="mt-1 text-xs text-surface-400">
+                  <Users className="h-10 w-10 text-muted-foreground/40" />
+                  <p className="mt-3 text-sm font-medium text-muted-foreground">No results</p>
+                  <p className="mt-1 text-xs text-muted-foreground/70">
                     No candidate results match this filter.
                   </p>
                 </CardContent>
@@ -319,14 +320,14 @@ export default function AssessmentResultsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[780px]">
                     <thead>
-                      <tr className="border-b border-surface-200 bg-surface-50">
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Candidate</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Status</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Score</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Time Spent</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Completed</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Proctoring</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Actions</th>
+                      <tr className="border-b border-border bg-muted/30">
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Candidate</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Status</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Score</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Time Spent</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Completed</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Proctoring</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -377,17 +378,17 @@ function ResultRow({
   const canReinvite = result.status !== "in_progress";
 
   return (
-    <tr className="border-b border-surface-100 transition-colors hover:bg-surface-50">
+    <tr className="border-b border-border transition-colors hover:bg-muted/30">
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] sm:text-xs font-semibold text-surface-600">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] sm:text-xs font-semibold text-muted-foreground">
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xs sm:text-sm font-medium text-surface-800">
+            <p className="truncate text-xs sm:text-sm font-medium text-foreground">
               {result.candidateName}
             </p>
-            <p className="truncate text-[11px] sm:text-xs text-surface-500">
+            <p className="truncate text-[11px] sm:text-xs text-muted-foreground">
               {result.candidateEmail}
             </p>
           </div>
@@ -415,21 +416,21 @@ function ResultRow({
             >
               {result.percentage}%
             </span>
-            <span className="text-[10px] text-surface-400">
+            <span className="text-[10px] text-muted-foreground/70">
               ({result.score}/{result.maxScore})
             </span>
           </div>
         ) : (
-          <span className="text-xs text-surface-400">—</span>
+          <span className="text-xs text-muted-foreground/70">—</span>
         )}
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] sm:text-xs text-surface-500">
+        <span className="text-[11px] sm:text-xs text-muted-foreground">
           {result.timeSpent != null ? `${result.timeSpent} min` : "—"}
         </span>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] sm:text-xs text-surface-500">
+        <span className="text-[11px] sm:text-xs text-muted-foreground">
           {result.completedAt ? formatRelativeTime(result.completedAt) : "—"}
         </span>
       </td>
@@ -461,7 +462,7 @@ function ResultRow({
             {isReinviting ? "Sending…" : "Re-invite"}
           </Button>
         ) : (
-          <span className="text-[11px] text-surface-400">In progress</span>
+          <span className="text-[11px] text-muted-foreground/70">In progress</span>
         )}
       </td>
     </tr>

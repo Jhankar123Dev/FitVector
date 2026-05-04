@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SearchX, Loader2, MapPin, Zap, Globe, LayoutGrid, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { JobDetailPanel } from "@/components/jobs/job-detail";
 import { JobFiltersPanel } from "@/components/jobs/job-filters";
 import type { JobFilters } from "@/components/jobs/job-filters";
 import type { OutreachButtonType } from "@/components/jobs/action-bar";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { UpgradePrompt } from "@/components/shared/upgrade-prompt";
 import { TailorDialog } from "@/components/resume/tailor-dialog";
@@ -84,7 +84,7 @@ export default function JobsPage() {
   const [loadingOutreachType, setLoadingOutreachType] = useState<OutreachButtonType | null>(null);
   const [outreachResult, setOutreachResult] = useState<OutreachResult | null>(null);
 
-  // Saved jobs (local optimistic state keyed by job id)
+  // Saved jobs — seeded from server-stamped isSaved on each job, then updated optimistically
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
 
   const {
@@ -100,6 +100,18 @@ export default function JobsPage() {
   const allJobs = useMemo(() => {
     return data?.pages ? data.pages.flatMap((page) => page.data.jobs) : [];
   }, [data]);
+
+  // Seed savedJobIds from the server-stamped isSaved on every search result change
+  useEffect(() => {
+    if (!allJobs.length) return;
+    setSavedJobIds((prev) => {
+      const next = new Set(prev);
+      for (const job of allJobs) {
+        if (job.isSaved) next.add(job.id);
+      }
+      return next;
+    });
+  }, [allJobs]);
 
   const totalJobs = data?.pages?.[0]?.data.total ?? 0;
   const usage = data?.pages?.[0]?.data.usage;
@@ -119,8 +131,11 @@ export default function JobsPage() {
 
       setOutreachResult(null);
       setLoadingOutreachType(null);
-      // Re-trigger search with new view if already searched
-      if (jobSearchParams) {
+      // Switching back to "all" resets the search — "All Jobs" is a browse view, not a search view.
+      // Switching between fitvector ↔ external re-runs the search with the new data source.
+      if (tab === "all") {
+        setJobSearchParams(null);
+      } else if (jobSearchParams) {
         setJobSearchParams((prev) => prev ? { ...prev, view: tab } : prev);
       }
     },
@@ -267,8 +282,8 @@ export default function JobsPage() {
       <div className="flex-none space-y-4 pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-surface-800">Job Search</h1>
-            <p className="text-sm text-surface-500">
+            <h1 className="text-2xl font-semibold text-foreground">Job Search</h1>
+            <p className="text-sm text-muted-foreground">
               {isFitVectorTab
                 ? "Jobs posted directly by employers on FitVector"
                 : isExternalTab
@@ -279,7 +294,7 @@ export default function JobsPage() {
 
           {/* Usage counter (external / all only) */}
           {usage && usage.limit !== Infinity && (
-            <div className="hidden text-right text-xs text-surface-500 sm:block">
+            <div className="hidden text-right text-xs text-muted-foreground sm:block">
               <span className="font-medium">
                 {usage.used} of {usage.limit}
               </span>{" "}
@@ -289,7 +304,7 @@ export default function JobsPage() {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex gap-1 rounded-lg border bg-surface-50 p-1">
+        <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -297,10 +312,10 @@ export default function JobsPage() {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-white text-surface-900 shadow-sm"
-                    : "text-surface-500 hover:text-surface-700"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon
@@ -308,7 +323,7 @@ export default function JobsPage() {
                     isActive && tab.id === "fitvector"
                       ? "text-violet-600"
                       : isActive
-                        ? "text-surface-700"
+                        ? "text-foreground/80"
                         : ""
                   }`}
                 />
@@ -320,7 +335,7 @@ export default function JobsPage() {
 
         {/* FitVector tab badge */}
         {isFitVectorTab && (
-          <div className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700">
+          <div className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-400">
             <Zap className="h-3.5 w-3.5 shrink-0" />
             <span>
               FitVector jobs support one-click apply with your saved resume and go straight into the employer&apos;s pipeline.
@@ -330,7 +345,7 @@ export default function JobsPage() {
 
         {/* External tab disclaimer */}
         {isExternalTab && !isLoading && !jobSearchParams && (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-400">
             <Clock className="h-3.5 w-3.5 shrink-0" />
             <span>External searches scrape live results — expect 60–90 seconds per search.</span>
           </div>
@@ -339,7 +354,7 @@ export default function JobsPage() {
         {/* Search bar */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="Job title... e.g. Frontend Developer"
               value={query}
@@ -349,7 +364,7 @@ export default function JobsPage() {
             />
           </div>
           <div className="relative w-40 shrink-0 sm:w-48">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="City or Remote"
               value={filters.location}
@@ -394,7 +409,7 @@ export default function JobsPage() {
       {/* Error state */}
       {isError && !isLimitReached && (
         <EmptyState
-          icon={SearchX}
+          icon={<SearchX />}
           title="Search failed"
           description={(error as Error)?.message || "Something went wrong. Please try again."}
           action={
@@ -419,7 +434,7 @@ export default function JobsPage() {
       {/* No search yet */}
       {!jobSearchParams && !isLoading && (
         <EmptyState
-          icon={isFitVectorTab ? Zap : Search}
+          icon={isFitVectorTab ? <Zap /> : <Search />}
           title={isFitVectorTab ? "Browse FitVector jobs" : "Start your job search"}
           description={
             isFitVectorTab
@@ -436,7 +451,7 @@ export default function JobsPage() {
         <>
           {allJobs.length === 0 ? (
             <EmptyState
-              icon={SearchX}
+              icon={<SearchX />}
               title="No jobs found"
               description={
                 isFitVectorTab
@@ -447,7 +462,7 @@ export default function JobsPage() {
           ) : (
             <>
               {/* Results count */}
-              <div className="mb-3 flex items-center gap-2 text-xs text-surface-500">
+              <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
                 <span>
                   {totalJobs} job{totalJobs !== 1 ? "s" : ""} found
                 </span>
@@ -530,7 +545,7 @@ export default function JobsPage() {
                   ? "LinkedIn Message"
                   : "Referral Request"}
               {selectedJob && (
-                <span className="ml-2 text-sm font-normal text-surface-500">
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
                   · {selectedJob.companyName}
                 </span>
               )}

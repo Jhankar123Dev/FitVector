@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Bell, Menu, LogOut, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { useUser } from "@/hooks/use-user";
@@ -41,7 +42,7 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
     : "U";
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 sm:h-16 items-center justify-between border-b border-surface-200 bg-white px-3 sm:px-4 md:px-6">
+    <header className="sticky top-0 z-40 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-background px-3 sm:px-4 md:px-6">
       {/* Left: mobile menu */}
       <div className="flex items-center gap-3">
         <Button
@@ -56,12 +57,15 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
       </div>
 
       {/* Right: actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        {/* Dark mode toggle */}
+        <ThemeToggle />
+
         {/* Notifications */}
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-surface-500 hover:text-surface-700"
+          className="relative text-muted-foreground hover:text-foreground"
         >
           <Bell className="h-5 w-5" />
           {/* Notification dot */}
@@ -72,7 +76,7 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
         {/* User avatar + dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
-            className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-200 focus:ring-offset-2"
+            className="flex cursor-pointer items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
             onClick={() => setShowDropdown(!showDropdown)}
           >
             <Avatar className="h-8 w-8">
@@ -81,17 +85,17 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-surface-200 bg-white shadow-card-hover">
-              <div className="border-b border-surface-100 px-4 py-3">
-                <p className="text-sm font-medium text-surface-800">
+            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-popover shadow-lg">
+              <div className="border-b border-border px-4 py-3">
+                <p className="text-sm font-medium text-popover-foreground">
                   {user?.name || "User"}
                 </p>
-                <p className="text-xs text-surface-500">{user?.email || ""}</p>
+                <p className="text-xs text-muted-foreground">{user?.email || ""}</p>
               </div>
               <div className="py-1">
                 <Link
                   href="/employer/settings"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-surface-600 transition-colors hover:bg-surface-50 hover:text-surface-800"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setShowDropdown(false)}
                 >
                   <User className="h-4 w-4" />
@@ -99,7 +103,7 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
                 </Link>
                 <Link
                   href="/employer/settings"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-surface-600 transition-colors hover:bg-surface-50 hover:text-surface-800 sm:hidden"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:hidden"
                   onClick={() => setShowDropdown(false)}
                 >
                   <Settings className="h-4 w-4" />
@@ -110,7 +114,7 @@ export function EmployerNavbar({ onMenuClick }: EmployerNavbarProps) {
                     setShowDropdown(false);
                     signOut({ callbackUrl: "/login" });
                   }}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-surface-600 transition-colors hover:bg-surface-50 hover:text-surface-800"
+                  className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign Out

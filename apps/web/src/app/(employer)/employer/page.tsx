@@ -33,6 +33,7 @@ import {
 import { formatRelativeTime } from "@/lib/utils";
 import { useAnalytics, useFunnel } from "@/hooks/use-analytics";
 import { useEmployer, useActivityFeed } from "@/hooks/use-employer";
+import { CHART_COLORS } from "@/lib/chart-colors";
 
 // ── Activity icon map ───────────────────────────────────────────────
 const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
@@ -44,8 +45,8 @@ const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; bg: string; colo
   candidate_hired: { icon: CheckCircle2, bg: "bg-emerald-50", color: "text-emerald-600" },
 };
 
-// ── Funnel bar colors ───────────────────────────────────────────────
-const FUNNEL_COLORS = ["#6c5ce7", "#8278ff", "#a78bfa", "#00d97e", "#34d399", "#6ee7b7"];
+// ── Funnel bar colors — brand blue scale (from chart-colors.ts) ─────
+const FUNNEL_COLORS = CHART_COLORS.funnel;
 
 // ── Quick actions ───────────────────────────────────────────────────
 const QUICK_ACTIONS = [
@@ -133,10 +134,10 @@ export default function EmployerDashboardPage() {
     <div className="space-y-6 md:space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+        <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
           Welcome back, {company?.name || "Your Company"}
         </h1>
-        <p className="mt-1 text-sm text-surface-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Here&apos;s what&apos;s happening with your hiring pipeline
         </p>
       </div>
@@ -151,10 +152,10 @@ export default function EmployerDashboardPage() {
                   <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xl sm:text-2xl font-bold text-surface-800">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">
                     {stat.value}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-surface-500">{stat.label}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</p>
                 </div>
                 <div
                   className={`hidden sm:flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${
@@ -192,24 +193,24 @@ export default function EmployerDashboardPage() {
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#e7e5e4"
+                    stroke={CHART_COLORS.grid}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="stage"
-                    tick={{ fontSize: 11, fill: "#78716c" }}
-                    axisLine={{ stroke: "#e7e5e4" }}
+                    tick={{ fontSize: 11, fill: CHART_COLORS.axisTick }}
+                    axisLine={{ stroke: CHART_COLORS.grid }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: "#78716c" }}
+                    tick={{ fontSize: 11, fill: CHART_COLORS.axisTick }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     contentStyle={{
                       borderRadius: "12px",
-                      border: "1px solid #e7e5e4",
+                      border: `1px solid ${CHART_COLORS.tooltipBorder}`,
                       boxShadow:
                         "0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06)",
                       fontSize: "13px",
@@ -257,19 +258,19 @@ export default function EmployerDashboardPage() {
                       <IconComp className={`h-3.5 w-3.5 ${cfg.color}`} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-surface-700 group-hover:text-surface-900 transition-colors">
+                      <p className="text-sm text-foreground/80 group-hover:text-foreground transition-colors">
                         {item.message}{" "}
                         {item.candidateName && (
-                          <span className="font-medium text-surface-800">
+                          <span className="font-medium text-foreground">
                             {item.candidateName}
                           </span>
                         )}
                         {item.candidateName && " — "}
-                        <span className="font-medium text-surface-800">
+                        <span className="font-medium text-foreground">
                           {item.jobTitle}
                         </span>
                       </p>
-                      <p className="mt-0.5 text-[11px] text-surface-400">
+                      <p className="mt-0.5 text-[11px] text-muted-foreground/70">
                         {formatRelativeTime(item.timestamp)}
                       </p>
                     </div>
@@ -293,7 +294,7 @@ export default function EmployerDashboardPage() {
                 <Link
                   key={action.label}
                   href={action.href}
-                  className="flex items-center gap-4 rounded-lg border border-surface-200 p-4 transition-all hover:border-surface-300 hover:shadow-card"
+                  className="flex items-center gap-4 rounded-lg border border-border p-4 transition-all hover:border-border/60 hover:shadow-card"
                 >
                   <div className={`rounded-lg p-2.5 ${action.iconBg}`}>
                     <action.icon
@@ -301,14 +302,14 @@ export default function EmployerDashboardPage() {
                     />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-surface-800">
+                    <p className="text-sm font-medium text-foreground">
                       {action.label}
                     </p>
-                    <p className="text-xs text-surface-500">
+                    <p className="text-xs text-muted-foreground">
                       {action.description}
                     </p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-surface-400" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/70" />
                 </Link>
               ))}
             </CardContent>
@@ -324,34 +325,34 @@ export default function EmployerDashboardPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-surface-400" />
-                  <span className="text-sm text-surface-600">
+                  <Target className="h-4 w-4 text-muted-foreground/70" />
+                  <span className="text-sm text-muted-foreground">
                     Screening Accuracy
                   </span>
                 </div>
-                <span className="text-sm font-semibold text-surface-800">
+                <span className="text-sm font-semibold text-foreground">
                   {"—"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-surface-400" />
-                  <span className="text-sm text-surface-600">
+                  <CheckCircle2 className="h-4 w-4 text-muted-foreground/70" />
+                  <span className="text-sm text-muted-foreground">
                     Offers Extended
                   </span>
                 </div>
-                <span className="text-sm font-semibold text-surface-800">
+                <span className="text-sm font-semibold text-foreground">
                   {(apiMetrics.offersMade as number) || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-surface-400" />
-                  <span className="text-sm text-surface-600">
+                  <TrendingUp className="h-4 w-4 text-muted-foreground/70" />
+                  <span className="text-sm text-muted-foreground">
                     Interview Completion
                   </span>
                 </div>
-                <span className="text-sm font-semibold text-surface-800">
+                <span className="text-sm font-semibold text-foreground">
                   78%
                 </span>
               </div>
@@ -361,14 +362,14 @@ export default function EmployerDashboardPage() {
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-surface-700">
+                <span className="text-sm font-medium text-foreground/80">
                   Plan
                 </span>
                 <Badge variant="brand" className="capitalize">
                   {company?.planTier || "starter"}
                 </Badge>
               </div>
-              <p className="mt-2 text-xs text-surface-500">
+              <p className="mt-2 text-xs text-muted-foreground">
                 10 active jobs, 500 screenings/mo, 50 AI interviews/mo
               </p>
               <Button

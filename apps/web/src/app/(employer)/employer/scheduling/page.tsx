@@ -113,10 +113,10 @@ export default function SchedulingPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
             Interview Scheduling
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+          <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
             Manage and schedule candidate interviews
           </p>
         </div>
@@ -140,8 +140,8 @@ export default function SchedulingPage() {
                 <stat.icon className={cn("h-5 w-5", stat.iconColor)} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xl sm:text-2xl font-bold text-surface-800">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-surface-500">{stat.label}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -165,7 +165,7 @@ export default function SchedulingPage() {
                   <ChevronLeft className="h-3.5 w-3.5" /> Prev
                 </Button>
                 <div className="text-center">
-                  <p className="text-xs sm:text-sm font-semibold text-surface-800">
+                  <p className="text-xs sm:text-sm font-semibold text-foreground">
                     {weekDays[0].toLocaleDateString("en-US", { month: "short", day: "numeric" })} — {weekDays[6].toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                   {weekOffset !== 0 && (
@@ -186,7 +186,7 @@ export default function SchedulingPage() {
               <div className="overflow-x-auto">
                 <div className="min-w-[900px]">
                   {/* Day headers */}
-                  <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-surface-200">
+                  <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
                     <div /> {/* Time column header */}
                     {weekDays.map((day) => {
                       const isToday = isSameDay(day, new Date());
@@ -195,7 +195,7 @@ export default function SchedulingPage() {
                           key={day.toISOString()}
                           className={cn(
                             "px-1 py-2 text-center text-[11px] sm:text-xs font-semibold",
-                            isToday ? "text-brand-600" : "text-surface-600",
+                            isToday ? "text-brand-600" : "text-muted-foreground",
                           )}
                         >
                           {formatDayHeader(day)}
@@ -210,12 +210,12 @@ export default function SchedulingPage() {
                   {/* Time slots */}
                   <div className="relative">
                     {HOURS.map((hour) => (
-                      <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-surface-100" style={{ height: 60 }}>
-                        <div className="flex items-start justify-end pr-2 pt-1 text-[10px] text-surface-400">
+                      <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border" style={{ height: 60 }}>
+                        <div className="flex items-start justify-end pr-2 pt-1 text-[10px] text-muted-foreground/70">
                           {hour <= 12 ? `${hour}:00` : `${hour - 12}:00`} {hour < 12 ? "AM" : "PM"}
                         </div>
                         {weekDays.map((day) => (
-                          <div key={day.toISOString()} className="relative border-l border-surface-100" />
+                          <div key={day.toISOString()} className="relative border-l border-border" />
                         ))}
                       </div>
                     ))}
@@ -252,10 +252,10 @@ export default function SchedulingPage() {
                             width: colWidth,
                           }}
                         >
-                          <p className="truncate text-[10px] font-semibold text-surface-800">
+                          <p className="truncate text-[10px] font-semibold text-foreground">
                             {interview.candidateName}
                           </p>
-                          <div className="flex items-center gap-1 text-[9px] text-surface-500">
+                          <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
                             <TypeIcon className="h-2.5 w-2.5 shrink-0" />
                             <span className="truncate">{formatTime(iDate)}</span>
                           </div>
@@ -274,9 +274,9 @@ export default function SchedulingPage() {
           {upcoming.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
-                <CalendarDays className="h-10 w-10 text-surface-300" />
-                <p className="mt-3 text-sm font-medium text-surface-600">No upcoming interviews</p>
-                <p className="mt-1 text-xs text-surface-400">
+                <CalendarDays className="h-10 w-10 text-muted-foreground/40" />
+                <p className="mt-3 text-sm font-medium text-muted-foreground">No upcoming interviews</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
                   Schedule an interview to see it here.
                 </p>
               </CardContent>
@@ -286,13 +286,13 @@ export default function SchedulingPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[700px]">
                   <thead>
-                    <tr className="border-b border-surface-200 bg-surface-50">
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Candidate</th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Job</th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Interviewer</th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Date & Time</th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Type</th>
-                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Action</th>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Candidate</th>
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Job</th>
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Interviewer</th>
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Date & Time</th>
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Type</th>
+                      <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -300,32 +300,32 @@ export default function SchedulingPage() {
                       const iDate = new Date(interview.scheduledAt);
                       const TypeIcon = TYPE_ICONS[interview.type];
                       return (
-                        <tr key={interview.id} className="border-b border-surface-100 transition-colors hover:bg-surface-50">
+                        <tr key={interview.id} className="border-b border-border transition-colors hover:bg-muted/30">
                           <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                             <div className="flex items-center gap-2">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] font-semibold text-surface-600">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
                                 {interview.candidateName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
                               </div>
                               <div className="min-w-0">
-                                <p className="truncate text-xs sm:text-sm font-medium text-surface-800">{interview.candidateName}</p>
-                                <p className="truncate text-[11px] text-surface-500">{interview.candidateEmail}</p>
+                                <p className="truncate text-xs sm:text-sm font-medium text-foreground">{interview.candidateName}</p>
+                                <p className="truncate text-[11px] text-muted-foreground">{interview.candidateEmail}</p>
                               </div>
                             </div>
                           </td>
                           <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-                            <span className="text-xs sm:text-sm text-surface-700">{interview.jobTitle}</span>
+                            <span className="text-xs sm:text-sm text-foreground/80">{interview.jobTitle}</span>
                           </td>
                           <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-                            <span className="text-[11px] sm:text-xs text-surface-600">
+                            <span className="text-[11px] sm:text-xs text-muted-foreground">
                               {interview.interviewerNames.join(", ")}
                             </span>
                           </td>
                           <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                             <div>
-                              <p className="text-[11px] sm:text-xs font-medium text-surface-800">
+                              <p className="text-[11px] sm:text-xs font-medium text-foreground">
                                 {iDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                               </p>
-                              <p className="text-[11px] text-surface-500">
+                              <p className="text-[11px] text-muted-foreground">
                                 {formatTime(iDate)} · {interview.duration} min
                               </p>
                             </div>
@@ -399,7 +399,7 @@ function InterviewDetailModal({
       <Card className="relative z-10 w-full max-w-lg">
         <CardContent className="space-y-4 p-5 sm:p-6">
           <div className="flex items-start justify-between">
-            <h2 className="text-base sm:text-lg font-semibold text-surface-800">Interview Details</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Interview Details</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -407,43 +407,43 @@ function InterviewDetailModal({
 
           {/* Candidate info */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-100 text-sm font-bold text-surface-600">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
               {interview.candidateName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-surface-800">{interview.candidateName}</p>
-              <p className="text-xs text-surface-500">{interview.candidateEmail}</p>
+              <p className="text-sm font-semibold text-foreground">{interview.candidateName}</p>
+              <p className="text-xs text-muted-foreground">{interview.candidateEmail}</p>
             </div>
           </div>
 
           {/* Details grid */}
           <div className="grid gap-3 grid-cols-2">
             <div>
-              <p className="text-[11px] text-surface-500">Job</p>
-              <p className="text-xs font-medium text-surface-800">{interview.jobTitle}</p>
+              <p className="text-[11px] text-muted-foreground">Job</p>
+              <p className="text-xs font-medium text-foreground">{interview.jobTitle}</p>
             </div>
             <div>
-              <p className="text-[11px] text-surface-500">Type</p>
+              <p className="text-[11px] text-muted-foreground">Type</p>
               <Badge className={cn("border text-[10px] gap-1 mt-0.5", SCHEDULED_INTERVIEW_TYPE_COLORS[interview.type])}>
                 <TypeIcon className="h-3 w-3" />
                 {SCHEDULED_INTERVIEW_TYPE_LABELS[interview.type]}
               </Badge>
             </div>
             <div>
-              <p className="text-[11px] text-surface-500">Date</p>
-              <p className="text-xs font-medium text-surface-800">
+              <p className="text-[11px] text-muted-foreground">Date</p>
+              <p className="text-xs font-medium text-foreground">
                 {iDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-surface-500">Time</p>
-              <p className="text-xs font-medium text-surface-800">
+              <p className="text-[11px] text-muted-foreground">Time</p>
+              <p className="text-xs font-medium text-foreground">
                 {formatTime(iDate)} · {interview.duration} min
               </p>
             </div>
             <div className="col-span-2">
-              <p className="text-[11px] text-surface-500">Interviewer(s)</p>
-              <p className="text-xs font-medium text-surface-800">
+              <p className="text-[11px] text-muted-foreground">Interviewer(s)</p>
+              <p className="text-xs font-medium text-foreground">
                 {interview.interviewerNames.join(", ")}
               </p>
             </div>
@@ -473,8 +473,8 @@ function InterviewDetailModal({
           {/* Interviewer notes */}
           {interview.interviewerNotes && (
             <div>
-              <p className="text-[11px] font-semibold text-surface-500 mb-1">Interviewer Notes</p>
-              <p className="text-xs text-surface-600 leading-relaxed">{interview.interviewerNotes}</p>
+              <p className="text-[11px] font-semibold text-muted-foreground mb-1">Interviewer Notes</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{interview.interviewerNotes}</p>
             </div>
           )}
 
@@ -486,7 +486,7 @@ function InterviewDetailModal({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 border-t border-surface-100 pt-3">
+          <div className="flex gap-2 border-t border-border pt-3">
             <Button variant="outline" size="sm" className="flex-1 text-xs">
               Reschedule
             </Button>
@@ -634,7 +634,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
       <Card className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <CardContent className="space-y-5 p-5 sm:p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-semibold text-surface-800">Schedule Interview</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Schedule Interview</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -694,15 +694,15 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
                     "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors",
                     selectedCandidate === a.id
                       ? "bg-brand-50 border border-brand-200"
-                      : "hover:bg-surface-50",
+                      : "hover:bg-muted/30",
                   )}
                 >
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[9px] font-bold text-surface-600">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground">
                     {a.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-surface-800">{a.name}</p>
-                    <p className="truncate text-[10px] text-surface-500">{a.currentRole} @ {a.currentCompany}</p>
+                    <p className="truncate text-xs font-medium text-foreground">{a.name}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">{a.currentRole} @ {a.currentCompany}</p>
                   </div>
                 </button>
               ))}
@@ -713,7 +713,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
           <div className="space-y-2">
             <Label className="text-xs sm:text-sm">
               Select Interviewer(s)
-              <span className="ml-1 text-[10px] text-surface-400">(first selected = lead)</span>
+              <span className="ml-1 text-[10px] text-muted-foreground/70">(first selected = lead)</span>
             </Label>
             <div className="space-y-1">
               {teamMembers.filter((m) => m.status === "active").map((m) => (
@@ -723,29 +723,29 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
                     "flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 transition-colors",
                     selectedInterviewers.includes(m.id)
                       ? "bg-brand-50 border border-brand-200"
-                      : "hover:bg-surface-50",
+                      : "hover:bg-muted/30",
                   )}
                 >
                   <input
                     type="checkbox"
                     checked={selectedInterviewers.includes(m.id)}
                     onChange={() => toggleInterviewer(m.id)}
-                    className="h-3.5 w-3.5 accent-brand-500"
+                    className="h-3.5 w-3.5 accent-primary"
                   />
-                  <span className="text-xs font-medium text-surface-800">{m.name}</span>
-                  <Badge className="border text-[9px] bg-surface-100 text-surface-500 border-surface-200">
+                  <span className="text-xs font-medium text-foreground">{m.name}</span>
+                  <Badge className="border text-[9px] bg-muted text-muted-foreground border-border">
                     {TEAM_ROLE_LABELS[m.role as TeamMemberRole] || m.role}
                   </Badge>
                   {/* Availability pill — shown once date+time are set */}
                   {date && time && (() => {
                     const avail = availability.find((a) => a.userId === m.id);
                     if (checkingAvail && selectedInterviewers.includes(m.id)) {
-                      return <Loader2 className="ml-auto h-3 w-3 animate-spin text-surface-400" />;
+                      return <Loader2 className="ml-auto h-3 w-3 animate-spin text-muted-foreground/70" />;
                     }
                     if (!avail) return null;
                     if (!avail.calendarConnected) {
                       return (
-                        <span className="ml-auto text-[9px] text-surface-400">No calendar</span>
+                        <span className="ml-auto text-[9px] text-muted-foreground/70">No calendar</span>
                       );
                     }
                     const isBusy = avail.busy.length > 0;
@@ -769,7 +769,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
             <div className="space-y-1.5">
               <Label className="text-xs sm:text-sm">Type</Label>
               <select
-                className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 py-1.5 text-sm text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30"
+                className="flex h-9 w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                 value={interviewType}
                 onChange={(e) => setInterviewType(e.target.value as ScheduledInterviewType)}
               >
@@ -781,7 +781,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
             <div className="space-y-1.5">
               <Label className="text-xs sm:text-sm">Duration</Label>
               <select
-                className="flex h-9 w-full rounded-md border border-surface-200 bg-white px-3 py-1.5 text-sm text-surface-800 outline-none focus:ring-2 focus:ring-brand-500/30"
+                className="flex h-9 w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
               >
@@ -807,7 +807,7 @@ function ScheduleInterviewModal({ onClose }: { onClose: () => void }) {
 
           {/* Summary */}
           {selectedCandidateObj && selectedInterviewers.length > 0 && date && (
-            <div className="rounded-lg bg-surface-50 p-3 text-xs text-surface-600">
+            <div className="rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground">
               <p>
                 <strong>{selectedCandidateObj.name}</strong> — {SCHEDULED_INTERVIEW_TYPE_LABELS[interviewType]}, {duration} min
               </p>

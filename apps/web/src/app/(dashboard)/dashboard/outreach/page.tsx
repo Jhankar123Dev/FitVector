@@ -17,7 +17,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ function CopyBtn({ text }: { text: string }) {
     <Button
       variant="ghost"
       size="sm"
-      className="h-7 w-7 p-0 text-surface-400 hover:text-surface-700"
+      className="h-7 w-7 p-0 text-muted-foreground/70 hover:text-foreground/80"
       title="Copy to clipboard"
       onClick={async () => {
         await navigator.clipboard.writeText(text);
@@ -155,22 +155,22 @@ function MessageItem({
     : entry.body;
 
   return (
-    <div className="rounded-md border border-surface-100 bg-surface-50 p-3">
+    <div className="rounded-md border border-border bg-muted p-3">
       {entry.subject && (
-        <p className="mb-1 truncate text-xs font-medium text-surface-700">
+        <p className="mb-1 truncate text-xs font-medium text-foreground/80">
           {entry.subject}
         </p>
       )}
       {entry.recruiterName && (
-        <p className="mb-1 text-[10px] text-surface-400">
+        <p className="mb-1 text-[10px] text-muted-foreground/70">
           to {entry.recruiterName}
         </p>
       )}
-      <p className="line-clamp-2 text-xs leading-relaxed text-surface-500">
+      <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
         {entry.body}
       </p>
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-[10px] text-surface-400">
+        <span className="text-[10px] text-muted-foreground/70">
           {formatDate(entry.createdAt)}
         </span>
         <div className="flex items-center gap-0.5">
@@ -178,7 +178,7 @@ function MessageItem({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 text-surface-300 hover:text-red-500"
+            className="h-7 w-7 p-0 text-muted-foreground/40 hover:text-red-500"
             title="Delete this version"
             onClick={() => onDelete(entry.id)}
             disabled={isDeleting}
@@ -218,12 +218,12 @@ function OutreachTypeSlot({
     <div className="space-y-2">
       {/* Slot header */}
       <div className="flex items-center gap-1.5">
-        <Icon className="h-3.5 w-3.5 text-surface-400" />
-        <span className="text-xs font-semibold text-surface-600">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground/70" />
+        <span className="text-xs font-semibold text-muted-foreground">
           {meta.label}
         </span>
         {messages.length > 1 && (
-          <span className="ml-auto rounded-full bg-surface-100 px-1.5 py-0.5 text-[10px] font-medium text-surface-500">
+          <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
             {messages.length} versions
           </span>
         )}
@@ -231,7 +231,7 @@ function OutreachTypeSlot({
 
       {/* Slot content */}
       {messages.length === 0 ? (
-        <p className="rounded-md border border-dashed border-surface-200 px-3 py-3 text-center text-xs text-surface-400">
+        <p className="rounded-md border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground/70">
           Not generated yet
         </p>
       ) : (
@@ -248,7 +248,7 @@ function OutreachTypeSlot({
             <>
               <button
                 onClick={() => setShowOlder((v) => !v)}
-                className="flex items-center gap-1 text-[11px] text-surface-400 transition-colors hover:text-surface-600"
+                className="flex items-center gap-1 text-[11px] text-muted-foreground/70 transition-colors hover:text-muted-foreground"
               >
                 {showOlder ? (
                   <ChevronUp className="h-3 w-3" />
@@ -296,28 +296,28 @@ function JobGroupCard({
   return (
     <Card className="overflow-hidden">
       {/* Card header — job identity */}
-      <div className="flex items-center justify-between border-b border-surface-100 bg-surface-50/60 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
-          <Briefcase className="h-4 w-4 shrink-0 text-surface-400" />
+          <Briefcase className="h-4 w-4 shrink-0 text-muted-foreground/70" />
           <div className="min-w-0">
             {hasJobContext ? (
-              <p className="truncate text-sm font-semibold text-surface-800">
+              <p className="truncate text-sm font-semibold text-foreground">
                 {group.jobTitle || "Unknown Role"}
                 {group.companyName && (
-                  <span className="font-normal text-surface-500">
+                  <span className="font-normal text-muted-foreground">
                     {" "}
                     @ {group.companyName}
                   </span>
                 )}
               </p>
             ) : (
-              <p className="text-sm italic text-surface-400">No job context</p>
+              <p className="text-sm italic text-muted-foreground/70">No job context</p>
             )}
           </div>
         </div>
         <Badge
           variant="outline"
-          className="ml-3 shrink-0 text-[10px] text-surface-500"
+          className="ml-3 shrink-0 text-[10px] text-muted-foreground"
         >
           {totalCount} message{totalCount !== 1 ? "s" : ""}
         </Badge>
@@ -325,7 +325,7 @@ function JobGroupCard({
 
       {/* Three outreach type slots */}
       <CardContent className="p-0">
-        <div className="grid grid-cols-1 divide-y divide-surface-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {OUTREACH_TYPES.map((type) => {
             const typeMessages = group.entries
               .filter((e) => e.outreachType === type)
@@ -414,15 +414,15 @@ export default function OutreachPage() {
       {/* Page header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-surface-800">
+          <h1 className="text-2xl font-semibold text-foreground">
             Outreach History
           </h1>
-          <p className="mt-1 text-sm text-surface-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Your generated messages, grouped by job
           </p>
         </div>
         {total > 0 && (
-          <Badge variant="outline" className="mt-1 shrink-0 text-xs text-surface-500">
+          <Badge variant="outline" className="mt-1 shrink-0 text-xs text-muted-foreground">
             {allEntries.length} of {total}
           </Badge>
         )}
@@ -432,7 +432,7 @@ export default function OutreachPage() {
 
       {!isLoading && groups.length === 0 && (
         <EmptyState
-          icon={Mail}
+          icon={<Mail />}
           title="No outreach messages yet"
           description="Generate cold emails, LinkedIn messages, or referral requests from any job in the Jobs tab."
         />

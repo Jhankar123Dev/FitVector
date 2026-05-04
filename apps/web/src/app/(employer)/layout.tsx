@@ -20,10 +20,10 @@ export default function EmployerLayout({
   // Show loading state while session is being fetched
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-surface-50">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-          <p className="text-sm text-surface-500">Loading...</p>
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -48,7 +48,7 @@ export default function EmployerLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-50">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop sidebar */}
       <EmployerSidebar className="hidden lg:flex" />
 

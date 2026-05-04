@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user";
 import { useSeekerProfile, useUpdateSeekerProfile } from "@/hooks/use-seeker-profile";
 import type { WorkHistoryEntry } from "@/hooks/use-seeker-profile";
@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import NextLink from "next/link";
 import { CalendarSyncCard } from "@/components/settings/calendar-sync-card";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -53,13 +54,19 @@ export default function SettingsPage() {
   const [name, setName]       = useState(user?.name || "");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Sync name from session once it resolves (useState only initialises once,
+  // so user?.name is null on the first render while the session is loading)
+  useEffect(() => {
+    if (user?.name) setName(user.name);
+  }, [user?.name]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await fetch("/api/user/profile", {
         method:  "PUT",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ fullName: name }),
+        body:    JSON.stringify(name.trim() ? { name: name.trim() } : {}),
       });
     } finally {
       setIsSaving(false);
@@ -203,8 +210,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-surface-800">Settings</h1>
-        <p className="mt-1 text-sm text-surface-500">
+        <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Manage your account and preferences
         </p>
       </div>
@@ -222,17 +229,18 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>Full Name</Label>
+            <Label htmlFor="settings-full-name">Full Name</Label>
             <Input
+              id="settings-full-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1.5 max-w-sm"
             />
           </div>
           <div>
-            <Label>Email</Label>
-            <Input value={user?.email || ""} disabled className="mt-1.5 max-w-sm" />
-            <p className="mt-1 text-xs text-surface-400">Email cannot be changed</p>
+            <Label htmlFor="settings-email">Email</Label>
+            <Input id="settings-email" value={user?.email || ""} disabled className="mt-1.5 max-w-sm" />
+            <p className="mt-1 text-xs text-muted-foreground/70">Email cannot be changed</p>
           </div>
           <Button onClick={handleSave} disabled={isSaving} className="gap-1.5">
             <Save className="h-3.5 w-3.5" />
@@ -258,7 +266,7 @@ export default function SettingsPage() {
           {profileLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-8 w-full animate-pulse rounded-md bg-surface-100" />
+                <div key={i} className="h-8 w-full animate-pulse rounded-md bg-muted" />
               ))}
             </div>
           ) : (
@@ -333,7 +341,7 @@ export default function SettingsPage() {
               </Button>
 
               {/* Divider */}
-              <div className="border-t border-surface-100" />
+              <div className="border-t border-border" />
 
               {/* Skills tag input */}
               <div>
@@ -388,12 +396,12 @@ export default function SettingsPage() {
               </Button>
 
               {/* Divider */}
-              <div className="border-t border-surface-100" />
+              <div className="border-t border-border" />
 
               {/* Work history */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <Label className="text-sm font-semibold text-surface-700">Work History</Label>
+                  <Label className="text-sm font-semibold text-foreground/80">Work History</Label>
                   <Button
                     type="button"
                     size="sm"
@@ -407,7 +415,7 @@ export default function SettingsPage() {
                 </div>
 
                 {workHistory.length === 0 && !showAddWork && (
-                  <p className="text-sm text-surface-400">
+                  <p className="text-sm text-muted-foreground/70">
                     No work history added yet. Add your experience to improve job matches.
                   </p>
                 )}
@@ -416,17 +424,17 @@ export default function SettingsPage() {
                   {workHistory.map((entry, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between rounded-lg border border-surface-200 bg-surface-50/60 px-4 py-3"
+                      className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-surface-800 truncate">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {entry.title} at {entry.company}
                         </p>
-                        <p className="text-xs text-surface-400 mt-0.5">
+                        <p className="text-xs text-muted-foreground/70 mt-0.5">
                           {formatWorkPeriod(entry)}
                         </p>
                         {entry.description && (
-                          <p className="mt-1 text-xs text-surface-500 line-clamp-1">
+                          <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
                             {entry.description}
                           </p>
                         )}
@@ -457,8 +465,8 @@ export default function SettingsPage() {
 
                 {/* Inline add / edit form */}
                 {showAddWork && (
-                  <div className="mt-3 rounded-xl border border-surface-200 bg-white p-4 space-y-3">
-                    <p className="text-sm font-semibold text-surface-700">
+                  <div className="mt-3 rounded-xl border border-border bg-card p-4 space-y-3">
+                    <p className="text-sm font-semibold text-foreground/80">
                       {editingIdx !== null ? "Edit Experience" : "Add Experience"}
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -512,9 +520,9 @@ export default function SettingsPage() {
                             endDate:   e.target.checked ? null : f.endDate,
                           }))
                         }
-                        className="h-4 w-4 rounded border-surface-300 accent-brand-500"
+                        className="h-4 w-4 rounded border-border accent-primary"
                       />
-                      <span className="text-xs text-surface-600">I currently work here</span>
+                      <span className="text-xs text-muted-foreground">I currently work here</span>
                     </label>
                     <div>
                       <Label className="text-xs">Description (optional)</Label>
@@ -523,7 +531,7 @@ export default function SettingsPage() {
                         onChange={(e) => setWorkForm((f) => ({ ...f, description: e.target.value }))}
                         placeholder="Brief description of your role..."
                         rows={2}
-                        className="mt-1 w-full resize-none rounded-md border border-surface-200 bg-white px-3 py-1.5 text-sm text-surface-700 placeholder:text-surface-400 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+                        className="mt-1 w-full resize-none rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground/80 placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-primary/30"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -570,7 +578,7 @@ export default function SettingsPage() {
               </Button>
             )}
           </div>
-          <p className="mt-2 text-sm text-surface-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             {user?.planTier === "free"
               ? "Upgrade to unlock more searches, resume tailoring, and outreach."
               : "Thank you for being a subscriber!"}
@@ -595,6 +603,30 @@ export default function SettingsPage() {
               Manage Notification Preferences
             </NextLink>
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* ── Appearance ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364-.707.707M6.343 17.657l-.707.707m12.728 0-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 1 1 0 10A5 5 0 0 1 12 7z" />
+              </svg>
+            </div>
+            Appearance
+          </CardTitle>
+          <CardDescription>Customize how FitVector looks for you</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">Theme</p>
+              <p className="text-xs text-muted-foreground">Switch between light and dark mode</p>
+            </div>
+            <ThemeToggle />
+          </div>
         </CardContent>
       </Card>
 

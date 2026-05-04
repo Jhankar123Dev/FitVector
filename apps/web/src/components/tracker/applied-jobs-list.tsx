@@ -68,7 +68,7 @@ function MatchScorePill({ score }: { score: number }) {
   const color =
     score >= 75 ? "bg-green-100 text-green-700" :
     score >= 50 ? "bg-amber-100 text-amber-700" :
-                  "bg-surface-100 text-surface-600";
+                  "bg-muted text-muted-foreground";
   return (
     <span className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${color}`}>
       <Star className="h-2.5 w-2.5" />
@@ -106,7 +106,7 @@ function FunnelBar({ applications }: { applications: TrackerApplication[] }) {
   ];
 
   return (
-    <div className="mb-4 rounded-xl border border-surface-100 bg-surface-50/60 p-4">
+    <div className="mb-4 rounded-xl border border-border bg-muted/30 p-4">
       <div className="flex items-center gap-1 sm:gap-2">
         {stages.map((stage, idx) => (
           <div key={stage.label} className="flex items-center gap-1 sm:gap-2">
@@ -114,10 +114,10 @@ function FunnelBar({ applications }: { applications: TrackerApplication[] }) {
               <span className={`text-lg font-bold leading-tight ${stage.color}`}>
                 {stage.count}
               </span>
-              <span className="text-[10px] text-surface-500 whitespace-nowrap">{stage.label}</span>
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{stage.label}</span>
             </div>
             {idx < stages.length - 1 && (
-              <ChevronDown className="h-3 w-3 rotate-[-90deg] shrink-0 text-surface-300" />
+              <ChevronDown className="h-3 w-3 rotate-[-90deg] shrink-0 text-muted-foreground/40" />
             )}
           </div>
         ))}
@@ -126,10 +126,10 @@ function FunnelBar({ applications }: { applications: TrackerApplication[] }) {
       {/* Conversion bar */}
       <div className="mt-3">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-surface-400 uppercase tracking-wide">conversion rate</span>
+          <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wide">conversion rate</span>
           <span className="text-[10px] font-medium text-emerald-600">{conversionPct}%</span>
         </div>
-        <div className="h-1.5 w-full rounded-full bg-surface-100">
+        <div className="h-1.5 w-full rounded-full bg-muted">
           <div
             className="h-1.5 rounded-full bg-emerald-400 transition-all duration-500"
             style={{ width: `${conversionPct}%` }}
@@ -174,7 +174,7 @@ function AppCard({
           <div className="min-w-0 flex-1">
             {/* Title + optional FV badge */}
             <div className="flex items-center gap-2">
-              <h3 className="truncate text-sm font-semibold text-surface-800">{app.jobTitle}</h3>
+              <h3 className="truncate text-sm font-semibold text-foreground">{app.jobTitle}</h3>
               {showFitVectorBadge && (
                 <Badge className="shrink-0 gap-0.5 bg-accent-50 px-1 py-0 text-[9px] text-accent-700 hover:bg-accent-100">
                   <Zap className="h-2 w-2" />
@@ -192,7 +192,7 @@ function AppCard({
             {/* Meta row */}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {app.appliedAt && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground" suppressHydrationWarning>
                   <Calendar className="h-2.5 w-2.5" />
                   Applied {formatDate(app.appliedAt)}
                 </span>
@@ -240,11 +240,11 @@ function AppCard({
                 <div
                   className={`h-1.5 w-1.5 rounded-full transition-all ${
                     isCurrent ? "h-2 w-2 bg-accent-500" :
-                    isPast    ? "bg-accent-300"          : "bg-surface-200"
+                    isPast    ? "bg-accent-300"          : "bg-muted"
                   }`}
                 />
                 {thisIdx < stageOrder.length - 1 && (
-                  <div className={`h-px w-4 ${isPast && !isCurrent ? "bg-accent-300" : "bg-surface-200"}`} />
+                  <div className={`h-px w-4 ${isPast && !isCurrent ? "bg-accent-300" : "bg-muted"}`} />
                 )}
               </div>
             );
@@ -300,11 +300,11 @@ function CompanyGroup({
 
   return (
     <details open={defaultOpen} className="group">
-      <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-surface-200 bg-white px-4 py-3 hover:bg-surface-50/80 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-border bg-card px-4 py-3 hover:bg-muted/40 [&::-webkit-details-marker]:hidden">
         <div className="flex items-center gap-2.5 min-w-0">
-          <Building2 className="h-4 w-4 shrink-0 text-surface-400" />
-          <span className="truncate text-sm font-semibold text-surface-800">{company}</span>
-          <span className="shrink-0 rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-medium text-surface-500">
+          <Building2 className="h-4 w-4 shrink-0 text-muted-foreground/70" />
+          <span className="truncate text-sm font-semibold text-foreground">{company}</span>
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
             {apps.length} {apps.length === 1 ? "role" : "roles"}
           </span>
           {bestConfig && (
@@ -316,7 +316,7 @@ function CompanyGroup({
             </span>
           )}
         </div>
-        <ChevronDown className="h-4 w-4 shrink-0 text-surface-400 transition-transform group-open:rotate-180" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform group-open:rotate-180" />
       </summary>
 
       <div className="mt-2 space-y-2 pl-2">
@@ -344,8 +344,8 @@ export function AppliedJobsList({
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <Zap className="h-10 w-10 text-accent-300" />
-        <h3 className="mt-4 text-sm font-semibold text-surface-700">No FitVector applications yet</h3>
-        <p className="mt-1 text-xs text-surface-500">
+        <h3 className="mt-4 text-sm font-semibold text-foreground/80">No FitVector applications yet</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
           Apply to jobs via FitVector and they&apos;ll appear here, tracked by the employer.
         </p>
       </div>

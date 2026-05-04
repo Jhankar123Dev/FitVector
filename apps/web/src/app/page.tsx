@@ -1,73 +1,189 @@
 import Link from "next/link";
-import { Search, FileText, Mail, LayoutDashboard, ArrowRight, Check, Zap, Target, Send } from "lucide-react";
+import {
+  Search,
+  FileText,
+  Mail,
+  LayoutDashboard,
+  ArrowRight,
+  Check,
+  Zap,
+  Target,
+  Send,
+  Building2,
+  Users,
+  Brain,
+  ClipboardCheck,
+  Video,
+  Kanban,
+  Briefcase,
+  UserCheck,
+  Star,
+  ChevronRight,
+  Menu,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Footer } from "@/components/layout/footer";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
-const features = [
+// ── Data ─────────────────────────────────────────────────────────────────────
+
+const seekerFeatures = [
   {
     icon: Search,
-    title: "Smart Job Search",
+    title: "Smart Multi-Platform Job Search",
     description:
-      "Search across LinkedIn, Indeed, Glassdoor, and Naukri simultaneously. AI-powered matching scores tell you which jobs fit you best.",
+      "Search across LinkedIn, Indeed, Glassdoor, and Naukri simultaneously. AI match scores show you exactly which jobs fit your profile — before you apply.",
   },
   {
     icon: FileText,
-    title: "Resume Tailoring",
+    title: "One-Click Resume Tailoring",
     description:
-      "One click to tailor your resume for any job. AI rewrites your experience to match job requirements while keeping it authentic.",
+      "AI rewrites your resume for each application, highlighting the skills that matter to that specific employer. Authentic, targeted, and ATS-optimised every time.",
   },
   {
     icon: Mail,
-    title: "Cold Email & Outreach",
+    title: "AI Outreach Generator",
     description:
-      "Generate personalized cold emails, LinkedIn InMails, and referral messages. Find recruiter emails automatically.",
+      "Generate personalized cold emails, LinkedIn InMails, and referral requests. Auto-find recruiter contact info so you reach the right person every time.",
   },
   {
     icon: LayoutDashboard,
     title: "Application Tracker",
     description:
-      "Kanban board to track every application from Applied to Offer. Never lose track of where you stand.",
+      "Kanban board that tracks every application from Applied to Offer. Set follow-up reminders, log notes, and never lose track of your pipeline.",
   },
 ];
 
-const steps = [
+const employerFeatures = [
   {
+    icon: Brain,
+    title: "AI FitScore™ Matching",
+    description:
+      "Vector AI ranks every candidate against your job description in milliseconds. See exactly who is the best fit — before opening a single resume.",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Smart Assessments",
+    description:
+      "Auto-generate role-specific coding challenges, MCQ tests, and async video interviews. Screen hundreds of candidates without a single manual review.",
+  },
+  {
+    icon: Video,
+    title: "Interview Intelligence",
+    description:
+      "Schedule AI-powered interviews, compare candidates side-by-side with scored transcripts, and make data-backed hiring decisions in minutes.",
+  },
+  {
+    icon: Kanban,
+    title: "Full Hiring Pipeline",
+    description:
+      "Drag-and-drop Kanban from Applied to Hired. Bulk actions, automated status updates, and team collaboration — all in one place.",
+  },
+];
+
+const seekerSteps = [
+  {
+    step: "01",
     icon: Search,
-    step: "1",
-    title: "Search",
-    description: "Search jobs across multiple platforms with a single query. Get AI match scores instantly.",
+    title: "Search Once, Find Everywhere",
+    description:
+      "Enter your role and target skills once. FitVector searches all major job boards and scores every result by your AI match percentage instantly.",
   },
   {
+    step: "02",
     icon: Target,
-    step: "2",
-    title: "Tailor",
-    description: "AI tailors your resume for each job, highlighting relevant experience and skills.",
+    title: "AI Tailors Your Application",
+    description:
+      "One click. Your resume is rewritten for that specific job — skills matched, keywords optimised, ATS-friendly. Every single time.",
   },
   {
+    step: "03",
     icon: Send,
-    step: "3",
-    title: "Apply",
-    description: "Generate outreach messages, track applications, and follow up automatically.",
+    title: "Apply, Outreach & Track",
+    description:
+      "Apply directly, generate a personalised cold email or InMail, and watch your Kanban board update automatically as you progress.",
   },
 ];
 
-const pricingPlans = [
+const employerSteps = [
+  {
+    step: "01",
+    icon: Briefcase,
+    title: "Post a Job in 2 Minutes",
+    description:
+      "Describe the role. Our AI generates the full job description, sets screening criteria, and activates your candidate pipeline instantly.",
+  },
+  {
+    step: "02",
+    icon: Brain,
+    title: "AI Ranks Every Applicant",
+    description:
+      "Every candidate is automatically scored with FitScore™ — vector similarity against your JD. Your top 10 surface immediately.",
+  },
+  {
+    step: "03",
+    icon: UserCheck,
+    title: "Assess, Interview & Hire",
+    description:
+      "Run automated assessments and AI interviews, then move candidates through your pipeline. Hire the right person in days, not weeks.",
+  },
+];
+
+const stats = [
+  { value: "10,000+", label: "Active Job Seekers" },
+  { value: "500+", label: "Companies Hiring" },
+  { value: "95%", label: "AI Match Accuracy" },
+  { value: "3×", label: "Faster Time-to-Hire" },
+];
+
+const testimonials = [
+  {
+    quote:
+      "FitVector's AI FitScore completely changed how we hire. We used to spend six hours reviewing 200 resumes. Now the AI surfaces the top 10 in seconds — and they're genuinely strong fits. We cut our time-to-hire by 65%.",
+    name: "Rahul Mehta",
+    role: "Senior Engineering Manager",
+    company: "Groww",
+    initials: "RM",
+    avatarBg: "bg-accent-100",
+    avatarColor: "text-accent-700",
+    type: "employer" as const,
+  },
+  {
+    quote:
+      "I applied to 40 jobs in one week and landed 3 interview calls. The resume tailoring is genuinely impressive — it reads the JD and rewrites your experience to match it precisely. Nothing I've tried before comes close.",
+    name: "Priya Sharma",
+    role: "Software Engineer",
+    company: "Freshworks (prev.)",
+    initials: "PS",
+    avatarBg: "bg-brand-100",
+    avatarColor: "text-brand-700",
+    type: "seeker" as const,
+  },
+];
+
+const seekerPlans = [
   {
     name: "Free",
     price: "0",
-    period: "forever",
+    period: "",
     description: "Get started with basic job search",
     features: [
-      "3 job searches/day",
-      "2 resume tailors/day",
-      "2 cold emails/day",
+      "3 job searches / day",
+      "2 resume tailors / day",
+      "2 cold emails / day",
       "10 active applications",
       "1 resume template",
     ],
     cta: "Get Started Free",
     highlighted: false,
+    ctaHref: "/signup",
   },
   {
     name: "Starter",
@@ -75,9 +191,9 @@ const pricingPlans = [
     period: "/month",
     description: "For active job seekers",
     features: [
-      "10 job searches/day",
-      "10 resume tailors/day",
-      "15 cold emails/day",
+      "10 job searches / day",
+      "10 resume tailors / day",
+      "15 cold emails / day",
       "50 active applications",
       "2 resume templates",
       "Job alerts",
@@ -85,6 +201,7 @@ const pricingPlans = [
     ],
     cta: "Start Free Trial",
     highlighted: false,
+    ctaHref: "/signup",
   },
   {
     name: "Pro",
@@ -93,8 +210,8 @@ const pricingPlans = [
     description: "Unlimited power for serious seekers",
     features: [
       "Unlimited job searches",
-      "50 resume tailors/day",
-      "50 cold emails/day",
+      "50 resume tailors / day",
+      "50 cold emails / day",
       "Unlimited applications",
       "3 resume templates",
       "Recruiter email finder",
@@ -103,6 +220,7 @@ const pricingPlans = [
     ],
     cta: "Start Free Trial",
     highlighted: true,
+    ctaHref: "/signup",
   },
   {
     name: "Elite",
@@ -112,217 +230,839 @@ const pricingPlans = [
     features: [
       "Everything in Pro",
       "Unlimited AI features",
-      "100 email lookups/day",
+      "100 email lookups / day",
       "Custom resume templates",
       "Priority support",
       "Early access to features",
     ],
     cta: "Start Free Trial",
     highlighted: false,
+    ctaHref: "/signup",
   },
 ];
 
+const employerPlans = [
+  {
+    name: "Starter",
+    price: "2,999",
+    period: "/month",
+    description: "Perfect for early-stage hiring",
+    features: [
+      "5 active job posts",
+      "AI FitScore ranking",
+      "Basic candidate pipeline",
+      "Up to 50 applications / month",
+      "Standard assessments",
+      "Email support",
+    ],
+    cta: "Start Hiring Free",
+    highlighted: false,
+    ctaHref: "/signup/employer",
+  },
+  {
+    name: "Growth",
+    price: "7,999",
+    period: "/month",
+    description: "For scaling teams",
+    features: [
+      "25 active job posts",
+      "Unlimited FitScore matches",
+      "Full Kanban pipeline",
+      "500 applications / month",
+      "MCQ + Coding assessments",
+      "AI interview analysis",
+      "Candidate comparison",
+      "Priority support",
+    ],
+    cta: "Start Free Trial",
+    highlighted: true,
+    ctaHref: "/signup/employer",
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    description: "For large organisations",
+    features: [
+      "Unlimited job posts",
+      "Unlimited applications",
+      "Custom assessment templates",
+      "API access & webhooks",
+      "Dedicated account manager",
+      "SLA guarantee",
+      "Custom integrations",
+      "Team collaboration",
+    ],
+    cta: "Contact Sales",
+    highlighted: false,
+    ctaHref: "/contact",
+  },
+];
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col bg-surface-50">
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 border-b border-surface-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center text-2xl font-bold">
-            <span className="text-brand-500">Fit</span>
-            <span className="text-surface-800">Vector</span>
-          </Link>
-          <div className="hidden items-center gap-6 md:flex">
-            <Link href="/#features" className="text-sm text-surface-500 hover:text-surface-800 transition-colors">
-              Features
+    <div className="flex min-h-screen flex-col bg-background">
+
+      {/* ── 1. Navbar ───────────────────────────────────────────────────────── */}
+      {/*
+        CSS-only mobile nav using the Tailwind `peer` pattern.
+        Structure rule: `input.peer` MUST be a preceding DOM sibling of any
+        element that uses `peer-checked:*`. So the checkbox lives as the FIRST
+        child of <header>, and the drawer div is its direct sibling.
+        The <label htmlFor="nav-toggle"> can live anywhere — it toggles the
+        checkbox by ID, not by position.
+      */}
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+
+        {/* Checkbox — first child so both nav and drawer can be siblings */}
+        <input
+          type="checkbox"
+          id="nav-toggle"
+          className="peer sr-only"
+          aria-hidden="true"
+        />
+
+        {/* Main navbar row */}
+        <nav className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex h-16 items-center justify-between">
+
+            {/* Logo */}
+            <Link href="/" className="flex items-center text-2xl font-bold">
+              <span className="text-primary">Fit</span>
+              <span className="text-foreground">Vector</span>
             </Link>
-            <Link href="/#how-it-works" className="text-sm text-surface-500 hover:text-surface-800 transition-colors">
-              How it Works
-            </Link>
-            <Link href="/#pricing" className="text-sm text-surface-500 hover:text-surface-800 transition-colors">
-              Pricing
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Get Started Free</Link>
-            </Button>
+
+            {/* Desktop nav links */}
+            <div className="hidden items-center gap-6 md:flex">
+              <Link
+                href="/#for-seekers"
+                className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
+              >
+                For Job Seekers
+              </Link>
+              <Link
+                href="/#for-employers"
+                className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
+              >
+                For Employers
+              </Link>
+              <Link
+                href="/#pricing"
+                className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
+              >
+                Pricing
+              </Link>
+            </div>
+
+            {/* Right side: CTAs + theme toggle + mobile hamburger */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Theme toggle — all screen sizes */}
+              <ThemeToggle />
+
+              {/* Desktop-only CTAs */}
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
+                <Link href="/login">Sign In</Link>
+              </Button>
+              <Link
+                href="/signup/employer"
+                className="hidden items-center gap-1.5 rounded-md border border-accent-500 px-3.5 py-2 text-sm font-medium text-accent-700 transition-colors duration-200 hover:bg-accent-50 hover:text-accent-800 lg:inline-flex"
+              >
+                Post a Job
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+              <Button size="sm" className="hidden sm:inline-flex" asChild>
+                <Link href="/signup">Get Started Free</Link>
+              </Button>
+
+              {/* Hamburger label — toggles checkbox by ID */}
+              <label
+                htmlFor="nav-toggle"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+                aria-label="Toggle navigation menu"
+              >
+                <Menu className="h-5 w-5" />
+              </label>
+            </div>
           </div>
         </nav>
+
+        {/* Mobile drawer — direct sibling of input.peer → peer-checked:block works */}
+        <div className="hidden peer-checked:block border-t border-border bg-background md:hidden">
+          <div className="mx-auto max-w-7xl space-y-1 px-4 pb-4 pt-3 sm:px-6">
+            <Link
+              href="/#for-seekers"
+              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              For Job Seekers
+            </Link>
+            <Link
+              href="/#for-employers"
+              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              For Employers
+            </Link>
+            <Link
+              href="/#pricing"
+              className="block rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              Pricing
+            </Link>
+            <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+              <Button variant="outline" size="sm" className="w-full" asChild>
+                <Link href="/login">Sign In</Link>
+              </Button>
+              <Link
+                href="/signup/employer"
+                className="flex items-center justify-center gap-1.5 rounded-md border border-accent-500 px-3.5 py-2 text-sm font-medium text-accent-700 transition-colors hover:bg-accent-50"
+              >
+                Post a Job
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+              <Button size="sm" className="w-full" asChild>
+                <Link href="/signup">Get Started Free</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden py-20 sm:py-32">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_40%_at_50%_60%,rgba(108,92,231,0.08),transparent)]" />
-          <div className="mx-auto max-w-7xl px-6 text-center">
-            <Badge variant="brand" className="mb-6">
-              <Zap className="mr-1 h-3 w-3" />
-              AI-Powered Job Search Platform
-            </Badge>
-            <h1 className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-surface-900 sm:text-6xl lg:text-7xl">
-              Find Your Perfect Job with{" "}
-              <span className="text-gradient-brand">
-                AI Precision
-              </span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-surface-500 sm:text-xl">
-              Search across multiple job boards, tailor your resume for each application, and
-              generate personalized outreach — all powered by AI.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button size="lg" asChild>
-                <Link href="/signup">
-                  I&apos;m Looking for a Job
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/signup/employer">I&apos;m Hiring</Link>
-              </Button>
+
+        {/* ── 2. Hero ─────────────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden py-20 sm:py-28">
+          {/* Subtle sky-blue radial glow */}
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(60%_50%_at_50%_60%,rgba(3,105,161,0.07),transparent)]" />
+
+          <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300">
+              <Zap className="h-3 w-3" />
+              AI-Powered Dual-Sided Hiring Platform
             </div>
-            <p className="mt-4 text-sm text-surface-400">No credit card required. Free plan available.</p>
+
+            {/* Headline */}
+            <h1 className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              Where AI Connects the Right{" "}
+              <span className="text-primary">Talent</span> to the Right{" "}
+              <span className="text-accent-600">Opportunity</span>
+            </h1>
+
+            {/* Sub-headline */}
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
+              Whether you&apos;re searching for your next role or building your
+              dream team — FitVector&apos;s AI does the heavy lifting for both
+              sides.
+            </p>
+
+            {/* Audience split cards — wider container on large screens */}
+            <div className="mx-auto mt-12 grid max-w-4xl gap-4 text-left sm:grid-cols-2">
+              {/* Job Seeker card */}
+              <div className="group relative overflow-hidden rounded-xl border border-brand-200 bg-card p-6 shadow-card transition-shadow duration-200 hover:shadow-card-hover cursor-pointer dark:border-sky-800">
+                {/* Blue left accent bar */}
+                <div className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-primary" />
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-brand-50 dark:bg-sky-900/40">
+                  <Search className="h-6 w-6 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">
+                  I&apos;m a Job Seeker
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Search smarter. Apply faster. Land more offers.
+                </p>
+                <ul className="mt-4 space-y-2.5">
+                  {[
+                    "Multi-platform AI job search",
+                    "One-click resume tailoring",
+                    "Personalised outreach generator",
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-2 text-sm text-foreground"
+                    >
+                      <Check className="h-4 w-4 shrink-0 text-primary" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Button className="mt-6 w-full" asChild>
+                  <Link href="/signup">
+                    Start Your Job Search
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+
+              {/* Employer card */}
+              <div className="group relative overflow-hidden rounded-xl border border-accent-200 bg-card p-6 shadow-card transition-shadow duration-200 hover:shadow-card-hover cursor-pointer dark:border-green-800">
+                {/* Green left accent bar */}
+                <div className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-accent-500" />
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-accent-50 dark:bg-green-900/40">
+                  <Building2 className="h-6 w-6 text-accent-600" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">
+                  I&apos;m an Employer
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Find, assess, and hire top talent with AI precision.
+                </p>
+                <ul className="mt-4 space-y-2.5">
+                  {[
+                    "AI FitScore™ candidate matching",
+                    "Smart automated assessments",
+                    "Full hiring pipeline management",
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-2 text-sm text-foreground"
+                    >
+                      <Check className="h-4 w-4 shrink-0 text-accent-600" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="mt-6 w-full bg-accent-500 text-white hover:bg-accent-600"
+                  asChild
+                >
+                  <Link href="/signup/employer">
+                    Start Hiring Free
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Social proof line — pipe replaced with visible divider */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Users className="h-4 w-4 text-primary" />
+                <strong className="text-foreground">10,000+</strong>&nbsp;Job Seekers
+              </span>
+              <div className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
+              <span className="flex items-center gap-1.5">
+                <Building2 className="h-4 w-4 text-accent-600" />
+                <strong className="text-foreground">500+</strong>&nbsp;Companies Hiring
+              </span>
+              <div className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
+              <span className="flex items-center gap-1.5">
+                <Zap className="h-4 w-4 text-primary" />
+                <strong className="text-foreground">95%</strong>&nbsp;AI Match Accuracy
+              </span>
+              <div className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
+              <span className="hidden text-muted-foreground sm:inline">
+                Free plan · No credit card required
+              </span>
+            </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="border-t border-surface-200 bg-surface-100/50 py-20 sm:py-28">
-          <div className="mx-auto max-w-7xl px-6">
+        {/* ── 3. For Job Seekers ──────────────────────────────────────────── */}
+        <section
+          id="for-seekers"
+          className="scroll-mt-20 border-t border-border bg-muted/20 py-20 dark:bg-slate-800/30 sm:py-28"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-surface-800 sm:text-4xl">
-                Everything you need to land your dream job
+              <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300">
+                <Search className="h-3 w-3" />
+                For Job Seekers
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Land your dream job with AI superpowers
               </h2>
-              <p className="mt-4 text-lg text-surface-500">
-                From search to offer, FitVector streamlines your entire job hunt.
+              <p className="mt-4 text-lg text-muted-foreground">
+                From your first search to a signed offer — FitVector handles
+                every step of your job hunt.
               </p>
             </div>
-            <div className="mx-auto mt-16 grid max-w-5xl gap-6 sm:grid-cols-2">
-              {features.map((feature) => (
-                <Card key={feature.title} className="transition-shadow hover:shadow-card-hover">
+
+            <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2">
+              {seekerFeatures.map((f) => (
+                <Card
+                  key={f.title}
+                  className="transition-shadow duration-200 hover:shadow-card-hover"
+                >
                   <CardHeader>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
-                      <feature.icon className="h-6 w-6 text-brand-500" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-50 dark:bg-sky-900/40">
+                      <f.icon className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle className="mt-4 text-xl">{feature.title}</CardTitle>
+                    <CardTitle className="mt-4 text-xl">{f.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-base">{feature.description}</CardDescription>
+                    <CardDescription className="text-base leading-relaxed">
+                      {f.description}
+                    </CardDescription>
                   </CardContent>
                 </Card>
               ))}
             </div>
+
+            <div className="mt-10 text-center">
+              <Button size="lg" asChild>
+                <Link href="/signup">
+                  Start Your Job Search
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </section>
 
-        {/* How it Works Section */}
-        <section id="how-it-works" className="py-20 sm:py-28">
-          <div className="mx-auto max-w-7xl px-6">
+        {/* ── 4. For Employers ────────────────────────────────────────────── */}
+        <section
+          id="for-employers"
+          className="scroll-mt-20 border-t border-border bg-card py-20 sm:py-28"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-surface-800 sm:text-4xl">
-                Three steps to your next job
+              <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-accent-200 bg-accent-50 px-3 py-1 text-xs font-medium text-accent-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
+                <Building2 className="h-3 w-3" />
+                For Employers
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Hire smarter with AI-powered talent intelligence
               </h2>
-              <p className="mt-4 text-lg text-surface-500">
-                Simple, fast, and effective. Let AI do the heavy lifting.
+              <p className="mt-4 text-lg text-muted-foreground">
+                From job posting to signed offer — FitVector finds, screens,
+                and ranks your best candidates automatically.
               </p>
             </div>
-            <div className="mx-auto mt-16 grid max-w-5xl gap-8 md:grid-cols-3">
-              {steps.map((step, index) => (
-                <div key={step.title} className="relative text-center">
-                  {index < steps.length - 1 && (
-                    <div className="absolute left-1/2 top-12 hidden h-0.5 w-full bg-surface-200 md:block" />
-                  )}
-                  <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-brand-50">
-                    <span className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
-                      {step.step}
-                    </span>
-                    <step.icon className="h-10 w-10 text-brand-500" />
-                  </div>
-                  <h3 className="mt-6 text-xl font-semibold text-surface-800">{step.title}</h3>
-                  <p className="mt-3 text-surface-500">{step.description}</p>
+
+            <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2">
+              {employerFeatures.map((f) => (
+                <Card
+                  key={f.title}
+                  className="transition-shadow duration-200 hover:shadow-card-hover"
+                >
+                  <CardHeader>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent-50 dark:bg-green-900/40">
+                      <f.icon className="h-6 w-6 text-accent-600 dark:text-green-400" />
+                    </div>
+                    <CardTitle className="mt-4 text-xl">{f.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base leading-relaxed">
+                      {f.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="mt-10 text-center">
+              <Button
+                size="lg"
+                className="bg-accent-500 text-white hover:bg-accent-600"
+                asChild
+              >
+                <Link href="/signup/employer">
+                  Post Your First Job Free
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 5. How It Works ─────────────────────────────────────────────── */}
+        <section
+          id="how-it-works"
+          className="scroll-mt-20 border-t border-border bg-background py-20 sm:py-28"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                How FitVector Works
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Simple, fast steps for both sides of the hiring equation.
+              </p>
+            </div>
+
+            <div className="mt-16 grid gap-0 lg:grid-cols-2">
+              {/* Job Seekers column */}
+              <div className="pb-10 lg:border-r lg:border-border lg:pb-0 lg:pr-12">
+                <div className="mb-8 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300">
+                  <Search className="h-3 w-3" />
+                  Job Seekers
+                </div>
+                <div className="space-y-0">
+                  {seekerSteps.map((step, i) => (
+                    <div key={step.title} className="flex gap-4">
+                      {/* Step indicator + connector */}
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-brand-200 bg-brand-50 dark:border-sky-800 dark:bg-sky-900/40">
+                          <span className="text-xs font-bold text-primary">
+                            {step.step}
+                          </span>
+                        </div>
+                        {i < seekerSteps.length - 1 && (
+                          <div className="mt-1 h-12 w-0.5 bg-brand-100 dark:bg-sky-900/60" />
+                        )}
+                      </div>
+                      {/* Content */}
+                      <div className="pb-10 pt-1.5">
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {step.title}
+                        </h3>
+                        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile divider between columns */}
+              <div className="mb-10 border-t border-border lg:hidden" />
+
+              {/* Employers column */}
+              <div className="lg:pl-12">
+                <div className="mb-8 inline-flex items-center gap-1.5 rounded-full border border-accent-200 bg-accent-50 px-3 py-1 text-xs font-medium text-accent-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
+                  <Building2 className="h-3 w-3" />
+                  Employers
+                </div>
+                <div className="space-y-0">
+                  {employerSteps.map((step, i) => (
+                    <div key={step.title} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-accent-200 bg-accent-50 dark:border-green-800 dark:bg-green-900/40">
+                          <span className="text-xs font-bold text-accent-700 dark:text-green-300">
+                            {step.step}
+                          </span>
+                        </div>
+                        {i < employerSteps.length - 1 && (
+                          <div className="mt-1 h-12 w-0.5 bg-accent-100 dark:bg-green-900/60" />
+                        )}
+                      </div>
+                      <div className="pb-10 pt-1.5">
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {step.title}
+                        </h3>
+                        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 6. Trust Stats ──────────────────────────────────────────────── */}
+        <section className="bg-brand-900 py-16 sm:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            {/* grid-cols-2 on mobile so stats are never single-column */}
+            <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+              {stats.map((s) => (
+                <div key={s.label} className="text-center">
+                  <p className="text-4xl font-bold text-white sm:text-5xl">
+                    {s.value}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-brand-200">
+                    {s.label}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Pricing Section */}
-        <section id="pricing" className="border-t border-surface-200 bg-surface-100/50 py-20 sm:py-28">
-          <div className="mx-auto max-w-7xl px-6">
+        {/* ── 7. Testimonials ─────────────────────────────────────────────── */}
+        <section className="border-t border-border bg-muted/20 py-20 dark:bg-slate-800/30 sm:py-28">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-surface-800 sm:text-4xl">
-                Simple, transparent pricing
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Trusted by teams and talent alike
               </h2>
-              <p className="mt-4 text-lg text-surface-500">
-                Start free. Upgrade when you need more power.
+              <p className="mt-4 text-lg text-muted-foreground">
+                Real results from both sides of the platform.
               </p>
             </div>
-            <div className="mx-auto mt-16 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {pricingPlans.map((plan) => (
-                <Card
-                  key={plan.name}
-                  className={`relative flex flex-col ${plan.highlighted ? "border-brand-500 shadow-card-hover ring-1 ring-brand-500" : ""}`}
-                >
-                  {plan.highlighted && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge variant="brand">Most Popular</Badge>
-                    </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="text-lg">{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
-                    <div className="mt-4">
-                      <span className="text-4xl font-bold text-surface-800">
-                        {plan.price === "0" ? "Free" : `\u20B9${plan.price}`}
-                      </span>
-                      {plan.price !== "0" && (
-                        <span className="text-sm text-surface-500">{plan.period}</span>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <ul className="space-y-3">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2 text-sm text-surface-600">
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-500" />
-                          {feature}
-                        </li>
+
+            <div className="mx-auto mt-14 grid max-w-4xl gap-6 sm:grid-cols-2">
+              {testimonials.map((t) => (
+                <Card key={t.name} className="flex flex-col">
+                  <CardContent className="flex flex-1 flex-col p-6">
+                    {/* Stars */}
+                    <div className="mb-4 flex gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className="h-4 w-4 fill-amber-400 text-amber-400"
+                        />
                       ))}
-                    </ul>
+                    </div>
+                    {/* Quote */}
+                    <blockquote className="flex-1 text-sm leading-relaxed text-foreground">
+                      &ldquo;{t.quote}&rdquo;
+                    </blockquote>
+                    {/* Attribution */}
+                    <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                          t.type === "employer"
+                            ? "bg-accent-100 text-accent-700 dark:bg-green-900/50 dark:text-green-300"
+                            : "bg-brand-100 text-brand-700 dark:bg-sky-900/50 dark:text-sky-300"
+                        }`}
+                      >
+                        {t.initials}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          {t.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {t.role} · {t.company}
+                        </p>
+                      </div>
+                      {/* Audience label */}
+                      <div
+                        className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${
+                          t.type === "employer"
+                            ? "border-accent-200 bg-accent-50 text-accent-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300"
+                            : "border-brand-200 bg-brand-50 text-brand-700 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300"
+                        }`}
+                      >
+                        {t.type === "employer" ? (
+                          <Building2 className="h-3 w-3" />
+                        ) : (
+                          <Search className="h-3 w-3" />
+                        )}
+                        {t.type === "employer" ? "Employer" : "Job Seeker"}
+                      </div>
+                    </div>
                   </CardContent>
-                  <div className="p-6 pt-0">
-                    <Button
-                      className="w-full"
-                      variant={plan.highlighted ? "default" : "outline"}
-                      asChild
-                    >
-                      <Link href="/signup">{plan.cta}</Link>
-                    </Button>
-                  </div>
                 </Card>
               ))}
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 sm:py-28">
-          <div className="mx-auto max-w-7xl px-6 text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-surface-800 sm:text-4xl">
-              Ready to supercharge your job search?
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-surface-500">
-              Join thousands of job seekers who have landed their dream jobs with FitVector.
-            </p>
-            <div className="mt-10">
-              <Button size="lg" asChild>
-                <Link href="/signup">
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+        {/* ── 8. Pricing ──────────────────────────────────────────────────── */}
+        <section
+          id="pricing"
+          className="scroll-mt-20 border-t border-border bg-background py-20 sm:py-28"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Simple, transparent pricing
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Start free on either side. Upgrade when you need more power.
+              </p>
+            </div>
+
+            {/* Job Seeker Plans */}
+            <div className="mt-14">
+              <div className="relative mb-10">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                  <div className="flex items-center gap-1.5 rounded-full border border-brand-200 bg-background px-4 py-1 text-sm font-medium text-brand-700 dark:border-sky-800 dark:text-sky-300">
+                    <Search className="h-3.5 w-3.5" />
+                    Job Seeker Plans
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {seekerPlans.map((plan) => (
+                  <Card
+                    key={plan.name}
+                    className={`relative flex flex-col ${
+                      plan.highlighted
+                        ? "border-primary shadow-card-hover ring-1 ring-primary"
+                        : ""
+                    }`}
+                  >
+                    {plan.highlighted && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <div className="rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-white">
+                          Most Popular
+                        </div>
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      <CardDescription>{plan.description}</CardDescription>
+                      <div className="mt-4">
+                        <span className="text-4xl font-bold text-foreground">
+                          {plan.price === "0" ? "Free" : `₹${plan.price}`}
+                        </span>
+                        {plan.period && (
+                          <span className="text-sm text-muted-foreground">
+                            {plan.period}
+                          </span>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1">
+                      <ul className="space-y-2.5">
+                        {plan.features.map((f) => (
+                          <li
+                            key={f}
+                            className="flex items-start gap-2 text-sm text-muted-foreground"
+                          >
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-500" />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                    <div className="p-6 pt-0">
+                      <Button
+                        className="w-full"
+                        variant={plan.highlighted ? "default" : "outline"}
+                        asChild
+                      >
+                        <Link href={plan.ctaHref}>{plan.cta}</Link>
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Employer Plans */}
+            <div className="mt-16">
+              <div className="relative mb-10">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                  <div className="flex items-center gap-1.5 rounded-full border border-accent-200 bg-background px-4 py-1 text-sm font-medium text-accent-700 dark:border-green-800 dark:text-green-300">
+                    <Building2 className="h-3.5 w-3.5" />
+                    Employer Plans
+                  </div>
+                </div>
+              </div>
+
+              {/* md:grid-cols-3 — avoids cramping at 640px (sm) */}
+              <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-3">
+                {employerPlans.map((plan) => (
+                  <Card
+                    key={plan.name}
+                    className={`relative flex flex-col ${
+                      plan.highlighted
+                        ? "border-accent-500 shadow-card-hover ring-1 ring-accent-500"
+                        : ""
+                    }`}
+                  >
+                    {plan.highlighted && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <div className="rounded-full bg-accent-500 px-3 py-0.5 text-xs font-semibold text-white">
+                          Most Popular
+                        </div>
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      <CardDescription>{plan.description}</CardDescription>
+                      <div className="mt-4">
+                        <span className="text-4xl font-bold text-foreground">
+                          {plan.price === "Custom" ? "Custom" : `₹${plan.price}`}
+                        </span>
+                        {plan.period && (
+                          <span className="text-sm text-muted-foreground">
+                            {plan.period}
+                          </span>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1">
+                      <ul className="space-y-2.5">
+                        {plan.features.map((f) => (
+                          <li
+                            key={f}
+                            className="flex items-start gap-2 text-sm text-muted-foreground"
+                          >
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-500" />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                    <div className="p-6 pt-0">
+                      <Button
+                        className={`w-full ${
+                          plan.highlighted
+                            ? "bg-accent-500 text-white hover:bg-accent-600"
+                            : ""
+                        }`}
+                        variant={plan.highlighted ? "default" : "outline"}
+                        asChild
+                      >
+                        <Link href={plan.ctaHref}>{plan.cta}</Link>
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 9. Final Split CTA ──────────────────────────────────────────── */}
+        <section className="border-t border-border bg-muted/20 py-20 dark:bg-slate-800/30 sm:py-28">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="grid gap-5 sm:grid-cols-2">
+              {/* Seeker CTA */}
+              <div className="flex flex-col items-center rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-background p-8 text-center dark:border-sky-800 dark:from-slate-800 dark:to-slate-900">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-brand-100 dark:bg-sky-900/40">
+                  <Search className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground">
+                  Land your dream job
+                </h3>
+                <p className="mt-2 max-w-xs text-muted-foreground">
+                  Join 10,000+ job seekers who have accelerated their search
+                  with AI.
+                </p>
+                <Button size="lg" className="mt-6 w-full sm:w-auto" asChild>
+                  <Link href="/signup">
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Free plan · No credit card required
+                </p>
+              </div>
+
+              {/* Employer CTA */}
+              <div className="flex flex-col items-center rounded-2xl border border-accent-200 bg-gradient-to-br from-accent-50 to-background p-8 text-center dark:border-green-800 dark:from-slate-800 dark:to-slate-900">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-accent-100 dark:bg-green-900/40">
+                  <Building2 className="h-7 w-7 text-accent-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground">
+                  Hire smarter, faster
+                </h3>
+                <p className="mt-2 max-w-xs text-muted-foreground">
+                  500+ companies use FitVector to find qualified candidates 3×
+                  faster with AI.
+                </p>
+                <Button
+                  size="lg"
+                  className="mt-6 w-full bg-accent-500 text-white hover:bg-accent-600 sm:w-auto"
+                  asChild
+                >
+                  <Link href="/signup/employer">
+                    Post a Job Free
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Free job post · Cancel any time
+                </p>
+              </div>
             </div>
           </div>
         </section>

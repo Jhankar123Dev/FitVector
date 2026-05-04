@@ -10,6 +10,7 @@ import {
   Users,
   Eye,
 } from "lucide-react";
+import { Skeleton, SkeletonCandidateRow } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAllApplicants } from "@/hooks/use-applicants";
@@ -61,10 +62,24 @@ export default function CandidatesPage() {
   if (isLoading) {
     return (
       <div className="space-y-5">
-        <div className="h-8 w-48 animate-pulse rounded bg-surface-200" />
-        <div className="h-12 animate-pulse rounded-lg bg-surface-100" />
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 animate-pulse rounded-lg border border-surface-200 bg-surface-50" />
+        {/* Header */}
+        <div className="space-y-1.5">
+          <Skeleton className="h-7 w-44" />
+          <Skeleton className="h-4 w-64 opacity-60" />
+        </div>
+        {/* Search bar + filter chips row */}
+        <div className="flex gap-2">
+          <Skeleton className="h-10 flex-1 rounded-lg" />
+          <Skeleton className="h-10 w-24 rounded-lg" />
+        </div>
+        <div className="flex gap-2">
+          {[80, 72, 68, 64, 60].map((w, i) => (
+            <Skeleton key={i} className="h-7 rounded-full" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Candidate rows */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonCandidateRow key={i} />
         ))}
       </div>
     );
@@ -74,8 +89,8 @@ export default function CandidatesPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-semibold text-surface-800">All Candidates</h1>
-        <p className="mt-0.5 text-sm text-surface-500">
+        <h1 className="text-xl font-semibold text-foreground">All Candidates</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           {totalCount} candidates across all job postings · {strongFitCount} strong fits
         </p>
       </div>
@@ -85,7 +100,7 @@ export default function CandidatesPage() {
         <CardContent className="flex flex-wrap gap-3 p-3 sm:p-4">
           {/* Search */}
           <div className="relative w-full sm:w-56">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="Search name, email, role..."
               value={search}
@@ -104,7 +119,7 @@ export default function CandidatesPage() {
                   "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                   bucketFilter === b
                     ? "bg-brand-500 text-white"
-                    : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                    : "bg-muted text-muted-foreground hover:bg-muted",
                 )}
               >
                 {b === "all" ? "All" : BUCKET_LABELS[b]}
@@ -119,8 +134,8 @@ export default function CandidatesPage() {
               className={cn(
                 "hidden rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:block",
                 stageFilter === "all"
-                  ? "bg-surface-800 text-white"
-                  : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                  ? "bg-foreground text-white"
+                  : "bg-muted text-muted-foreground hover:bg-muted",
               )}
             >
               All Stages
@@ -132,8 +147,8 @@ export default function CandidatesPage() {
                 className={cn(
                   "hidden rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:block",
                   stageFilter === s
-                    ? "bg-surface-800 text-white"
-                    : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                    ? "bg-foreground text-white"
+                    : "bg-muted text-muted-foreground hover:bg-muted",
                 )}
               >
                 {PIPELINE_STAGE_LABELS[s]}
@@ -149,14 +164,14 @@ export default function CandidatesPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px]">
               <thead>
-                <tr className="border-b border-surface-200 bg-surface-50">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Candidate</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Current Role</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Stage</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500">Fit</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-surface-500">Score</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-surface-500">Applied</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-surface-500">Actions</th>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Candidate</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Current Role</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Stage</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Fit</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Score</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Applied</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,19 +184,19 @@ export default function CandidatesPage() {
                   });
 
                   return (
-                    <tr key={applicant.id} className="border-b border-surface-100 last:border-0 hover:bg-surface-50">
+                    <tr key={applicant.id} className="border-b border-border last:border-0 hover:bg-muted/30">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
                             {applicant.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-surface-800">{applicant.name}</p>
-                            <p className="text-xs text-surface-400">{applicant.email}</p>
+                            <p className="text-sm font-medium text-foreground">{applicant.name}</p>
+                            <p className="text-xs text-muted-foreground/70">{applicant.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-surface-600">
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
                         {applicant.currentRole} at {applicant.currentCompany}
                       </td>
                       <td className="px-4 py-3">
@@ -195,11 +210,11 @@ export default function CandidatesPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="text-sm font-semibold text-surface-800">
+                        <span className="text-sm font-semibold text-foreground">
                           {applicant.screeningScore ?? "—"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-surface-500">
+                      <td className="px-4 py-3 text-right text-xs text-muted-foreground">
                         {appliedDate}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -219,8 +234,8 @@ export default function CandidatesPage() {
 
           {filtered.length === 0 && (
             <div className="flex flex-col items-center py-12 text-center">
-              <Users className="mb-2 h-8 w-8 text-surface-300" />
-              <p className="text-sm text-surface-500">No candidates match your filters</p>
+              <Users className="mb-2 h-8 w-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">No candidates match your filters</p>
             </div>
           )}
         </CardContent>

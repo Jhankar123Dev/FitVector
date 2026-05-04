@@ -81,7 +81,7 @@ export function JobDetailPanel({ job, userSkills = [], alreadyApplied, onBack, o
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="border-b border-surface-200 p-4">
+      <div className="border-b border-border p-4">
         <Button
           variant="ghost"
           size="sm"
@@ -94,8 +94,8 @@ export function JobDetailPanel({ job, userSkills = [], alreadyApplied, onBack, o
 
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-surface-800">{job.title}</h2>
-            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-surface-500">
+            <h2 className="text-lg font-semibold text-foreground">{job.title}</h2>
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
               {job.companyName}
             </p>
@@ -112,7 +112,7 @@ export function JobDetailPanel({ job, userSkills = [], alreadyApplied, onBack, o
         </div>
 
         {/* Meta */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-surface-500">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
           {job.location && (
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5" />
@@ -149,10 +149,10 @@ export function JobDetailPanel({ job, userSkills = [], alreadyApplied, onBack, o
 
       {/* Skills Match Visualization */}
       {(matching.length > 0 || missing.length > 0) && (
-        <div className="border-b border-surface-200 p-4">
-          <h3 className="mb-2 text-sm font-semibold text-surface-800">Skills Match</h3>
+        <div className="border-b border-border p-4">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Skills Match</h3>
           {detComponents?.requiredSkillsMatch && (
-            <div className="mb-2 h-2 w-full overflow-hidden rounded-full bg-surface-100">
+            <div className="mb-2 h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-accent-500 transition-all"
                 style={{
@@ -164,7 +164,7 @@ export function JobDetailPanel({ job, userSkills = [], alreadyApplied, onBack, o
           <div className="space-y-2">
             {matching.length > 0 && (
               <div>
-                <p className="mb-1 text-xs text-surface-500">
+                <p className="mb-1 text-xs text-muted-foreground">
                   You have ({matching.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -183,7 +183,7 @@ export function JobDetailPanel({ job, userSkills = [], alreadyApplied, onBack, o
             )}
             {missing.length > 0 && (
               <div>
-                <p className="mb-1 text-xs text-surface-500">
+                <p className="mb-1 text-xs text-muted-foreground">
                   To learn ({missing.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -205,18 +205,18 @@ export function JobDetailPanel({ job, userSkills = [], alreadyApplied, onBack, o
       )}
 
       {/* Gap Analysis */}
-      <div className="border-b border-surface-200 px-4 py-3">
+      <div className="border-b border-border px-4 py-3">
         <GapAnalysisPanel job={job} />
       </div>
 
       {/* Description */}
       <div className="p-4">
-        <h3 className="mb-2 text-sm font-semibold text-surface-800">Job Description</h3>
-        <div className="max-w-none text-surface-600">
+        <h3 className="mb-2 text-sm font-semibold text-foreground">Job Description</h3>
+        <div className="max-w-none text-muted-foreground">
           {job.description ? (
             <div className="whitespace-pre-wrap text-sm leading-relaxed">{job.description}</div>
           ) : (
-            <p className="italic text-surface-400">No description available.</p>
+            <p className="italic text-muted-foreground/70">No description available.</p>
           )}
         </div>
       </div>

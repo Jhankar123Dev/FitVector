@@ -138,15 +138,15 @@ export default function VerificationPage() {
       <div>
         <Link
           href="/dashboard/settings"
-          className="mb-3 inline-flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700"
+          className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground/80"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Settings
         </Link>
-        <h1 className="text-2xl font-semibold text-surface-800">
+        <h1 className="text-2xl font-semibold text-foreground">
           FitVector Verified Profile
         </h1>
-        <p className="mt-1 text-sm text-surface-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Earn a verified badge to gain priority visibility with employers and access exclusive job postings
         </p>
       </div>
@@ -156,8 +156,8 @@ export default function VerificationPage() {
         <CardContent className="p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-surface-700">Verification Progress</p>
-              <p className="mt-0.5 text-xs text-surface-500">
+              <p className="text-sm font-medium text-foreground/80">Verification Progress</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {verifiedCount} of 4 verifications complete
               </p>
             </div>
@@ -176,13 +176,13 @@ export default function VerificationPage() {
           <CardDescription>This is how employers will see your profile</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 rounded-xl border border-surface-200 bg-surface-50 p-4">
+          <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4">
             <Avatar className="h-14 w-14">
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-surface-800">
+                <h3 className="font-semibold text-foreground">
                   {user?.name || "Your Name"}
                 </h3>
                 {allVerified ? (
@@ -191,16 +191,16 @@ export default function VerificationPage() {
                     Verified
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="gap-1 text-surface-400">
+                  <Badge variant="outline" className="gap-1 text-muted-foreground/70">
                     <ShieldCheck className="h-3 w-3" />
                     Not Verified
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-surface-500">Frontend Developer · 5 years exp.</p>
+              <p className="text-sm text-muted-foreground">Frontend Developer · 5 years exp.</p>
             </div>
           </div>
-          <p className="mt-3 text-xs text-surface-400">
+          <p className="mt-3 text-xs text-muted-foreground/70">
             {allVerified
               ? "✓ Your verified badge is active! Employers will see this on your profile."
               : "Complete all 4 verifications to earn your FitVector Verified badge."}
@@ -210,7 +210,7 @@ export default function VerificationPage() {
 
       {/* Verification Checklist */}
       <div className="space-y-4">
-        <h2 className="text-base font-semibold text-surface-800">Verification Checklist</h2>
+        <h2 className="text-base font-semibold text-foreground">Verification Checklist</h2>
 
         {isLoading
           ? // Loading skeletons
@@ -218,10 +218,10 @@ export default function VerificationPage() {
               <Card key={i}>
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex items-start gap-4">
-                    <div className="h-10 w-10 animate-pulse rounded-lg bg-surface-100" />
+                    <div className="h-10 w-10 animate-pulse rounded-lg bg-muted" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 w-40 animate-pulse rounded bg-surface-100" />
-                      <div className="h-3 w-64 animate-pulse rounded bg-surface-100" />
+                      <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+                      <div className="h-3 w-64 animate-pulse rounded bg-muted" />
                     </div>
                   </div>
                 </CardContent>
@@ -252,10 +252,10 @@ export default function VerificationPage() {
                       <div className="flex-1">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <h3 className="text-sm font-semibold text-surface-800">
+                            <h3 className="text-sm font-semibold text-foreground">
                               {item.label}
                             </h3>
-                            <p className="mt-0.5 text-xs text-surface-500">
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                               {item.description}
                             </p>
                           </div>
@@ -269,7 +269,7 @@ export default function VerificationPage() {
 
                         {/* Document name */}
                         {item.documentName && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-surface-100 px-2 py-1 text-xs text-surface-600">
+                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
                             <FileText className="h-3 w-3" />
                             {item.documentName}
                           </div>
@@ -285,7 +285,7 @@ export default function VerificationPage() {
                               year: "numeric",
                             })}
                             {item.expiresAt && (
-                              <span className="text-surface-400">
+                              <span className="text-muted-foreground/70">
                                 {" · "}Expires{" "}
                                 {new Date(item.expiresAt).toLocaleDateString("en-IN", {
                                   day: "numeric",
@@ -357,8 +357,8 @@ export default function VerificationPage() {
           <Card className="w-full max-w-sm">
             <CardContent className="flex flex-col items-center p-8">
               <Upload className="mb-3 h-8 w-8 animate-pulse text-brand-500" />
-              <p className="text-sm font-medium text-surface-800">Uploading document...</p>
-              <p className="mt-1 text-xs text-surface-500">
+              <p className="text-sm font-medium text-foreground">Uploading document...</p>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Please wait while we process your file
               </p>
               <Progress value={65} className="mt-4 w-full" />

@@ -18,6 +18,7 @@ import {
   Send,
   RotateCcw,
 } from "lucide-react";
+import { Skeleton, SkeletonStatCard, SkeletonInterviewRow } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
 import { useInterviews, useInviteInterview } from "@/hooks/use-interviews";
@@ -59,6 +60,34 @@ export default function InterviewsPage() {
   const stats = useMemo(() => computeStats(interviews), [interviews]);
   const resendInvite = useInviteInterview();
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="space-y-1.5">
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-4 w-64 opacity-60" />
+        </div>
+        {/* 4 stat cards */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+        {/* Tabs bar */}
+        <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
+          {[60, 52, 68, 52].map((w, i) => (
+            <Skeleton key={i} className="h-8 rounded-md" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Interview rows */}
+        {Array.from({ length: 5 }).map((_, i) => (
+          <SkeletonInterviewRow key={i} />
+        ))}
+      </div>
+    );
+  }
+
   const filterByTab = (tab: string) => {
     switch (tab) {
       case "pending":
@@ -76,10 +105,10 @@ export default function InterviewsPage() {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-semibold text-surface-800">
+        <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
           AI Interviews
         </h1>
-        <p className="mt-0.5 text-xs sm:text-sm text-surface-500">
+        <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
           Track and review AI-conducted candidate interviews
         </p>
       </div>
@@ -98,8 +127,8 @@ export default function InterviewsPage() {
                 <stat.icon className={cn("h-5 w-5", stat.iconColor)} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xl sm:text-2xl font-bold text-surface-800">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-surface-500">{stat.label}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -123,11 +152,11 @@ export default function InterviewsPage() {
             {filterByTab(tab).length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
-                  <Video className="h-10 w-10 text-surface-300" />
-                  <p className="mt-3 text-sm font-medium text-surface-600">
+                  <Video className="h-10 w-10 text-muted-foreground/40" />
+                  <p className="mt-3 text-sm font-medium text-muted-foreground">
                     No {tab === "all" ? "" : tab} interviews
                   </p>
-                  <p className="mt-1 text-xs text-surface-400">
+                  <p className="mt-1 text-xs text-muted-foreground/70">
                     AI interviews will appear here when candidates are invited.
                   </p>
                 </CardContent>
@@ -137,14 +166,14 @@ export default function InterviewsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[700px]">
                     <thead>
-                      <tr className="border-b border-surface-200 bg-surface-50">
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Candidate</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Job</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Status</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Date</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Score</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Cheating</th>
-                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-surface-600">Actions</th>
+                      <tr className="border-b border-border bg-muted/30">
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Candidate</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Job</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Status</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Date</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Score</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Cheating</th>
+                        <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-[11px] sm:text-xs font-semibold text-muted-foreground">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -180,24 +209,24 @@ function InterviewRow({ interview, onResend }: { interview: AIInterview; onResen
   const dateStr = interview.completedAt || interview.startedAt || interview.inviteSentAt;
 
   return (
-    <tr className="border-b border-surface-100 transition-colors hover:bg-surface-50">
+    <tr className="border-b border-border transition-colors hover:bg-muted/30">
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[10px] sm:text-xs font-semibold text-surface-600">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] sm:text-xs font-semibold text-muted-foreground">
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xs sm:text-sm font-medium text-surface-800">
+            <p className="truncate text-xs sm:text-sm font-medium text-foreground">
               {interview.applicantName}
             </p>
-            <p className="truncate text-[11px] sm:text-xs text-surface-500">
+            <p className="truncate text-[11px] sm:text-xs text-muted-foreground">
               {interview.applicantRole} @ {interview.applicantCompany}
             </p>
           </div>
         </div>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <p className="text-xs sm:text-sm text-surface-700">{interview.jobTitle}</p>
+        <p className="text-xs sm:text-sm text-foreground/80">{interview.jobTitle}</p>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
         <Badge variant={STATUS_VARIANT[interview.status]} className="gap-1">
@@ -206,7 +235,7 @@ function InterviewRow({ interview, onResend }: { interview: AIInterview; onResen
         </Badge>
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-        <span className="text-[11px] sm:text-xs text-surface-500">
+        <span className="text-[11px] sm:text-xs text-muted-foreground">
           {formatRelativeTime(dateStr)}
         </span>
       </td>
@@ -227,7 +256,7 @@ function InterviewRow({ interview, onResend }: { interview: AIInterview; onResen
             {interview.overallScore}
           </span>
         ) : (
-          <span className="text-xs text-surface-400">—</span>
+          <span className="text-xs text-muted-foreground/70">—</span>
         )}
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
@@ -245,7 +274,7 @@ function InterviewRow({ interview, onResend }: { interview: AIInterview; onResen
             {interview.cheatingConfidence === "low" ? "Clean" : interview.cheatingConfidence}
           </Badge>
         ) : (
-          <span className="text-xs text-surface-400">—</span>
+          <span className="text-xs text-muted-foreground/70">—</span>
         )}
       </td>
       <td className="px-3 py-2.5 sm:px-4 sm:py-3">
@@ -271,11 +300,11 @@ function InterviewRow({ interview, onResend }: { interview: AIInterview; onResen
           )}
           {interview.status === "invited" && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-surface-400">Awaiting candidate</span>
+              <span className="text-[11px] text-muted-foreground/70">Awaiting candidate</span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-1.5 text-[10px] gap-1 text-surface-500 hover:text-surface-700"
+                className="h-6 px-1.5 text-[10px] gap-1 text-muted-foreground hover:text-foreground/80"
                 onClick={() => onResend(interview.applicantId)}
                 title="Resend invite link"
               >

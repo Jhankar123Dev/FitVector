@@ -78,7 +78,7 @@ export function CalendarSyncCard() {
 
         {/* Connection buttons */}
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-surface-400">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground/70">
             <Loader2 className="h-4 w-4 animate-spin" />
             Checking connections…
           </div>
@@ -123,14 +123,14 @@ export function CalendarSyncCard() {
               >
                 <Link2 className="h-3 w-3" />
                 Connect Outlook
-                <span className="ml-1 rounded-full bg-surface-100 px-1.5 py-0.5 text-[10px] text-surface-500">
+                <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                   Soon
                 </span>
               </Button>
             )}
 
             {noneConnected && !calendarParam && (
-              <span className="text-xs text-surface-400">No calendars connected</span>
+              <span className="text-xs text-muted-foreground/70">No calendars connected</span>
             )}
           </div>
         )}

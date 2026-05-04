@@ -276,17 +276,34 @@ def _build_latex_from_profile(parsed_resume: dict[str, Any]) -> str:
 
 
 def _extract_latex(raw_response: str) -> str:
-    """Extract LaTeX source from Claude's response, stripping markdown fences if present."""
+    """Extract LaTeX source from Gemini's response, stripping markdown fences if present.
+
+    Raises ValueError if the extracted content does not look like valid LaTeX —
+    this prevents garbage (e.g. a JSON blob or apology text) from being stored in
+    the DB and later causing a 422 when the user tries to download a PDF.
+    """
     # Strip ```latex ... ``` wrapper if present
     match = re.search(r"```(?:latex|tex)?\s*\n(.*?)```", raw_response, re.DOTALL)
     if match:
-        return match.group(1).strip()
+        extracted = match.group(1).strip()
+    elif raw_response.strip().startswith("\\documentclass") or raw_response.strip().startswith("% ASSUMPTION"):
+        extracted = raw_response.strip()
+    else:
+        extracted = raw_response.strip()
 
-    # If it starts with \documentclass, it's already clean
-    if raw_response.strip().startswith("\\documentclass") or raw_response.strip().startswith("% ASSUMPTION"):
-        return raw_response.strip()
+    # Validate — must contain the two mandatory LaTeX markers
+    if "\\documentclass" not in extracted or "\\begin{document}" not in extracted:
+        logger.error(
+            "[_extract_latex] Gemini response does not contain valid LaTeX. "
+            "First 200 chars: %s",
+            extracted[:200],
+        )
+        raise ValueError(
+            "Gemini did not return valid LaTeX. "
+            "Response is missing \\documentclass or \\begin{document}."
+        )
 
-    return raw_response.strip()
+    return extracted
 
 
 def _generate_version_name(

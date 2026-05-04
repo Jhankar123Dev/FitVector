@@ -362,10 +362,10 @@ export default function CandidateInterviewPage() {
 
   if (phase === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-50">
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          <p className="text-sm text-surface-500">Loading interview...</p>
+          <p className="text-sm text-muted-foreground">Loading interview...</p>
         </div>
       </div>
     );
@@ -373,11 +373,11 @@ export default function CandidateInterviewPage() {
 
   if (phase === "error") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <AlertCircle className="h-12 w-12 text-red-400" />
-            <h2 className="mt-4 text-lg font-semibold text-surface-800">
+            <h2 className="mt-4 text-lg font-semibold text-foreground">
               {errorKind === "browser-unsupported"
                 ? "Browser Not Supported"
                 : errorKind === "mic-denied"
@@ -386,7 +386,7 @@ export default function CandidateInterviewPage() {
                 ? "Interview Unavailable"
                 : "Something Went Wrong"}
             </h2>
-            <p className="mt-2 text-sm text-surface-500">
+            <p className="mt-2 text-sm text-muted-foreground">
               {errorKind === "browser-unsupported"
                 ? "This interview requires voice capabilities. Please open this link in Google Chrome or Microsoft Edge."
                 : errorKind === "mic-denied"
@@ -403,31 +403,31 @@ export default function CandidateInterviewPage() {
 
   if (phase === "welcome" && info) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
         <Card className="w-full max-w-lg">
           <CardContent className="space-y-6 p-8 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50">
               <Bot className="h-8 w-8 text-brand-500" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-surface-800">AI Voice Interview</h1>
-              <p className="mt-1 text-sm text-surface-500">{info.jobTitle}</p>
+              <h1 className="text-xl font-semibold text-foreground">AI Voice Interview</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{info.jobTitle}</p>
             </div>
 
             <div className="space-y-2 text-left">
-              <p className="text-sm text-surface-600">
+              <p className="text-sm text-muted-foreground">
                 Hello <span className="font-medium">{info.candidateName}</span>, welcome to your
                 AI-powered interview.
               </p>
-              <p className="text-sm text-surface-500">
+              <p className="text-sm text-muted-foreground">
                 The AI will ask you questions out loud. Speak your answers naturally — take your
                 time, pause to think, and click{" "}
-                <span className="font-medium text-surface-700">"Done Speaking"</span> when you have
+                <span className="font-medium text-foreground/80">"Done Speaking"</span> when you have
                 finished each answer.
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-6 text-sm text-surface-500">
+            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Mic className="h-4 w-4" />
                 Voice-based
@@ -441,7 +441,7 @@ export default function CandidateInterviewPage() {
               </span>
             </div>
 
-            <div className="rounded-lg bg-surface-100 px-4 py-3 text-left text-xs text-surface-600">
+            <div className="rounded-lg bg-muted px-4 py-3 text-left text-xs text-muted-foreground">
               <p className="font-medium">Before you begin</p>
               <ul className="mt-1 space-y-0.5 list-disc list-inside">
                 <li>Find a quiet space with minimal background noise</li>
@@ -462,18 +462,18 @@ export default function CandidateInterviewPage() {
 
   if (phase === "complete") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
               <CheckCircle2 className="h-8 w-8 text-emerald-500" />
             </div>
-            <h2 className="mt-4 text-xl font-semibold text-surface-800">Interview Complete</h2>
-            <p className="mt-2 text-sm text-surface-500">
+            <h2 className="mt-4 text-xl font-semibold text-foreground">Interview Complete</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               Thank you for completing the interview. Your responses have been recorded and
               will be evaluated by our AI system.
             </p>
-            <p className="mt-4 text-xs text-surface-400">
+            <p className="mt-4 text-xs text-muted-foreground/70">
               The hiring team will review your results and be in touch soon.
             </p>
           </CardContent>
@@ -489,7 +489,7 @@ export default function CandidateInterviewPage() {
   const isProcessing = phase === "processing" || phase === "starting";
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-50">
+    <div className="flex min-h-screen flex-col bg-muted/30">
       {/* Proctoring warning */}
       {proctoringWarning && (
         <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2">
@@ -505,17 +505,17 @@ export default function CandidateInterviewPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-surface-200 bg-white px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-brand-500" />
-          <span className="text-sm font-medium text-surface-700">AI Voice Interview</span>
+          <span className="text-sm font-medium text-foreground/80">AI Voice Interview</span>
         </div>
         {info && (
-          <span className="text-xs text-surface-400">
+          <span className="text-xs text-muted-foreground/70">
             {info.jobTitle}
           </span>
         )}
-        <span className="text-xs font-medium text-surface-500">
+        <span className="text-xs font-medium text-muted-foreground">
           Question {Math.min(turnNumber, MAX_TURNS)} of {MAX_TURNS}
         </span>
       </div>
@@ -546,14 +546,14 @@ export default function CandidateInterviewPage() {
               isAiSpeaking
                 ? "bg-brand-500 shadow-lg shadow-brand-500/40"
                 : isListening
-                ? "bg-surface-300"
-                : "bg-surface-200"
+                ? "bg-muted/40"
+                : "bg-muted"
             )}
           >
             <Bot
               className={cn(
                 "h-9 w-9 transition-colors duration-300",
-                isAiSpeaking ? "text-white" : "text-surface-500"
+                isAiSpeaking ? "text-white" : "text-muted-foreground"
               )}
             />
           </div>
@@ -574,7 +574,7 @@ export default function CandidateInterviewPage() {
             </span>
           )}
           {isProcessing && (
-            <span className="flex items-center gap-1.5 text-sm text-surface-500">
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               AI is thinking...
             </span>
@@ -583,8 +583,8 @@ export default function CandidateInterviewPage() {
 
         {/* Current question text */}
         {currentQuestion && (
-          <div className="w-full max-w-xl rounded-2xl bg-white px-6 py-4 shadow-sm border border-surface-200">
-            <p className="text-center text-sm font-medium leading-relaxed text-surface-800">
+          <div className="w-full max-w-xl rounded-2xl bg-background px-6 py-4 shadow-sm border border-border">
+            <p className="text-center text-sm font-medium leading-relaxed text-foreground">
               {currentQuestion}
             </p>
           </div>
@@ -595,14 +595,14 @@ export default function CandidateInterviewPage() {
           <div className="w-full max-w-xl">
             <div className="min-h-[80px] rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
               {liveTranscript ? (
-                <p className="text-sm leading-relaxed text-surface-700">{liveTranscript}</p>
+                <p className="text-sm leading-relaxed text-foreground/80">{liveTranscript}</p>
               ) : (
-                <p className="text-sm text-surface-400 italic">
+                <p className="text-sm text-muted-foreground/70 italic">
                   Start speaking — your words will appear here...
                 </p>
               )}
             </div>
-            <p className="mt-2 text-center text-xs text-surface-400">
+            <p className="mt-2 text-center text-xs text-muted-foreground/70">
               Listening restarts automatically if you pause to think.
             </p>
           </div>

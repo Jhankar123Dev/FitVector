@@ -22,6 +22,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CHART_COLORS } from "@/lib/chart-colors";
 import { useUser } from "@/hooks/use-user";
 import { useFitVectorApply, useFitVectorApplications } from "@/hooks/use-fitvector-apply";
 import type { JobSearchResult } from "@/types/job";
@@ -47,8 +48,8 @@ interface ResumeOption {
 // ─── Confetti ──────────────────────────────────────────────────────────────
 
 const CONFETTI_COLORS = [
-  "#6c5ce7", "#00d97e", "#3B82F6", "#F59E0B", "#EF4444",
-  "#8B5CF6", "#EC4899", "#14B8A6", "#F97316", "#06B6D4",
+  CHART_COLORS.primary, CHART_COLORS.secondary, "#3b82f6", CHART_COLORS.amber, CHART_COLORS.red,
+  "#0284c7", "#ec4899", CHART_COLORS.sky, CHART_COLORS.orange, "#06b6d4",
 ];
 
 function ConfettiPiece({ index }: { index: number }) {
@@ -274,19 +275,19 @@ export function FitVectorApplyModal({
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent-50">
               <PartyPopper className="h-8 w-8 text-accent-600" />
             </div>
-            <h2 className="text-xl font-semibold text-surface-800">
+            <h2 className="text-xl font-semibold text-foreground">
               Application Submitted!
             </h2>
-            <p className="mt-2 text-sm text-surface-500">
+            <p className="mt-2 text-sm text-muted-foreground">
               You applied to{" "}
-              <span className="font-medium text-surface-700">{job.title}</span>{" "}
+              <span className="font-medium text-foreground/80">{job.title}</span>{" "}
               at{" "}
-              <span className="font-medium text-surface-700">{job.companyName}</span>
+              <span className="font-medium text-foreground/80">{job.companyName}</span>
             </p>
             <Badge variant="success" className="mt-3">
               Applied via FitVector
             </Badge>
-            <p className="mt-4 text-xs text-surface-400">
+            <p className="mt-4 text-xs text-muted-foreground/70">
               You&apos;ll receive real-time updates as the employer reviews your application.
             </p>
             <div className="mt-6 flex gap-3">
@@ -320,7 +321,7 @@ export function FitVectorApplyModal({
                   </Badge>
                 </div>
                 <CardTitle className="mt-2 text-base">{job.title}</CardTitle>
-                <p className="mt-0.5 text-sm text-surface-500">{job.companyName}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">{job.companyName}</p>
               </div>
               <div className="flex items-center gap-2">
                 <MatchScoreBadge
@@ -343,7 +344,7 @@ export function FitVectorApplyModal({
             <CardContent className="space-y-5 pb-6">
               {/* ── Loading skeleton ── */}
               {dataLoading && (
-                <div className="flex items-center gap-2 py-4 text-sm text-surface-400">
+                <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground/70">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading application details…
                 </div>
@@ -354,11 +355,11 @@ export function FitVectorApplyModal({
                   {/* ── Resume Selector ── */}
                   <div>
                     <Label className="text-sm font-medium">Resume</Label>
-                    <p className="mb-2 text-xs text-surface-400">
+                    <p className="mb-2 text-xs text-muted-foreground/70">
                       Select which resume to submit with your application
                     </p>
                     {resumes.length === 0 ? (
-                      <p className="text-xs text-surface-400">
+                      <p className="text-xs text-muted-foreground/70">
                         No resumes found.{" "}
                         <a href="/dashboard/resume" className="text-brand-600 underline">
                           Create one first
@@ -371,7 +372,7 @@ export function FitVectorApplyModal({
                           <select
                             value={selectedResumeId}
                             onChange={(e) => setSelectedResumeId(e.target.value)}
-                            className="flex-1 rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm text-surface-700 outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                            className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground/80 outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
                           >
                             {resumes.map((r) => (
                               <option key={r.id} value={r.id}>
@@ -401,7 +402,7 @@ export function FitVectorApplyModal({
                             </a>
                           </Button>
                         </div>
-                        <p className="text-[11px] text-surface-400 mt-1">
+                        <p className="text-[11px] text-muted-foreground/70 mt-1">
                           Tailored a new resume in the new tab? Click <RefreshCw className="inline h-2.5 w-2.5" /> to refresh this list.
                         </p>
                       </>
@@ -412,7 +413,7 @@ export function FitVectorApplyModal({
                   {screeningQuestions.length > 0 && (
                     <div>
                       <Label className="text-sm font-medium">Screening Questions</Label>
-                      <p className="mb-3 text-xs text-surface-400">
+                      <p className="mb-3 text-xs text-muted-foreground/70">
                         Answer the employer&apos;s screening questions
                       </p>
                       <div className="space-y-4">
@@ -420,7 +421,7 @@ export function FitVectorApplyModal({
                           const answer = answers.find((a) => a.questionId === q.id);
                           return (
                             <div key={q.id} className="space-y-1.5">
-                              <p className="text-sm font-medium text-surface-700">
+                              <p className="text-sm font-medium text-foreground/80">
                                 {q.question}
                                 {q.required && (
                                   <span className="ml-1 text-red-500">*</span>
@@ -447,7 +448,7 @@ export function FitVectorApplyModal({
                                         "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
                                         answer?.answer === val
                                           ? "border-brand-300 bg-brand-50 text-brand-700"
-                                          : "border-surface-200 text-surface-500 hover:border-surface-300",
+                                          : "border-border text-muted-foreground hover:border-border/60",
                                       )}
                                     >
                                       {val === "yes" ? "Yes" : "No"}
@@ -466,14 +467,14 @@ export function FitVectorApplyModal({
                                         "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-colors",
                                         answer?.answer === opt
                                           ? "border-brand-400 bg-brand-50 text-brand-700"
-                                          : "border-surface-200 text-surface-600 hover:border-surface-300 hover:bg-surface-50",
+                                          : "border-border text-muted-foreground hover:border-border/60 hover:bg-muted/30",
                                       )}
                                     >
                                       <span className={cn(
                                         "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold",
                                         answer?.answer === opt
                                           ? "border-brand-500 bg-brand-500 text-white"
-                                          : "border-surface-300 text-surface-400",
+                                          : "border-border/60 text-muted-foreground/70",
                                       )}>
                                         {String.fromCharCode(65 + optIdx)}
                                       </span>
@@ -490,8 +491,8 @@ export function FitVectorApplyModal({
                   )}
 
                   {screeningQuestions.length === 0 && (
-                    <div className="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3">
-                      <p className="text-xs text-surface-500">
+                    <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                      <p className="text-xs text-muted-foreground">
                         No screening questions for this position
                       </p>
                     </div>
@@ -503,9 +504,9 @@ export function FitVectorApplyModal({
                       <div>
                         <Label className="text-sm font-medium">
                           Why I&apos;m Interested{" "}
-                          <span className="font-normal text-surface-400">(optional)</span>
+                          <span className="font-normal text-muted-foreground/70">(optional)</span>
                         </Label>
-                        <p className="text-xs text-surface-400">
+                        <p className="text-xs text-muted-foreground/70">
                           A short note to stand out to the hiring team
                         </p>
                       </div>
@@ -521,17 +522,17 @@ export function FitVectorApplyModal({
 
                   {/* ── Review Section ── */}
                   <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-4">
-                    <h4 className="text-sm font-semibold text-surface-800">Review</h4>
-                    <div className="mt-2 space-y-1.5 text-xs text-surface-600">
+                    <h4 className="text-sm font-semibold text-foreground">Review</h4>
+                    <div className="mt-2 space-y-1.5 text-xs text-muted-foreground">
                       <p>
                         Applying as{" "}
-                        <span className="font-medium text-surface-800">
+                        <span className="font-medium text-foreground">
                           {user?.name || "User"}
                         </span>{" "}
                         {selectedResume && (
                           <>
                             with resume{" "}
-                            <span className="font-medium text-surface-800">
+                            <span className="font-medium text-foreground">
                               {resumeLabel(selectedResume)}
                             </span>
                           </>
@@ -539,12 +540,12 @@ export function FitVectorApplyModal({
                       </p>
                       <p>
                         Match score:{" "}
-                        <span className="font-medium text-surface-800">{job.matchScore}%</span>
+                        <span className="font-medium text-foreground">{job.matchScore}%</span>
                       </p>
                       {screeningQuestions.length > 0 && (
                         <p>
                           Screening questions answered:{" "}
-                          <span className="font-medium text-surface-800">
+                          <span className="font-medium text-foreground">
                             {answeredCount} of {screeningQuestions.length}
                           </span>
                         </p>
