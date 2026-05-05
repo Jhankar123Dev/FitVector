@@ -46,7 +46,9 @@ test.describe("Community hub", () => {
     await expect(seekerPage.getByText("Beta", { exact: true })).toBeVisible();
 
     for (const label of ["Experiences", "Discussions", "Roles Covered", "Community Posts"]) {
-      await expect(seekerPage.getByText(label, { exact: true })).toBeVisible();
+      // .first() avoids strict-mode violation when the label appears in both
+      // a stat <p> and a section <h2> (e.g. "Discussions").
+      await expect(seekerPage.getByText(label, { exact: true }).first()).toBeVisible();
     }
   });
 

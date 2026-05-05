@@ -23,14 +23,25 @@ generatePlanGatingSuite({
   feature: "cold_email",
   quotaByTier: { free: 2, starter: 15, pro: 50, elite: -1 },
   upgradeTo: "pro",
-  action: (page) =>
-    page.request.post("/api/ai/cold-email", {
-      data: {
-        jobTitle: "Software Engineer",
-        companyName: "Acme",
-        jobDescription:
-          "Build great software for a great team. We use TypeScript, React, and Postgres.",
-        tone: "professional",
+  mockRoutePattern: "**/api/ai/cold-email",
+  action: async (page) => {
+    const r = await page.evaluate(
+      async ([url]: [string]) => {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobTitle: "Software Engineer",
+            companyName: "Acme",
+            jobDescription:
+              "Build great software for a great team. We use TypeScript, React, and Postgres.",
+            tone: "professional",
+          }),
+        });
+        return { status: res.status, body: await res.json().catch(() => null) };
       },
-    }),
+      [`${process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"}/api/ai/cold-email`],
+    );
+    return { status: () => r.status, json: async () => r.body };
+  },
 });

@@ -32,10 +32,10 @@ interface VerificationItem {
 }
 
 const ITEMS: VerificationItem[] = [
-  { id: "v-id", category: "identity", status: "verified", verifiedAt: "2026-04-01T10:00:00Z" },
-  { id: "v-edu", category: "education", status: "pending", documentUrl: "https://example.com/degree.pdf" },
-  { id: "v-emp", category: "employment", status: "not_started" },
-  { id: "v-skills", category: "skills", status: "not_started" },
+  { id: "v-id", category: "identity", status: "verified", label: "Identity Verification", description: "Verify your identity with Aadhaar or PAN card", verifiedAt: "2026-04-01T10:00:00Z" },
+  { id: "v-edu", category: "education", status: "pending", label: "Education Verification", description: "Upload your degree certificate for validation", documentUrl: "https://example.com/degree.pdf" },
+  { id: "v-emp", category: "employment", status: "not_started", label: "Employment Verification", description: "Verify current or last employment with offer letter" },
+  { id: "v-skills", category: "skills", status: "not_started", label: "Skills Verification", description: "Pass a FitVector AI assessment to verify your technical skills" },
 ];
 
 async function mockVerification(page: Page, items: VerificationItem[] = ITEMS): Promise<void> {
@@ -107,8 +107,8 @@ test.describe("Settings — FitVector Verified", () => {
     // Click the visible upload-trigger button (any "Upload" or "Take
     // Assessment" button — UPLOAD_LABEL varies by category).
     const triggers = seekerPage.getByRole("button", {
-      name: /upload|take assessment/i,
+      name: /upload/i,
     });
-    expect(await triggers.count()).toBeGreaterThan(0);
+    await expect(triggers.first()).toBeVisible({ timeout: 10_000 });
   });
 });

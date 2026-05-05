@@ -292,11 +292,7 @@ function CompanyGroup({
   const bestConfig = bestStatus ? (FV_RAW_STATUS_CONFIG[bestStatus] ?? null) : null;
 
   // Default open if group has an interesting status
-  const defaultOpen =
-    bestStatus === "offered" ||
-    bestStatus === "interviewed" ||
-    bestStatus === "interview_invited" ||
-    bestStatus === "decision_pending";
+  const defaultOpen = true;
 
   return (
     <details open={defaultOpen} className="group">

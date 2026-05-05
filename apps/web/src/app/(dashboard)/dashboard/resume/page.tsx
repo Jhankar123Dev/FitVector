@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { VersionList } from "@/components/resume/version-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { useSession } from "next-auth/react";
 import { useResumeVersions } from "@/hooks/use-resume";
 import { useUser } from "@/hooks/use-user";
 import { useUsage } from "@/hooks/use-usage";
@@ -109,8 +110,10 @@ function BaseResumeUpload({ hasResume, resumeData }: { hasResume: boolean; resum
 
 export default function ResumePage() {
   const { user } = useUser();
+  const { data: session } = useSession();
   const { data: versions, isLoading, isError } = useResumeVersions();
   const { data: usage } = useUsage();
+  const resumeData = (session?.user as any)?.resume_data ?? (user as any)?.resume_data ?? null;
 
   const resumeUsage = usage?.usage?.resumeTailor;
 
@@ -138,7 +141,7 @@ export default function ResumePage() {
       </div>
 
       {/* Base resume upload */}
-      <BaseResumeUpload hasResume={!!(user as any)?.resume_data} resumeData={(user as any)?.resume_data} />
+      <BaseResumeUpload hasResume={!!resumeData} resumeData={resumeData} />
 
       {/* How it works */}
       <div className="rounded-xl border border-border bg-muted/30 p-4">

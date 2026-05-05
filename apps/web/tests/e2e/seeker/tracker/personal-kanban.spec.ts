@@ -83,7 +83,7 @@ test.describe("Tracker — Personal Kanban", () => {
 
     for (const col of COLUMNS) {
       await expect(
-        seekerPage.getByText(col, { exact: true }).first(),
+        seekerPage.locator("h3").filter({ hasText: col }).first(),
       ).toBeVisible({ timeout: 10_000 });
     }
   });

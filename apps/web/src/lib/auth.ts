@@ -176,13 +176,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.provider = account.provider;
       }
 
-      // Single shared client for all DB lookups in this callback
-      const supabase = createAdminClient();
+      // Lazy client — only instantiated when a DB query is actually needed.
+      // Avoids creating a Supabase connection on every JWT refresh (which fires
+      // on every authenticated request and would exhaust the connection pool).
+      let _supabase: ReturnType<typeof createAdminClient> | null = null;
+      const getSupabase = () => {
+        if (!_supabase) _supabase = createAdminClient();
+        return _supabase;
+      };
 
       // If id is not a UUID (OAuth providers give numeric sub IDs), look up real Supabase UUID by email
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (token.id && !isUUID.test(String(token.id)) && token.email) {
-        const { data: dbUser } = await supabase
+        const { data: dbUser } = await getSupabase()
           .from("users")
           .select("id, plan_tier, onboarding_completed, role")
           .eq("email", token.email as string)
@@ -198,7 +204,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // On initial sign-in, fetch companyId for employers
       if (user && token.id) {
         if (token.role === "employer") {
-          const { data: membership } = await supabase
+          const { data: membership } = await getSupabase()
             .from("company_members")
             .select("company_id")
             .eq("user_id", token.id)
@@ -212,7 +218,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // Refresh user data from DB on session update (e.g., after company creation)
       if (trigger === "update") {
-        const { data: freshUser } = await supabase
+        const { data: freshUser } = await getSupabase()
           .from("users")
           .select("plan_tier, onboarding_completed, role")
           .eq("id", token.id)
@@ -226,7 +232,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Refresh company membership for employers
         if (token.role === "employer") {
-          const { data: membership } = await supabase
+          const { data: membership } = await getSupabase()
             .from("company_members")
             .select("company_id")
             .eq("user_id", token.id)

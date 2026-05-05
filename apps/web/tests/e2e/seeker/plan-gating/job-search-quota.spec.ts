@@ -23,5 +23,15 @@ generatePlanGatingSuite({
   feature: "job_search",
   quotaByTier: { free: 3, starter: 10, pro: -1, elite: -1 },
   upgradeTo: "pro",
-  action: (page) => page.request.get("/api/jobs/search?role=engineer&page=1"),
+  mockRoutePattern: "**/api/jobs/search**",
+  action: async (page) => {
+    const r = await page.evaluate(
+      async ([url]: [string]) => {
+        const res = await fetch(url);
+        return { status: res.status, body: await res.json().catch(() => null) };
+      },
+      [`${process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"}/api/jobs/search?role=engineer&page=1`],
+    );
+    return { status: () => r.status, json: async () => r.body };
+  },
 });

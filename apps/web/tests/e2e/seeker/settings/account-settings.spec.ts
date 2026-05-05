@@ -173,7 +173,7 @@ test.describe("Settings — Professional Profile (contact info)", () => {
     await settings.goto();
 
     await expect(
-      page.getByRole("heading", { level: 1, name: /^Settings$/ }),
+      page.getByRole("heading", { level: 1, name: /settings/i }),
     ).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/professional profile/i)).toBeVisible();
     await expect(settings.saveContactInfoButton).toBeVisible();

@@ -386,6 +386,7 @@ export async function createTestJob(
       company_id: options.companyId,
       created_by: options.createdBy,
       title,
+      status: "active",
       location: options.location ?? "Bangalore",
       work_mode: options.workMode ?? "hybrid",
       job_type: options.jobType ?? "fulltime",
@@ -557,6 +558,53 @@ export async function backdateUsageTimestamp(
     throw new Error(
       `backdateUsageTimestamp(${userId}, ${feature}, ${hoursAgo}h) failed: ${error.message}`,
     );
+  }
+}
+
+// ─── Applications (tracker rows) ─────────────────────────────────────────────
+
+/**
+ * Seeds N rows into the `applications` table to simulate the active_applications
+ * stock quota. The tracker POST route counts `applications WHERE user_id=X AND
+ * is_archived=false` — NOT usage_logs — so setUsageCounter has no effect.
+ *
+ * Each row gets a unique job_title (TEST_PREFIX + uuid) to avoid UNIQUE conflicts.
+ */
+export async function seedApplications(userId: string, count: number): Promise<void> {
+  if (count <= 0) return;
+  const supabase = getAdminClient();
+  const rows = Array.from({ length: count }, (_, i) => ({
+    user_id: userId,
+    job_title: `${TEST_PREFIX}app_seed_${i}_${randomUUID().slice(0, 6)}`,
+    company_name: `${TEST_PREFIX}co_seed_${i}`,
+    status: "saved",
+    is_archived: false,
+    position_order: i + 1,
+    status_history: [{ status: "saved", changed_at: new Date().toISOString() }],
+  }));
+  const { error } = await supabase.from("applications").insert(rows);
+  if (error) {
+    throw new Error(`seedApplications(${userId}, ${count}) failed: ${error.message}`);
+  }
+}
+
+/**
+ * Removes test-seeded application rows for a user (identified by TEST_PREFIX).
+ * Called by active-applications-quota spec's resetCounter override.
+ */
+export async function clearApplications(userId: string): Promise<void> {
+  const supabase = getAdminClient();
+  try {
+    const { error } = await supabase
+      .from("applications")
+      .delete()
+      .eq("user_id", userId)
+      .like("job_title", `${TEST_PREFIX}%`);
+    if (error) {
+      console.warn(`[db-helpers] clearApplications(${userId}) soft-failed: ${error.message}`);
+    }
+  } catch (e) {
+    console.warn(`[db-helpers] clearApplications(${userId}) threw:`, e);
   }
 }
 

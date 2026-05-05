@@ -131,7 +131,7 @@ test.describe("Outreach history — /dashboard/outreach", () => {
       seekerPage.getByRole("heading", { level: 1, name: /outreach history/i }),
     ).toBeVisible();
     // Group header — "Software Engineer @ Acme".
-    await expect(seekerPage.getByText("Software Engineer")).toBeVisible();
+    await expect(seekerPage.getByText("Software Engineer @ Acme")).toBeVisible();
     await expect(seekerPage.getByText("@ Acme")).toBeVisible();
     // Three type-slot headers per group.
     await expect(
@@ -184,7 +184,7 @@ test.describe("Outreach history — /dashboard/outreach", () => {
     expect(second.searchParams.get("limit")).toBe("20");
 
     // The Globex group should now appear in the DOM.
-    await expect(seekerPage.getByText("Senior Frontend Engineer")).toBeVisible({
+    await expect(seekerPage.getByText("Senior Frontend Engineer @")).toBeVisible({
       timeout: 10_000,
     });
     await expect(seekerPage.getByText("@ Globex")).toBeVisible();
@@ -226,7 +226,7 @@ test.describe("Outreach history — /dashboard/outreach", () => {
     await seekerPage.goto("/dashboard/outreach");
 
     await expect(
-      seekerPage.getByRole("heading", { name: /no outreach messages yet/i }),
+      seekerPage.getByText("No outreach messages yet", { exact: true }),
     ).toBeVisible({ timeout: 10_000 });
   });
 });

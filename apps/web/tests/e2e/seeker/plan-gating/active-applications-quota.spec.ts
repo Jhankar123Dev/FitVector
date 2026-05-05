@@ -24,18 +24,31 @@
  */
 
 import { generatePlanGatingSuite } from "../../support/fixtures/plan-fixture";
+import { seedApplications, clearApplications } from "../../support/helpers/db-helpers";
 
 generatePlanGatingSuite({
   displayName: "active applications",
   feature: "active_applications",
   quotaByTier: { free: 10, starter: 50, pro: -1, elite: -1 },
   upgradeTo: "pro",
-  action: (page) =>
-    page.request.post("/api/tracker", {
-      data: {
-        jobTitle: "Software Engineer",
-        companyName: "Acme",
-        status: "saved",
+  setCounter: (userId, _feature, count) => seedApplications(userId, count),
+  resetCounter: (userId, _feature) => clearApplications(userId),
+  action: async (page) => {
+    const r = await page.evaluate(
+      async ([url]: [string]) => {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobTitle: "Software Engineer",
+            companyName: "Acme",
+            status: "saved",
+          }),
+        });
+        return { status: res.status, body: await res.json().catch(() => null) };
       },
-    }),
+      [`${process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"}/api/tracker`],
+    );
+    return { status: () => r.status, json: async () => r.body };
+  },
 });

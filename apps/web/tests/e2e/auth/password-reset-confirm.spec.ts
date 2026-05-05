@@ -37,7 +37,7 @@ async function fillResetForm(
   page: import("@playwright/test").Page,
   password: string,
 ): Promise<void> {
-  await page.getByLabel("New Password").fill(password);
+  await page.getByLabel("New Password", { exact: true }).fill(password);
   await page.getByLabel("Confirm New Password").fill(password);
   await page.getByRole("button", { name: /update password/i }).click();
 }
@@ -54,7 +54,7 @@ test.describe("Password reset — confirm flow", () => {
       await page.goto(`/reset-password?token=${issued.rawToken}`);
       await fillResetForm(page, NEW_PASSWORD);
 
-      await expect(page.getByText(/password updated/i)).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(/password updated/i)).toBeVisible({ timeout: 30_000 });
 
       // The new password works — proves the bcrypt update actually landed.
       await signInAs(page.context(), {

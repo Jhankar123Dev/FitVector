@@ -3,13 +3,21 @@ import type { NextRequest } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-// ─── Why no auth() wrapper ────────────────────────────────────────────────────
-// Next.js middleware runs on the Edge runtime which does NOT support Node.js
-// APIs. The auth() wrapper from @/lib/auth pulls in createAdminClient()
-// → @supabase/supabase-js which uses Node.js-specific code and causes the
-// dev server to hang on startup. Route protection (redirects to /login etc.)
-// is handled client-side via the existing session checks in each page/layout.
-// This middleware handles rate limiting only — a pure Edge-compatible concern.
+// ─── Auth cookie check (Edge-compatible) ─────────────────────────────────────
+// The auth() wrapper from @/lib/auth pulls in createAdminClient()
+// → @supabase/supabase-js which is Node.js-only and hangs the Edge runtime.
+// Instead we do a lightweight cookie-existence check for page route protection.
+// JWT signature is not re-verified here; that happens in API routes via the
+// full auth() call. This guard only prevents unauthenticated page loads.
+
+const SESSION_COOKIE_NAMES = [
+  "__Secure-authjs.session-token",
+  "authjs.session-token",
+  "__Secure-next-auth.session-token",
+  "next-auth.session-token",
+];
+
+const PROTECTED_PAGE_PREFIXES = ["/dashboard", "/onboarding", "/employer", "/admin"];
 
 // ─── Upstash Redis & rate limiters ────────────────────────────────────────────
 // Limiters are initialised once at module load — only when env vars are present.
@@ -134,10 +142,22 @@ const RULES: Array<{
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // ── Page route protection ────────────────────────────────────────────────────
+  // Redirect unauthenticated requests to protected pages back to /login.
+  // Cookie existence is a sufficient guard here — the JWT is verified
+  // cryptographically whenever the session is actually consumed by an API route.
+  if (PROTECTED_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    const hasSession = SESSION_COOKIE_NAMES.some((name) => req.cookies.has(name));
+    if (!hasSession) {
+      return NextResponse.redirect(new URL("/login", req.nextUrl.origin));
+    }
+    return NextResponse.next();
+  }
+
   // Skip rate limiting when Redis is not configured (local dev without Upstash)
   if (!limiters) return NextResponse.next();
-
-  const { pathname } = req.nextUrl;
   const ip = getClientIp(req);
 
   for (const rule of RULES) {
@@ -178,7 +198,13 @@ export async function middleware(req: NextRequest) {
 }
 
 // ─── Matcher ─────────────────────────────────────────────────────────────────
-// Run only on API routes — no need to rate-limit page navigation.
+// API routes: rate limiting. Protected page routes: auth guard.
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: [
+    "/api/:path*",
+    "/dashboard/:path*",
+    "/onboarding/:path*",
+    "/employer/:path*",
+    "/admin/:path*",
+  ],
 };

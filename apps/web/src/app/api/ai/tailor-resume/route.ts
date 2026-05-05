@@ -119,6 +119,10 @@ export async function POST(req: Request) {
 
     if (insertError) {
       console.error("Failed to store tailored resume:", insertError);
+      return Response.json(
+        { error: "Failed to store tailored resume. Please try again." },
+        { status: 500 },
+      );
     }
 
     // Log usage

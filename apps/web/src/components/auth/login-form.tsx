@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function LoginForm() {
   const [role, setRole] = useState<"seeker" | "employer">("seeker");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -53,18 +55,38 @@ export function LoginForm() {
             : "Invalid email or password. If you signed up as a Recruiter, switch to the Recruiter tab."
         );
       } else {
-        const session = await getSession();
+        const res = await fetch("/api/auth/session");
+        const session = await res.json();
         const actualRole = session?.user?.role;
+        const onboarded = session?.user?.onboardingCompleted;
         if (actualRole === "superadmin") {
-          window.location.href = "/admin";
+          router.push("/admin");
         } else if (actualRole === "employer") {
-          window.location.href = "/employer";
+          router.push(onboarded ? "/employer" : "/employer/onboarding");
         } else {
-          window.location.href = "/dashboard";
+          router.push(onboarded ? "/dashboard" : "/onboarding");
         }
       }
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      // next-auth v5 throws a CredentialsSignin error on auth failure
+      // (v4 returned { error: "CredentialsSignin" } instead of throwing).
+      // Detect it by name/message so the user sees the role-specific message
+      // rather than the generic fallback.
+      const errName = err instanceof Error ? err.name : "";
+      const errMsg = err instanceof Error ? err.message : "";
+      const isCredentialFailure =
+        errName === "CredentialsSignin" ||
+        errMsg.includes("CredentialsSignin") ||
+        errMsg.includes("credentials");
+      if (isCredentialFailure) {
+        setError(
+          role === "employer"
+            ? "No recruiter account found with these credentials. If you signed up as a Job Seeker, switch to the Job Seeker tab."
+            : "Invalid email or password. If you signed up as a Recruiter, switch to the Recruiter tab.",
+        );
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -134,7 +156,7 @@ export function LoginForm() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {error && (
           <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
             {error}

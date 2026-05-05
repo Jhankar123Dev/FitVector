@@ -33,11 +33,11 @@ const EXPERIENCES = [
     createdAt: "2026-04-26T08:00:00Z",
     authorAlias: "anon-1",
     isAnonymous: true,
-    metadata: {
+    interviewData: {
       companyName: "Acme",
       role: "Frontend Engineer",
       difficulty: "medium",
-      outcome: "offer",
+      outcome: "got_offer",
       rounds: [
         { type: "screen", notes: "30-min phone screen" },
         { type: "system_design", notes: "60-min architecture deep-dive" },
@@ -55,7 +55,7 @@ const EXPERIENCES = [
     createdAt: "2026-04-22T08:00:00Z",
     authorAlias: "anon-2",
     isAnonymous: true,
-    metadata: {
+    interviewData: {
       companyName: "Globex",
       role: "Backend Engineer",
       difficulty: "hard",
@@ -77,11 +77,11 @@ const EXPERIENCES = [
     createdAt: "2026-04-20T08:00:00Z",
     authorAlias: "anon-3",
     isAnonymous: true,
-    metadata: {
+    interviewData: {
       companyName: "Initech",
       role: "Junior Engineer",
       difficulty: "easy",
-      outcome: "in_progress",
+      outcome: "ghosted",
       rounds: [{ type: "screen", notes: "Phone screen" }],
     },
   },
@@ -116,10 +116,10 @@ test.describe("Community — interview experiences", () => {
     await seekerPage.goto("/dashboard/community/interviews");
 
     for (const e of EXPERIENCES) {
-      await expect(seekerPage.getByText(e.metadata.companyName).first()).toBeVisible({
+      await expect(seekerPage.getByText(e.interviewData.companyName).first()).toBeVisible({
         timeout: 10_000,
       });
-      await expect(seekerPage.getByText(e.metadata.role).first()).toBeVisible();
+      await expect(seekerPage.getByText(e.interviewData.role).first()).toBeVisible();
     }
   });
 
@@ -129,7 +129,7 @@ test.describe("Community — interview experiences", () => {
     await expect(seekerPage.getByText("Acme")).toBeVisible({ timeout: 10_000 });
 
     await seekerPage
-      .getByPlaceholder(/search.*compan/i)
+      .getByPlaceholder("Company...")
       .fill("Globex");
 
     await expect(seekerPage.getByText("Globex")).toBeVisible();
@@ -143,14 +143,8 @@ test.describe("Community — interview experiences", () => {
     await expect(seekerPage.getByText("Acme")).toBeVisible({ timeout: 10_000 });
 
     // Difficulty selector — typically a select with values easy/medium/hard.
-    const diffSelect = seekerPage
-      .locator("select")
-      .filter({ hasText: /difficulty|^All$/i })
-      .first();
-    await diffSelect.selectOption({ label: /hard/i }).catch(async () => {
-      // Fallback: the filter may be a button group; click "Hard".
-      await seekerPage.getByRole("button", { name: /^hard$/i }).click();
-    });
+    // Difficulty is a button group (All / Easy / Medium / Hard).
+    await seekerPage.getByRole("button", { name: /^hard$/i }).click();
 
     await expect(seekerPage.getByText("Globex")).toBeVisible();
     await expect(seekerPage.getByText("Acme")).toHaveCount(0);
@@ -162,16 +156,10 @@ test.describe("Community — interview experiences", () => {
     await seekerPage.goto("/dashboard/community/interviews");
     await expect(seekerPage.getByText("Acme")).toBeVisible({ timeout: 10_000 });
 
-    // Outcome selector.
-    const outcomeSelect = seekerPage
-      .locator("select")
-      .filter({ hasText: /outcome|all outcomes/i })
-      .first();
-    await outcomeSelect.selectOption({ label: /offer/i }).catch(async () => {
-      await seekerPage.getByRole("button", { name: /^offer$/i }).click();
-    });
+    // Outcome is a button group (All / Got Offer / Rejected / Ghosted).
+    await seekerPage.getByRole("button", { name: /^got offer$/i }).click();
 
-    // Only the Acme entry has outcome=offer.
+    // Only the Acme entry has outcome=got_offer.
     await expect(seekerPage.getByText("Acme")).toBeVisible();
     await expect(seekerPage.getByText("Globex")).toHaveCount(0);
     await expect(seekerPage.getByText("Initech")).toHaveCount(0);

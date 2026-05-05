@@ -22,14 +22,25 @@ generatePlanGatingSuite({
   // Free has 0 — the boundary tests collapse onto the "first attempt → 429" path.
   quotaByTier: { free: 0, starter: 5, pro: 30, elite: -1 },
   upgradeTo: "pro",
-  action: (page) =>
-    page.request.post("/api/ai/referral-msg", {
-      data: {
-        jobTitle: "Software Engineer",
-        companyName: "Acme",
-        jobDescription:
-          "Join our distributed-systems team — Go, Kafka, Spanner. We invest heavily in mentorship.",
-        tone: "professional",
+  mockRoutePattern: "**/api/ai/referral-msg",
+  action: async (page) => {
+    const r = await page.evaluate(
+      async ([url]: [string]) => {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobTitle: "Software Engineer",
+            companyName: "Acme",
+            jobDescription:
+              "Join our distributed-systems team — Go, Kafka, Spanner. We invest heavily in mentorship.",
+            tone: "professional",
+          }),
+        });
+        return { status: res.status, body: await res.json().catch(() => null) };
       },
-    }),
+      [`${process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"}/api/ai/referral-msg`],
+    );
+    return { status: () => r.status, json: async () => r.body };
+  },
 });

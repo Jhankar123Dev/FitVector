@@ -136,7 +136,7 @@ test.describe("Jobs board — browse", () => {
     await runSearch(board, "frontend");
 
     await expect(board.resultsCount).toBeVisible({ timeout: 10_000 });
-    await expect(seekerPage.getByText("Frontend Engineer")).toBeVisible();
+    await expect(seekerPage.getByText("Frontend Engineer", { exact: true })).toBeVisible();
     await expect(seekerPage.getByText("Senior Frontend Engineer")).toBeVisible();
     await expect(seekerPage.getByText("Frontend Lead")).toBeVisible();
     await expect(seekerPage.getByText("Acme Corp")).toBeVisible();

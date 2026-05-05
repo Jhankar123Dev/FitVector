@@ -19,6 +19,7 @@
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
+import { createClient } from '@supabase/supabase-js';
 
 const AUTH_FILE = path.join(__dirname, '../.auth/seeker.json');
 const BASE_URL = 'http://localhost:3000';
@@ -56,7 +57,19 @@ setup('authenticate as test seeker', async ({ page }) => {
 
   console.log(`✅ Signed in as: ${session.user.email} (role: ${session.user.role})`);
 
-  // ── Step 4: persist cookies for all seeker specs ─────────────────────────
+  // ── Step 4: ensure onboarding_completed=true (auth gate added post-seed) ──
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && serviceKey) {
+    const supabase = createClient(supabaseUrl, serviceKey);
+    await supabase
+      .from('users')
+      .update({ onboarding_completed: true })
+      .eq('email', 'playwright@gmail.com');
+    console.log('✅ onboarding_completed=true stamped on playwright@gmail.com');
+  }
+
+  // ── Step 5: persist cookies for all seeker specs ─────────────────────────
   await page.context().storageState({ path: AUTH_FILE });
   console.log(`✅ Seeker auth state cached → ${AUTH_FILE}`);
 });

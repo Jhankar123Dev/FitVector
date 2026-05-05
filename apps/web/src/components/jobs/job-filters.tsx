@@ -54,7 +54,7 @@ const DECISION_LABELS = [
 ] as const;
 
 export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = false }: JobFiltersProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   const hasFilters =
     filters.location ||
@@ -111,7 +111,7 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={onReset} className="gap-1 text-xs">
             <X className="h-3 w-3" />
-            Clear
+            Reset
           </Button>
         )}
       </div>
@@ -134,52 +134,36 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
 
           {/* Work Mode */}
           <div>
-            <Label className="text-xs">Work Mode</Label>
-            <div className="mt-1 flex flex-wrap gap-1">
+            <Label htmlFor="work-mode" className="text-xs">Work Mode</Label>
+            <select
+              id="work-mode"
+              value={filters.workMode}
+              onChange={(e) =>
+                onChange({ ...filters, workMode: e.target.value as JobFilters["workMode"] })
+              }
+              className="mt-1 h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
+            >
               {WORK_MODES.map((mode) => (
-                <button
-                  key={mode.value}
-                  className={`cursor-pointer rounded-md border px-2 py-1 text-xs transition-colors ${
-                    filters.workMode === mode.value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-border/60"
-                  }`}
-                  onClick={() =>
-                    onChange({
-                      ...filters,
-                      workMode: mode.value as JobFilters["workMode"],
-                    })
-                  }
-                >
-                  {mode.label}
-                </button>
+                <option key={mode.value} value={mode.value}>{mode.label}</option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Job Type */}
           <div>
-            <Label className="text-xs">Job Type</Label>
-            <div className="mt-1 flex flex-wrap gap-1">
+            <Label htmlFor="job-type" className="text-xs">Job Type</Label>
+            <select
+              id="job-type"
+              value={filters.jobType}
+              onChange={(e) =>
+                onChange({ ...filters, jobType: e.target.value as JobFilters["jobType"] })
+              }
+              className="mt-1 h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
+            >
               {JOB_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  className={`cursor-pointer rounded-md border px-2 py-1 text-xs transition-colors ${
-                    filters.jobType === type.value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-border/60"
-                  }`}
-                  onClick={() =>
-                    onChange({
-                      ...filters,
-                      jobType: type.value as JobFilters["jobType"],
-                    })
-                  }
-                >
-                  {type.label}
-                </button>
+                <option key={type.value} value={type.value}>{type.label}</option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Date Posted — hidden for FitVector tab */}
@@ -233,27 +217,33 @@ export function JobFiltersPanel({ filters, onChange, onReset, hideHoursOld = fal
 
           {/* Salary Range */}
           <div className="sm:col-span-2">
-            <Label className="text-xs">Salary Range (INR per annum)</Label>
-            <div className="mt-1 flex items-center gap-2">
-              <Input
-                placeholder="Min"
-                type="number"
-                value={filters.salaryMin}
-                onChange={(e) =>
-                  onChange({ ...filters, salaryMin: e.target.value })
-                }
-                className="h-8 text-sm"
-              />
-              <span className="text-xs text-muted-foreground">to</span>
-              <Input
-                placeholder="Max"
-                type="number"
-                value={filters.salaryMax}
-                onChange={(e) =>
-                  onChange({ ...filters, salaryMax: e.target.value })
-                }
-                className="h-8 text-sm"
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="salary-min" className="text-xs">Minimum Salary</Label>
+                <Input
+                  id="salary-min"
+                  placeholder="Min"
+                  type="number"
+                  value={filters.salaryMin}
+                  onChange={(e) =>
+                    onChange({ ...filters, salaryMin: e.target.value })
+                  }
+                  className="mt-1 h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="salary-max" className="text-xs">Maximum Salary</Label>
+                <Input
+                  id="salary-max"
+                  placeholder="Max"
+                  type="number"
+                  value={filters.salaryMax}
+                  onChange={(e) =>
+                    onChange({ ...filters, salaryMax: e.target.value })
+                  }
+                  className="mt-1 h-8 text-sm"
+                />
+              </div>
             </div>
           </div>
         </div>

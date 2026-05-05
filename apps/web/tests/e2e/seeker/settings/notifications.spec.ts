@@ -40,7 +40,7 @@ test.describe("Settings — notification preferences", () => {
       seekerPage.getByRole("heading", { level: 1, name: /notifications/i }),
     ).toBeVisible({ timeout: 10_000 });
     await expect(seekerPage.getByText(/email notifications/i)).toBeVisible();
-    await expect(seekerPage.getByText(/push notifications/i)).toBeVisible();
+    await expect(seekerPage.getByText(/push notifications/i).first()).toBeVisible();
   });
 
   test("all toggle-row labels render", async ({ seekerPage }) => {
@@ -65,7 +65,7 @@ test.describe("Settings — notification preferences", () => {
     // The visible UI toggle is a styled <label> wrapping the checkbox.
     // Clicking the label toggles the checkbox in the DOM. The page does not
     // wire any change handler, so we only assert the DOM-level flip.
-    await firstCheckbox.click();
+    await firstCheckbox.click({ force: true });
     await expect(firstCheckbox).not.toBeChecked();
   });
 

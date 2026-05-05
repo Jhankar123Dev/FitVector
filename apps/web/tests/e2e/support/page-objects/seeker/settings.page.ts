@@ -46,7 +46,7 @@ export class SettingsPage {
 
   async goto(): Promise<void> {
     await this.page.goto("/dashboard/settings");
-    await this.page.getByRole("heading", { level: 1, name: /^Settings$/ }).waitFor();
+    await this.page.getByRole("heading", { level: 1, name: /settings/i }).waitFor();
   }
 
   // ── Card 1: Profile (basic info) ──────────────────────────────────────────

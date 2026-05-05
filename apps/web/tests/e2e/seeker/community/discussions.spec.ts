@@ -26,9 +26,10 @@ interface MockThread {
   id: string;
   title: string;
   body: string;
-  category: "tech" | "career" | "salary" | "misc";
+  category: "tech" | "career_advice" | "salary" | "general";
   upvotes: number;
   repliesCount: number;
+  lastActivityAt: string;
   createdAt: string;
 }
 
@@ -40,15 +41,17 @@ const THREADS: MockThread[] = [
     category: "tech",
     upvotes: 24,
     repliesCount: 8,
+    lastActivityAt: "2026-04-25T12:00:00Z",
     createdAt: "2026-04-25T10:00:00Z",
   },
   {
     id: "t2",
     title: "How to negotiate counter-offers",
     body: "Got two offers — would love advice from senior engineers.",
-    category: "career",
+    category: "career_advice",
     upvotes: 31,
     repliesCount: 14,
+    lastActivityAt: "2026-04-26T09:00:00Z",
     createdAt: "2026-04-26T08:00:00Z",
   },
   {
@@ -58,6 +61,7 @@ const THREADS: MockThread[] = [
     category: "salary",
     upvotes: 56,
     repliesCount: 22,
+    lastActivityAt: "2026-04-27T10:00:00Z",
     createdAt: "2026-04-27T08:00:00Z",
   },
 ];
@@ -90,6 +94,7 @@ async function mockDiscussionsApi(
           category: t.category,
           upvotes: t.upvotes,
           repliesCount: t.repliesCount,
+          lastActivityAt: t.lastActivityAt,
           createdAt: t.createdAt,
           authorAlias: "anon",
           isAnonymous: true,
@@ -161,6 +166,7 @@ test.describe("Community — discussions board", () => {
             category: t.category,
             upvotes: t.upvotes,
             repliesCount: t.repliesCount,
+            lastActivityAt: t.lastActivityAt,
             createdAt: t.createdAt,
             authorAlias: "anon",
             isAnonymous: true,
@@ -196,19 +202,8 @@ test.describe("Community — discussions board", () => {
 
     // The vote button typically renders the upvote count + an arrow icon.
     // Click the upvote control inside the first thread row.
-    const firstThread = seekerPage
-      .locator("article, [role='article'], div")
-      .filter({ hasText: THREADS[0].title })
-      .first();
-    // Click the first element labelled "upvote" or the count itself.
-    await firstThread
-      .getByRole("button", { name: /upvote|^\d+$/i })
-      .first()
-      .click()
-      .catch(async () => {
-        // Fallback: click the upvote count text directly.
-        await firstThread.getByText(/^24$/).first().click();
-      });
+    // The upvote button renders a ThumbsUp SVG with no text label — use SVG class.
+    await seekerPage.locator("svg.lucide-thumbs-up").first().click();
 
     await expect.poll(() => voteRequests.length).toBeGreaterThan(0);
     expect(voteRequests[0].method()).toBe("POST");
@@ -223,8 +218,8 @@ test.describe("Community — discussions board", () => {
       timeout: 10_000,
     });
 
-    // "Misc" tab — no thread in our mock has category="misc".
-    await seekerPage.getByRole("tab", { name: /^misc$/i }).click();
+    // "General" tab — no thread in our mock has category="general".
+    await seekerPage.getByRole("tab", { name: /^general$/i }).click();
     await expect(
       seekerPage.getByText(/no threads in this category/i),
     ).toBeVisible({ timeout: 5_000 });

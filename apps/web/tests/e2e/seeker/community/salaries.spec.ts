@@ -78,9 +78,11 @@ test.describe("Community — salary insights", () => {
     // selectable via the location control. Check all three render somewhere
     // on the page (selector chips OR options).
     for (const loc of ["Bangalore", "Mumbai", "Remote"]) {
-      await expect(seekerPage.getByText(loc).first()).toBeVisible({
-        timeout: 10_000,
-      });
+      // Location values live as <option> elements inside a native <select> —
+      // they are in the DOM but not visible. Use toBeAttached() instead.
+      await expect(
+        seekerPage.locator(`select option:has-text("${loc}")`).first(),
+      ).toBeAttached({ timeout: 10_000 });
     }
   });
 });

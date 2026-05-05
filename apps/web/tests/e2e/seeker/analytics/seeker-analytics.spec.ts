@@ -114,7 +114,7 @@ test.describe("Seeker analytics dashboard", () => {
     // "Total Applications" label.
     const totalCard = seekerPage
       .getByText("Total Applications", { exact: true })
-      .locator("..");
+      .locator("../..") ;
     await expect(totalCard.getByText("11", { exact: true })).toBeVisible();
   });
 
@@ -142,7 +142,7 @@ test.describe("Seeker analytics dashboard", () => {
 
     const card = seekerPage
       .getByText("Response Rate", { exact: true })
-      .locator("..");
+      .locator("../..") ;
     await expect(card.getByText("44%", { exact: true })).toBeVisible({
       timeout: 10_000,
     });
@@ -164,7 +164,7 @@ test.describe("Seeker analytics dashboard", () => {
 
     const card = seekerPage
       .getByText("This Week", { exact: true })
-      .locator("..");
+      .locator("../..") ;
     await expect(card.getByText("3", { exact: true })).toBeVisible({
       timeout: 10_000,
     });
@@ -203,7 +203,7 @@ test.describe("Seeker analytics dashboard", () => {
     await seekerPage.goto("/dashboard/analytics");
 
     await expect(
-      seekerPage.getByRole("heading", { name: /no data yet/i }),
+      seekerPage.getByText("No data yet", { exact: true }),
     ).toBeVisible({ timeout: 10_000 });
     // Stat cards must NOT render in the empty state.
     await expect(

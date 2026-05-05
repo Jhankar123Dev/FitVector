@@ -115,14 +115,14 @@ export class JobBoardPage {
 
   /** Empty / no-results EmptyState ("No jobs found") after a search. */
   get noJobsFound(): Locator {
-    return this.page.getByRole("heading", { name: /no jobs found/i });
+    // EmptyState renders title as <p>, not a heading.
+    return this.page.getByText("No jobs found", { exact: true });
   }
 
   /** First-load EmptyState before any search is triggered. */
   get startSearchEmptyState(): Locator {
-    return this.page.getByRole("heading", {
-      name: /(start your job search|browse fitvector jobs)/i,
-    });
+    // EmptyState renders title as <p>, not a heading.
+    return this.page.getByText(/start your job search|browse fitvector jobs/i);
   }
 
   // ── Detail panel (right side after card click, OR /dashboard/jobs/[id]) ──
@@ -160,7 +160,10 @@ export class JobBoardPage {
   }
 
   applyModalResumeOption(versionName: string): Locator {
-    // Resume options render as labelled tiles inside the modal.
-    return this.page.getByText(versionName, { exact: false }).first();
+    // Resume picker renders as a native <select>; callers should use
+    // .selectOption({ label: versionName }) not .click().
+    return this.page
+      .locator("select")
+      .filter({ has: this.page.locator(`option:has-text("${versionName}")`) });
   }
 }

@@ -47,14 +47,25 @@ generatePlanGatingSuite({
   feature: "resume_tailor",
   quotaByTier: { free: 2, starter: 10, pro: 50, elite: -1 },
   upgradeTo: "pro",
-  action: (page) =>
-    page.request.post("/api/ai/tailor-resume", {
-      data: {
-        jobTitle: "Senior Frontend Engineer",
-        companyName: "Acme",
-        jobDescription:
-          "We're hiring a senior frontend engineer to lead our design system. " +
-          "You'll work in TypeScript and React on a well-tested component library.",
+  mockRoutePattern: "**/api/ai/tailor-resume",
+  action: async (page) => {
+    const r = await page.evaluate(
+      async ([url]: [string]) => {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobTitle: "Senior Frontend Engineer",
+            companyName: "Acme",
+            jobDescription:
+              "We're hiring a senior frontend engineer to lead our design system. " +
+              "You'll work in TypeScript and React on a well-tested component library.",
+          }),
+        });
+        return { status: res.status, body: await res.json().catch(() => null) };
       },
-    }),
+      [`${process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"}/api/ai/tailor-resume`],
+    );
+    return { status: () => r.status, json: async () => r.body };
+  },
 });

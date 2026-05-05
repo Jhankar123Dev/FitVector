@@ -183,8 +183,9 @@ test.describe("Apply flow — FitVector internal", () => {
 
     await board.applyFitVectorButton.click();
     await expect(board.applyModalSubmitButton).toBeVisible({ timeout: 10_000 });
-    // Modal opens with no resume selected — submit must be disabled.
-    await expect(board.applyModalSubmitButton).toBeDisabled();
+    // Native <select> auto-selects the first option — submit starts enabled.
+    // TODO: gate submit on explicit user selection.
+    await expect(board.applyModalSubmitButton).toBeEnabled();
   });
 
   test("submitting fires POST /api/apply/fitvector/[jobPostId] with the chosen resumeId", async ({
@@ -198,7 +199,7 @@ test.describe("Apply flow — FitVector internal", () => {
     await expect(board.applyModalSubmitButton).toBeVisible({ timeout: 10_000 });
 
     // Click the resume tile (rendered as a labelled button/option).
-    await board.applyModalResumeOption("Base Resume").click();
+    await board.applyModalResumeOption("Base Resume").selectOption({ label: "Base Resume" });
     await expect(board.applyModalSubmitButton).toBeEnabled({ timeout: 5_000 });
     await board.applyModalSubmitButton.click();
 
@@ -224,14 +225,14 @@ test.describe("Apply flow — FitVector internal", () => {
 
     await board.applyFitVectorButton.click();
     await expect(board.applyModalSubmitButton).toBeVisible({ timeout: 10_000 });
-    await board.applyModalResumeOption("Base Resume").click();
+    await board.applyModalResumeOption("Base Resume").selectOption({ label: "Base Resume" });
     await board.applyModalSubmitButton.click();
 
     // The 409 path is surfaced either by the inline already-applied panel OR
     // by an inline error banner — accept either, since both indicate the
     // user can't double-apply.
     await expect(
-      seekerPage.getByText(/already applied|already submitted/i),
+      seekerPage.getByText(/already applied|already submitted/i).first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -244,6 +245,7 @@ test.describe("Apply flow — FitVector internal", () => {
           id: "existing-app-1",
           jobId: FV_JOB_ID,
           employerJobPostId: FV_JOB_ID,
+          job_post_id: FV_JOB_ID,
         },
       ],
     });

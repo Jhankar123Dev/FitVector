@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   },
   description:
     "Find your perfect job match with AI-powered resume tailoring, smart job matching, and automated outreach.",
+  openGraph: {
+    title: "FitVector — AI-Powered Job Search",
+    description:
+      "Find your perfect job match with AI-powered resume tailoring, smart job matching, and automated outreach.",
+    type: "website",
+    siteName: "FitVector",
+  },
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon-192x192.png",

@@ -87,7 +87,7 @@ export async function issueAssessmentToken(
       job_post_id: job.id,
       name: candidateName,
       email: candidateEmail,
-      source: "external",
+      source: "fitvector_organic",
       pipeline_stage: "applied",
     })
     .select("id")
@@ -212,7 +212,7 @@ export async function issueInterviewToken(
       job_post_id: job.id,
       name: candidateName,
       email: candidateEmail,
-      source: "external",
+      source: "fitvector_organic",
       pipeline_stage: "ai_interviewed",
     })
     .select("id")

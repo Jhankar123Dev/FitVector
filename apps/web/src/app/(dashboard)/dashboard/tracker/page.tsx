@@ -187,8 +187,9 @@ export default function TrackerPage() {
       {activeTab === "personal" && showAddForm && (
         <div className="mb-4 flex items-end gap-2 rounded-xl border border-border bg-muted/30 p-3">
           <div className="flex-1">
-            <label className="text-xs font-medium text-foreground/80">Job Title *</label>
+            <label htmlFor="newJobTitle" className="text-xs font-medium text-foreground/80">Job Title *</label>
             <Input
+              id="newJobTitle"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="e.g. Frontend Developer"
@@ -196,8 +197,9 @@ export default function TrackerPage() {
             />
           </div>
           <div className="flex-1">
-            <label className="text-xs font-medium text-foreground/80">Company *</label>
+            <label htmlFor="newCompany" className="text-xs font-medium text-foreground/80">Company *</label>
             <Input
+              id="newCompany"
               value={newCompany}
               onChange={(e) => setNewCompany(e.target.value)}
               placeholder="e.g. Google"

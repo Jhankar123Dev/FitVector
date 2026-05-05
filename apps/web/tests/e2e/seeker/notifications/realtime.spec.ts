@@ -51,9 +51,10 @@ async function mockNotifsMutable(
 }
 
 async function openBell(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 375, height: 812 });
   const bell = page
     .locator("header button, nav button")
-    .filter({ has: page.locator("svg") })
+    .filter({ has: page.locator("svg.lucide-bell, svg[class*='lucide-bell']") })
     .first();
   await bell.click();
 }

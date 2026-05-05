@@ -276,7 +276,10 @@ test.describe("Integration — assessment hand-off (dashboard → take → dashb
 
     // ── 4. Answer the MCQ ────────────────────────────────────────────────────
     // Each option renders as a <button> with the option text inside a <span>.
-    await seekerPage.getByRole("button", { name: /^C\s+map$/ }).click();
+    // Use a broad regex — option letter prefix format (e.g. "C. map", "C  map")
+    // varies by UI; matching the option text alone is unambiguous since "map"
+    // appears in exactly one of the four options (push / splice / map / sort).
+    await seekerPage.getByRole("button", { name: /\bmap\b/i }).click();
 
     // Advance to the coding question via the "Next" / "Review & Submit" button.
     await seekerPage.getByRole("button", { name: /^Next$/i }).click();
@@ -349,6 +352,14 @@ test.describe("Integration — assessment hand-off (dashboard → take → dashb
       .getByRole("link", { name: /back to my tests/i })
       .click();
     await expect(seekerPage).toHaveURL(/\/dashboard\/tests$/, { timeout: 10_000 });
+
+    // Reload to bust React Query's 30s staleTime cache — without this, the
+    // in-memory cache still returns the pre-submit "invited" row and the
+    // completed tab shows an empty state.
+    await seekerPage.reload();
+    await expect(seekerPage.getByRole("heading", { name: /my tests/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
     // ── 10. Switch to Completed tab → the same row appears with 85% Passed ──
     await seekerPage

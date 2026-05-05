@@ -274,8 +274,9 @@ export default function SettingsPage() {
               {/* Contact & links section */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Current Role</Label>
+                  <Label htmlFor="currentRole">Current Role</Label>
                   <Input
+                    id="currentRole"
                     value={currentRole}
                     onChange={(e) => setCurrentRole(e.target.value)}
                     placeholder="e.g. Software Engineer"
@@ -283,8 +284,9 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Current Company</Label>
+                  <Label htmlFor="currentCompany">Current Company</Label>
                   <Input
+                    id="currentCompany"
                     value={currentCompany}
                     onChange={(e) => setCurrentCompany(e.target.value)}
                     placeholder="e.g. Acme Corp"
@@ -292,11 +294,12 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <Label className="flex items-center gap-1">
+                  <Label htmlFor="phone" className="flex items-center gap-1">
                     <Phone className="h-3 w-3" />
                     Phone
                   </Label>
                   <Input
+                    id="phone"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+91 98765 43210"
@@ -305,11 +308,12 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <Label className="flex items-center gap-1">
+                  <Label htmlFor="linkedinUrl" className="flex items-center gap-1">
                     <Link className="h-3 w-3" />
                     LinkedIn URL
                   </Label>
                   <Input
+                    id="linkedinUrl"
                     value={linkedinUrl}
                     onChange={(e) => setLinkedinUrl(e.target.value)}
                     placeholder="https://linkedin.com/in/yourname"
@@ -318,11 +322,12 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label className="flex items-center gap-1">
+                  <Label htmlFor="portfolioUrl" className="flex items-center gap-1">
                     <Link className="h-3 w-3" />
                     Portfolio URL
                   </Label>
                   <Input
+                    id="portfolioUrl"
                     value={portfolioUrl}
                     onChange={(e) => setPortfolioUrl(e.target.value)}
                     placeholder="https://yourportfolio.com"
@@ -471,8 +476,9 @@ export default function SettingsPage() {
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <Label className="text-xs">Company *</Label>
+                        <Label htmlFor="work-company" className="text-xs">Company *</Label>
                         <Input
+                          id="work-company"
                           value={workForm.company}
                           onChange={(e) => setWorkForm((f) => ({ ...f, company: e.target.value }))}
                           placeholder="e.g. Google"
@@ -480,8 +486,9 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Title *</Label>
+                        <Label htmlFor="work-title" className="text-xs">Title *</Label>
                         <Input
+                          id="work-title"
                           value={workForm.title}
                           onChange={(e) => setWorkForm((f) => ({ ...f, title: e.target.value }))}
                           placeholder="e.g. Software Engineer"
@@ -489,8 +496,9 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Start Date</Label>
+                        <Label htmlFor="work-start-date" className="text-xs">Start Date</Label>
                         <Input
+                          id="work-start-date"
                           value={workForm.startDate}
                           onChange={(e) => setWorkForm((f) => ({ ...f, startDate: e.target.value }))}
                           placeholder="MM/YYYY"
@@ -498,8 +506,9 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">End Date</Label>
+                        <Label htmlFor="work-end-date" className="text-xs">End Date</Label>
                         <Input
+                          id="work-end-date"
                           value={workForm.endDate ?? ""}
                           onChange={(e) => setWorkForm((f) => ({ ...f, endDate: e.target.value || null }))}
                           placeholder="MM/YYYY"

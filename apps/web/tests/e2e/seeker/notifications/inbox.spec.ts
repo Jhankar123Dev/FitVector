@@ -112,14 +112,14 @@ async function clickBell(page: Page): Promise<void> {
 
 test.describe("Notifications — bell dropdown", () => {
   test("bell button is visible in the dashboard navbar", async ({ seekerPage }) => {
+    // Run at mobile width so the bell button (lg:hidden on desktop) is visible.
+    await seekerPage.setViewportSize({ width: 375, height: 812 });
     await mockNotifs(seekerPage, SEED_NOTIFS);
     await seekerPage.goto("/dashboard");
 
-    // Either a button with a Bell svg child OR a role=button with a
-    // notification accessible-name should exist.
     const bell = seekerPage
       .locator("header button, nav button")
-      .filter({ has: seekerPage.locator("svg") })
+      .filter({ has: seekerPage.locator("svg.lucide-bell, svg[class*='lucide-bell']") })
       .first();
     await expect(bell).toBeVisible({ timeout: 10_000 });
   });

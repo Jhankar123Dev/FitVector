@@ -1,48 +1,56 @@
 /**
  * setup/employer.setup.ts
  *
- * Logs in as the test Employer via the real NextAuth Credentials flow and
- * persists the resulting cookies to tests/e2e/.auth/employer.json.
- *
- * Every spec in the "employer" Playwright project consumes this file via
- * `storageState` so tests start pre-authenticated.
+ * Authenticates as the test Employer via direct NextAuth API calls (no UI).
+ * Mirrors seeker.setup.ts — faster and immune to UI/CSRF timing issues.
  *
  * Credentials (employer seed user):
  *   Email    : employer_1@seed.fitvector.dev
  *   Password : jhankar123
  */
 
-import { test as setup, expect } from '@playwright/test';
+import { test as setup } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
 const AUTH_FILE = path.join(__dirname, '../.auth/employer.json');
+const BASE_URL = 'http://localhost:3000';
 
 setup('authenticate as test employer', async ({ page }) => {
   fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
 
-  await page.goto('/login');
-  await expect(page).toHaveURL('/login');
+  // Step 1: get CSRF token
+  const csrfRes = await page.request.get(`${BASE_URL}/api/auth/csrf`);
+  const { csrfToken } = await csrfRes.json();
 
-  // The employer tab renders as "Recruiter" in the UI (Building2 icon + label)
-  // NOT "Employer" — this sends role="employer" to the NextAuth credentials provider.
-  await page.getByRole('button', { name: /Recruiter/i }).click();
+  // Step 2: POST credentials directly to NextAuth
+  await page.request.post(`${BASE_URL}/api/auth/callback/credentials`, {
+    form: {
+      csrfToken,
+      email: 'employer_1@seed.fitvector.dev',
+      password: 'jhankar123',
+      role: 'employer',
+      callbackUrl: `${BASE_URL}/employer`,
+      json: 'true',
+    },
+  });
 
-  await page.getByLabel('Email').fill('employer_1@seed.fitvector.dev');
-  await page.getByLabel('Password').fill('jhankar123');
+  // Step 3: verify session was created
+  const sessionRes = await page.request.get(`${BASE_URL}/api/auth/session`);
+  const session = await sessionRes.json();
 
-  await page.getByRole('button', { name: 'Sign In' }).click();
+  if (!session?.user?.email) {
+    throw new Error(
+      `Auth failed — employer credentials rejected by NextAuth.\n` +
+      `Session response: ${JSON.stringify(session)}\n` +
+      `Make sure employer_1@seed.fitvector.dev exists with role=employer and password jhankar123.\n` +
+      `Run: pnpm --filter web seed:test-users`
+    );
+  }
 
-  // Employers land on /employer (onboarding done) or /employer/onboarding (first time).
-  await page.waitForURL(
-    (url) => !url.pathname.includes('/login'),
-    { timeout: 20_000 },
-  );
+  console.log(`✅ Signed in as: ${session.user.email} (role: ${session.user.role})`);
 
-  await expect(
-    page.locator('.text-destructive').filter({ hasText: /Invalid|No recruiter/i }),
-  ).not.toBeVisible();
-
+  // Step 4: persist cookies for all employer specs
   await page.context().storageState({ path: AUTH_FILE });
   console.log(`✅ Employer auth state cached → ${AUTH_FILE}`);
 });
