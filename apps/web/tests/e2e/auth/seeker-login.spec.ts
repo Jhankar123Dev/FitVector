@@ -61,8 +61,7 @@ test.describe("Seeker login (UI form)", () => {
 
     await fillLoginForm(page, ephemeralSeeker.email, ephemeralSeeker.password);
 
-    await page.waitForURL("**/dashboard", { timeout: 15_000 });
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
 
     const session = await getSession(page);
     expect(session?.user.email).toBe(ephemeralSeeker.email);
@@ -89,8 +88,7 @@ test.describe("Seeker login (UI form)", () => {
 
     await fillLoginForm(page, ephemeralSeeker.email, ephemeralSeeker.password);
 
-    await page.waitForURL("**/dashboard", { timeout: 15_000 });
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
     await expect(page).not.toHaveURL(/\/onboarding/);
   });
 

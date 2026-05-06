@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ export function LoginForm() {
   const [role, setRole] = useState<"seeker" | "employer">("seeker");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const {
     register,
@@ -41,52 +39,55 @@ export function LoginForm() {
     setError(null);
 
     try {
-      const result = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        role,
-        redirect: false,
+      // Step 1: Fetch CSRF token — required by the NextAuth credentials callback.
+      // Using the direct API approach (mirrors signInAs helper + setup scripts)
+      // to avoid next-auth/react v5 beta timing issues with the signIn() wrapper.
+      const csrfRes = await fetch("/api/auth/csrf");
+      const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
+
+      // Step 2: POST credentials directly to the NextAuth callback endpoint.
+      await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          csrfToken,
+          email: data.email,
+          password: data.password,
+          role,
+          callbackUrl: `${window.location.origin}/dashboard`,
+          json: "true",
+        }).toString(),
       });
 
-      if (result?.error) {
-        setError(
-          role === "employer"
-            ? "No recruiter account found with these credentials. If you signed up as a Job Seeker, switch to the Job Seeker tab."
-            : "Invalid email or password. If you signed up as a Recruiter, switch to the Recruiter tab."
-        );
-      } else {
-        const res = await fetch("/api/auth/session");
-        const session = await res.json();
-        const actualRole = session?.user?.role;
-        const onboarded = session?.user?.onboardingCompleted;
-        if (actualRole === "superadmin") {
-          router.push("/admin");
-        } else if (actualRole === "employer") {
-          router.push(onboarded ? "/employer" : "/employer/onboarding");
-        } else {
-          router.push(onboarded ? "/dashboard" : "/onboarding");
-        }
-      }
-    } catch (err) {
-      // next-auth v5 throws a CredentialsSignin error on auth failure
-      // (v4 returned { error: "CredentialsSignin" } instead of throwing).
-      // Detect it by name/message so the user sees the role-specific message
-      // rather than the generic fallback.
-      const errName = err instanceof Error ? err.name : "";
-      const errMsg = err instanceof Error ? err.message : "";
-      const isCredentialFailure =
-        errName === "CredentialsSignin" ||
-        errMsg.includes("CredentialsSignin") ||
-        errMsg.includes("credentials");
-      if (isCredentialFailure) {
+      // Step 3: Check if the session was created. If NextAuth rejected the
+      // credentials (wrong password, role mismatch) no session cookie is issued
+      // and session.user will be absent.
+      const sessionRes = await fetch("/api/auth/session");
+      const session = (await sessionRes.json()) as {
+        user?: { role?: string; onboardingCompleted?: boolean };
+      };
+      const actualRole = session?.user?.role;
+      const onboarded = session?.user?.onboardingCompleted;
+
+      if (!actualRole) {
         setError(
           role === "employer"
             ? "No recruiter account found with these credentials. If you signed up as a Job Seeker, switch to the Job Seeker tab."
             : "Invalid email or password. If you signed up as a Recruiter, switch to the Recruiter tab.",
         );
-      } else {
-        setError("Something went wrong. Please try again.");
+        return;
       }
+
+      // Auth succeeded — navigate based on actual role from session.
+      if (actualRole === "superadmin") {
+        window.location.href = "/admin";
+      } else if (actualRole === "employer") {
+        window.location.href = onboarded ? "/employer" : "/employer/onboarding";
+      } else {
+        window.location.href = onboarded ? "/dashboard" : "/onboarding";
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }

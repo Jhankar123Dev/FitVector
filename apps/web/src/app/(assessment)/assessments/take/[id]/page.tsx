@@ -61,7 +61,7 @@ const MONACO_LANG: Record<string, string> = {
   rust:       "rust",
 };
 
-// Human-readable labels for the language badge
+// Human-readable labels for the language badge (all keys, incl. aliases)
 const LANG_LABEL: Record<string, string> = {
   python3:    "Python",
   python:     "Python",
@@ -76,6 +76,17 @@ const LANG_LABEL: Record<string, string> = {
   typescript: "TypeScript",
   rust:       "Rust",
 };
+
+// Canonical language options for the picker — one entry per language, no aliases,
+// no unsupported entries (Rust is not supported by JDoodle).
+const LANG_OPTIONS: { value: string; label: string }[] = [
+  { value: "python3",    label: "Python"     },
+  { value: "nodejs",     label: "JavaScript" },
+  { value: "java",       label: "Java"       },
+  { value: "cpp17",      label: "C++"        },
+  { value: "go",         label: "Go"         },
+  { value: "typescript", label: "TypeScript" },
+];
 
 // Client-side language alias normaliser (mirrors jdoodle.ts but without Node imports).
 // Maps human-readable / alias keys → JDoodle canonical keys.
@@ -842,8 +853,8 @@ function QuestionView({
                   onChange={(e) => onLangChange(e.target.value)}
                   className="h-7 rounded-md border border-zinc-600 bg-zinc-800 px-2 text-[11px] text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 >
-                  {Object.entries(LANG_LABEL).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
+                  {LANG_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
               </>
@@ -1014,8 +1025,8 @@ function QuestionView({
                     onChange={(e) => onLangChange(e.target.value)}
                     className="h-7 rounded-md border border-zinc-600 bg-zinc-900 px-2 text-[11px] text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
                   >
-                    {Object.entries(LANG_LABEL).map(([key, label]) => (
-                      <option key={key} value={key}>
+                    {LANG_OPTIONS.map(({ value, label }) => (
+                      <option key={value} value={value}>
                         {label}
                       </option>
                     ))}

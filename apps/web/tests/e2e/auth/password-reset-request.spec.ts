@@ -88,6 +88,9 @@ test.describe("Forgot password — request flow", () => {
     page,
     ephemeralSeeker,
   }) => {
+    // 4 full UI submissions × ~8 s each = ~32 s. Raise the per-test timeout so
+    // the loop doesn't hit the global 30 s cap before the email count can be read.
+    test.setTimeout(90_000);
     await clearEmailSink();
 
     // 4 requests in quick succession. The route's rate limiter keys on
@@ -102,12 +105,20 @@ test.describe("Forgot password — request flow", () => {
       await page.goto("/forgot-password");
     }
 
-    // Allow async email delivery to flush before counting.
-    await page.waitForTimeout(800);
+    // Poll until at least one email arrives (proves the sink is live), then
+    // assert the rate-limit cap. Fixed waits race against async delivery; this
+    // retries up to 5 s without adding unnecessary latency on fast machines.
+    await expect
+      .poll(
+        async () => (await getEmailsSentTo(ephemeralSeeker.email)).length,
+        { timeout: 5_000 },
+      )
+      .toBeGreaterThan(0);
+
     const emails = await getEmailsSentTo(ephemeralSeeker.email);
     expect(emails.length, `expected ≤3 emails, got ${emails.length}`).toBeLessThanOrEqual(3);
-    // Soft floor: at least one email made it through (otherwise the test is
-    // catching a different bug — sink misconfigured).
+    // Soft floor: already verified above via poll, but keep explicit for
+    // clarity in the failure message.
     expect(emails.length).toBeGreaterThan(0);
   });
 

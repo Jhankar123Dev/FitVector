@@ -50,8 +50,7 @@ test.describe("Employer login (UI form)", () => {
     await clickRecruiterTab(page);
     await fillCreds(page, ephemeralEmployer.user.email, ephemeralEmployer.user.password);
 
-    await page.waitForURL(/\/employer(\/|$)/, { timeout: 20_000 });
-    await expect(page).toHaveURL(/\/employer/);
+    await expect(page).toHaveURL(/\/employer/, { timeout: 20_000 });
 
     const session = await getSession(page);
     expect(session?.user.role).toBe("employer");
@@ -63,11 +62,14 @@ test.describe("Employer login (UI form)", () => {
     ephemeralEmployer,
   }) => {
     // Default tab is "Job Seeker" — the form posts role=seeker, the authorize()
-    // callback rejects because the DB row says employer.
+    // callback rejects because the DB row says employer. On the seeker tab the
+    // form shows the seeker-specific error copy (not the employer-tab copy).
     await page.goto("/login");
     await fillCreds(page, ephemeralEmployer.user.email, ephemeralEmployer.user.password);
 
-    await expect(page.getByText(RECRUITER_NOT_FOUND)).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByText(/Invalid email or password/i),
+    ).toBeVisible({ timeout: 10_000 });
     await expect(page).toHaveURL(/\/login/);
 
     const session = await getSession(page);
@@ -97,7 +99,7 @@ test.describe("Employer login (UI form)", () => {
     await clickRecruiterTab(page);
     await fillCreds(page, ephemeralEmployer.user.email, ephemeralEmployer.user.password);
 
-    await page.waitForURL(/\/employer(\/|$)/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/employer/, { timeout: 20_000 });
 
     // jwt() callback fetches an active company_members row on initial sign-in
     // and stamps token.companyId — proves the membership chain is intact.

@@ -50,7 +50,7 @@ test.describe("Superadmin login (UI form)", () => {
     await page.goto("/login");
     await fillCreds(page, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
 
-    await page.waitForURL("**/admin**", { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/admin/, { timeout: 20_000 });
     await expect(page).toHaveURL(/\/admin/);
   });
 
@@ -63,14 +63,14 @@ test.describe("Superadmin login (UI form)", () => {
 
     // The credentials provider ignores the posted role for superadmins, the
     // session callback sees role=superadmin, and the form redirects to /admin.
-    await page.waitForURL("**/admin**", { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/admin/, { timeout: 20_000 });
     await expect(page).toHaveURL(/\/admin/);
   });
 
   test("post-login session carries role=superadmin", async ({ page }) => {
     await page.goto("/login");
     await fillCreds(page, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
-    await page.waitForURL("**/admin**", { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/admin/, { timeout: 20_000 });
 
     const session = await getSession(page);
     expect(session?.user.email).toBe(SUPERADMIN_EMAIL);
