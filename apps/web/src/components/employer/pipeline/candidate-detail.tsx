@@ -198,6 +198,7 @@ interface CandidateDetailProps {
   onAdvance: (id: string) => void;
   onGoBack: (id: string) => void;
   onReject: (id: string) => void;
+  isAdvancing?: boolean;
 }
 
 export function CandidateDetail({
@@ -206,6 +207,7 @@ export function CandidateDetail({
   onAdvance,
   onGoBack,
   onReject,
+  isAdvancing = false,
 }: CandidateDetailProps) {
   const [noteText, setNoteText] = useState("");
   const [assessmentTabActive, setAssessmentTabActive] = useState(false);
@@ -1100,24 +1102,29 @@ export function CandidateDetail({
                 )}
                 <Button
                   className="flex-1 gap-1.5"
+                  disabled={isAdvancing}
                   onClick={() => onAdvance(applicant.id)}
                 >
                   <ArrowRight className="h-4 w-4" />
-                  {applicant.pipelineStage === "ai_screened"
-                    ? "Advance → Auto-send Assessment"
-                    : applicant.pipelineStage === "assessment_pending"
-                      ? "Mark Test Complete"
-                      : applicant.pipelineStage === "assessment_completed"
-                        ? "Advance → Auto-send AI Interview"
-                        : applicant.pipelineStage === "ai_interview_pending"
-                          ? "Mark Interview Given"
-                          : applicant.pipelineStage === "ai_interviewed"
-                            ? "Schedule Interview"
-                            : applicant.pipelineStage === "human_interview"
-                              ? "Make Offer"
-                              : applicant.pipelineStage === "offer"
-                                ? "Mark Hired"
-                                : "Advance"}
+                  {isAdvancing && applicant.pipelineStage === "applied"
+                    ? "Screening…"
+                    : applicant.pipelineStage === "applied"
+                      ? "Screen & Advance"
+                      : applicant.pipelineStage === "ai_screened"
+                        ? "Advance → Auto-send Assessment"
+                        : applicant.pipelineStage === "assessment_pending"
+                          ? "Mark Test Complete"
+                          : applicant.pipelineStage === "assessment_completed"
+                            ? "Advance → Auto-send AI Interview"
+                            : applicant.pipelineStage === "ai_interview_pending"
+                              ? "Mark Interview Given"
+                              : applicant.pipelineStage === "ai_interviewed"
+                                ? "Schedule Interview"
+                                : applicant.pipelineStage === "human_interview"
+                                  ? "Make Offer"
+                                  : applicant.pipelineStage === "offer"
+                                    ? "Mark Hired"
+                                    : "Advance"}
                 </Button>
                 <Button
                   variant="outline"

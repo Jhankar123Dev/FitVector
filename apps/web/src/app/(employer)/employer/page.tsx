@@ -34,6 +34,20 @@ import { formatRelativeTime } from "@/lib/utils";
 import { useAnalytics, useFunnel } from "@/hooks/use-analytics";
 import { useEmployer, useActivityFeed } from "@/hooks/use-employer";
 import { CHART_COLORS } from "@/lib/chart-colors";
+import type { ActivityItem } from "@/app/api/employer/activity/route";
+
+function buildActivityUrl(item: ActivityItem): string {
+  switch (item.entityType) {
+    case "job":
+      return `/employer/jobs/${item.entityId}/pipeline`;
+    case "interview":
+      return `/employer/interviews`;
+    case "applicant":
+      return item.jobId ? `/employer/jobs/${item.jobId}/pipeline` : `/employer/candidates`;
+    default:
+      return `/employer`;
+  }
+}
 
 // ── Activity icon map ───────────────────────────────────────────────
 const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
@@ -249,7 +263,7 @@ export default function EmployerDashboardPage() {
                 return (
                   <Link
                     key={item.id}
-                    href={item.actionUrl}
+                    href={buildActivityUrl(item)}
                     className="flex items-start gap-3 group"
                   >
                     <div

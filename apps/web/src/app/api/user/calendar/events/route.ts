@@ -74,6 +74,8 @@ export async function GET() {
       singleEvents: "true",
       orderBy: "startTime",
       maxResults: "50",
+      // Only return events created by FitVector (tagged during interview scheduling)
+      privateExtendedProperty: "source=fitvector",
     });
 
     const calRes = await fetch(`${GOOGLE_CALENDAR_URL}?${params}`, {

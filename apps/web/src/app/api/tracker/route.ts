@@ -135,6 +135,25 @@ export async function GET(req: Request) {
       }
     }
 
+    // Fetch expired assessments for assessment_pending apps (lazy eval)
+    const assessmentPendingApplicantIds = Object.entries(fvStatusMap)
+      .filter(([, s]) => s === "assessment_pending")
+      .map(([fvId]) => fvApplicantIdMap[fvId])
+      .filter((id): id is string => !!id);
+
+    const expiredAssessmentApplicantIds = new Set<string>();
+    if (assessmentPendingApplicantIds.length > 0) {
+      const now = new Date().toISOString();
+      const { data: expiredRows } = await supabase
+        .from("assessment_submissions")
+        .select("applicant_id")
+        .in("applicant_id", assessmentPendingApplicantIds)
+        .lt("expires_at", now);
+      for (const row of expiredRows || []) {
+        if (row.applicant_id) expiredAssessmentApplicantIds.add(row.applicant_id);
+      }
+    }
+
     const formatted = (applications || []).map((a) => {
       const row = a as Record<string, unknown>;
       const fvAppId = row.fitvector_app_id as string | null;
@@ -144,6 +163,7 @@ export async function GET(req: Request) {
       const interviewLink = applicantId ? (interviewLinkMap[applicantId] ?? null) : null;
       const rawPipelineStage = applicantId ? (rawPipelineStageMap[applicantId] ?? null) : null;
       const isTransparentPipeline = applicantId ? (transparentPipelineMap[applicantId] ?? false) : false;
+      const assessmentExpired = applicantId ? expiredAssessmentApplicantIds.has(applicantId) : false;
 
       return {
         id: a.id,
@@ -170,6 +190,7 @@ export async function GET(req: Request) {
         fitvectorAppId: fvAppId,
         appliedAt: a.applied_at,
         createdAt: a.created_at,
+        assessmentExpired,
       };
     });
 

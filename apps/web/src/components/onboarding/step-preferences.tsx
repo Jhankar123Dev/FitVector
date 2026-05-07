@@ -9,11 +9,12 @@ import { Button } from "@/components/ui/button";
 import { X, Plus } from "lucide-react";
 import type { OnboardingFormData } from "@/components/onboarding/wizard";
 
-const WORK_MODES = [
-  { value: "remote", label: "Remote", icon: "🏠" },
-  { value: "hybrid", label: "Hybrid", icon: "🔄" },
-  { value: "onsite", label: "On-site", icon: "🏢" },
-] as const;
+const WORK_MODES: { value: "remote" | "hybrid" | "onsite" | null; label: string; icon: string }[] = [
+  { value: "remote",  label: "Remote",       icon: "🏠" },
+  { value: "hybrid",  label: "Hybrid",       icon: "🔄" },
+  { value: "onsite",  label: "On-site",      icon: "🏢" },
+  { value: null,      label: "Open to All",  icon: "🌐" },
+];
 
 const JOB_TYPES = [
   { value: "fulltime", label: "Full-time" },
@@ -158,22 +159,33 @@ export function StepPreferences() {
       {/* Work Mode */}
       <div className="space-y-3">
         <Label>Preferred Work Mode</Label>
-        <div className="grid grid-cols-3 gap-3">
-          {WORK_MODES.map((mode) => (
-            <button
-              key={mode.value}
-              type="button"
-              onClick={() => setValue("preferredWorkMode", mode.value)}
-              className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-center transition-colors ${
-                preferredWorkMode === mode.value
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-              }`}
-            >
-              <span className="text-xl">{mode.icon}</span>
-              <span className="text-xs font-medium">{mode.label}</span>
-            </button>
-          ))}
+        <div className="grid grid-cols-2 gap-3">
+          {WORK_MODES.map((mode) => {
+            const isSelected =
+              mode.value === null
+                ? !preferredWorkMode
+                : preferredWorkMode === mode.value;
+            return (
+              <button
+                key={mode.value ?? "open"}
+                type="button"
+                onClick={() =>
+                  setValue(
+                    "preferredWorkMode",
+                    mode.value === null ? undefined : mode.value,
+                  )
+                }
+                className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-center transition-colors ${
+                  isSelected
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <span className="text-xl">{mode.icon}</span>
+                <span className="text-xs font-medium">{mode.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

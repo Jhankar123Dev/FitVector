@@ -247,12 +247,13 @@ export default function PipelinePage() {
     if (!applicant) return;
     setDetailApplicant(null);
 
-    // Auto-trigger AI fit score calculation when advancing applied → ai_screened
+    // Screen first, then advance stage only after screening succeeds
     if (applicant.pipelineStage === "applied") {
       const next = NEXT_STAGE[applicant.pipelineStage];
       if (next) {
-        changeStage.mutate({ id, stage: next });
-        screenApplicant.mutate(id);
+        screenApplicant.mutate(id, {
+          onSuccess: () => changeStage.mutate({ id, stage: next }),
+        });
       }
       return;
     }
@@ -344,6 +345,10 @@ export default function PipelinePage() {
       },
     });
   }
+
+  const hasAppliedSelected = Array.from(selectedIds).some(
+    (id) => applicants.find((a) => a.id === id)?.pipelineStage === "applied"
+  );
 
   const hasActiveFilters =
     filterScoreMin > 0 ||
@@ -446,16 +451,18 @@ export default function PipelinePage() {
               {selectedIds.size} selected
             </span>
             <div className="ml-auto flex flex-wrap items-center gap-1.5 sm:gap-2">
-              {/* Run AI Screening — only show for unscreened applicants */}
-              <Button
-                size="sm"
-                onClick={handleBulkScreen}
-                disabled={screenApplicant.isPending}
-                className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5 bg-brand-600 hover:bg-brand-700 text-white"
-              >
-                <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                {screenApplicant.isPending ? "Screening…" : `AI Screen (${selectedIds.size})`}
-              </Button>
+              {/* Run AI Screening — only show when ≥1 selected candidate is in 'applied' stage */}
+              {hasAppliedSelected && (
+                <Button
+                  size="sm"
+                  onClick={handleBulkScreen}
+                  disabled={screenApplicant.isPending}
+                  className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5 bg-brand-600 hover:bg-brand-700 text-white"
+                >
+                  <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  {screenApplicant.isPending ? "Screening…" : `AI Screen (${selectedIds.size})`}
+                </Button>
+              )}
               <Button size="sm" onClick={bulkAdvance} className="gap-1 h-7 text-xs sm:h-8 sm:text-sm sm:gap-1.5">
                 <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 Advance
@@ -885,6 +892,7 @@ export default function PipelinePage() {
           onAdvance={advanceApplicant}
           onGoBack={goBackApplicant}
           onReject={handleRejectApplicant}
+          isAdvancing={screenApplicant.isPending || changeStage.isPending}
         />
       )}
 

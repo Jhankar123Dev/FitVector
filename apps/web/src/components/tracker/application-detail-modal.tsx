@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { APPLICATION_STATUSES } from "@fitvector/shared";
 import type { TrackerApplication } from "@/hooks/use-tracker";
-import { isFitVectorApp, FV_STATUS_CONFIG, BOOST_OPTIONS, BOOST_CREDIT_PACKS } from "@/types/marketplace";
+import { FV_STATUS_CONFIG, BOOST_OPTIONS, BOOST_CREDIT_PACKS } from "@/types/marketplace";
 import type { FVApplicationStatus, BoostTier } from "@/types/marketplace";
 import { FitVectorStatusTimeline } from "./fitvector-status-timeline";
 import { useFitVectorDetail } from "@/hooks/use-fitvector-apply";
@@ -54,10 +54,11 @@ export function ApplicationDetailModal({
   const [isBoosted, setIsBoosted] = useState(false);
   const [selectedBoostTier, setSelectedBoostTier] = useState<BoostTier>("standard");
 
-  const isFV = isFitVectorApp(application.status);
-  const fvConfig = isFV
-    ? FV_STATUS_CONFIG[application.status as FVApplicationStatus]
+  const isFV = application.fitvectorAppId !== null;
+  const fvStatusKey = application.fitvectorStatus
+    ? (`fv_${application.fitvectorStatus}` as FVApplicationStatus)
     : null;
+  const fvConfig = isFV && fvStatusKey ? (FV_STATUS_CONFIG[fvStatusKey] ?? null) : null;
 
   // Fetch live FitVector application detail (replaces mock data)
   const { data: fvDetailRes, isLoading: fvLoading } = useFitVectorDetail(

@@ -205,7 +205,12 @@ function AppCard({
 
           {/* Status badge + interview link */}
           <div className="flex shrink-0 flex-col items-end gap-2">
-            {statusConfig && (
+            {app.assessmentExpired && app.fitvectorStatus === "assessment_pending" && (
+              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                Test Expired
+              </span>
+            )}
+            {statusConfig && !app.assessmentExpired && (
               <span
                 className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
                 style={{ backgroundColor: statusConfig.color }}

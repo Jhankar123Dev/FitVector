@@ -46,6 +46,7 @@ export interface TrackerApplication {
   fitvectorAppId: string | null;
   appliedAt: string | null;
   createdAt: string;
+  assessmentExpired: boolean;
 }
 
 export function useTrackerApplications(search?: string) {

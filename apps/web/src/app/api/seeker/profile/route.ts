@@ -47,16 +47,17 @@ export async function PUT(req: Request) {
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
     const { user } = result.data;
     const body = (await req.json()) as {
-      fullName?:        string;
-      currentRole?:     string;
-      currentCompany?:  string;
-      skills?:          string[];
-      targetRoles?:     string[];
-      targetLocations?: string[];
-      phone?:           string;
-      linkedinUrl?:     string;
-      portfolioUrl?:    string;
-      workHistory?:     unknown[];
+      fullName?:           string;
+      currentRole?:        string;
+      currentCompany?:     string;
+      skills?:             string[];
+      targetRoles?:        string[];
+      targetLocations?:    string[];
+      preferredWorkMode?:  string | null;
+      phone?:              string;
+      linkedinUrl?:        string;
+      portfolioUrl?:       string;
+      workHistory?:        unknown[];
     };
 
     const supabase = createAdminClient();
@@ -72,8 +73,9 @@ export async function PUT(req: Request) {
     if (body.currentCompany  !== undefined) profilePatch.current_company   = body.currentCompany;
     if (body.skills          !== undefined) profilePatch.skills            = body.skills;
     if (body.targetRoles     !== undefined) profilePatch.target_roles      = body.targetRoles;
-    if (body.targetLocations !== undefined) profilePatch.target_locations  = body.targetLocations;
-    if (body.phone           !== undefined) profilePatch.phone             = body.phone;
+    if (body.targetLocations   !== undefined) profilePatch.target_locations   = body.targetLocations;
+    if ("preferredWorkMode" in body)         profilePatch.preferred_work_mode = body.preferredWorkMode ?? null;
+    if (body.phone             !== undefined) profilePatch.phone               = body.phone;
     if (body.linkedinUrl     !== undefined) profilePatch.linkedin_url      = body.linkedinUrl;
     if (body.portfolioUrl    !== undefined) profilePatch.portfolio_url     = body.portfolioUrl;
     if (body.workHistory     !== undefined) profilePatch.work_history      = body.workHistory;

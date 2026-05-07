@@ -8,7 +8,9 @@ export interface ActivityItem {
   message: string;
   candidateName: string | null;
   jobTitle: string;
-  actionUrl: string;
+  entityType: "job" | "interview" | "applicant";
+  entityId: string;
+  jobId: string | null;
   timestamp: string;
 }
 
@@ -76,7 +78,9 @@ export async function GET() {
         message: "New application from",
         candidateName: a.name,
         jobTitle: String(jp.title ?? ""),
-        actionUrl: `/employer/applicants/${a.id}`,
+        entityType: "job",
+        entityId: String(jp.id ?? ""),
+        jobId: String(jp.id ?? ""),
         timestamp: a.created_at,
       });
     }
@@ -91,7 +95,9 @@ export async function GET() {
         message: "Interview scheduled with",
         candidateName: applicant ? String(applicant.name ?? "") : null,
         jobTitle: jp ? String(jp.title ?? "") : "Unknown job",
-        actionUrl: `/employer/interviews`,
+        entityType: "interview",
+        entityId: iv.id,
+        jobId: jp ? String(jp.id ?? "") : null,
         timestamp: iv.scheduled_at,
       });
     }
@@ -104,7 +110,9 @@ export async function GET() {
         message: "New job posted:",
         candidateName: null,
         jobTitle: jp.title,
-        actionUrl: `/employer/jobs/${jp.id}`,
+        entityType: "job",
+        entityId: jp.id,
+        jobId: jp.id,
         timestamp: jp.created_at,
       });
     }

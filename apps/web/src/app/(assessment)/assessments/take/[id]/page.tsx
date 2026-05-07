@@ -720,6 +720,11 @@ export default function TakeAssessmentPage() {
               answer={getAnswerWithStarter(question)}
               isFlagged={flagged.has(question.id)}
               onAnswer={(v) => setAnswer(question.id, v)}
+              onClear={
+                question.type === "multiple_choice" || question.type === "true_false"
+                  ? () => setAnswers((prev) => { const next = { ...prev }; delete next[question.id]; return next; })
+                  : undefined
+              }
               onToggleFlag={() => toggleFlag(question.id)}
               runResult={runResults[question.id]}
               runErrorMsg={runError[question.id]}
@@ -783,6 +788,7 @@ function QuestionView({
   answer,
   isFlagged,
   onAnswer,
+  onClear,
   onToggleFlag,
   runResult,
   runErrorMsg,
@@ -796,6 +802,7 @@ function QuestionView({
   answer:       string;
   isFlagged:    boolean;
   onAnswer:     (v: string) => void;
+  onClear?:     () => void;
   onToggleFlag: () => void;
   runResult?:   RunResult[];
   runErrorMsg?: string;
@@ -1008,6 +1015,14 @@ function QuestionView({
                 <span className="flex-1">{opt}</span>
               </button>
             ))}
+            {answer && onClear && (
+              <button
+                onClick={onClear}
+                className="mt-1 text-[11px] text-muted-foreground hover:text-foreground/70 underline underline-offset-2"
+              >
+                Clear selection
+              </button>
+            )}
           </div>
         )}
 
