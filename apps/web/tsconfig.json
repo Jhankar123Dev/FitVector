@@ -35,6 +35,8 @@
     "node_modules/.cache/next-build/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "scripts",
+    "tests"
   ]
 }

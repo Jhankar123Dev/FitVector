@@ -77,7 +77,9 @@ export default function InterviewsPage() {
         {/* Tabs bar */}
         <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
           {[60, 52, 68, 52].map((w, i) => (
-            <Skeleton key={i} className="h-8 rounded-md" style={{ width: w }} />
+            <div key={i} style={{ width: w }}>
+              <Skeleton className="h-8 rounded-md" />
+            </div>
           ))}
         </div>
         {/* Interview rows */}

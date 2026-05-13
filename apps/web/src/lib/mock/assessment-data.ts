@@ -309,6 +309,7 @@ export const MOCK_ASSESSMENT_INSTANCES: AssessmentInstance[] = [
 export const MOCK_CANDIDATE_RESULTS: CandidateAssessmentResult[] = [
   {
     id: "res-001",
+    applicantId: "",
     assessmentId: "ast-001",
     assessmentTitle: "React Frontend Coding Test",
     candidateName: "Ananya Krishnan",
@@ -332,6 +333,7 @@ export const MOCK_CANDIDATE_RESULTS: CandidateAssessmentResult[] = [
   },
   {
     id: "res-002",
+    applicantId: "",
     assessmentId: "ast-001",
     assessmentTitle: "React Frontend Coding Test",
     candidateName: "Rahul Menon",
@@ -355,6 +357,7 @@ export const MOCK_CANDIDATE_RESULTS: CandidateAssessmentResult[] = [
   },
   {
     id: "res-003",
+    applicantId: "",
     assessmentId: "ast-001",
     assessmentTitle: "React Frontend Coding Test",
     candidateName: "Vikram Patel",
@@ -378,6 +381,7 @@ export const MOCK_CANDIDATE_RESULTS: CandidateAssessmentResult[] = [
   },
   {
     id: "res-004",
+    applicantId: "",
     assessmentId: "ast-002",
     assessmentTitle: "JavaScript Fundamentals Quiz",
     candidateName: "Pooja Deshmukh",
@@ -404,6 +408,7 @@ export const MOCK_CANDIDATE_RESULTS: CandidateAssessmentResult[] = [
   },
   {
     id: "res-005",
+    applicantId: "",
     assessmentId: "ast-002",
     assessmentTitle: "JavaScript Fundamentals Quiz",
     candidateName: "Arjun Reddy",

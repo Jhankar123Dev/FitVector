@@ -311,7 +311,9 @@ export default function EmployerJobsPage() {
         {/* Tabs bar */}
         <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
           {[52, 56, 52, 52, 44].map((w, i) => (
-            <Skeleton key={i} className="h-8 rounded-md" style={{ width: w }} />
+            <div key={i} style={{ width: w }}>
+              <Skeleton className="h-8 rounded-md" />
+            </div>
           ))}
         </div>
         {/* Job rows */}

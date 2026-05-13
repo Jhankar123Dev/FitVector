@@ -1027,7 +1027,7 @@ function QuestionView({
         )}
 
         {/* ── Code question — Monaco IDE ───────────────────────────────────── */}
-        {question.type === "code" && (
+        {(question.type as string) === "code" && (
           <div className="space-y-3">
             {/* Language picker — lets candidate switch to a preferred language */}
             <div className="flex items-center justify-between">

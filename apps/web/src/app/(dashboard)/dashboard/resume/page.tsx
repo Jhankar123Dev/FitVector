@@ -113,7 +113,7 @@ export default function ResumePage() {
   const { data: session } = useSession();
   const { data: versions, isLoading, isError } = useResumeVersions();
   const { data: usage } = useUsage();
-  const resumeData = (session?.user as any)?.resume_data ?? (user as any)?.resume_data ?? null;
+  const resumeData = ((session?.user as unknown as Record<string, unknown>)?.resume_data ?? (user as unknown as Record<string, unknown>)?.resume_data ?? null) as Record<string, unknown> | null;
 
   const resumeUsage = usage?.usage?.resumeTailor;
 

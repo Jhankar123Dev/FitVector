@@ -74,7 +74,9 @@ export default function CandidatesPage() {
         </div>
         <div className="flex gap-2">
           {[80, 72, 68, 64, 60].map((w, i) => (
-            <Skeleton key={i} className="h-7 rounded-full" style={{ width: w }} />
+            <div key={i} style={{ width: w }}>
+              <Skeleton className="h-7 rounded-full" />
+            </div>
           ))}
         </div>
         {/* Candidate rows */}
