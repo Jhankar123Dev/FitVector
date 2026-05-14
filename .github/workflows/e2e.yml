@@ -7,8 +7,6 @@ on:
       - 'apps/web/**'
       - 'packages/shared/**'
       - '.github/workflows/e2e.yml'
-  push:
-    branches: [main]
   workflow_dispatch:
 
 # Cancel superseded runs on the same branch.
