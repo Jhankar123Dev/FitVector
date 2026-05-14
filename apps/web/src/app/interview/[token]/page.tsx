@@ -422,7 +422,7 @@ export default function CandidateInterviewPage() {
               <p className="text-sm text-muted-foreground">
                 The AI will ask you questions out loud. Speak your answers naturally — take your
                 time, pause to think, and click{" "}
-                <span className="font-medium text-foreground/80">"Done Speaking"</span> when you have
+                <span className="font-medium text-foreground/80">&quot;Done Speaking&quot;</span> when you have
                 finished each answer.
               </p>
             </div>

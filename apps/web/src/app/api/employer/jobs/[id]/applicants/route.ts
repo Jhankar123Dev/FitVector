@@ -93,7 +93,7 @@ export async function GET(
 
     // ── Enrich with PDF URL from tailored_resumes via fitvector_applications ──
     const applicantIds = (rows || []).map((r) => r.id as string);
-    let pdfByApplicantId: Record<string, string> = {};
+    const pdfByApplicantId: Record<string, string> = {};
 
     if (applicantIds.length > 0) {
       const { data: fvApps } = await supabase
@@ -127,7 +127,7 @@ export async function GET(
     }
 
     // ── Enrich with latest test score from assessment_submissions ──────────────
-    let testScoreByApplicantId: Record<string, number> = {};
+    const testScoreByApplicantId: Record<string, number> = {};
     if (applicantIds.length > 0) {
       const { data: subs } = await supabase
         .from("assessment_submissions")

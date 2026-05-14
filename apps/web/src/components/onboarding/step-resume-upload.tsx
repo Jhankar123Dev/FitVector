@@ -9,6 +9,25 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 
+// Raw shapes from the AI parser (snake_case or camelCase, all fields optional)
+interface RawExp {
+  company?: string; role?: string; title?: string;
+  start_date?: string; startDate?: string;
+  end_date?: string; endDate?: string;
+  bullets?: string[]; technologies?: string[];
+}
+interface RawEdu {
+  institution?: string; school?: string;
+  degree?: string; field?: string; major?: string;
+  year?: number; graduation_year?: number; graduationYear?: number;
+}
+interface RawProject {
+  name?: string; title?: string;
+  bullets?: string[]; description?: string;
+  technologies?: string[]; url?: string;
+}
+interface RawCert { name?: string; issuer?: string; year?: number }
+
 interface ParsedResume {
   name: string;
   email: string;
@@ -89,7 +108,7 @@ export function StepResumeUpload() {
         phone: raw?.contact?.phone || raw?.phone || "",
         location: raw?.contact?.location || raw?.location || "",
         summary: raw?.summary || "",
-        experience: (raw?.experience || []).map((e: any) => ({
+        experience: (raw?.experience || []).map((e: RawExp) => ({
           company: e.company || "",
           role: e.role || e.title || "",
           startDate: e.start_date || e.startDate || "",
@@ -97,20 +116,20 @@ export function StepResumeUpload() {
           bullets: e.bullets || [],
           technologies: e.technologies || [],
         })),
-        education: (raw?.education || []).map((e: any) => ({
+        education: (raw?.education || []).map((e: RawEdu) => ({
           institution: e.institution || e.school || "",
           degree: e.degree || "",
           field: e.field || e.major || "",
           graduationYear: e.year || e.graduation_year || e.graduationYear || 0,
         })),
         skills: raw?.skills || [],
-        projects: (raw?.projects || []).map((p: any) => ({
+        projects: (raw?.projects || []).map((p: RawProject) => ({
           name: p.name || p.title || "",
           description: Array.isArray(p.bullets) ? p.bullets.join(" ") : (p.description || ""),
           technologies: p.technologies || [],
           url: p.url || "",
         })),
-        certifications: (raw?.certifications || []).map((c: any) =>
+        certifications: (raw?.certifications || []).map((c: RawCert | string) =>
           typeof c === "string" ? { name: c, issuer: "", year: 0 } : c
         ),
       };
@@ -272,7 +291,7 @@ export function StepResumeUpload() {
                       <div>
                         <p className="font-medium">{exp.role}</p>
                         <p className="text-sm text-muted-foreground">
-                          {exp.company} &middot; {(exp as any).start_date ?? exp.startDate} - {(exp as any).end_date ?? exp.endDate}
+                          {exp.company} &middot; {exp.startDate} - {exp.endDate}
                         </p>
                       </div>
                     </div>
@@ -298,7 +317,7 @@ export function StepResumeUpload() {
                       {edu.degree}{edu.field ? ` in ${edu.field}` : ""}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {edu.institution} &middot; {(edu as any).year ?? edu.graduationYear}
+                      {edu.institution} &middot; {edu.graduationYear}
                     </p>
                   </CardContent>
                 </Card>

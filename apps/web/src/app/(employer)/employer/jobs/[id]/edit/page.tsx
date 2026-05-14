@@ -310,7 +310,7 @@ export default function EditJobPage() {
   function toggleBankItem(id: string) {
     setBankSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }
@@ -420,7 +420,7 @@ export default function EditJobPage() {
   if (isError || !jobData?.data) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-        <p className="text-muted-foreground">Job not found or you don't have access.</p>
+        <p className="text-muted-foreground">Job not found or you don&apos;t have access.</p>
         <Button variant="outline" onClick={() => router.push("/employer/jobs")}>
           Back to Jobs
         </Button>

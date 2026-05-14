@@ -214,7 +214,7 @@ export default function CompaniesPage() {
           {query && (
             <span>
               {" "}
-              for <span className="font-medium text-foreground">"{query}"</span>
+              for <span className="font-medium text-foreground">&quot;{query}&quot;</span>
             </span>
           )}
         </p>

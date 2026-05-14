@@ -50,7 +50,7 @@ export async function GET() {
     const interviewIds = (rows || []).map((r) => r.id);
 
     // Fetch all participants for these interviews in one query
-    let participantMap: Record<string, Array<{ userId: string; name: string }>> = {};
+    const participantMap: Record<string, Array<{ userId: string; name: string }>> = {};
     if (interviewIds.length > 0) {
       const { data: participants } = await supabase
         .from("interview_participants")

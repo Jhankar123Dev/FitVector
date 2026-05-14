@@ -1,306 +1,484 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import {
-  CalendarDays,
-  MapPin,
+  Bot,
   Video,
-  ExternalLink,
-  CalendarX,
-  LinkIcon,
   Clock,
+  CalendarDays,
+  Play,
+  Timer,
+  Layers,
+  CalendarX,
+  AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
-import type { CalendarEvent } from "@/app/api/user/calendar/events/route";
-
-// ─── Typed error ──────────────────────────────────────────────────────────────
-
-class CalendarFetchError extends Error {
-  notConnected?: boolean;
-}
+import { Skeleton } from "@/components/ui/skeleton";
+import { useMyInterviews } from "@/hooks/use-seeker-interviews";
+import type { SeekerInterview } from "@/app/api/seeker/interviews/route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
-
-function getDurationMins(start: string, end: string): number {
-  return Math.round(
-    (new Date(end).getTime() - new Date(start).getTime()) / 60000,
-  );
-}
-
-function groupByDate(entries: CalendarEvent[]): Map<string, CalendarEvent[]> {
-  const map = new Map<string, CalendarEvent[]>();
-  for (const entry of entries) {
-    const key = entry.start.slice(0, 10); // YYYY-MM-DD
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(entry);
-  }
-  return map;
-}
-
-function formatGroupHeader(dateKey: string): string {
-  const d = new Date(dateKey + "T00:00:00"); // local midnight — avoids UTC shift
+function formatScheduledAt(iso: string): string {
+  const d        = new Date(iso);
   const today    = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
 
-  if (d.toDateString() === today.toDateString())    return "Today";
-  if (d.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
+  let prefix: string;
+  if (d.toDateString() === today.toDateString()) {
+    prefix = "Today";
+  } else if (d.toDateString() === tomorrow.toDateString()) {
+    prefix = "Tomorrow";
+  } else {
+    prefix = d.toLocaleDateString("en-US", {
+      weekday: "short",
+      month:   "short",
+      day:     "numeric",
+    });
+  }
+  const time = d.toLocaleTimeString("en-US", {
+    hour:   "numeric",
+    minute: "2-digit",
+    hour12: true,
   });
+  return `${prefix} · ${time}`;
 }
 
-// ─── Event card ───────────────────────────────────────────────────────────────
+function formatExpiry(iso: string): { label: string; urgent: boolean } {
+  const diff = new Date(iso).getTime() - Date.now();
+  if (diff <= 0) return { label: "Expiring soon", urgent: true };
 
-function EventCard({ calEvent }: { calEvent: CalendarEvent }) {
-  const duration = calEvent.isAllDay
-    ? null
-    : getDurationMins(calEvent.start, calEvent.end);
+  const totalMins  = Math.floor(diff / 60_000);
+  const totalHours = Math.floor(totalMins / 60);
+  const days       = Math.floor(totalHours / 24);
+  const hours      = totalHours % 24;
+
+  if (days >= 1) {
+    return {
+      label:  `Expires in ${days}d${hours > 0 ? ` ${hours}h` : ""}`,
+      urgent: false,
+    };
+  }
+  if (totalHours >= 1) {
+    return { label: `Expires in ${totalHours}h`, urgent: totalHours < 4 };
+  }
+  return { label: `Expires in ${totalMins}m`, urgent: true };
+}
+
+function interviewTypeLabel(type: string | null): string {
+  if (!type) return "Interview";
+  return type
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+// ─── Skeleton loaders ─────────────────────────────────────────────────────────
+
+function CardSkeleton() {
+  return (
+    <Card className="border-l-4 border-l-border">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-2.5 flex-1 min-w-0">
+            <Skeleton className="h-4 w-44 rounded" />
+            <Skeleton className="h-3 w-28 rounded" />
+            <Skeleton className="h-5 w-32 rounded-full" />
+          </div>
+          <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+        </div>
+        <div className="mt-3.5 border-t border-border pt-3.5">
+          <Skeleton className="h-8 w-36 rounded-md" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Empty section state ──────────────────────────────────────────────────────
+
+function SectionEmpty({ message }: { message: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border bg-muted/20 dark:bg-muted/10 py-7 px-4 text-center">
+      <p className="text-sm text-muted-foreground/70">{message}</p>
+    </div>
+  );
+}
+
+// ─── AI Interview Card ────────────────────────────────────────────────────────
+
+function AiInterviewCard({ interview }: { interview: SeekerInterview }) {
+  const expiry    = interview.expiresAt ? formatExpiry(interview.expiresAt) : null;
+  const isStarted = interview.status === "started";
 
   return (
-    <Card className="transition-shadow hover:shadow-md">
-      <CardContent className="p-4">
+    <Card className="border-l-4 border-l-brand-500 shadow-card transition-shadow duration-200 hover:shadow-card-hover motion-reduce:transition-none animate-fade-in">
+      <CardContent className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
+          {/* Left: content */}
           <div className="min-w-0 flex-1">
-            {/* Title */}
-            <p className="font-semibold leading-snug text-foreground">
-              {calEvent.title}
+            <p className="font-semibold leading-snug text-foreground truncate text-[15px] tracking-tight">
+              {interview.jobTitle}
+            </p>
+            <p className="mt-0.5 text-sm text-muted-foreground truncate">
+              {interview.companyName}
             </p>
 
-            {/* Time row */}
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-              {calEvent.isAllDay ? (
-                <span className="flex items-center gap-1">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  All day
-                </span>
-              ) : (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  {formatTime(calEvent.start)} – {formatTime(calEvent.end)}
-                  {duration !== null && (
-                    <span className="text-muted-foreground/70">· {duration} min</span>
-                  )}
-                </span>
+            {/* Badges / meta row */}
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              {interview.interviewType && (
+                <Badge
+                  variant="outline"
+                  className="gap-1 text-[11px] text-muted-foreground border-border"
+                >
+                  <Layers className="h-3 w-3" aria-hidden="true" />
+                  {interviewTypeLabel(interview.interviewType)}
+                </Badge>
               )}
-
-              {calEvent.location && (
-                <span className="flex max-w-[200px] items-center gap-1 truncate">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />
-                  {calEvent.location}
+              {isStarted && (
+                <Badge className="gap-1 text-[11px] bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                  <Timer className="h-3 w-3" aria-hidden="true" />
+                  In Progress
+                </Badge>
+              )}
+              {expiry && (
+                <span
+                  className={`flex items-center gap-1 text-[11px] font-medium tabular-nums ${
+                    expiry.urgent
+                      ? "text-red-500 dark:text-red-400"
+                      : "text-muted-foreground/80"
+                  }`}
+                >
+                  <Clock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  {expiry.label}
                 </span>
               )}
             </div>
-
-            {/* Description preview */}
-            {calEvent.description && (
-              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                {calEvent.description.replace(/<[^>]*>/g, "")}
-              </p>
-            )}
           </div>
 
-          {/* Badges */}
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            {calEvent.meetLink && (
-              <Badge className="gap-1 border-sky-200 bg-sky-50 text-[10px] text-sky-700">
-                <Video className="h-3 w-3" />
-                Video call
-              </Badge>
-            )}
-            {calEvent.isAllDay && (
-              <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                All day
-              </Badge>
-            )}
+          {/* Right: AI avatar */}
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950 ring-1 ring-brand-100 dark:ring-brand-900"
+            aria-hidden="true"
+          >
+            <Bot className="h-[18px] w-[18px] text-brand-600 dark:text-brand-400" />
           </div>
         </div>
 
-        {/* Action row */}
-        {(calEvent.meetLink || calEvent.htmlLink) && (
-          <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
-            {calEvent.meetLink && (
-              <Button size="sm" className="h-7 gap-1.5 text-xs" asChild>
-                <a
-                  href={calEvent.meetLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Video className="h-3 w-3" />
-                  Join Call
-                </a>
-              </Button>
-            )}
-            {calEvent.htmlLink && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 gap-1.5 text-xs text-muted-foreground"
-                asChild
-              >
-                <a
-                  href={calEvent.htmlLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Open in Google Calendar
-                </a>
-              </Button>
-            )}
-          </div>
-        )}
+        {/* CTA */}
+        <div className="mt-3.5 border-t border-border pt-3.5">
+          <Button
+            size="sm"
+            className="cursor-pointer gap-2 bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400 text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            asChild
+          >
+            <Link href={interview.actionUrl}>
+              <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+              {isStarted ? "Resume Interview" : "Start Interview"}
+            </Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+// ─── Human Interview Card ─────────────────────────────────────────────────────
+
+function HumanInterviewCard({ interview }: { interview: SeekerInterview }) {
+  const hasLink = Boolean(interview.meetingLink && interview.meetingLink !== "#");
+
+  return (
+    <Card className="border-l-4 border-l-accent-500 shadow-card transition-shadow duration-200 hover:shadow-card-hover motion-reduce:transition-none animate-fade-in">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          {/* Left: content */}
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold leading-snug text-foreground truncate text-[15px] tracking-tight">
+              {interview.jobTitle}
+            </p>
+            <p className="mt-0.5 text-sm text-muted-foreground truncate">
+              {interview.companyName}
+            </p>
+
+            {/* Date / time / duration */}
+            {interview.scheduledAt && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium text-foreground/80">
+                  <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {formatScheduledAt(interview.scheduledAt)}
+                </span>
+                {interview.durationMinutes && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-border" aria-hidden="true">·</span>
+                    <Clock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                    {interview.durationMinutes} min
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Round + interview type badges */}
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              {interview.roundNumber && (
+                <Badge
+                  variant="outline"
+                  className="text-[11px] text-muted-foreground border-border"
+                >
+                  Round {interview.roundNumber}
+                </Badge>
+              )}
+              {interview.interviewType && (
+                <Badge
+                  variant="outline"
+                  className="gap-1 text-[11px] text-muted-foreground border-border"
+                >
+                  <Video className="h-3 w-3" aria-hidden="true" />
+                  {interviewTypeLabel(interview.interviewType)}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Right: human avatar */}
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-50 dark:bg-accent-900/30 ring-1 ring-accent-100 dark:ring-accent-900"
+            aria-hidden="true"
+          >
+            <Video className="h-[18px] w-[18px] text-accent-600 dark:text-accent-400" />
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-3.5 border-t border-border pt-3.5">
+          {hasLink ? (
+            <Button
+              size="sm"
+              className="cursor-pointer gap-2 bg-accent-600 hover:bg-accent-700 text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+              asChild
+            >
+              <a
+                href={interview.meetingLink!}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Join meeting for ${interview.jobTitle} at ${interview.companyName}`}
+              >
+                <Video className="h-3.5 w-3.5" aria-hidden="true" />
+                Join Meeting
+              </a>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled
+              className="gap-2 cursor-not-allowed text-muted-foreground"
+            >
+              <Video className="h-3.5 w-3.5" aria-hidden="true" />
+              Link pending
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Section header ───────────────────────────────────────────────────────────
+
+function SectionHeader({
+  icon: Icon,
+  iconBg,
+  iconColor,
+  title,
+  count,
+  countBg,
+  countColor,
+  isLoading,
+}: {
+  icon: React.ElementType;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  count: number;
+  countBg: string;
+  countColor: string;
+  isLoading: boolean;
+}) {
+  return (
+    <div className="mb-3 flex items-center gap-2.5">
+      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
+        <Icon className={`h-3.5 w-3.5 ${iconColor}`} aria-hidden="true" />
+      </div>
+      <h2 className="text-sm font-semibold tracking-tight text-foreground whitespace-nowrap">
+        {title}
+      </h2>
+      {!isLoading && count > 0 && (
+        <span
+          className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums ${countBg} ${countColor}`}
+        >
+          {count}
+        </span>
+      )}
+      <div className="flex-1 border-t border-border" />
+    </div>
   );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SchedulePage() {
-  const {
-    data: events,
-    isLoading,
-    error,
-    isError,
-  } = useQuery<CalendarEvent[], CalendarFetchError>({
-    queryKey: ["calendar-events"],
-    queryFn: async () => {
-      const res  = await fetch("/api/user/calendar/events");
-      const json = await res.json() as { data?: CalendarEvent[]; error?: string; notConnected?: boolean };
-      if (!res.ok) {
-        const err = new CalendarFetchError(json.error ?? "Failed to load events");
-        err.notConnected = json.notConnected ?? false;
-        throw err;
-      }
-      return json.data ?? [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data, isLoading, isError, error, refetch } = useMyInterviews();
 
-  const grouped    = events ? groupByDate(events) : new Map<string, CalendarEvent[]>();
-  const totalCount = events?.length ?? 0;
-
-  // ── Not connected ────────────────────────────────────────────────────────────
-  if (isError && error.notConnected) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Schedule</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your upcoming events from Google Calendar
-          </p>
-        </div>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-              <LinkIcon className="h-6 w-6 text-muted-foreground/70" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground/80">
-                Google Calendar not connected
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Connect your calendar from Settings to see your upcoming events
-                here.
-              </p>
-            </div>
-            <Button asChild>
-              <Link href="/dashboard/settings">Go to Settings</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const interviews      = data?.data ?? [];
+  const aiInterviews    = interviews.filter((i) => i.type === "ai");
+  const humanInterviews = interviews.filter((i) => i.type === "human");
+  const totalCount      = interviews.length;
+  const bothEmpty       = !isLoading && !isError && totalCount === 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
+    <div className="space-y-8 pb-8">
+
+      {/* ── Page header ───────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Schedule</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your upcoming events for the next 30 days
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+            Interviews
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            All your pending AI interviews and upcoming scheduled calls
           </p>
         </div>
-        {totalCount > 0 && (
+        {!isLoading && totalCount > 0 && (
           <Badge
             variant="outline"
-            className="mt-1 shrink-0 text-xs text-muted-foreground"
+            className="mt-1 self-start sm:self-auto shrink-0 text-xs text-muted-foreground tabular-nums"
           >
-            {totalCount} event{totalCount !== 1 ? "s" : ""}
+            {totalCount} upcoming
           </Badge>
         )}
       </div>
 
-      {/* Loading */}
-      {isLoading && <LoadingSpinner message="Loading your calendar…" />}
-
-      {/* Generic error */}
-      {isError && !error.notConnected && (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-sm text-red-600">
-              {error.message || "Failed to load events. Please try again."}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && !isError && events?.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <CalendarX className="h-10 w-10 text-muted-foreground/40" />
-            <p className="font-medium text-muted-foreground">No upcoming events</p>
-            <p className="text-sm text-muted-foreground/70">
-              Your Google Calendar has no events in the next 30 days.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Events grouped by date */}
-      {grouped.size > 0 && (
-        <div className="space-y-6">
-          {Array.from(grouped.entries()).map(([dateKey, dayEvents]) => (
-            <div key={dateKey}>
-              {/* Date header */}
-              <div className="mb-3 flex items-center gap-3">
-                <h2 className="text-sm font-semibold text-foreground/80">
-                  {formatGroupHeader(dateKey)}
-                </h2>
-                <div className="flex-1 border-t border-border" />
-                <span className="text-xs text-muted-foreground/70">
-                  {dayEvents.length} event{dayEvents.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-
-              {/* Cards for this day */}
-              <div className="space-y-3">
-                {dayEvents.map((calEvent) => (
-                  <EventCard key={calEvent.id} calEvent={calEvent} />
-                ))}
-              </div>
+      {/* ── Error state ───────────────────────────────────────────────── */}
+      {isError && (
+        <Card className="border-destructive/30 bg-destructive/5 dark:bg-destructive/10">
+          <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-5 px-5">
+            <AlertCircle
+              className="h-5 w-5 shrink-0 text-destructive mt-0.5 sm:mt-0"
+              aria-hidden="true"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-destructive">
+                Couldn&apos;t load interviews
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {(error as Error)?.message || "Something went wrong. Please try again."}
+              </p>
             </div>
-          ))}
-        </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 cursor-pointer gap-1.5"
+              onClick={() => refetch()}
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Full empty state (zero interviews, no error) ───────────────── */}
+      {bothEmpty && (
+        <Card className="shadow-card">
+          <CardContent className="flex flex-col items-center justify-center gap-5 py-20 px-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/60 dark:bg-muted/30 ring-1 ring-border">
+              <CalendarX className="h-7 w-7 text-muted-foreground/50" aria-hidden="true" />
+            </div>
+            <div className="max-w-xs">
+              <p className="text-base font-semibold text-foreground/90">
+                No upcoming interviews
+              </p>
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+                When an employer invites you for an AI screening or schedules a
+                call, it will appear here.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer focus-visible:ring-2 focus-visible:ring-ring"
+              asChild
+            >
+              <Link href="/dashboard/applications">Browse Applications</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Section 1: Pending AI Interviews ──────────────────────────── */}
+      {!bothEmpty && (
+        <section aria-labelledby="ai-section-heading">
+          <SectionHeader
+            icon={Bot}
+            iconBg="bg-brand-50 dark:bg-brand-950"
+            iconColor="text-brand-600 dark:text-brand-400"
+            title="Pending AI Interviews"
+            count={aiInterviews.length}
+            countBg="bg-brand-100 dark:bg-brand-900/60"
+            countColor="text-brand-700 dark:text-brand-300"
+            isLoading={isLoading}
+          />
+
+          {isLoading ? (
+            <div className="space-y-3">
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          ) : aiInterviews.length === 0 ? (
+            <SectionEmpty message="No pending AI interviews — you're all caught up!" />
+          ) : (
+            <div className="space-y-3">
+              {aiInterviews.map((interview) => (
+                <AiInterviewCard key={interview.id} interview={interview} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── Section 2: Upcoming Scheduled Interviews ──────────────────── */}
+      {!bothEmpty && (
+        <section aria-labelledby="human-section-heading">
+          <SectionHeader
+            icon={Video}
+            iconBg="bg-accent-50 dark:bg-accent-900/30"
+            iconColor="text-accent-600 dark:text-accent-400"
+            title="Upcoming Scheduled Interviews"
+            count={humanInterviews.length}
+            countBg="bg-accent-100 dark:bg-accent-900/40"
+            countColor="text-accent-700 dark:text-accent-300"
+            isLoading={isLoading}
+          />
+
+          {isLoading ? (
+            <div className="space-y-3">
+              <CardSkeleton />
+            </div>
+          ) : humanInterviews.length === 0 ? (
+            <SectionEmpty message="No scheduled interviews yet — check back after an employer books a call." />
+          ) : (
+            <div className="space-y-3">
+              {humanInterviews.map((interview) => (
+                <HumanInterviewCard key={interview.id} interview={interview} />
+              ))}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

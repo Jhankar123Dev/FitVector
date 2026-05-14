@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
     // Get active job counts per company
     const companyIds = (companies || []).map((c) => c.id);
-    let jobCounts: Record<string, number> = {};
+    const jobCounts: Record<string, number> = {};
 
     if (companyIds.length > 0) {
       const { data: counts } = await supabase

@@ -129,7 +129,7 @@ export default function AdminCompaniesPage() {
         <Eye className="h-3.5 w-3.5 shrink-0" />
         <span>
           <strong>Transparent Pipeline</strong> — when enabled, candidates see their exact pipeline stage
-          name (e.g. "Phone Screen") instead of the generic status label (e.g. "Under Review").
+          name (e.g. &quot;Phone Screen&quot;) instead of the generic status label (e.g. &quot;Under Review&quot;).
         </span>
       </div>
 

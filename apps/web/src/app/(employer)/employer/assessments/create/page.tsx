@@ -304,7 +304,7 @@ export default function CreateAssessmentPage() {
   function toggleBankItem(id: string) {
     setBankSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }
@@ -706,7 +706,7 @@ export default function CreateAssessmentPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">{aiPreview.length} questions generated. Review and remove any you don't want before adding.</p>
+                  <p className="text-xs text-muted-foreground">{aiPreview.length} questions generated. Review and remove any you don&apos;t want before adding.</p>
                   <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
                     {aiPreview.map((q, i) => (
                       <div key={q.id} className="flex items-start gap-2 rounded-lg border border-border p-3">
