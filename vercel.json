@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "outputDirectory": "apps/web/.next",
+  "buildCommand": "pnpm turbo build --filter=@fitvector/web",
+  "installCommand": "pnpm install"
+}
