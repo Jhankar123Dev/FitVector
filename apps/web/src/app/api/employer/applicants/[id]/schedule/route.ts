@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmployerSession } from "@/lib/employer-auth";
 import { scheduleInterviewSchema } from "@/lib/validators";
 import { transformHumanInterview } from "@/lib/scheduling-helpers";
+import { createNotification, Notifications } from "@/lib/notifications/create";
 
 export async function POST(
   req: Request,
@@ -24,7 +25,7 @@ export async function POST(
     // Verify applicant belongs to company
     const { data: applicant } = await supabase
       .from("applicants")
-      .select("id, name, email, job_post_id")
+      .select("id, name, email, job_post_id, user_id")
       .eq("id", applicantId)
       .single();
 
@@ -67,6 +68,18 @@ export async function POST(
     const { data: interviewer } = await supabase.from("users").select("full_name").eq("id", parsed.data.interviewerId).single();
 
     console.log(`[Schedule] Interview scheduled for ${applicant.name} with ${interviewer?.full_name || "interviewer"} at ${parsed.data.scheduledAt}`);
+
+    // Notify seeker of scheduled interview (fire-and-forget)
+    if (applicant.user_id) {
+      void createNotification(
+        Notifications.interviewScheduled(applicant.user_id, {
+          companyName: company.name,
+          jobTitle: jobPost.title,
+          scheduledAt: parsed.data.scheduledAt,
+          interviewId: row.id,
+        })
+      );
+    }
 
     return NextResponse.json({
       data: transformHumanInterview(row, applicant, jobPost.title, interviewer?.full_name || ""),

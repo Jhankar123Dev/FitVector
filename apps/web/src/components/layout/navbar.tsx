@@ -21,7 +21,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  const { data: notifications = [] } = useNotifications();
+  const { data: notifications = [] } = useNotifications(user?.id);
   const markAllRead = useMarkAllRead();
 
   const unreadCount = useMemo(

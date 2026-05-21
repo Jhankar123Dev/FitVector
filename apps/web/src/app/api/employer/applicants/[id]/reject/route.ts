@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmployerSession } from "@/lib/employer-auth";
 import { rejectApplicantSchema } from "@/lib/validators";
 import { transformApplicant } from "@/lib/applicant-helpers";
+import { createNotification, Notifications } from "@/lib/notifications/create";
 
 // ─── PUT: Reject applicant with reason ───────────────────────────────────────
 
@@ -33,7 +34,7 @@ export async function PUT(
     // Verify ownership
     const { data: applicant } = await supabase
       .from("applicants")
-      .select("id, job_post_id")
+      .select("id, job_post_id, user_id")
       .eq("id", id)
       .single();
 
@@ -43,7 +44,7 @@ export async function PUT(
 
     const { data: jobPost } = await supabase
       .from("job_posts")
-      .select("company_id")
+      .select("company_id, title")
       .eq("id", applicant.job_post_id)
       .single();
 
@@ -87,6 +88,18 @@ export async function PUT(
         .from("applications")
         .update({ status: "rejected" })
         .eq("fitvector_app_id", fvApp.id);
+    }
+
+    // Notify seeker of rejection (fire-and-forget)
+    if (applicant.user_id) {
+      void createNotification(
+        Notifications.applicationStatusChanged(applicant.user_id, {
+          companyName: company.name,
+          jobTitle: jobPost.title,
+          newStatus: "rejected",
+          applicationId: fvApp?.id ?? id,
+        })
+      );
     }
 
     return NextResponse.json({

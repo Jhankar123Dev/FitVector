@@ -4,6 +4,7 @@ import { pythonClient } from "@/lib/python-client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasQuota } from "@fitvector/shared";
 import type { PlanTier } from "@fitvector/shared";
+import { getDailyUsage, logUsage } from "@/lib/quota/get-daily-usage";
 
 const coldEmailSchema = z.object({
   jobTitle: z.string().min(1, "Job title is required").max(200),
@@ -24,16 +25,9 @@ export async function POST(req: Request) {
     const planTier = (session.user.planTier || "free") as PlanTier;
     const supabase = createAdminClient();
 
-    const monthStart = new Date().toISOString().slice(0, 7) + "-01";
-    const { count } = await supabase
-      .from("usage_logs")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("feature", "cold_email")
-      .gte("created_at", `${monthStart}T00:00:00Z`);
-
-    if (!hasQuota(planTier, "cold_email", count || 0)) {
-      return Response.json({ error: "Monthly cold email limit reached.", upgrade: true }, { status: 429 });
+    const dailyUsage = await getDailyUsage(userId, "cold_email");
+    if (!hasQuota(planTier, "cold_email", dailyUsage)) {
+      return Response.json({ error: "Daily cold email limit reached.", upgrade: true }, { status: 429 });
     }
 
     const rawBody = await req.json();
@@ -110,11 +104,7 @@ export async function POST(req: Request) {
       .select("id")
       .single();
 
-    await supabase.from("usage_logs").insert({
-      user_id: userId,
-      feature: "cold_email",
-      metadata: { company: companyName, job_title: jobTitle },
-    });
+    await logUsage(userId, "cold_email", { company: companyName, job_title: jobTitle });
 
     return Response.json({
       data: {

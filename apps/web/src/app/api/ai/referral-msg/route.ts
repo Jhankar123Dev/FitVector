@@ -3,6 +3,7 @@ import { pythonClient } from "@/lib/python-client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasQuota } from "@fitvector/shared";
 import type { PlanTier } from "@fitvector/shared";
+import { getDailyUsage, logUsage } from "@/lib/quota/get-daily-usage";
 
 export async function POST(req: Request) {
   try {
@@ -15,16 +16,9 @@ export async function POST(req: Request) {
     const planTier = (session.user.planTier || "free") as PlanTier;
     const supabase = createAdminClient();
 
-    const monthStart = new Date().toISOString().slice(0, 7) + "-01";
-    const { count } = await supabase
-      .from("usage_logs")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("feature", "referral_msg")
-      .gte("created_at", `${monthStart}T00:00:00Z`);
-
-    if (!hasQuota(planTier, "referral_msg", count || 0)) {
-      return Response.json({ error: "Monthly referral message limit reached.", upgrade: true }, { status: 429 });
+    const dailyUsage = await getDailyUsage(userId, "referral_msg");
+    if (!hasQuota(planTier, "referral_msg", dailyUsage)) {
+      return Response.json({ error: "Daily referral message limit reached.", upgrade: true }, { status: 429 });
     }
 
     const body = await req.json();
@@ -83,10 +77,7 @@ export async function POST(req: Request) {
       company_name: body.companyName || null,
     });
 
-    await supabase.from("usage_logs").insert({
-      user_id: userId,
-      feature: "referral_msg",
-    });
+    await logUsage(userId, "referral_msg");
 
     return Response.json({
       data: { body: result.body, personalizationPoints: result.personalization_points },

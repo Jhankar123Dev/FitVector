@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { PLAN_LIMITS, hasQuota } from "@fitvector/shared";
 import type { PlanTier } from "@fitvector/shared";
 import { z } from "zod";
+import { getDailyUsage, logUsage } from "@/lib/quota/get-daily-usage";
 
 const tailorSchema = z.object({
   jobDescription: z.string().min(10, "Job description too short").max(10000, "Job description too long"),
@@ -22,22 +23,13 @@ export async function POST(req: Request) {
     const userId = session.user.id;
     const planTier = (session.user.planTier || "free") as PlanTier;
 
-    // Check usage limit
+    // Check daily usage limit
     const supabase = createAdminClient();
-    const monthStart = new Date().toISOString().slice(0, 7) + "-01";
-
-    const { count } = await supabase
-      .from("usage_logs")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("feature", "resume_tailor")
-      .gte("created_at", `${monthStart}T00:00:00Z`);
-
-    const currentUsage = count || 0;
+    const currentUsage = await getDailyUsage(userId, "resume_tailor");
     if (!hasQuota(planTier, "resume_tailor", currentUsage)) {
       return Response.json(
         {
-          error: "Monthly resume tailoring limit reached. Upgrade your plan for more.",
+          error: "Daily resume tailoring limit reached. Upgrade your plan for more.",
           upgrade: true,
           usage: {
             used: currentUsage,
@@ -126,14 +118,10 @@ export async function POST(req: Request) {
     }
 
     // Log usage
-    await supabase.from("usage_logs").insert({
-      user_id: userId,
-      feature: "resume_tailor",
-      metadata: {
-        company: body.companyName,
-        job_title: body.jobTitle,
-        resume_id: resume?.id,
-      },
+    await logUsage(userId, "resume_tailor", {
+      company: body.companyName,
+      job_title: body.jobTitle,
+      resume_id: resume?.id,
     });
 
     return Response.json({

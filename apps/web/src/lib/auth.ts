@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import type { PlanTier } from "@fitvector/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createNotification, Notifications } from "@/lib/notifications/create";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -96,6 +97,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        // Fire security notification for successful credentials sign-in (fire-and-forget)
+        void createNotification(
+          Notifications.securityNewLogin(user.id, {
+            ip: "unknown",
+            userAgent: "unknown",
+          })
+        );
+
         return {
           id: user.id,
           email: user.email,
@@ -138,6 +147,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           user.planTier = existingUser.plan_tier;
           user.onboardingCompleted = existingUser.onboarding_completed;
           user.role = existingUser.role as "seeker" | "employer";
+
+          // Fire security notification for existing user OAuth sign-in (fire-and-forget)
+          void createNotification(
+            Notifications.securityNewLogin(existingUser.id, {
+              ip: "unknown",
+              userAgent: "unknown",
+            })
+          );
         } else {
           // Create new user for OAuth sign-in (always seeker)
           const { data: newUser } = await supabase

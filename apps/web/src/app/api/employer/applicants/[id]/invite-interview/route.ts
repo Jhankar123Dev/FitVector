@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmployerSession } from "@/lib/employer-auth";
 import { inviteInterviewSchema } from "@/lib/validators";
 import { transformInterview } from "@/lib/interview-helpers";
+import { createNotification, Notifications } from "@/lib/notifications/create";
 
 // ─── POST: Send AI interview invite ──────────────────────────────────────────
 
@@ -33,7 +34,7 @@ export async function POST(
     // Fetch applicant and verify company ownership
     const { data: applicant } = await supabase
       .from("applicants")
-      .select("id, job_post_id, name, email, role_title, current_company")
+      .select("id, job_post_id, name, email, role_title, current_company, user_id")
       .eq("id", applicantId)
       .single();
 
@@ -115,6 +116,18 @@ export async function POST(
         .from("applications")
         .update({ status: "interview" })
         .eq("fitvector_app_id", fvApp.id);
+    }
+
+    // Notify seeker of AI interview invite (fire-and-forget)
+    if (applicant.user_id) {
+      void createNotification(
+        Notifications.assessmentInvite(applicant.user_id, {
+          companyName: company.name,
+          jobTitle: jobPost.title,
+          assessmentId: interview.id,
+          expiresAt: expiresAt.toISOString(),
+        })
+      );
     }
 
     // NOTE: interviewLink is derived from interview.id — no need to store separately.

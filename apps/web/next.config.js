@@ -7,10 +7,11 @@ const withPWA = require("next-pwa")({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Defender excludes node_modules from real-time scanning — placing the
-  // build cache here avoids the EPERM atomic-rename failures on corporate
-  // Windows machines (Cognizant/Avecto policy).
-  distDir: "node_modules/.cache/next-build",
+  // On Vercel use the standard .next output directory.
+  // Locally on corporate Windows (Cognizant/Avecto), Defender blocks atomic
+  // renames in the project root, so we redirect the build cache into
+  // node_modules which is excluded from real-time scanning.
+  distDir: process.env.VERCEL ? ".next" : "node_modules/.cache/next-build",
   reactStrictMode: true,
   transpilePackages: ["@fitvector/shared"],
   images: {
